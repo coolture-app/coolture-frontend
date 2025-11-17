@@ -1,0 +1,11 @@
+#!/bin/sh
+
+#checks for frontend
+echo "🔍 Checking frontend..."
+
+npm run lint || exit 1
+npm run format || exit 1
+cd ..
+
+echo "✅ Frontend checks passed!"
+
