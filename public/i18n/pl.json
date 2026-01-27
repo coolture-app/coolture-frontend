@@ -1,0 +1,13 @@
+{
+  "MAIN_PAGE": {
+    "title": "Strona główna"
+  },
+
+  "REGISTER": {
+    "title": "Zarejestruj się!"
+  },
+
+  "LOGIN": {
+    "title": "Zaloguj się!"
+  }
+}
