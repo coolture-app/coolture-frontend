@@ -1,12 +1,14 @@
 import { Component, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
-import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { TranslateService } from '@ngx-translate/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { heroBars3, heroBell } from '@ng-icons/heroicons/outline';
 
 @Component({
   selector: 'app-navbar',
-  imports: [TranslateDirective, TranslatePipe],
+  imports: [NgIcon],
+  viewProviders: [provideIcons({ heroBars3, heroBell })],
   templateUrl: './navbar.html',
   styleUrl: './navbar.scss',
 })

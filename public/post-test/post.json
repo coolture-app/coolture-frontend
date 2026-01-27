@@ -1,0 +1,103 @@
+[
+  {
+    "id": 1,
+    "title": "Wieczór z Jazzem w Starym Mieście",
+    "user": {
+      "id": 101,
+      "username": "JakKal",
+      "avatarUrl": "https://picsum.photos/id/64/200/200",
+      "isVerified": true
+    },
+    "dateOfEvent": "2026-02-15T19:00:00Z",
+    "dateOfPosting": "2026-01-27T10:00:00Z",
+    "location": {
+      "id": 101,
+      "name": "Wejherowo, Stary młyn"
+    },
+    "description": "Zapraszamy na absolutnie wyjątkowy, nastrojowy wieczór z muzyką jazzową na żywo w samym sercu Starego Miasta. Scena zostanie ustawiona w klimatycznym, ceglanym wnętrzu piwnic artystycznych, gdzie akustyka pozwala usłyszeć każde muśnięcie strun kontrabasu. Wystąpią lokalni wirtuozi oraz goście specjalni z warszawskiej sceny offowej. To idealna okazja, by odpocząć od zgiełku miasta przy dźwiękach saksofonu i lampce dobrego wina. Ze względu na ograniczoną liczbę miejsc siedzących, zalecamy wcześniejsze przybycie, choć wstęp jest całkowicie bezpłatny dla wszystkich miłośników dobrego brzmienia. Przygotujcie się na improwizacje, które poruszą Waszą duszę!",
+    "likesCount": 124,
+    "participatingCount": 45,
+    "commentCount": 0,
+    "comments": []
+  },
+  {
+    "id": 2,
+    "title": "Wystawa Rzeźby Nowoczesnej",
+    "user": {
+      "id": 102,
+      "username": "kulturka_pl",
+      "avatarUrl": "https://picsum.photos/id/103/200/200"
+    },
+    "dateOfEvent": "2026-03-01T12:00:00Z",
+    "dateOfPosting": "2026-01-26T15:30:00Z",
+    "location": {
+      "id": 101,
+      "name": "Reda, Stary młyn"
+    },
+    "description": "Przegląd prac najzdolniejszych rzeźbiarzy młodego pokolenia, którzy w swoich dziełach łączą klasyczne rzemiosło z nowoczesną technologią druku 3D oraz materiałami z recyklingu. Wystawa 'Formy Przyszłości' to nie tylko statyczne obiekty, ale również instalacje kinetyczne reagujące na ruch zwiedzających. Każda rzeźba posiada własną narrację dotyczącą zmian klimatycznych oraz kondycji człowieka w dobie cyfryzacji. Kurator wystawy poprowadzi oprowadzanie autorskie, podczas którego dowiemy się, dlaczego beton i światło neonowe stały się ulubionym medium współczesnych twórców w tej dekadzie. Wydarzenie obowiązkowe dla fanów brutalizmu i minimalizmu.",
+    "photos": ["https://picsum.photos/id/237/800/600", "https://picsum.photos/id/238/800/600"],
+    "likesCount": 89,
+    "participatingCount": 12,
+    "commentCount": 1,
+    "comments": [
+      {
+        "id": 501,
+        "author": { "id": 103, "username": "jan_kowalski" },
+        "content": "Czy wystawa jest dostępna dla osób poruszających się na wózkach?",
+        "likesCount": 5,
+        "comments": [
+          {
+            "id": 502,
+            "author": { "id": 102, "username": "kulturka_pl", "isVerified": true },
+            "content": "Tak, mamy windę i szerokie przejścia!",
+            "likesCount": 2,
+            "comments": [
+              {
+                "id": 503,
+                "author": { "id": 103, "username": "jan_kowalski" },
+                "content": "Świetnie, będę na pewno!",
+                "likesCount": 1,
+                "comments": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "title": "Festiwal Foodtrucków 2026",
+    "user": {
+      "id": 105,
+      "username": "foodie_king",
+      "avatarUrl": "https://picsum.photos/id/177/200/200"
+    },
+    "dateOfEvent": "2026-05-20T10:00:00Z",
+    "dateOfPosting": "2026-01-20T08:00:00Z",
+    "location": {
+      "id": 101,
+      "name": "Gdańsk, Stary młyn"
+    },
+    "description": "Przygotujcie swoje podniebienia na najbardziej epickie wydarzenie kulinarne tego roku! Festiwal Foodtrucków powraca w wielkim stylu, gromadząc ponad 50 wystawców z całej Europy. Znajdziecie tu wszystko: od rzemieślniczych burgerów z sezonowaną wołowiną, przez aromatyczne bao buns prosto z parownika, aż po ekshibicjonistyczne desery w postaci lodów tajskich i churrosów. Oprócz strefy gastronomicznej, przygotowaliśmy wielką strefę relaksu z leżakami, sety DJ-skie na żywo oraz kącik dla dzieci z animatorami. Nie zabraknie też konkursów na najszybsze jedzenie ostrych skrzydełek – tylko dla odważnych! To trzy dni pełne smaku, zapachu i świetnej zabawy pod gołym niebem.",
+    "photos": [
+      "https://picsum.photos/id/493/800/600",
+      "https://picsum.photos/id/494/800/600",
+      "https://picsum.photos/id/495/800/600",
+      "https://picsum.photos/id/496/800/600",
+      "https://picsum.photos/id/497/800/600"
+    ],
+    "likesCount": 567,
+    "participatingCount": 230,
+    "commentCount": 1,
+    "comments": [
+      {
+        "id": 601,
+        "author": { "id": 101, "username": "stachu_dev", "isVerified": true },
+        "content": "Będą frytki belgijskie? To moje być albo nie być.",
+        "likesCount": 15,
+        "comments": []
+      }
+    ]
+  }
+]

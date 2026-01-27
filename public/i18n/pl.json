@@ -1,6 +1,14 @@
 {
   "MAIN_PAGE": {
-    "title": "Strona główna"
+    "searchbar": "Szukaj wydarzeń",
+    "sort": "Filtry i sortowanie"
+  },
+
+  "FOOTER": {
+    "main-page": "Strona główna",
+    "friends": "Znajomi",
+    "map-callendar": "Mapa Kalendarz",
+    "my-profile": "Mój Profil"
   },
 
   "REGISTER": {

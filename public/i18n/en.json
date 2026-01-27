@@ -1,6 +1,14 @@
 {
   "MAIN_PAGE": {
-    "title": "Main page"
+    "searchbar": "Search for events",
+    "sort": "Filters and sorting"
+  },
+
+  "FOOTER": {
+    "main-page": "Main Page",
+    "friends": "Friends",
+    "map-callendar": "Map Callendar",
+    "my-profile": "My profile"
   },
 
   "REGISTER": {
