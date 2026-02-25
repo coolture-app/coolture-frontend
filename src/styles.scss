@@ -2,3 +2,6 @@
 @use 'app/static/styles/flex.scss';
 @use 'app/static/styles/reset.scss';
 @use 'app/static/styles/headers.scss';
+body {
+  padding-bottom: 80px;
+}

@@ -1,0 +1,9 @@
+<div class="wrapper">
+  <div class="row" (click)="goBack()">&lt;- GO BACK</div>
+  <app-post-component [data]="post" [isFullView]="true" />
+  <div class="comments">
+    @for (item of comments; track item.id) {
+      <app-comment-component [comment]="item" />
+    }
+  </div>
+</div>

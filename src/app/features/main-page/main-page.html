@@ -12,7 +12,7 @@
     </button>
   </div>
   @for (item of posts(); track item.id) {
-    <app-post-component [data]="item" />
+    <app-post-component [data]="item" [isFullView]="false" />
   } @empty {
     <p>Brak postów do wyświetlenia... Smuteczek.</p>
   }

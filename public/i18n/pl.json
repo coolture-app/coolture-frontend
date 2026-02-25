@@ -1,7 +1,19 @@
 {
   "MAIN_PAGE": {
     "searchbar": "Szukaj wydarzeń",
-    "sort": "Filtry i sortowanie"
+    "sort": "Filtry i sortowanie",
+    "title": "Strona główna"
+  },
+
+  "FULL_POST": {
+    "title": "Fajny post"
+  },
+
+  "POST": {
+    "share": "Udostępnij",
+    "show-more": "Wyświetl więcej",
+    "show-less": "Wyświetl mniej",
+    "show-all-photos": "Zobacz resztę zdjęć"
   },
 
   "FOOTER": {

@@ -1,6 +1,6 @@
 <div class="wrapper row">
   <div class="post-body">
-    <div class="row report">
+    <div class="row report" (click)="viewPostPage()">
       <h3 class="report">!</h3>
     </div>
     <div class="row title">
@@ -16,26 +16,30 @@
       <h4 class="location">{{ data.location.name }}</h4>
     </div>
     <div class="desc">
-      @if (!isExpanded()) {
-        {{ data.description.slice(0, maxLength) + '...' }}
-        <span
-          (click)="ToggleExpanded()"
-          (keydown.enter)="ToggleExpanded()"
-          role="button"
-          tabindex="0"
-        >
-          ROZWIŃ
-        </span>
-      } @else {
+      @if (this.isFullView) {
         {{ data.description }}
-        <span
-          (click)="ToggleExpanded()"
-          (keydown.enter)="ToggleExpanded()"
-          role="button"
-          tabindex="0"
-        >
-          Schowaj
-        </span>
+      } @else {
+        @if (!isExpanded()) {
+          {{ data.description.slice(0, maxLength) + '...' }}
+          <span
+            (click)="toggleExpanded()"
+            (keydown.enter)="toggleExpanded()"
+            role="button"
+            tabindex="0"
+          >
+            {{ 'POST.show-more' | translate }}
+          </span>
+        } @else {
+          {{ data.description }}
+          <span
+            (click)="toggleExpanded()"
+            (keydown.enter)="toggleExpanded()"
+            role="button"
+            tabindex="0"
+          >
+            {{ 'POST.show-less' | translate }}
+          </span>
+        }
       }
     </div>
     @if (photos.length > 0) {
@@ -46,7 +50,7 @@
 
             @if ($index === 2 && photos.length > 3) {
               <div class="overlay">
-                <span>ZOBACZ RESZTĘ ZDJĘĆ (+{{ photos.length - 3 }})</span>
+                <span>{{ 'POST.show-all-photos' | translate }} (+{{ photos.length - 3 }})</span>
               </div>
             }
           </div>
@@ -55,9 +59,11 @@
     }
   </div>
   <div class="social-panel row">
-    <div class="likes"></div>
-    <div class="stars"></div>
-    <div class="comments"></div>
-    <div class="share"></div>
+    <div class="likes"><ng-icon name="heroHandThumbUp" />{{ formatNumber(data.likesCount) }}</div>
+    <div class="stars"><ng-icon name="heroStar" />{{ formatNumber(data.participatingCount) }}</div>
+    <div class="comments">
+      <ng-icon name="heroChatBubbleLeftEllipsis" />{{ formatNumber(data.commentCount) }}
+    </div>
+    <div class="share"><ng-icon name="heroShare" />{{ 'POST.share' | translate }}</div>
   </div>
 </div>

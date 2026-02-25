@@ -15,7 +15,7 @@
       "name": "Wejherowo, Stary młyn"
     },
     "description": "Zapraszamy na absolutnie wyjątkowy, nastrojowy wieczór z muzyką jazzową na żywo w samym sercu Starego Miasta. Scena zostanie ustawiona w klimatycznym, ceglanym wnętrzu piwnic artystycznych, gdzie akustyka pozwala usłyszeć każde muśnięcie strun kontrabasu. Wystąpią lokalni wirtuozi oraz goście specjalni z warszawskiej sceny offowej. To idealna okazja, by odpocząć od zgiełku miasta przy dźwiękach saksofonu i lampce dobrego wina. Ze względu na ograniczoną liczbę miejsc siedzących, zalecamy wcześniejsze przybycie, choć wstęp jest całkowicie bezpłatny dla wszystkich miłośników dobrego brzmienia. Przygotujcie się na improwizacje, które poruszą Waszą duszę!",
-    "likesCount": 124,
+    "likesCount": 1244,
     "participatingCount": 45,
     "commentCount": 0,
     "comments": []
@@ -36,25 +36,38 @@
     },
     "description": "Przegląd prac najzdolniejszych rzeźbiarzy młodego pokolenia, którzy w swoich dziełach łączą klasyczne rzemiosło z nowoczesną technologią druku 3D oraz materiałami z recyklingu. Wystawa 'Formy Przyszłości' to nie tylko statyczne obiekty, ale również instalacje kinetyczne reagujące na ruch zwiedzających. Każda rzeźba posiada własną narrację dotyczącą zmian klimatycznych oraz kondycji człowieka w dobie cyfryzacji. Kurator wystawy poprowadzi oprowadzanie autorskie, podczas którego dowiemy się, dlaczego beton i światło neonowe stały się ulubionym medium współczesnych twórców w tej dekadzie. Wydarzenie obowiązkowe dla fanów brutalizmu i minimalizmu.",
     "photos": ["https://picsum.photos/id/237/800/600", "https://picsum.photos/id/238/800/600"],
-    "likesCount": 89,
+    "likesCount": 8912345,
     "participatingCount": 12,
     "commentCount": 1,
     "comments": [
       {
         "id": 501,
-        "author": { "id": 103, "username": "jan_kowalski" },
+        "author": {
+          "id": 103,
+          "username": "jan_kowalski",
+          "avatarUrl": "https://picsum.photos/id/103/200/200"
+        },
         "content": "Czy wystawa jest dostępna dla osób poruszających się na wózkach?",
         "likesCount": 5,
         "comments": [
           {
             "id": 502,
-            "author": { "id": 102, "username": "kulturka_pl", "isVerified": true },
+            "author": {
+              "id": 102,
+              "username": "kulturka_pl",
+              "isVerified": true,
+              "avatarUrl": "https://picsum.photos/id/103/200/200"
+            },
             "content": "Tak, mamy windę i szerokie przejścia!",
             "likesCount": 2,
             "comments": [
               {
                 "id": 503,
-                "author": { "id": 103, "username": "jan_kowalski" },
+                "author": {
+                  "id": 103,
+                  "username": "jan_kowalski",
+                  "avatarUrl": "https://picsum.photos/id/103/200/200"
+                },
                 "content": "Świetnie, będę na pewno!",
                 "likesCount": 1,
                 "comments": []

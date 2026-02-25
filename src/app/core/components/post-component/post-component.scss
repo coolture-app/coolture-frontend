@@ -5,15 +5,13 @@
   width: 100%;
 }
 
-.row {
-  margin: 5px 0;
-}
-
 .wrapper {
+  margin: 20px 0;
   width: 80%;
   flex-direction: column;
   .post-body {
     // aspect-ratio: 1;
+    padding: 5px;
     background-color: grey;
 
     .report {
@@ -107,6 +105,13 @@
   }
   .social-panel {
     margin-top: 10px;
-    background-color: red;
+    display: flex;
+    justify-content: space-between;
+    div {
+      border-radius: 15px;
+      background-color: white;
+      padding: 3px 7px;
+      @include center-flex;
+    }
   }
 }

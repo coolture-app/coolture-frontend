@@ -1,7 +1,19 @@
 {
   "MAIN_PAGE": {
     "searchbar": "Search for events",
-    "sort": "Filters and sorting"
+    "sort": "Filters and sorting",
+    "title": "Strona główna"
+  },
+
+  "FULL_POST": {
+    "title": "Fajny post"
+  },
+
+  "POST": {
+    "share": "Share",
+    "show-more": "Show more",
+    "show-less": "Show less",
+    "show-all-photos": "See the rest"
   },
 
   "FOOTER": {
