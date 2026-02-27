@@ -1,20 +1,21 @@
-<div class="wrapper">
-  <div class="row searchbar">
-    <span class="searchbar-wrapper">
-      <ng-icon class="magnifier" name="heroMagnifyingGlass" />
-      <input type="text" placeholder="{{ 'MAIN_PAGE.searchbar' | translate }}" />
-      <button>Szukaj</button>
-    </span>
+<app-dithering-filter>
+  <div class="wrapper">
+    <div class="row searchbar">
+      <span class="searchbar-wrapper">
+        <ng-icon class="magnifier" name="heroMagnifyingGlass" />
+        <input type="text" placeholder="{{ 'MAIN_PAGE.searchbar' | translate }}" />
+        <button>Szukaj</button>
+      </span>
+    </div>
+    <div class="row sort">
+      <button>
+        {{ 'MAIN_PAGE.sort' | translate }}
+      </button>
+    </div>
+    @for (item of posts(); track item.id) {
+      <app-post-component [data]="item" [isFullView]="false" />
+    } @empty {
+      <p>Brak postów do wyświetlenia... Smuteczek.</p>
+    }
   </div>
-  <div class="row sort">
-    <button>
-      {{ 'MAIN_PAGE.sort' | translate }}
-    </button>
-  </div>
-  @for (item of posts(); track item.id) {
-    <app-post-component [data]="item" [isFullView]="false" />
-  } @empty {
-    <p>Brak postów do wyświetlenia... Smuteczek.</p>
-  }
-  <div class="row post"></div>
-</div>
+</app-dithering-filter>

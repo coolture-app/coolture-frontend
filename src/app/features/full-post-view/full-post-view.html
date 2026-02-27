@@ -1,9 +1,26 @@
 <div class="wrapper">
-  <div class="row" (click)="goBack()">&lt;- GO BACK</div>
-  <app-post-component [data]="post" [isFullView]="true" />
-  <div class="comments">
-    @for (item of comments; track item.id) {
-      <app-comment-component [comment]="item" />
-    }
+  <div class="row" (click)="goBack()" (keydown.enter)="goBack()" role="button" tabindex="0">
+    &lt;- GO BACK
   </div>
+  @if (post(); as postData) {
+    <app-post-component [data]="postData" [isFullView]="true" />
+    <div #commentSection class="comments">
+      @for (item of comments; track item.id) {
+        <app-comment-component [comment]="item" />
+      }
+    </div>
+    <div class="commentfield" [class.sticky]="isCommentFocused()">
+      <textarea
+        #commentInput
+        rows="1"
+        name="comment"
+        placeholder="Zostaw swoj komentarz!"
+        (input)="checkIfResize()"
+        [(ngModel)]="commentContent"
+        (focus)="isCommentFocused.set(true)"
+        (blur)="isCommentFocused.set(false)"
+      ></textarea>
+      <button (click)="addComment()">Skomentuj</button>
+    </div>
+  }
 </div>

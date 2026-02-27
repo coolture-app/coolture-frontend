@@ -9,6 +9,7 @@ import {
   heroStar,
   heroShare,
 } from '@ng-icons/heroicons/outline';
+import { PostService } from '../../services/post/post.service';
 
 @Component({
   selector: 'app-post-component',
@@ -21,17 +22,23 @@ import {
 })
 export class PostComponent {
   isExpanded = signal(false);
-  maxLength = 150;
+  maxLengthOfShortDesc = 150;
+
+  //THIS WILL HAVE TO BE FETCHED FROM API TO CHECK IF USER ALREADY LIKED A POST
+  isLiked = signal(false);
+  isParticipating = signal(false);
 
   private router = inject(Router);
+  private postState = inject(PostService);
 
-  viewPostPage() {
+  viewPostPage(isScrolling: boolean): void {
+    this.postState.setActivePost(this.data);
     this.router.navigate(['/post', this.data.id], {
-      state: { postData: this.data },
+      queryParams: { scrollToComments: isScrolling },
     });
   }
 
-  toggleExpanded() {
+  toggleExpanded(): void {
     this.isExpanded.update((v) => !v);
   }
 
@@ -50,5 +57,29 @@ export class PostComponent {
       return (value / 1000).toFixed(1) + 'tyś';
     }
     return value.toString();
+  }
+
+  likePost(): void {
+    if (!this.isLiked()) {
+      //HERE SEND POST TO API
+      this.data.likesCount++;
+      this.isLiked.set(true);
+    } else {
+      //HERE SEND PATCH TO API
+      this.data.likesCount--;
+      this.isLiked.set(false);
+    }
+  }
+
+  participatePost(): void {
+    if (!this.isParticipating()) {
+      //HERE SEND POST TO API
+      this.data.participatingCount++;
+      this.isParticipating.set(true);
+    } else {
+      //HERE SEND PATCH TO API
+      this.data.participatingCount--;
+      this.isParticipating.set(false);
+    }
   }
 }

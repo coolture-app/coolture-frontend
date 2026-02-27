@@ -113,5 +113,11 @@
       padding: 3px 7px;
       @include center-flex;
     }
+    .liked {
+      color: red;
+    }
+    .stared {
+      color: yellow;
+    }
   }
 }

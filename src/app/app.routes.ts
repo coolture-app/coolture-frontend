@@ -8,7 +8,7 @@ export const routes: Routes = [
   {
     path: '',
     component: MainPage,
-    title: (route) => {
+    title: () => {
       const translate = inject(TranslateService);
       return translate.get('MAIN_PAGE.title');
     },
@@ -16,7 +16,7 @@ export const routes: Routes = [
   {
     path: 'post/:id',
     component: FullPostView,
-    title: (route) => {
+    title: () => {
       const translate = inject(TranslateService);
       return translate.get('FULL_POST.title');
     },

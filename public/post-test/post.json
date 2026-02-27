@@ -38,7 +38,7 @@
     "photos": ["https://picsum.photos/id/237/800/600", "https://picsum.photos/id/238/800/600"],
     "likesCount": 8912345,
     "participatingCount": 12,
-    "commentCount": 1,
+    "commentCount": 3,
     "comments": [
       {
         "id": 501,
@@ -102,14 +102,43 @@
     ],
     "likesCount": 567,
     "participatingCount": 230,
-    "commentCount": 1,
+    "commentCount": 3,
     "comments": [
       {
-        "id": 601,
-        "author": { "id": 101, "username": "stachu_dev", "isVerified": true },
-        "content": "Będą frytki belgijskie? To moje być albo nie być.",
-        "likesCount": 15,
-        "comments": []
+        "id": 501,
+        "author": {
+          "id": 103,
+          "username": "jan_kowalski",
+          "avatarUrl": "https://picsum.photos/id/103/200/200"
+        },
+        "content": "Czy wystawa jest dostępna dla osób poruszających się na wózkach?",
+        "likesCount": 5,
+        "comments": [
+          {
+            "id": 502,
+            "author": {
+              "id": 102,
+              "username": "kulturka_pl",
+              "isVerified": true,
+              "avatarUrl": "https://picsum.photos/id/103/200/200"
+            },
+            "content": "Tak, mamy windę i szerokie przejścia!",
+            "likesCount": 2,
+            "comments": [
+              {
+                "id": 503,
+                "author": {
+                  "id": 103,
+                  "username": "jan_kowalski",
+                  "avatarUrl": "https://picsum.photos/id/103/200/200"
+                },
+                "content": "Świetnie, będę na pewno!",
+                "likesCount": 1,
+                "comments": []
+              }
+            ]
+          }
+        ]
       }
     ]
   }

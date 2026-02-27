@@ -1,17 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { FullPostView } from './full-post-view';
+import { DitheringFilter } from './dithering-filter';
 
-describe('FullPostView', () => {
-  let component: FullPostView;
-  let fixture: ComponentFixture<FullPostView>;
+describe('DitheringFilter', () => {
+  let component: DitheringFilter;
+  let fixture: ComponentFixture<DitheringFilter>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [FullPostView],
-    }).compileComponents();
+      imports: [DitheringFilter]
+    })
+    .compileComponents();
 
-    fixture = TestBed.createComponent(FullPostView);
+    fixture = TestBed.createComponent(DitheringFilter);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
