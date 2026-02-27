@@ -23,7 +23,7 @@ export class FullPostView implements OnInit, AfterViewInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private postState = inject(PostService);
-  private isScrolling: boolean = false;
+  private isScrolling = false;
 
   commentSection = viewChild<ElementRef>('commentSection');
   commentInput = viewChild<ElementRef>('commentInput');

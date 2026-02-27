@@ -8,9 +8,8 @@ describe('DitheringFilter', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [DitheringFilter]
-    })
-    .compileComponents();
+      imports: [DitheringFilter],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(DitheringFilter);
     component = fixture.componentInstance;
