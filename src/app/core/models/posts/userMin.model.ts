@@ -1,5 +1,5 @@
 export interface UserMin {
-  id: string | number;
+  id: string;
   username: string;
   avatarUrl?: string;
   isVerified?: boolean;

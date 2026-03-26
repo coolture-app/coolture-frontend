@@ -22,20 +22,27 @@ import { FormsModule } from '@angular/forms';
 export class FullPostView implements OnInit, AfterViewInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
-  private postState = inject(PostService);
+  private postService = inject(PostService);
   private isScrolling = false;
 
   commentSection = viewChild<ElementRef>('commentSection');
   commentInput = viewChild<ElementRef>('commentInput');
   commentContent = signal<string>('');
   isCommentFocused = signal<boolean>(false);
-  post = this.postState.activePost;
+  post = this.postService.activePost;
 
   ngOnInit(): void {
-    // const id = this.route.snapshot.paramMap.get('id');
+    const id = this.route.snapshot.paramMap.get('id');
     this.isScrolling = this.route.snapshot.queryParamMap.get('scrollToComments') === 'true';
-    if (!this.post()) {
-      //fetch post with given id from db
+    if (id) {
+      if (!this.post()) {
+        this.postService.getPost(id).subscribe({
+          next: (data) => this.postService.setActivePost(data),
+          error: (error) => console.log(error),
+        });
+      }
+    } else {
+      console.error('NO ID IN URL ERRRR');
     }
   }
 

@@ -5,7 +5,7 @@
   @if (post(); as postData) {
     <app-post-component [data]="postData" [isFullView]="true" />
     <div #commentSection class="comments">
-      @for (item of comments; track item.id) {
+      @for (item of comments; track $index) {
         <app-comment-component [comment]="item" />
       }
     </div>

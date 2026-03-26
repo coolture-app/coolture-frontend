@@ -18,14 +18,14 @@ import { DitheringFilter } from '../../core/components/filters/dithering-filter/
 })
 export class MainPage implements OnInit {
   private http = inject(HttpClient);
-  private postState = inject(PostService);
+  private postService = inject(PostService);
   posts = signal<PostModel[]>([]);
 
   ngOnInit() {
-    //REPLACE THIS WITH FETCH REQUEST TO API
-    this.http.get<PostModel[]>('post-test/post.json').subscribe((data) => {
-      this.posts.set(data);
+    this.postService.getPosts().subscribe({
+      next: (data) => this.posts.set(data),
+      error: (err) => console.error('Error while fetching posts', err),
     });
-    this.postState.clearActivePost();
+    this.postService.clearActivePost();
   }
 }

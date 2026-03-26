@@ -1,9 +1,11 @@
 import { UserMin } from './userMin.model';
 
 export interface PostComment {
-  id: number;
+  commentId: number;
   author: UserMin;
   likesCount: number;
   content: string;
-  comments: PostComment[];
+  postUuid: string;
+  parentUuid: string;
+  replies: PostComment[];
 }

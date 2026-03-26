@@ -1,4 +1,4 @@
-import { Component, Input, signal, inject } from '@angular/core';
+import { Component, Input, signal, inject, OnInit } from '@angular/core';
 import { PostModel } from '../../models/posts/post.model';
 import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -10,6 +10,7 @@ import {
   heroShare,
 } from '@ng-icons/heroicons/outline';
 import { PostService } from '../../services/post/post.service';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-post-component',
@@ -20,7 +21,7 @@ import { PostService } from '../../services/post/post.service';
   templateUrl: './post-component.html',
   styleUrl: './post-component.scss',
 })
-export class PostComponent {
+export class PostComponent implements OnInit {
   isExpanded = signal(false);
   maxLengthOfShortDesc = 150;
 
@@ -30,6 +31,8 @@ export class PostComponent {
 
   private router = inject(Router);
   private postState = inject(PostService);
+
+  ngOnInit(): void {}
 
   viewPostPage(isScrolling: boolean): void {
     this.postState.setActivePost(this.data);
@@ -46,7 +49,13 @@ export class PostComponent {
   @Input() isFullView!: boolean;
 
   get photos() {
-    return this.data.photos || [];
+    const uuids = this.data?.photos;
+    return uuids?.map((uuid) => `${environment.apiUrl}/images/posts/${uuid}`) || [];
+  }
+
+  get avatar() {
+    const uuid = this.data.user.avatarUrl;
+    return `${environment.apiUrl}/images/avatars/${uuid}`;
   }
 
   formatNumber(value: number): string {
