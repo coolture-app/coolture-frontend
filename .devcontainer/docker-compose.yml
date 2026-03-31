@@ -1,0 +1,13 @@
+services:
+  devcontainer:
+    image: mcr.microsoft.com/devcontainers/base:ubuntu24.04
+    environment:
+      NG_SERVE_HOST: 0.0.0.0
+      NPM_CONFIG_CACHE: /root/.npm
+    volumes:
+      - ../:/workspace:cached
+      - npm_cache:/root/.npm
+    command: sleep infinity
+
+volumes:
+  npm_cache:
