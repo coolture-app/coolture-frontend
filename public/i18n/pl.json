@@ -1,6 +1,26 @@
 {
   "MAIN_PAGE": {
+    "searchbar": "SZUKAJ WYDARZEŃ",
+    "sort": "Filtry i sortowanie",
     "title": "Strona główna"
+  },
+
+  "FULL_POST": {
+    "title": "Fajny post"
+  },
+
+  "POST": {
+    "share": "Udostępnij",
+    "show-more": "Wyświetl więcej",
+    "show-less": "Wyświetl mniej",
+    "show-all-photos": "Zobacz resztę zdjęć"
+  },
+
+  "FOOTER": {
+    "main-page": "Strona główna",
+    "friends": "Znajomi",
+    "map-callendar": "Mapa Kalendarz",
+    "my-profile": "Mój Profil"
   },
 
   "REGISTER": {

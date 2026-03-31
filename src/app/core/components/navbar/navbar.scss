@@ -1,6 +1,20 @@
+h1 {
+  letter-spacing: 3px;
+  font-size: 40px;
+  font-family: 'Helvetica';
+}
 .row {
+  display: flex;
   justify-content: space-between;
   align-items: center;
   height: 100px;
-  background-color: grey;
+  background-color: var(--main-dark);
+  color: var(--main-light);
+}
+.burger,
+.alert {
+  width: 44px;
+  height: 44px;
+  text-align: center;
+  fill: var(--main-light);
 }

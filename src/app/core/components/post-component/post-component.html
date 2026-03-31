@@ -1,0 +1,97 @@
+<div class="wrapper row">
+  <div class="post-body">
+    @if (data) {
+      <div
+        class="row report"
+        (click)="viewPostPage(false)"
+        (keydown.enter)="viewPostPage(false)"
+        role="button"
+        tabindex="0"
+      >
+        <h3 class="report">!</h3>
+      </div>
+      <div class="row title">
+        <h3 class="title">{{ data.title }}</h3>
+      </div>
+      <div class="row info">
+        <img [src]="avatar" alt="" class="avatar" />
+        <span>
+          <h4 class="author">{{ data.user.username }}</h4>
+          <h5 class="posting-date">{{ data.dateOfPosting }}</h5>
+          <h5 class="event-date">{{ data.dateOfEvent }}</h5>
+        </span>
+        <h4 class="location">{{ data.location.name }}</h4>
+      </div>
+      <div class="desc">
+        @if (this.isFullView) {
+          {{ data.description }}
+        } @else {
+          @if (!isExpanded()) {
+            {{ data.description.slice(0, maxLengthOfShortDesc) + '...' }}
+            <span
+              (click)="toggleExpanded()"
+              (keydown.enter)="toggleExpanded()"
+              role="button"
+              tabindex="1"
+            >
+              {{ 'POST.show-more' | translate }}
+            </span>
+          } @else {
+            {{ data.description }}
+            <span
+              (click)="toggleExpanded()"
+              (keydown.enter)="toggleExpanded()"
+              role="button"
+              tabindex="2"
+            >
+              {{ 'POST.show-less' | translate }}
+            </span>
+          }
+        }
+      </div>
+      @if (photos.length > 0) {
+        <div class="photo-grid" [class]="'count-' + (photos.length > 3 ? 'more' : photos.length)">
+          @for (photo of photos.slice(0, 3); track $index) {
+            <div class="photo-item">
+              <img [src]="photo" alt="Zdjęcie z wydarzenia" />
+
+              @if ($index === 2 && photos.length > 3) {
+                <div class="overlay">
+                  <span>{{ 'POST.show-all-photos' | translate }} (+{{ photos.length - 3 }})</span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+      <div class="social-panel row">
+        <div
+          class="likes"
+          [class.liked]="isLiked()"
+          (click)="likePost()"
+          (keydown.enter)="likePost()"
+          role="button"
+          tabindex="3"
+        >
+          <ng-icon name="heroHandThumbUp" />{{ formatNumber(data.likesCount) }}
+        </div>
+        <div
+          class="stars"
+          [class.stared]="isParticipating()"
+          (click)="participatePost()"
+          (keydown.enter)="participatePost()"
+          role="button"
+          tabindex="4"
+        >
+          <ng-icon name="heroStar" />{{ formatNumber(data.participatingCount) }}
+        </div>
+        <div class="comments" (click)="viewPostPage(true)" role="button" tabindex="5">
+          <ng-icon name="heroChatBubbleLeftEllipsis" />{{ formatNumber(data.commentCount) }}
+        </div>
+        <div class="share"><ng-icon name="heroShare" />{{ 'POST.share' | translate }}</div>
+      </div>
+    } @else {
+      <div class="loading">Ładowanie posta...</div>
+    }
+  </div>
+</div>

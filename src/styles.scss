@@ -2,3 +2,76 @@
 @use 'app/static/styles/flex.scss';
 @use 'app/static/styles/reset.scss';
 @use 'app/static/styles/headers.scss';
+
+@font-face {
+  font-family: 'Helvetica';
+  src: url('assets/fonts/NeueHaasDisplayBlack.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Helvetica';
+  src: url('assets/fonts/NeueHaasDisplayBlackItalic.ttf') format('truetype');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Helvetica';
+  src: url('assets/fonts/NeueHaasDisplayMediu.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Helvetica';
+  src: url('assets/fonts/NeueHaasDisplayMediumItalic.ttf') format('truetype');
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Helvetica';
+  src: url('assets/fonts/NeueHaasDisplayRoman.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Helvetica';
+  src: url('assets/fonts/NeueHaasDisplayRomanItalic.ttf') format('truetype');
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Helvetica';
+  src: url('assets/fonts/NeueHaasDisplayThin.ttf') format('truetype');
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Helvetica';
+  src: url('assets/fonts/NeueHaasDisplayThinItalic.ttf') format('truetype');
+  font-weight: 200;
+  font-style: italic;
+  font-display: swap;
+}
+
+body {
+  padding-bottom: 80px;
+  background-color: var(--main-light);
+}
+:root {
+  --main-dark: #bd0828;
+  --main-light: #b5d7ff;
+}
