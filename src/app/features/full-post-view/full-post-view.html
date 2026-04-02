@@ -1,7 +1,7 @@
-<div class="wrapper">
-  <div class="row" (click)="goBack()" (keydown.enter)="goBack()" role="button" tabindex="0">
-    &lt;- GO BACK
-  </div>
+<div class="page">
+  <button class="back" (click)="goBack()" (keydown.enter)="goBack()" role="button" tabindex="0">
+    {{ 'FULL_POST.back' | translate }}
+  </button>
   @if (post(); as postData) {
     <app-post-component [data]="postData" [isFullView]="true" />
     <div #commentSection class="comments">
@@ -14,13 +14,13 @@
         #commentInput
         rows="1"
         name="comment"
-        placeholder="Zostaw swoj komentarz!"
+        placeholder="{{ 'FULL_POST.comment-placeholder' | translate }}"
         (input)="checkIfResize()"
         [(ngModel)]="commentContent"
         (focus)="isCommentFocused.set(true)"
         (blur)="isCommentFocused.set(false)"
       ></textarea>
-      <button (click)="addComment()">Skomentuj</button>
+      <button (click)="addComment()">{{ 'FULL_POST.comment-btn' | translate }}</button>
     </div>
   }
 </div>

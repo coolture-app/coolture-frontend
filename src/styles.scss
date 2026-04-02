@@ -1,7 +1,7 @@
-/* You can add global styles to this file, and also import other style files */
-@use 'app/static/styles/flex.scss';
-@use 'app/static/styles/reset.scss';
-@use 'app/static/styles/headers.scss';
+@use 'app/static/styles/tokens';
+@use 'app/static/styles/reset';
+@use 'app/static/styles/headers';
+@use 'app/static/styles/flex';
 
 @font-face {
   font-family: 'Helvetica';
@@ -67,11 +67,38 @@
   font-display: swap;
 }
 
-body {
-  padding-bottom: 80px;
-  background-color: var(--main-light);
+* {
+  box-sizing: border-box;
 }
-:root {
-  --main-dark: #bd0828;
-  --main-light: #b5d7ff;
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  font-weight: var(--font-normal);
+  line-height: 1.5;
+  color: var(--color-text);
+  background-color: var(--color-background);
+  padding-bottom: var(--footer-height);
+  min-height: 100vh;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
 }

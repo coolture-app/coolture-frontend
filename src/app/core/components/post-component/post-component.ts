@@ -1,4 +1,4 @@
-import { Component, Input, signal, inject, OnInit } from '@angular/core';
+import { Component, Input, signal, inject } from '@angular/core';
 import { PostModel } from '../../models/posts/post.model';
 import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -21,7 +21,7 @@ import { environment } from '../../../../environments/environment';
   templateUrl: './post-component.html',
   styleUrl: './post-component.scss',
 })
-export class PostComponent implements OnInit {
+export class PostComponent {
   isExpanded = signal(false);
   maxLengthOfShortDesc = 150;
 
@@ -31,8 +31,6 @@ export class PostComponent implements OnInit {
 
   private router = inject(Router);
   private postState = inject(PostService);
-
-  ngOnInit(): void {}
 
   viewPostPage(isScrolling: boolean): void {
     this.postState.setActivePost(this.data);

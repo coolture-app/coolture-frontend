@@ -1,32 +1,44 @@
 {
   "MAIN_PAGE": {
-    "searchbar": "SZUKAJ WYDARZEŃ",
+    "searchbar": "Szukaj wydarzeń",
+    "search": "Szukaj",
     "sort": "Filtry i sortowanie",
-    "title": "Strona główna"
+    "title": "Strona główna",
+    "no-posts": "Brak postów do wyświetlenia... Smuteczek."
   },
-
   "FULL_POST": {
-    "title": "Fajny post"
+    "title": "Fajny post",
+    "back": "Wróć",
+    "comment-placeholder": "Zostaw swój komentarz!",
+    "comment-btn": "Skomentuj"
   },
-
   "POST": {
     "share": "Udostępnij",
     "show-more": "Wyświetl więcej",
     "show-less": "Wyświetl mniej",
-    "show-all-photos": "Zobacz resztę zdjęć"
+    "show-all-photos": "Zobacz resztę zdjęć",
+    "loading": "Ładowanie posta...",
+    "likes": "polubień",
+    "participating": "uczestników",
+    "comments": "komentarzy"
   },
-
   "FOOTER": {
     "main-page": "Strona główna",
     "friends": "Znajomi",
-    "map-callendar": "Mapa Kalendarz",
+    "map-callendar": "Kalendarz",
     "my-profile": "Mój Profil"
   },
-
+  "NAVBAR": {
+    "menu": "Menu",
+    "notifications": "Powiadomienia"
+  },
+  "LANG": {
+    "pl": "PL",
+    "en": "EN"
+  },
   "REGISTER": {
     "title": "Zarejestruj się!"
   },
-
   "LOGIN": {
     "title": "Zaloguj się!"
   }
