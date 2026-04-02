@@ -1,36 +1,48 @@
-.wrapper {
-  background-color: cyan;
-  .commentfield {
-    display: flex;
-    justify-content: space-around;
-    align-items: flex-end;
-    margin-top: 15px;
-    padding-bottom: 15px;
-    padding-left: 10px;
-    padding-right: 10px;
-    textarea {
-      width: 100%;
-      box-sizing: border-box;
-      resize: none;
+@use '_mixin' as *;
 
-      min-height: auto;
-      max-height: 150px;
-      overflow-y: auto;
-
-      &::-webkit-scrollbar {
-        width: 6px;
-      }
-      &::-webkit-scrollbar-track {
-        background: transparent;
-      }
-      &::-webkit-scrollbar-thumb {
-        background-color: #d1d5db;
-        border-radius: 10px;
-      }
-    }
-  }
+.page {
+  padding: var(--space-md);
+  max-width: var(--container-max);
+  margin: 0 auto;
 }
-.sticky {
-  position: sticky;
-  bottom: 80px;
+
+.back {
+  @include button-ghost;
+  margin-bottom: var(--space-md);
+  padding-left: 0;
+}
+
+.comments {
+  margin-top: var(--space-lg);
+}
+
+.commentfield {
+  @include flex-between;
+  gap: var(--space-sm);
+  padding: var(--space-md) 0;
+  margin-top: var(--space-lg);
+  border-top: 1px solid var(--color-border-light);
+
+  &.sticky {
+    position: sticky;
+    bottom: calc(var(--footer-height) + var(--space-md));
+    background: var(--color-background);
+    padding: var(--space-md) 0;
+    z-index: var(--z-sticky);
+  }
+
+  textarea {
+    @include input-base;
+    resize: none;
+    min-height: auto;
+    max-height: 150px;
+    overflow-y: auto;
+    @include scrollbar;
+    flex: 1;
+  }
+
+  button {
+    @include button-primary;
+    flex-shrink: 0;
+  }
 }

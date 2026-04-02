@@ -1,15 +1,15 @@
-<div class="comment-container">
-  <div class="comment-main">
-    <img [src]="avatar" alt="" class="author-avatar" />
-    <div class="comment-content">
-      <div class="author-username">{{ comment.author.username }}</div>
-      <div class="text">{{ comment.content }}</div>
-      <div class="likes">{{ comment.likesCount }} polubień</div>
+<div class="comment">
+  <div class="comment__main">
+    <img [src]="avatar" alt="" class="comment__avatar" />
+    <div class="comment__content">
+      <div class="comment__username">{{ comment.author.username }}</div>
+      <div class="comment__text">{{ comment.content }}</div>
+      <div class="comment__likes">{{ comment.likesCount }} {{ 'POST.likes' | translate }}</div>
     </div>
   </div>
 
   @if (comment.replies && comment.replies.length > 0) {
-    <div class="replies">
+    <div class="comment__replies">
       @for (reply of comment.replies; track reply.commentId) {
         <app-comment-component [comment]="reply" />
       }

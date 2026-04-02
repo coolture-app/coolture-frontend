@@ -1,32 +1,44 @@
 {
   "MAIN_PAGE": {
     "searchbar": "Search for events",
+    "search": "Search",
     "sort": "Filters and sorting",
-    "title": "Strona główna"
+    "title": "Home Page",
+    "no-posts": "No posts to display... Sad face."
   },
-
   "FULL_POST": {
-    "title": "Fajny post"
+    "title": "Cool post",
+    "back": "Back",
+    "comment-placeholder": "Leave your comment!",
+    "comment-btn": "Comment"
   },
-
   "POST": {
     "share": "Share",
     "show-more": "Show more",
     "show-less": "Show less",
-    "show-all-photos": "See the rest"
+    "show-all-photos": "See the rest",
+    "loading": "Loading post...",
+    "likes": "likes",
+    "participating": "going",
+    "comments": "comments"
   },
-
   "FOOTER": {
-    "main-page": "Main Page",
+    "main-page": "Home",
     "friends": "Friends",
-    "map-callendar": "Map Callendar",
-    "my-profile": "My profile"
+    "map-callendar": "Calendar",
+    "my-profile": "Profile"
   },
-
+  "NAVBAR": {
+    "menu": "Menu",
+    "notifications": "Notifications"
+  },
+  "LANG": {
+    "pl": "PL",
+    "en": "EN"
+  },
   "REGISTER": {
     "title": "Register!"
   },
-
   "LOGIN": {
     "title": "Log in!"
   }

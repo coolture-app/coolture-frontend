@@ -1,6 +1,14 @@
-<div class="row">
-  <div class="main-page element">{{ 'FOOTER.main-page' | translate }}</div>
-  <div class="friends element">{{ 'FOOTER.friends' | translate }}</div>
-  <div class="map-callendar element">{{ 'FOOTER.map-callendar' | translate }}</div>
-  <div class="my-profile element">{{ 'FOOTER.my-profile' | translate }}</div>
-</div>
+<nav class="footer">
+  <div class="footer__item" routerLink="/" routerLinkActive="active">
+    {{ 'FOOTER.main-page' | translate }}
+  </div>
+  <div class="footer__item" routerLink="/friends" routerLinkActive="active">
+    {{ 'FOOTER.friends' | translate }}
+  </div>
+  <div class="footer__item" routerLink="/calendar" routerLinkActive="active">
+    {{ 'FOOTER.map-callendar' | translate }}
+  </div>
+  <div class="footer__item" routerLink="/profile" routerLinkActive="active">
+    {{ 'FOOTER.my-profile' | translate }}
+  </div>
+</nav>
