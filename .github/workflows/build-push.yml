@@ -36,7 +36,7 @@ jobs:
       - name: Build and push API image
         run: |
           set -u
-          IMAGE="${REGISTRY}/${REPOSITORY}-${BRANCH}:${IMAGE_TAG}"
+          IMAGE="${REGISTRY}/${REPOSITORY}${BRANCH}:${IMAGE_TAG}"
           docker build -f Dockerfile -t "$IMAGE" .
           docker push "$IMAGE"
           echo "Image pushed to $IMAGE"
