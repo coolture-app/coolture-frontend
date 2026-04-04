@@ -1,0 +1,18 @@
+@use '_mixin' as *;
+.page {
+  padding: var(--space-md);
+  @include center-flex;
+  padding-top: 150px;
+}
+.info {
+  @include center-flex;
+  flex-direction: column;
+  gap: 20px;
+  button {
+    border: none;
+    background-color: transparent;
+    text-decoration: underline;
+    font-size: var(--sm);
+    cursor: pointer;
+  }
+}

@@ -30,7 +30,8 @@
   },
   "NAVBAR": {
     "menu": "Menu",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "addPost": "Add post!"
   },
   "LANG": {
     "pl": "PL",
@@ -41,5 +42,13 @@
   },
   "LOGIN": {
     "title": "Log in!"
+  },
+  "404": {
+    "header": "The thing you are looking for doesnt exist.",
+    "go-back-btn": "Go back to the main page",
+    "title": "Ohh, we are lost..."
+  },
+  "ADD_POST": {
+    "title": "Add post!"
   }
 }

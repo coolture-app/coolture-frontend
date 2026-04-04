@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Component({
@@ -9,6 +10,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 })
 export class Navbar {
   private translate = inject(TranslateService);
+  private router = inject(Router);
   currentLang = signal(this.translate.currentLang);
 
   constructor() {
@@ -20,5 +22,9 @@ export class Navbar {
   changeLanguage(): void {
     const newLang = this.currentLang() === 'pl' ? 'en' : 'pl';
     this.translate.use(newLang);
+  }
+
+  goToAddPost(): void {
+    this.router.navigate(['/addPost']);
   }
 }

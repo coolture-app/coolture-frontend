@@ -30,7 +30,8 @@
   },
   "NAVBAR": {
     "menu": "Menu",
-    "notifications": "Powiadomienia"
+    "notifications": "Powiadomienia",
+    "addPost": "Dodaj post!"
   },
   "LANG": {
     "pl": "PL",
@@ -41,5 +42,13 @@
   },
   "LOGIN": {
     "title": "Zaloguj się!"
+  },
+  "404": {
+    "header": "Szukana przez ciebie strona nie istnieje.",
+    "go-back-btn": "Wróc na stronę główną",
+    "title": "Ups, zabładziliśmy..."
+  },
+  "ADD_POST": {
+    "title": "Dodaj post!"
   }
 }

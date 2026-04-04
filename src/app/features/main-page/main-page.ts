@@ -22,7 +22,7 @@ export class MainPage implements OnInit {
   posts = signal<PostModel[]>([]);
 
   ngOnInit() {
-    this.postService.getPosts().subscribe({
+    this.postService.getPosts(1, 10).subscribe({
       next: (data) => this.posts.set(data),
       error: (err) => console.error('Error while fetching posts', err),
     });
