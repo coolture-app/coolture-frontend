@@ -1,0 +1,16 @@
+node_modules
+dist
+.git
+.gitignore
+.devcontainer
+.vscode
+*.md
+.browserslistrc
+.editorconfig
+.eslintignore
+.eslintrc.json
+.prettierignore
+.prettierrc
+karma.conf.js
+eslint.config.*
+.husky
