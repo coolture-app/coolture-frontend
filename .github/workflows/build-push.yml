@@ -4,8 +4,6 @@ name: Build & Push Backend Image
 on:
   push:
     branches: ["main", "dev"]
-  pull_request:
-    branches: ["main", "dev"]
   workflow_dispatch:
 jobs:
   build-and-push:
