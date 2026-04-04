@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 jobs:
   build-and-push:
-    name: Build & Push Backend Image
+    name: Build & Push Frontend Image
     runs-on: self-hosted
     concurrency:
       group: build-and-push
