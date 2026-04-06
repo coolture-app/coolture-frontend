@@ -3,6 +3,7 @@ import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../core/services/auth/auth.service';
 import { PostService } from '../../core/services/post/post.service';
+import { CreatePostModel } from '../../core/models/posts/createPost.model';
 
 @Component({
   selector: 'app-add-post-view',
@@ -40,7 +41,7 @@ export class AddPostView {
   onSubmit() {
     if (this.postForm.valid) {
       console.log('Dane do wysłania na backend:', this.postForm.value);
-      this.postService.addPost(this.postForm.value).subscribe();
+      this.postService.addPost(this.postForm.value as CreatePostModel).subscribe();
     } else {
       console.log('Formularz zawiera błędy.');
       this.postForm.markAllAsTouched();

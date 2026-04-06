@@ -57,7 +57,11 @@
             <img [src]="photo" alt="Zdjęcie z wydarzenia" />
 
             @if ($index === 2 && photos.length > 3) {
-              <button class="post__overlay" (click)="viewPostPage(true)" (keydown.enter)="viewPostPage(true)">
+              <button
+                class="post__overlay"
+                (click)="viewPostPage(true)"
+                (keydown.enter)="viewPostPage(true)"
+              >
                 <span>{{ 'POST.show-all-photos' | translate }} (+{{ photos.length - 3 }})</span>
               </button>
             }
@@ -95,9 +99,7 @@
       >
         <ng-icon name="heroChatBubbleLeftEllipsis" />{{ formatNumber(data.commentCount) }}
       </div>
-      <div class="post__social-btn">
-        <ng-icon name="heroShare" />{{ 'POST.share' | translate }}
-      </div>
+      <div class="post__social-btn"><ng-icon name="heroShare" />{{ 'POST.share' | translate }}</div>
     </div>
   } @else {
     <div class="post__loading">{{ 'POST.loading' | translate }}</div>
