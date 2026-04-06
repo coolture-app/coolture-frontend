@@ -10,7 +10,7 @@ import {
   heroShare,
 } from '@ng-icons/heroicons/outline';
 import { PostService } from '../../services/post/post.service';
-import { environment } from '../../../../environments/environment';
+import { ApiUrlService } from '../../services/api-url.service';
 
 @Component({
   selector: 'app-post-component',
@@ -32,6 +32,8 @@ export class PostComponent {
   private router = inject(Router);
   private postState = inject(PostService);
 
+  private apiUrl = inject(ApiUrlService);
+
   viewPostPage(isScrolling: boolean): void {
     this.postState.setActivePost(this.data);
     this.router.navigate(['/post', this.data.id], {
@@ -48,12 +50,12 @@ export class PostComponent {
 
   get photos() {
     const uuids = this.data?.photos;
-    return uuids?.map((uuid) => `${environment.apiUrl}/images/posts/${uuid}`) || [];
+    return uuids?.map((uuid) => this.apiUrl.path(`/images/posts/${uuid}`)) || [];
   }
 
   get avatar() {
     const uuid = this.data.user.avatarUrl;
-    return `${environment.apiUrl}/images/avatars/${uuid}`;
+    return this.apiUrl.path(`/images/avatars/${uuid}`);
   }
 
   formatNumber(value: number): string {

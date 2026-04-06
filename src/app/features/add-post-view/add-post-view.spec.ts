@@ -8,9 +8,8 @@ describe('AddPostView', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [AddPostView]
-    })
-    .compileComponents();
+      imports: [AddPostView],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(AddPostView);
     component = fixture.componentInstance;

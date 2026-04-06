@@ -1,7 +1,7 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { PostComment } from '../../models/posts/comments.model';
-import { environment } from '../../../../environments/environment';
 import { TranslatePipe } from '@ngx-translate/core';
+import { ApiUrlService } from '../../services/api-url.service';
 
 @Component({
   selector: 'app-comment-component',
@@ -11,7 +11,8 @@ import { TranslatePipe } from '@ngx-translate/core';
 })
 export class CommentComponent {
   @Input({ required: true }) comment!: PostComment;
+  private apiUrl = inject(ApiUrlService);
   get avatar() {
-    return `${environment.apiUrl}/images/avatars/${this.comment.author.id}`;
+    return this.apiUrl.path(`/images/avatars/${this.comment.author.id}`);
   }
 }
