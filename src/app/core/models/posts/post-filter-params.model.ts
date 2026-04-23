@@ -1,8 +1,8 @@
 import { PostType, PostStatus, PostVisibility } from '../common/enums';
-import { PaginationInfo } from '../common/paginated-response.model';
 
 export interface PostFilterParams {
-  pagination?: PaginationInfo;
+  cursor?: string;
+  limit?: number;
   q?: string;
   categoryId?: string; // UUID
   tags?: string[];

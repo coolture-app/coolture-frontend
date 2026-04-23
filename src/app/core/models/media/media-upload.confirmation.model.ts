@@ -1,5 +1,5 @@
 export interface MediaUploadConfirmation {
   fullMediaId: string;
-  thumbnailMediaID: string;
+  thumbnailMediaId: string;
   setAt: string;
 }

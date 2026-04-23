@@ -1,23 +1,7 @@
-export interface UserAvatar {
-  id: string;
-  purpose: string;
-  mimeType: string;
-  sizeBytes: number;
-  status: string;
-  url: string;
-  createdAt: string;
-  deletedAt: string | null;
-}
+import { UserSummary } from './user-summary.model';
 
-export interface UserProfile {
-  id: string;
-  username: string;
-  firstName: string;
-  lastName: string;
-  avatar: UserAvatar;
-  followersCount: number;
-  followingCount: number;
-  bio: string;
+export interface UserProfile extends UserSummary {
+  bio: string | null;
   createdAt: string;
   isFollowing: boolean;
   isBlocked: boolean;

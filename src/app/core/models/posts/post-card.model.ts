@@ -1,4 +1,4 @@
 import { PostBase } from './post-base.model';
-
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
+// TODO: FOR NOW IGNORE
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface PostCard extends PostBase {}

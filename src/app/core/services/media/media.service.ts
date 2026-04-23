@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ApiUrlService } from '../api-url.service';
 import { MediaUploadInitRequest } from '../../models/media/media-upload-init-request.model';
@@ -29,8 +29,8 @@ export class MediaService {
   uploadToS3(
     uploadUrl: string,
     file: File,
-    requiredHeaders: { [key: string]: string },
-  ): Observable<any> {
+    requiredHeaders: Record<string, string>,
+  ): Observable<HttpResponse<string>> {
     let headers = new HttpHeaders();
 
     Object.keys(requiredHeaders).forEach((key) => {
