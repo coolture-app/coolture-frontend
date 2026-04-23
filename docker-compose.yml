@@ -1,0 +1,15 @@
+services:
+  angular-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: angular-frontend
+    ports:
+      - "4200:4000"
+    networks:
+      - coolture-devnet
+
+networks:
+  coolture-devnet:
+    external: true
+    name: coolture-core_devnet

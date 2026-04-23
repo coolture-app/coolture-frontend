@@ -1,11 +1,11 @@
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { catchError, throwError } from 'rxjs';
-import { environment } from '../../../environments/environment';
+import { inject } from '@angular/core';
+import { ApiUrlService } from '../services/api-url.service';
 
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
-  // we are ignoring 401 errors from /me path because it's being
-  // handled by auth service (it's used to determine if user is authenticated)
-  if (req.url.includes(`${environment.apiUrl}/me`)) {
+  const apiUrl = inject(ApiUrlService);
+  if (req.url.includes(apiUrl.path('/me'))) {
     return next(req);
   }
 

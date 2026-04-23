@@ -103,7 +103,9 @@
   font-size: var(--text-base);
   color: var(--color-text);
   background: var(--color-surface);
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
 
   &:focus {
     outline: none;

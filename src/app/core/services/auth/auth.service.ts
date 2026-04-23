@@ -1,15 +1,15 @@
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
-import { environment } from '../../../../environments/environment';
 import { UserRole } from '../../models/auth/role';
 import { catchError, map, Observable, of, tap } from 'rxjs';
+import { ApiUrlService } from '../api-url.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
   private http = inject(HttpClient);
-  private apiUrl = environment.apiUrl;
+  private apiUrl = inject(ApiUrlService);
 
   // ==== getters and setters for auth vars ====
   readonly isAuthenticated = signal<boolean>(false);
@@ -43,7 +43,7 @@ export class AuthService {
   // ==== api calls ====
   checkSession(): Observable<boolean> {
     return this.http
-      .get(`${this.apiUrl}/users/me`, {
+      .get(this.apiUrl.path('/users/me'), {
         responseType: 'text',
         withCredentials: true,
       })
