@@ -13,7 +13,10 @@
   <div class="form-group">
     <label for="categoryId">Kategoria (UUID):</label>
     <input id="categoryId" type="text" formControlName="categoryId" />
-    <div class="error" *ngIf="postForm.get('categoryId')?.invalid && postForm.get('categoryId')?.touched">
+    <div
+      class="error"
+      *ngIf="postForm.get('categoryId')?.invalid && postForm.get('categoryId')?.touched"
+    >
       Kategoria jest wymagana.
     </div>
   </div>
@@ -29,7 +32,10 @@
   <div class="form-group">
     <label for="startsAt">Data i godzina rozpoczęcia:</label>
     <input id="startsAt" type="datetime-local" formControlName="startsAt" />
-    <div class="error" *ngIf="postForm.get('startsAt')?.invalid && postForm.get('startsAt')?.touched">
+    <div
+      class="error"
+      *ngIf="postForm.get('startsAt')?.invalid && postForm.get('startsAt')?.touched"
+    >
       Data wydarzenia jest wymagana.
     </div>
   </div>
@@ -50,14 +56,23 @@
     <label for="description">Opis:</label>
     <textarea id="description" formControlName="description" rows="5"></textarea>
 
-    <div class="error" *ngIf="postForm.get('description')?.invalid && postForm.get('description')?.touched">
+    <div
+      class="error"
+      *ngIf="postForm.get('description')?.invalid && postForm.get('description')?.touched"
+    >
       Opis jest wymagany i nie może przekraczać 2000 znaków.
     </div>
   </div>
 
   <div class="form-group">
     <label for="mediaFiles">Zdjęcia:</label>
-    <input id="mediaFiles" type="file" multiple accept="image/*" (change)="onFilesSelected($event)" />
+    <input
+      id="mediaFiles"
+      type="file"
+      multiple
+      accept="image/*"
+      (change)="onFilesSelected($event)"
+    />
     <div class="selected-files" *ngIf="selectedFiles.length > 0">
       <p>Wybrane pliki:</p>
       <ul>

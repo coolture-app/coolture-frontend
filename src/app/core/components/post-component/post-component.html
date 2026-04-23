@@ -1,70 +1,106 @@
 <div class="post">
   @if (data) {
-  <div class="post__header">
-    <button class="post__report" (click)="viewPostPage(false)" (keydown.enter)="viewPostPage(false)" role="button"
-      tabindex="0">
-      !
-    </button>
-  </div>
-  <h3 class="post__title">{{ data.title }}</h3>
-  <div class="post__meta">
-    <!-- <img [src]="avatar" alt="" class="post__avatar" /> -->
-    <div class="post__author">
-      <span class="post__username">{{ data.author.username }}</span>
-      <span class="post__date">{{ data.createdAt | date:'short' }}</span>
-      <span class="post__date">{{ data.startsAt | date:'short' }}</span>
-    </div>
-  </div>
-  <div class="post__desc">
-    @if (this.isFullView) {
-    {{ data.description }}
-    } @else {
-    @if (!isExpanded()) {
-    {{ data.description.slice(0, maxLengthOfShortDesc) + '...' }}
-    <span class="post__desc-action" (click)="toggleExpanded()" (keydown.enter)="toggleExpanded()" role="button"
-      tabindex="1">
-      {{ 'POST.show-more' | translate }}
-    </span>
-    } @else {
-    {{ data.description }}
-    <span class="post__desc-action" (click)="toggleExpanded()" (keydown.enter)="toggleExpanded()" role="button"
-      tabindex="2">
-      {{ 'POST.show-less' | translate }}
-    </span>
-    }
-    }
-  </div>
-  @if (photos.length > 0) {
-  <div class="post__photos" [class]="'count-' + (photos.length > 3 ? 'more' : photos.length)">
-    @for (photo of photos.slice(0, 3); track $index) {
-    <div class="post__photo-item">
-      <img [src]="photo" alt="Zdjęcie z wydarzenia" />
-
-      @if ($index === 2 && photos.length > 3) {
-      <button class="post__overlay" (click)="viewPostPage(true)" (keydown.enter)="viewPostPage(true)">
-        <span>{{ 'POST.show-all-photos' | translate }} (+{{ photos.length - 3 }})</span>
+    <div class="post__header">
+      <button
+        class="post__report"
+        (click)="viewPostPage(false)"
+        (keydown.enter)="viewPostPage(false)"
+        role="button"
+        tabindex="0"
+      >
+        !
       </button>
+    </div>
+    <h3 class="post__title">{{ data.title }}</h3>
+    <div class="post__meta">
+      <!-- <img [src]="avatar" alt="" class="post__avatar" /> -->
+      <div class="post__author">
+        <span class="post__username">{{ data.author.username }}</span>
+        <span class="post__date">{{ data.createdAt | date: 'short' }}</span>
+        <span class="post__date">{{ data.startsAt | date: 'short' }}</span>
+      </div>
+    </div>
+    <div class="post__desc">
+      @if (this.isFullView) {
+        {{ data.description }}
+      } @else {
+        @if (!isExpanded()) {
+          {{ data.description.slice(0, maxLengthOfShortDesc) + '...' }}
+          <span
+            class="post__desc-action"
+            (click)="toggleExpanded()"
+            (keydown.enter)="toggleExpanded()"
+            role="button"
+            tabindex="1"
+          >
+            {{ 'POST.show-more' | translate }}
+          </span>
+        } @else {
+          {{ data.description }}
+          <span
+            class="post__desc-action"
+            (click)="toggleExpanded()"
+            (keydown.enter)="toggleExpanded()"
+            role="button"
+            tabindex="2"
+          >
+            {{ 'POST.show-less' | translate }}
+          </span>
+        }
       }
     </div>
+    @if (photos.length > 0) {
+      <div class="post__photos" [class]="'count-' + (photos.length > 3 ? 'more' : photos.length)">
+        @for (photo of photos.slice(0, 3); track $index) {
+          <div class="post__photo-item">
+            <img [src]="photo" alt="Zdjęcie z wydarzenia" />
+
+            @if ($index === 2 && photos.length > 3) {
+              <button
+                class="post__overlay"
+                (click)="viewPostPage(true)"
+                (keydown.enter)="viewPostPage(true)"
+              >
+                <span>{{ 'POST.show-all-photos' | translate }} (+{{ photos.length - 3 }})</span>
+              </button>
+            }
+          </div>
+        }
+      </div>
     }
-  </div>
-  }
-  <div class="post__social">
-    <div class="post__social-btn" [class.liked]="isLiked()" (click)="likePost()" (keydown.enter)="likePost()"
-      role="button" tabindex="3">
-      <ng-icon name="heroHandThumbUp" />{{ formatNumber(data.positiveReactionCount) }}
+    <div class="post__social">
+      <div
+        class="post__social-btn"
+        [class.liked]="isLiked()"
+        (click)="likePost()"
+        (keydown.enter)="likePost()"
+        role="button"
+        tabindex="3"
+      >
+        <ng-icon name="heroHandThumbUp" />{{ formatNumber(data.positiveReactionCount) }}
+      </div>
+      <div
+        class="post__social-btn"
+        [class.participating]="isParticipating()"
+        (click)="participatePost()"
+        (keydown.enter)="participatePost()"
+        role="button"
+        tabindex="4"
+      >
+        <ng-icon name="heroStar" />{{ formatNumber(data.participantCount) }}
+      </div>
+      <div
+        class="post__social-btn"
+        (click)="viewPostPage(true)"
+        (keydown.enter)="viewPostPage(true)"
+        role="button"
+        tabindex="5"
+      >
+        <ng-icon name="heroChatBubbleLeftEllipsis" />{{ formatNumber(data.commentsCount) }}
+      </div>
+      <div class="post__social-btn"><ng-icon name="heroShare" />{{ 'POST.share' | translate }}</div>
     </div>
-    <div class="post__social-btn" [class.participating]="isParticipating()" (click)="participatePost()"
-      (keydown.enter)="participatePost()" role="button" tabindex="4">
-      <ng-icon name="heroStar" />{{ formatNumber(data.participantCount) }}
-    </div>
-    <div class="post__social-btn" (click)="viewPostPage(true)" (keydown.enter)="viewPostPage(true)" role="button"
-      tabindex="5">
-      <ng-icon name="heroChatBubbleLeftEllipsis" />{{ formatNumber(data.commentsCount) }}
-    </div>
-    <div class="post__social-btn"><ng-icon name="heroShare" />{{ 'POST.share' | translate }}</div>
-  </div>
   } @else {
-  <div class="post__loading">{{ 'POST.loading' | translate }}</div>
+    <div class="post__loading">{{ 'POST.loading' | translate }}</div>
   }
 </div>
