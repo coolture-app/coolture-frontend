@@ -1,0 +1,18 @@
+import { PostType, PostStatus, PostVisibility } from '../common/enums';
+import { PaginationInfo } from '../common/paginated-response.model';
+
+export interface PostFilterParams {
+  pagination?: PaginationInfo;
+  q?: string;
+  categoryId?: string; // UUID
+  tags?: string[];
+  authorId?: string; // UUID
+  status?: PostStatus;
+  visibility?: PostVisibility;
+  type?: PostType;
+  startsFrom?: string; // ISO-8601
+  startsTo?: string; // ISO-8601
+  latitude?: number;
+  longitude?: number;
+  radiusKm?: number;
+}
