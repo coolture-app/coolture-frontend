@@ -53,10 +53,10 @@ export class PostComponent {
     return uuids?.map((uuid) => this.apiUrl.path(`/images/posts/${uuid}`)) || [];
   }
 
-  get avatar() {
-    const uuid = this.data.user.avatarUrl;
-    return this.apiUrl.path(`/images/avatars/${uuid}`);
-  }
+  // get avatar() {
+  //   const uuid = this.data.user.avatarUrl;
+  //   return this.apiUrl.path(`/images/avatars/${uuid}`);
+  // }
 
   formatNumber(value: number): string {
     if (value >= 1000000) {

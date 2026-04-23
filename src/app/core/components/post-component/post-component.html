@@ -13,13 +13,12 @@
     </div>
     <h3 class="post__title">{{ data.title }}</h3>
     <div class="post__meta">
-      <img [src]="avatar" alt="" class="post__avatar" />
+      <!-- <img [src]="avatar" alt="" class="post__avatar" /> -->
       <div class="post__author">
         <span class="post__username">{{ data.user.username }}</span>
         <span class="post__date">{{ data.dateOfPosting }}</span>
         <span class="post__date">{{ data.dateOfEvent }}</span>
       </div>
-      <span class="post__location">{{ data.location.name }}</span>
     </div>
     <div class="post__desc">
       @if (this.isFullView) {

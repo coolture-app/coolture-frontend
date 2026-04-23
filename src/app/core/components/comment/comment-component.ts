@@ -12,7 +12,7 @@ import { ApiUrlService } from '../../services/api-url.service';
 export class CommentComponent {
   @Input({ required: true }) comment!: PostComment;
   private apiUrl = inject(ApiUrlService);
-  get avatar() {
-    return this.apiUrl.path(`/images/avatars/${this.comment.author.id}`);
-  }
+  // get avatar() {
+  //   return this.apiUrl.path(`/images/avatars/${this.comment.author.id}`);
+  // }
 }

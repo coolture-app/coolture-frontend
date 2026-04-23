@@ -20,7 +20,7 @@ export class AddPostView {
     id: [null],
 
     title: [
-      'zbieranie grzybow z artystami i rzemieslnikami',
+      '',
       [
         Validators.required,
         Validators.minLength(3),
@@ -33,9 +33,9 @@ export class AddPostView {
 
     dateOfEvent: ['2026-04-18T21:04', Validators.required],
 
-    locationUuid: ['3fa85f64-5717-4562-b3fc-2c963f66afa6', Validators.required],
+    // locationUuid: ['3fa85f64-5717-4562-b3fc-2c963f66afa6', Validators.required],
 
-    description: ['lubie grzyyyybyyyyyy', [Validators.required, Validators.maxLength(2000)]],
+    description: ['', [Validators.required, Validators.maxLength(2000)]],
   });
 
   onSubmit() {

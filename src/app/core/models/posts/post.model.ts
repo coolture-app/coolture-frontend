@@ -8,7 +8,7 @@ export interface PostModel {
   user: UserMin;
   dateOfEvent: string;
   dateOfPosting: string;
-  location: EventLocation;
+  // location: EventLocation;
   description: string;
   photos?: string[];
   likesCount: number;
