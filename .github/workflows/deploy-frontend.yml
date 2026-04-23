@@ -1,0 +1,33 @@
+---
+name: Deploy Frontend
+
+on:
+  push:
+    branches: ["main", "dev"]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy frontend with Docker Compose
+    runs-on: [self-hosted, linux, host, deployer]
+    concurrency:
+      group: deploy-frontend
+      cancel-in-progress: false
+    env:
+      DEPLOY_DIR: /home/admin/coolture/dev/frontend
+
+    steps:
+      - name: Update deploy repository
+        run: |
+          if [ ! -d "$DEPLOY_DIR/.git" ]; then
+            echo "Missing git repository in $DEPLOY_DIR"
+            exit 1
+          fi
+
+          git -C "$DEPLOY_DIR" fetch --all --prune
+          git -C "$DEPLOY_DIR" checkout "$GITHUB_REF_NAME"
+          git -C "$DEPLOY_DIR" pull --ff-only origin "$GITHUB_REF_NAME"
+
+      - name: Deploy frontend stack
+        run: docker-compose up --build -d
+        working-directory: /home/admin/coolture/dev/frontend
