@@ -41,7 +41,7 @@
           }}
         </span>
         <span class="test-name">{{ r.name }}</span>
-        <span class="duration" *ngIf="r.duration != null">{{ r.duration }}ms</span>
+        <span class="duration" *ngIf="r.duration !== null">{{ r.duration }}ms</span>
       </div>
       <div class="result-detail">{{ r.detail }}</div>
     </li>

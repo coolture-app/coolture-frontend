@@ -82,7 +82,7 @@ export class AddPostView {
           title: formValue.title ?? '',
           categoryId: formValue.categoryId ?? '',
           type: formValue.type ?? 'OFFLINE',
-          startsAt: formValue.startsAt ?? '',
+          startsAt: formValue.startsAt ? new Date(formValue.startsAt).toISOString() : '',
           description: formValue.description ?? '',
 
           mediaIds: this.uploadedMediaIds.length > 0 ? this.uploadedMediaIds : undefined,
