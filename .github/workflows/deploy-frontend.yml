@@ -18,6 +18,7 @@ jobs:
       cancel-in-progress: false
     env:
       DEPLOY_DIR: /home/admin/coolture/dev/frontend
+      BRANCH: dev
 
     steps:
       - name: Fix git safe directory
@@ -31,8 +32,8 @@ jobs:
           fi
 
           git -C "$DEPLOY_DIR" fetch --all --prune
-          git -C "$DEPLOY_DIR" checkout "$GITHUB_REF_NAME"
-          git -C "$DEPLOY_DIR" pull --ff-only origin "$GITHUB_REF_NAME"
+          git -C "$DEPLOY_DIR" checkout "$BRANCH"
+          git -C "$DEPLOY_DIR" pull --ff-only origin "$BRANCH"
 
       - name: Deploy frontend stack
         run: docker-compose up --build -d
