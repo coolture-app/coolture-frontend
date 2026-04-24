@@ -20,6 +20,9 @@ jobs:
       DEPLOY_DIR: /home/admin/coolture/dev/frontend
 
     steps:
+      - name: Fix git safe directory
+        run: git config --global --add safe.directory "$DEPLOY_DIR"
+
       - name: Update deploy repository
         run: |
           if [ ! -d "$DEPLOY_DIR/.git" ]; then
