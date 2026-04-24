@@ -34,7 +34,10 @@ export class MediaService {
     let headers = new HttpHeaders();
 
     Object.keys(requiredHeaders).forEach((key) => {
-      headers = headers.set(key, requiredHeaders[key]);
+      const lowerKey = key.toLowerCase();
+      if (lowerKey !== 'host' && lowerKey !== 'content-length') {
+        headers = headers.set(key, requiredHeaders[key]);
+      }
     });
 
     return this.http.put(uploadUrl, file, {
