@@ -35,6 +35,10 @@ jobs:
           git -C "$DEPLOY_DIR" checkout "$BRANCH"
           git -C "$DEPLOY_DIR" pull --ff-only origin "$BRANCH"
 
+      - name: Tear down existing stack
+        working-directory: ${{ env.DEPLOY_DIR }}
+        run: docker-compose -f ${{ env.DEPLOY_DIR }}/docker-compose.yml down
+
       - name: Deploy frontend stack
         run: docker-compose up --build -d
         working-directory: /home/admin/coolture/dev/frontend

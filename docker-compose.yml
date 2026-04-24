@@ -12,4 +12,4 @@ services:
 networks:
   coolture-devnet:
     external: true
-    name: backend_devnet
+    name: coolture-core_devnet
