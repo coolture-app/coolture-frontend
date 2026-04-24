@@ -1,0 +1,191 @@
+@use '_mixin' as *;
+
+.add-post-container {
+  @include container;
+  padding: var(--space-xl) var(--space-md);
+  @include center-flex;
+}
+
+.add-post-card {
+  @include card;
+  width: 100%;
+  max-width: 800px;
+  padding: var(--space-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.card-header {
+  h2 {
+    font-size: var(--text-2xl);
+    font-weight: var(--font-bold);
+    color: var(--color-text);
+    margin-bottom: var(--space-xs);
+  }
+  p {
+    color: var(--color-text-secondary);
+    font-size: var(--text-sm);
+  }
+}
+
+.post-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+
+  label {
+    font-weight: var(--font-medium);
+    font-size: var(--text-sm);
+    color: var(--color-text);
+  }
+
+  input,
+  select,
+  textarea {
+    @include input-base;
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 100px;
+  }
+
+  .error {
+    color: var(--color-danger);
+    font-size: var(--text-xs);
+    margin-top: 4px;
+  }
+}
+
+.form-row {
+  display: flex;
+  gap: var(--space-md);
+
+  .half {
+    flex: 1;
+  }
+}
+
+.media-upload-area {
+  display: block;
+  width: 100%;
+  font-family: inherit;
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-xl);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  background: var(--color-surface-alt);
+
+  &:hover {
+    border-color: var(--color-accent);
+    background: rgba(37, 99, 235, 0.05); // slight accent tint
+  }
+
+  .upload-placeholder {
+    @include flex-center-col;
+    gap: var(--space-sm);
+    color: var(--color-text-secondary);
+
+    svg {
+      color: var(--color-text-tertiary);
+    }
+
+    span {
+      font-size: var(--text-sm);
+      font-weight: var(--font-medium);
+    }
+  }
+}
+
+.media-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+}
+
+.preview-item {
+  position: relative;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  aspect-ratio: 1;
+  border: 1px solid var(--color-border-light);
+  box-shadow: var(--shadow-sm);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .upload-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.7);
+    @include center-flex;
+
+    .spinner {
+      width: 24px;
+      height: 24px;
+      border: 3px solid var(--color-border);
+      border-top-color: var(--color-accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+  }
+
+  .remove-btn {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    @include center-flex;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: var(--color-surface);
+    color: var(--color-danger);
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    transition: transform var(--transition-fast);
+
+    &:hover {
+      transform: scale(1.1);
+    }
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--color-border-light);
+
+  .submit-btn {
+    @include button-primary;
+    padding: var(--space-md) var(--space-xl);
+    font-size: var(--text-base);
+  }
+}
+
+@media (max-width: 600px) {
+  .form-row {
+    flex-direction: column;
+  }
+}
