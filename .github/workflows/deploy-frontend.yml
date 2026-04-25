@@ -33,8 +33,8 @@ jobs:
 
           git -C "$DEPLOY_DIR" fetch --all --prune
           git -C "$DEPLOY_DIR" checkout "$BRANCH"
-          git -C "$DEPLOY_DIR" pull --ff-only origin "$BRANCH"
-          echo "test"
+          git -C "$DEPLOY_DIR" reset --hard "origin/$BRANCH"
+          git -C "$DEPLOY_DIR" clean -fd
       - name: Tear down existing stack
         working-directory: ${{ env.DEPLOY_DIR }}
         run: docker-compose -f ${{ env.DEPLOY_DIR }}/docker-compose.yml down
