@@ -4,6 +4,10 @@ import { UserRole } from '../../models/auth/role';
 import { catchError, map, Observable, of, tap } from 'rxjs';
 import { ApiUrlService } from '../api-url.service';
 
+interface AuthMeResponse {
+  id: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -43,14 +47,11 @@ export class AuthService {
   // ==== api calls ====
   checkSession(): Observable<boolean> {
     return this.http
-      .get(this.apiUrl.path('/users/me'), {
-        responseType: 'text',
-        withCredentials: true,
-      })
+      .get<AuthMeResponse>(this.apiUrl.path('/auth/me'), { withCredentials: true })
       .pipe(
         tap((response) => {
           this.setIsAuthenticated(true);
-          this.setUserId(response);
+          this.setUserId(response.id);
           console.log(this.getIsAuthenticated());
         }),
         map(() => true),

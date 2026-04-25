@@ -1,36 +1,41 @@
 <form [formGroup]="postForm" (ngSubmit)="onSubmit()">
   <div class="form-group">
+    <label for="categoryId">Kategoria (UUID):</label>
+    <input id="categoryId" type="text" formControlName="categoryId" />
+
+    <div
+      class="error"
+      *ngIf="postForm.get('categoryId')?.invalid && postForm.get('categoryId')?.touched"
+    >
+      Kategoria jest wymagana.
+    </div>
+  </div>
+
+  <div class="form-group">
     <label for="title">Tytuł:</label>
     <input id="title" type="text" formControlName="title" />
 
     <div class="error" *ngIf="postForm.get('title')?.invalid && postForm.get('title')?.touched">
-      Tytuł jest wymagany, musi mieć od 3 do 200 znaków i zawierać tylko litery, cyfry, spacje lub
+      Tytuł jest wymagany, musi mieć od 3 do 32 znaków i zawierać tylko litery, cyfry, spacje lub
       podkreślenia.
     </div>
   </div>
 
   <div class="form-group">
-    <label for="authorUuid">Autor (UUID):</label>
-    <input id="authorUuid" type="text" formControlName="authorUuid" />
+    <label for="startsAt">Data wydarzenia:</label>
+    <input id="startsAt" type="datetime-local" formControlName="startsAt" />
 
-    <div
-      class="error"
-      *ngIf="postForm.get('authorUuid')?.invalid && postForm.get('authorUuid')?.touched"
-    >
-      UUID autora jest wymagane.
+    <div class="error" *ngIf="postForm.get('startsAt')?.invalid && postForm.get('startsAt')?.touched">
+      Data wydarzenia jest wymagana.
     </div>
   </div>
 
   <div class="form-group">
-    <label for="dateOfEvent">Data wydarzenia:</label>
-    <input id="dateOfEvent" type="datetime-local" formControlName="dateOfEvent" />
-
-    <div
-      class="error"
-      *ngIf="postForm.get('dateOfEvent')?.invalid && postForm.get('dateOfEvent')?.touched"
-    >
-      Data wydarzenia jest wymagana.
-    </div>
+    <label for="type">Typ wydarzenia:</label>
+    <select id="type" formControlName="type">
+      <option value="ONLINE">ONLINE</option>
+      <option value="OFFLINE">OFFLINE</option>
+    </select>
   </div>
 
   <!-- <div class="form-group">

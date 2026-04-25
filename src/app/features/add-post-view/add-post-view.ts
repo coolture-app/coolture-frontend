@@ -1,7 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { AuthService } from '../../core/services/auth/auth.service';
 import { PostService } from '../../core/services/post/post.service';
 import { CreatePostModel } from '../../core/models/posts/createPost.model';
 
@@ -12,30 +11,26 @@ import { CreatePostModel } from '../../core/models/posts/createPost.model';
   styleUrl: './add-post-view.scss',
 })
 export class AddPostView {
-  private authService = inject(AuthService);
   private postService = inject(PostService);
   private fb = inject(FormBuilder);
 
   postForm = this.fb.group({
-    id: [null],
-
+    categoryId: ['', [Validators.required]],
     title: [
       '',
       [
         Validators.required,
         Validators.minLength(3),
-        Validators.maxLength(200),
+        Validators.maxLength(32),
         Validators.pattern(/^[a-zA-Z0-9_ ]+$/),
       ],
     ],
-
-    authorUuid: [this.authService.getUserId(), Validators.required],
-
-    dateOfEvent: ['2026-04-18T21:04', Validators.required],
+    startsAt: ['2026-04-18T21:04', Validators.required],
+    type: ['ONLINE' as const, Validators.required],
 
     // locationUuid: ['3fa85f64-5717-4562-b3fc-2c963f66afa6', Validators.required],
 
-    description: ['', [Validators.required, Validators.maxLength(2000)]],
+    description: ['', [Validators.required, Validators.maxLength(1024)]],
   });
 
   onSubmit() {

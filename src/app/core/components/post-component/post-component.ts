@@ -10,7 +10,6 @@ import {
   heroShare,
 } from '@ng-icons/heroicons/outline';
 import { PostService } from '../../services/post/post.service';
-import { ApiUrlService } from '../../services/api-url.service';
 
 @Component({
   selector: 'app-post-component',
@@ -32,8 +31,6 @@ export class PostComponent {
   private router = inject(Router);
   private postState = inject(PostService);
 
-  private apiUrl = inject(ApiUrlService);
-
   viewPostPage(isScrolling: boolean): void {
     this.postState.setActivePost(this.data);
     this.router.navigate(['/post', this.data.id], {
@@ -49,8 +46,7 @@ export class PostComponent {
   @Input() isFullView!: boolean;
 
   get photos() {
-    const uuids = this.data?.photos;
-    return uuids?.map((uuid) => this.apiUrl.path(`/images/posts/${uuid}`)) || [];
+    return this.data?.photos || [];
   }
 
   // get avatar() {

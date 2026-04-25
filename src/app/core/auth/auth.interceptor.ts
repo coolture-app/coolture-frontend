@@ -5,7 +5,7 @@ import { ApiUrlService } from '../services/api-url.service';
 
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const apiUrl = inject(ApiUrlService);
-  if (req.url.includes(apiUrl.path('/me'))) {
+  if (req.url.includes(apiUrl.path('/auth/me'))) {
     return next(req);
   }
 

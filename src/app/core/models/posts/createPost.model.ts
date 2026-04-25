@@ -1,7 +1,7 @@
 export interface CreatePostModel {
+  categoryId: string;
   title: string;
-  authorUuid: string;
-  dateOfEvent: string;
-  // locationUuid: string;
+  startsAt: string;
   description: string;
+  type: 'OFFLINE' | 'ONLINE';
 }
