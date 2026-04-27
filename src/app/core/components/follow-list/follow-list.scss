@@ -193,6 +193,11 @@
     border: none;
     white-space: nowrap;
 
+    ng-icon {
+      width: 14px;
+      height: 14px;
+    }
+
     &--follow {
       background: #2563eb;
       color: white;
