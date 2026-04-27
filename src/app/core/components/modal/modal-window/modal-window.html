@@ -1,0 +1,14 @@
+<dialog #modalDialog class="wrapper">
+  <div class="modal-content">
+    <h3 class="title">{{ title() }}</h3>
+    <p class="body">{{ text() }}</p>
+    <div class="optionWrapper" [class.center]="modalType() === 'OK'">
+      @if (modalType() === 'OK') {
+        <button class="btn-ok" (click)="close('OK')">{{ 'MODAL.ok' | translate }}</button>
+      } @else if (modalType() === 'YESNO') {
+        <button class="btn-yes" (click)="close('YES')">{{ 'MODAL.yes' | translate }}</button>
+        <button class="btn-no" (click)="close('NO')">{{ 'MODAL.no' | translate }}</button>
+      }
+    </div>
+  </div>
+</dialog>

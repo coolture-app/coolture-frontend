@@ -6,7 +6,18 @@
   z-index: var(--z-sticky);
   display: block;
 }
-
+.left,
+.right {
+  width: 20%;
+}
+.left {
+  display: flex;
+  justify-content: flex-start;
+}
+.right {
+  display: flex;
+  justify-content: flex-end;
+}
 .navbar {
   @include flex-between;
   height: var(--navbar-height);
@@ -19,6 +30,9 @@
 
 .addPost {
   cursor: pointer;
+  background-color: transparent;
+  border: none;
+  font-size: var(--text-base);
 }
 
 .navbar__icon {

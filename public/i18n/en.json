@@ -10,7 +10,8 @@
     "title": "Cool post",
     "back": "Back",
     "comment-placeholder": "Leave your comment!",
-    "comment-btn": "Comment"
+    "comment-btn": "Comment",
+    "replying-to": "Replying to comment"
   },
   "POST": {
     "share": "Share",
@@ -20,12 +21,17 @@
     "loading": "Loading post...",
     "likes": "likes",
     "participating": "going",
-    "comments": "comments"
+    "comments": "comments",
+    "photo-alt": "Event photo",
+    "edit": "Edit post",
+    "delete": "Delete post",
+    "modal-delete-title": "Do you really want to delete your post?",
+    "modal-delete-body": "This action cannot be undone."
   },
   "FOOTER": {
     "main-page": "Home",
     "friends": "Friends",
-    "map-callendar": "Calendar",
+    "map-callendar": "Map/Calendar",
     "my-profile": "Profile"
   },
   "NAVBAR": {
@@ -49,6 +55,60 @@
     "title": "Ohh, we are lost..."
   },
   "ADD_POST": {
-    "title": "Add post!"
+    "title": "Add post!",
+    "header-title": "Add new event",
+    "header-desc": "Fill the form to publish a new post.",
+    "form-title": "Event title",
+    "form-title-placeholder": "Enter title...",
+    "form-title-error": "Title is required (3-200 characters).",
+    "form-category": "Category",
+    "form-category-placeholder": "Select category",
+    "form-category-error": "Category is required.",
+    "form-type": "Event type",
+    "form-type-online": "Online",
+    "form-type-offline": "Offline",
+    "form-date": "Start date and time",
+    "form-date-error": "Event date is required.",
+    "form-desc": "Event description",
+    "form-desc-placeholder": "Describe your event...",
+    "form-desc-error": "Description is required (up to 2000 characters).",
+    "form-media": "Photos",
+    "form-media-click": "Click to add photos",
+    "form-media-remove": "Remove photo",
+    "submit-saving": "Saving...",
+    "submit-btn": "Publish event"
+  },
+  "EDIT_POST": {
+    "title": "Edit post!",
+    "form-title": "Edit event",
+    "event-title": "Event title",
+    "category": "Category",
+    "default-category": "Select category...",
+    "event-type": "Event type",
+    "default-type": "Select type...",
+    "date": "Start date and time",
+    "desc": "Description",
+    "photos": "Photos",
+    "current-photos": "Current photos:",
+    "no-current-photos": "No photos added.",
+    "delete-permanently": "Delete permanently",
+    "newly-added": "Newly added photo (unsaved)",
+    "add-new-photo": "Add new photo:",
+    "uploading": "Uploading photo...",
+    "save": "Save event changes"
+  },
+  "COMMENT": {
+    "reply": "Reply",
+    "hide-replies": "Hide replies",
+    "show-replies": "Show replies",
+    "edit-comment": "Edit comment",
+    "delete-comment": "Delete comment",
+    "modal-delete-title": "Do you really want to delete your comment?",
+    "modal-delete-body": "This action cannot be undone."
+  },
+  "MODAL": {
+    "yes": "Yes",
+    "no": "No",
+    "ok": "Okay"
   }
 }

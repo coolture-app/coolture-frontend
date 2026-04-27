@@ -55,4 +55,13 @@ export class MainPage implements OnInit, OnDestroy {
     this.destroy$.next();
     this.destroy$.complete();
   }
+
+  removeChild(idToRemove: string) {
+    this.posts.update((currentData) => {
+      return {
+        ...currentData,
+        items: currentData.items.filter((post) => String(post.id) !== String(idToRemove)),
+      };
+    });
+  }
 }

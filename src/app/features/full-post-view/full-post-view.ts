@@ -15,6 +15,7 @@ import { CommentsService } from '../../core/services/comments/comments.service';
 import { CommentSummary } from '../../core/models/comments/comment-summary.model';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
+import { CommentCreateRequest } from '../../core/models/comments/comment-create-request.model';
 
 @Component({
   selector: 'app-full-post-view',
@@ -28,6 +29,8 @@ export class FullPostView implements OnInit, AfterViewInit {
   private postService = inject(PostService);
   private commentsService = inject(CommentsService);
   private isScrolling = false;
+  parentCommentId: string | null = null;
+  parentUsername: string | null = null;
 
   commentSection = viewChild<ElementRef>('commentSection');
   commentInput = viewChild<ElementRef>('commentInput');
@@ -40,7 +43,7 @@ export class FullPostView implements OnInit, AfterViewInit {
     const id = this.route.snapshot.paramMap.get('id');
     this.isScrolling = this.route.snapshot.queryParamMap.get('scrollToComments') === 'true';
     if (id) {
-      if (!this.post()) {
+      if (!this.post() || this.post()?.id !== id) {
         this.postService.getPost(id).subscribe({
           next: (data) => {
             this.postService.setActivePost(data);
@@ -49,7 +52,8 @@ export class FullPostView implements OnInit, AfterViewInit {
         });
       }
       this.commentsService.getCommentsOfPost(id, undefined, { cursor: '', limit: 20 }).subscribe({
-        next: (res) => this.comments.set(res.items),
+        next: (res) =>
+          this.comments.set(res.items.filter((c) => c.status !== 'DELETED' || c.repliesCount > 0)),
         error: (err) => console.error(err),
       });
     } else {
@@ -79,11 +83,48 @@ export class FullPostView implements OnInit, AfterViewInit {
     const textarea = this.commentInput()?.nativeElement;
     if (textarea) {
       textarea.style.height = 'auto';
-      textarea.style.height = `${textarea.scrollHeight}px`;
+      textarea.style.height = `${textarea.scrollHeight + 2}px`;
     }
   }
 
+  setReplyTo(payload: [string, string]) {
+    this.parentCommentId = payload[0];
+    this.parentUsername = payload[1];
+    this.commentInput()?.nativeElement.focus();
+  }
+
   addComment(): void {
-    alert('dodano komentarz:\n' + this.commentContent());
+    const payload: CommentCreateRequest = {
+      content: this.commentContent(),
+      parentCommentId: this.parentCommentId,
+    };
+    if (this.post() != null) {
+      this.commentsService.createComment(this.post()!.id, payload).subscribe({
+        next: (newComment) => {
+          if (!newComment.parentCommentId) {
+            this.comments.update((comments) => [...comments, newComment]);
+          } else {
+            this.commentsService.commentAdded$.next(newComment);
+          }
+          this.commentContent.set('');
+          this.parentCommentId = null;
+          this.parentUsername = null;
+          this.checkIfResize();
+          this.commentInput()?.nativeElement.blur();
+        },
+        error: (err) => console.error(err),
+      });
+    }
+  }
+
+  onCommentDeleted(deletedId: string): void {
+    this.comments.update((comments) => comments.filter((c) => c.id !== deletedId));
+    const currentPost = this.post();
+    if (currentPost) {
+      this.postService.setActivePost({
+        ...currentPost,
+        commentsCount: Math.max(0, currentPost.commentsCount - 1),
+      });
+    }
   }
 }

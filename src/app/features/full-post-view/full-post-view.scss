@@ -16,20 +16,45 @@
   margin-top: var(--space-lg);
 }
 
-.commentfield {
-  @include flex-between;
-  gap: var(--space-sm);
-  padding: var(--space-md) 0;
+.commentfield-container {
   margin-top: var(--space-lg);
+  padding: var(--space-md) 0;
   border-top: 1px solid var(--color-border-light);
 
   &.sticky {
     position: sticky;
     bottom: calc(var(--footer-height) + var(--space-md));
     background: var(--color-background);
-    padding: var(--space-md) 0;
     z-index: var(--z-sticky);
   }
+}
+
+.reply-indicator {
+  @include flex-between;
+  background-color: var(--color-surface-hover);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-sm);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+
+  .cancel-reply {
+    background: transparent;
+    border: none;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    padding: 0 var(--space-xs);
+    font-size: var(--font-size-md);
+
+    &:hover {
+      color: var(--color-primary);
+    }
+  }
+}
+
+.commentfield {
+  @include flex-between;
+  gap: var(--space-sm);
 
   textarea {
     @include input-base;

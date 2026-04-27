@@ -8,6 +8,8 @@ import { MediaService } from '../../core/services/media/media.service';
 import { DictionaryService } from '../../core/services/dictionary/dictionary.service';
 import { EventCategory } from '../../core/models/dictionary/event-category.model';
 import { lastValueFrom, Observable } from 'rxjs';
+import { TranslatePipe } from '@ngx-translate/core';
+import { Router } from '@angular/router';
 
 interface MediaPreview {
   file: File;
@@ -18,7 +20,7 @@ interface MediaPreview {
 
 @Component({
   selector: 'app-add-post-view',
-  imports: [ReactiveFormsModule, CommonModule],
+  imports: [ReactiveFormsModule, CommonModule, TranslatePipe],
   templateUrl: './add-post-view.html',
   styleUrl: './add-post-view.scss',
 })
@@ -27,6 +29,7 @@ export class AddPostView {
   private mediaService = inject(MediaService);
   private dictionaryService = inject(DictionaryService);
   private fb = inject(FormBuilder);
+  private router = inject(Router);
 
   categories$: Observable<EventCategory[]> = this.dictionaryService.getEventCategories();
   mediaPreviews: MediaPreview[] = [];
@@ -73,7 +76,6 @@ export class AddPostView {
         preview.isUploading = false;
       } catch (err) {
         console.error('Błąd podczas wgrywania pliku', file.name, err);
-        alert('Wystąpił błąd podczas wgrywania pliku: ' + file.name);
         this.mediaPreviews = this.mediaPreviews.filter((p) => p !== preview);
       }
     }
@@ -89,7 +91,6 @@ export class AddPostView {
     if (this.postForm.invalid || this.isSubmitting) return;
 
     if (this.mediaPreviews.some((p) => p.isUploading)) {
-      alert('Poczekaj na wgranie wszystkich zdjęć.');
       return;
     }
 
@@ -108,14 +109,13 @@ export class AddPostView {
         coverMediaId: uploadedMediaIds.length > 0 ? uploadedMediaIds[0] : undefined,
       };
 
-      await lastValueFrom(this.postService.addPost(payload));
-      alert('Dodano post pomyślnie!');
+      const createdPost = await lastValueFrom(this.postService.addPost(payload));
       this.postForm.reset({ type: 'ONLINE' });
       this.mediaPreviews.forEach((p) => URL.revokeObjectURL(p.previewUrl));
       this.mediaPreviews = [];
+      this.router.navigate(['/post', createdPost.id]);
     } catch (err) {
       console.error(err);
-      alert('Wystąpił błąd podczas dodawania posta.');
     } finally {
       this.isSubmitting = false;
     }

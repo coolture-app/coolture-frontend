@@ -2,8 +2,75 @@
   <div class="comment__main">
     <!-- <img [src]="avatar" alt="" class="comment__avatar" /> -->
     <div class="comment__content">
-      <div class="comment__username">{{ comment.author.username }}</div>
-      <div class="comment__text">{{ comment.content }}</div>
+      <div class="row">
+        <div class="comment__username">
+          @if (comment.status === 'DELETED') {
+            [Usunięty]
+          } @else {
+            {{ comment.author.username }}
+          }
+        </div>
+        @if (comment.status !== 'DELETED') {
+          @if (comment.depth < 2) {
+            <button class="reply-button" (click)="onReply()">
+              {{ 'COMMENT.reply' | translate }}
+            </button>
+          }
+        }
+        @if (comment.repliesCount > 0) {
+          <button class="show-anwsers" (click)="showReplies()">
+            {{
+              isShowingReplies()
+                ? ('COMMENT.hide-replies' | translate)
+                : ('COMMENT.show-replies' | translate) + ' (' + comment.repliesCount + ')'
+            }}
+          </button>
+        }
+        @if (comment.status !== 'DELETED' && isMyComment) {
+          <button class="edit-comment" (click)="startEditingComment()">
+            {{ 'COMMENT.edit-comment' | translate }}
+          </button>
+          <button class="delete-comment" (click)="openModal()">
+            {{ 'COMMENT.delete-comment' | translate }}
+          </button>
+          <app-modal-window
+            #myModal
+            modalType="YESNO"
+            [title]="'COMMENT.modal-delete-title' | translate"
+            [text]="'COMMENT.modal-delete-body' | translate"
+            (modalAction)="handleModalResponse($event)"
+          >
+          </app-modal-window>
+        }
+      </div>
+      <div class="comment__text">
+        @if (isEditing) {
+          <textarea
+            #editInput
+            class="body-edit"
+            [value]="comment.content"
+            (blur)="saveEdit(editInput.value)"
+            (keydown.enter)="saveEdit(editInput.value)"
+          >
+          </textarea>
+        } @else {
+          <span class="body">
+            {{ comment.content }}
+          </span>
+        }
+      </div>
     </div>
   </div>
+
+  @if (isShowingReplies()) {
+    <div class="comment__replies">
+      @for (reply of replies(); track reply.id) {
+        <app-comment-component
+          [comment]="reply"
+          (replyClicked)="replyClicked.emit($event)"
+          (commentDeleted)="onCommentDeleted($event)"
+        />
+      }
+    </div>
+  }
 </div>

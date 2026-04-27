@@ -2,25 +2,50 @@
   <button class="back" (click)="goBack()" (keydown.enter)="goBack()" role="button" tabindex="0">
     {{ 'FULL_POST.back' | translate }}
   </button>
-  @if (post(); as postData) {
-    <app-post-component [data]="postData" [isFullView]="true" />
+  @if (post()) {
+    <app-post-component [data]="post()!" [isFullView]="true" />
     <div #commentSection class="comments">
       @for (item of comments(); track $index) {
-        <app-comment-component [comment]="item" />
+        <app-comment-component
+          [comment]="item"
+          (replyClicked)="setReplyTo($event)"
+          (commentDeleted)="onCommentDeleted($event)"
+        />
       }
     </div>
-    <div class="commentfield" [class.sticky]="isCommentFocused()">
-      <textarea
-        #commentInput
-        rows="1"
-        name="comment"
-        placeholder="{{ 'FULL_POST.comment-placeholder' | translate }}"
-        (input)="checkIfResize()"
-        [(ngModel)]="commentContent"
-        (focus)="isCommentFocused.set(true)"
-        (blur)="isCommentFocused.set(false)"
-      ></textarea>
-      <button (click)="addComment()">{{ 'FULL_POST.comment-btn' | translate }}</button>
+    <div
+      class="commentfield-container"
+      [class.sticky]="isCommentFocused() || parentCommentId !== null"
+    >
+      @if (parentCommentId) {
+        <div class="reply-indicator">
+          <span class="reply-indicator__text"
+            >{{ 'FULL_POST.replying-to' | translate }} {{ this.parentUsername }}</span
+          >
+          <button
+            (mousedown)="$event.preventDefault()"
+            (click)="parentCommentId = null; parentUsername = null"
+            class="cancel-reply"
+          >
+            ✕
+          </button>
+        </div>
+      }
+      <div class="commentfield">
+        <textarea
+          #commentInput
+          rows="1"
+          name="comment"
+          placeholder="{{ 'FULL_POST.comment-placeholder' | translate }}"
+          (input)="checkIfResize()"
+          [(ngModel)]="commentContent"
+          (focus)="isCommentFocused.set(true)"
+          (blur)="isCommentFocused.set(false)"
+        ></textarea>
+        <button (mousedown)="$event.preventDefault()" (click)="addComment()">
+          {{ 'FULL_POST.comment-btn' | translate }}
+        </button>
+      </div>
     </div>
   }
 </div>
