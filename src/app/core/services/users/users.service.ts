@@ -2,10 +2,10 @@ import { inject, Injectable } from '@angular/core';
 import { ApiUrlService } from '../api-url.service';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { UserProfile } from '../../models/users/user-profile.model';
+import { UserSummary } from '../../models/users/user-summary.model';
 import { Observable } from 'rxjs';
 import { MediaUploadConfirmation } from '../../models/media/media-upload.confirmation.model';
 import { PaginatedResponse, PaginationInfo } from '../../models/common/paginated-response.model';
-import { UserSummary } from '../../models/users/user-summary.model';
 import { UserProfileUpdateRequest } from '../../models/users/user-profile-update-request.model';
 
 @Injectable({

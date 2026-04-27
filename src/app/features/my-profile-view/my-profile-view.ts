@@ -23,6 +23,7 @@ import { Users } from '../../core/services/users/users.service';
 import { RelationsService } from '../../core/services/relations/relations.service';
 import { MediaService } from '../../core/services/media/media.service';
 import { UserProfile } from '../../core/models/users/user-profile.model';
+import { UserSummary } from '../../core/models/users/user-summary.model';
 import { UserProfileUpdateRequest } from '../../core/models/users/user-profile-update-request.model';
 import { FollowListComponent } from '../../core/components/follow-list/follow-list';
 
@@ -76,7 +77,7 @@ export class UserProfileView implements OnInit {
   showFollowers = signal(false);
   showFollowing = signal(false);
   showBlocked = signal(false);
-  blockedUsers = signal<UserProfile[]>([]);
+  blockedUsers = signal<UserSummary[]>([]);
 
   async ngOnInit() {
     const username = this.route.snapshot.paramMap.get('username');

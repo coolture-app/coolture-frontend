@@ -18,7 +18,7 @@ import { heroUserPlus, heroUserMinus, heroNoSymbol, heroXMark } from '@ng-icons/
 
 import { AuthService } from '../../services/auth/auth.service';
 import { RelationsService } from '../../services/relations/relations.service';
-import { UserProfile } from '../../models/users/user-profile.model';
+import { UserSummary } from '../../models/users/user-summary.model';
 import { PaginationInfo } from '../../models/common/paginated-response.model';
 
 export type FollowListType = 'followers' | 'following';
@@ -43,7 +43,7 @@ export class FollowListComponent implements OnInit {
   closeList = output<void>();
   followChanged = output<{ deltaFollowers: number; deltaFollowing: number }>();
 
-  users = signal<UserProfile[]>([]);
+  users = signal<UserSummary[]>([]);
   followingIds = signal<Set<string>>(new Set());
   isLoadingInitial = signal(false);
   isLoadingMore = signal(false);
@@ -73,12 +73,12 @@ export class FollowListComponent implements OnInit {
     }
   }
 
-  canFollow(user: UserProfile): boolean {
+  canFollow(user: UserSummary): boolean {
     const currentUserId = this.authService.currentUser()?.id;
     return !!currentUserId && user.id !== currentUserId && !this.followingIds().has(user.id);
   }
 
-  async onFollow(user: UserProfile): Promise<void> {
+  async onFollow(user: UserSummary): Promise<void> {
     this.actionUserId.set(user.id);
     try {
       await firstValueFrom(this.relationsService.follow(user.id));
@@ -121,7 +121,7 @@ export class FollowListComponent implements OnInit {
 
   private fetchPage(
     cursor: string | null,
-    onSuccess: (items: UserProfile[], hasMore: boolean, nextCursor: string | null) => void,
+    onSuccess: (items: UserSummary[], hasMore: boolean, nextCursor: string | null) => void,
   ): void {
     const pagination: PaginationInfo = { limit: 20, cursor: cursor ?? '' };
 
@@ -139,7 +139,7 @@ export class FollowListComponent implements OnInit {
     });
   }
 
-  async onToggleFollow(user: UserProfile, isCurrentlyFollowing: boolean): Promise<void> {
+  async onToggleFollow(user: UserSummary, isCurrentlyFollowing: boolean): Promise<void> {
     this.actionUserId.set(user.id);
     try {
       if (isCurrentlyFollowing) {
@@ -162,7 +162,7 @@ export class FollowListComponent implements OnInit {
     }
   }
 
-  async onRemoveFollower(user: UserProfile): Promise<void> {
+  async onRemoveFollower(user: UserSummary): Promise<void> {
     if (!confirm('Block this follower?')) return;
     this.actionUserId.set(user.id);
     try {
@@ -175,7 +175,7 @@ export class FollowListComponent implements OnInit {
     }
   }
 
-  async onToggleBlock(user: UserProfile, isCurrentlyBlocked: boolean): Promise<void> {
+  async onToggleBlock(user: UserSummary, isCurrentlyBlocked: boolean): Promise<void> {
     if (!confirm(isCurrentlyBlocked ? 'Unblock this user?' : 'Block this user?')) return;
     this.actionUserId.set(user.id);
     try {

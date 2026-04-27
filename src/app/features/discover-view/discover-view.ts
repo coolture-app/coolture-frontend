@@ -16,7 +16,7 @@ import { heroMagnifyingGlass } from '@ng-icons/heroicons/outline';
 import { AuthService } from '../../core/services/auth/auth.service';
 import { Users } from '../../core/services/users/users.service';
 import { RelationsService } from '../../core/services/relations/relations.service';
-import { UserProfile } from '../../core/models/users/user-profile.model';
+import { UserSummary } from '../../core/models/users/user-summary.model';
 import { PaginatedResponse } from '../../core/models/common/paginated-response.model';
 
 @Component({
@@ -33,9 +33,9 @@ export class DiscoverView implements OnInit, OnDestroy {
 
   searchControl = new FormControl('');
   private destroy$ = new Subject<void>();
-  private followerIds = signal<Set<string>>(new Set());
+  followerIds = signal<Set<string>>(new Set());
 
-  users = signal<PaginatedResponse<UserProfile>>({
+  users = signal<PaginatedResponse<UserSummary>>({
     items: [],
     page: { limit: 20, hasMore: false, nextCursor: null },
   });
@@ -78,24 +78,27 @@ export class DiscoverView implements OnInit, OnDestroy {
     }
   }
 
-  async toggleFollow(user: UserProfile) {
+  async toggleFollow(user: UserSummary) {
+    const isCurrentlyFollowing = this.followerIds().has(user.id);
     try {
-      if (user.isFollowing) {
+      if (isCurrentlyFollowing) {
         await firstValueFrom(this.relationsService.unfollow(user.id));
+        this.followerIds.update((set) => {
+          const newSet = new Set(set);
+          newSet.delete(user.id);
+          return newSet;
+        });
       } else {
         await firstValueFrom(this.relationsService.follow(user.id));
+        this.followerIds.update((set) => {
+          const newSet = new Set(set);
+          newSet.add(user.id);
+          return newSet;
+        });
       }
       this.users.update((u) => ({
         ...u,
-        items: u.items.map((item) =>
-          item.id === user.id
-            ? {
-                ...item,
-                isFollowing: !user.isFollowing,
-                followersCount: item.followersCount + (user.isFollowing ? -1 : 1),
-              }
-            : item,
-        ),
+        items: u.items.filter((item) => item.id !== user.id),
       }));
     } catch (err) {
       console.error('Error toggling follow', err);
