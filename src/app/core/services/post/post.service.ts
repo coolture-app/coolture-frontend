@@ -1,9 +1,13 @@
 import { inject, Injectable, signal } from '@angular/core';
-import { PostModel } from '../../models/posts/post.model';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { CreatePostModel } from '../../models/posts/createPost.model';
 import { ApiUrlService } from '../api-url.service';
+import { PostDetail } from '../../models/posts/post-detail.model';
+import { PostCard } from '../../models/posts/post-card.model';
+import { PostCreateRequest } from '../../models/posts/post-create-request.model';
+import { PostUpdateRequest } from '../../models/posts/post-update-request.model';
+import { PaginatedResponse } from '../../models/common/paginated-response.model';
+import { PostFilterParams } from '../../models/posts/post-filter-params.model';
 
 @Injectable({
   providedIn: 'root',
@@ -12,39 +16,56 @@ export class PostService {
   private http = inject(HttpClient);
   private apiUrl = inject(ApiUrlService);
 
-  //LAST SELECTED POST FOR FASTER LOADING AND LESS FETCHES
-  readonly activePost = signal<PostModel | null>(null);
-  setActivePost(post: PostModel): void {
+  readonly activePost = signal<PostDetail | null>(null);
+
+  setActivePost(post: PostDetail): void {
     this.activePost.set(post);
   }
+
   clearActivePost(): void {
     this.activePost.set(null);
   }
 
-  // ===== api calls =====
-  getPosts(page: number, size: number): Observable<PostModel[]> {
-    //TODO FIX ENDPOINT SO THAT IT PASSES THE PAGE AND SIZE
-    console.log(`${page} + ${size}`);
-    return this.http.get<PostModel[]>(this.apiUrl.path('/posts'));
-  }
+  // ===== API CALLS =====
+  getPosts(filters: PostFilterParams = {}): Observable<PaginatedResponse<PostCard>> {
+    let params = new HttpParams();
 
-  getPost(id: string): Observable<PostModel> {
-    return this.http.get<PostModel>(this.apiUrl.path(`/posts/${id}`));
-  }
+    if (filters.cursor) params = params.set('cursor', filters.cursor);
+    if (filters.limit) params = params.set('limit', filters.limit);
+    if (filters.q) params = params.set('q', filters.q);
+    if (filters.categoryId) params = params.set('categoryId', filters.categoryId);
+    if (filters.authorId) params = params.set('authorId', filters.authorId);
+    if (filters.status) params = params.set('status', filters.status);
+    if (filters.visibility) params = params.set('visibility', filters.visibility);
+    if (filters.type) params = params.set('type', filters.type);
+    if (filters.startsFrom) params = params.set('startsFrom', filters.startsFrom);
+    if (filters.startsTo) params = params.set('startsTo', filters.startsTo);
+    if (filters.latitude) params = params.set('latitude', filters.latitude);
+    if (filters.longitude) params = params.set('longitude', filters.longitude);
+    if (filters.radiusKm) params = params.set('radiusKm', filters.radiusKm);
 
-  addPost(payload: CreatePostModel, images?: File[]): Observable<PostModel> {
-    const formData = new FormData();
-    formData.append(
-      'postData',
-      new Blob([JSON.stringify(payload)], {
-        type: 'application/json',
-      }),
-    );
-    if (images) {
-      images.forEach((file) => {
-        formData.append('images', file);
+    if (filters.tags) {
+      filters.tags.forEach((tag) => {
+        params = params.append('tags', tag);
       });
     }
-    return this.http.post<PostModel>(this.apiUrl.path('/posts'), formData);
+
+    return this.http.get<PaginatedResponse<PostCard>>(this.apiUrl.path('/posts'), { params });
+  }
+
+  getPost(id: string): Observable<PostDetail> {
+    return this.http.get<PostDetail>(this.apiUrl.path(`/posts/${id}`));
+  }
+
+  addPost(payload: PostCreateRequest): Observable<PostDetail> {
+    return this.http.post<PostDetail>(this.apiUrl.path('/posts'), payload);
+  }
+
+  updatePost(id: string, payload: PostUpdateRequest): Observable<PostDetail> {
+    return this.http.patch<PostDetail>(this.apiUrl.path(`/posts/${id}`), payload);
+  }
+
+  deletePost(id: string): Observable<void> {
+    return this.http.delete<void>(this.apiUrl.path(`/posts/${id}`));
   }
 }

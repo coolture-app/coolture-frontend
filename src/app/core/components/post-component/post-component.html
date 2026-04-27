@@ -15,9 +15,9 @@
     <div class="post__meta">
       <!-- <img [src]="avatar" alt="" class="post__avatar" /> -->
       <div class="post__author">
-        <span class="post__username">{{ data.user.username }}</span>
-        <span class="post__date">{{ data.dateOfPosting }}</span>
-        <span class="post__date">{{ data.dateOfEvent }}</span>
+        <span class="post__username">{{ data.author.username }}</span>
+        <span class="post__date">{{ data.createdAt | date: 'short' }}</span>
+        <span class="post__date">{{ data.startsAt | date: 'short' }}</span>
       </div>
     </div>
     <div class="post__desc">
@@ -77,7 +77,7 @@
         role="button"
         tabindex="3"
       >
-        <ng-icon name="heroHandThumbUp" />{{ formatNumber(data.likesCount) }}
+        <ng-icon name="heroHandThumbUp" />{{ formatNumber(data.positiveReactionCount) }}
       </div>
       <div
         class="post__social-btn"
@@ -87,7 +87,7 @@
         role="button"
         tabindex="4"
       >
-        <ng-icon name="heroStar" />{{ formatNumber(data.participatingCount) }}
+        <ng-icon name="heroStar" />{{ formatNumber(data.participantCount) }}
       </div>
       <div
         class="post__social-btn"
@@ -96,7 +96,7 @@
         role="button"
         tabindex="5"
       >
-        <ng-icon name="heroChatBubbleLeftEllipsis" />{{ formatNumber(data.commentCount) }}
+        <ng-icon name="heroChatBubbleLeftEllipsis" />{{ formatNumber(data.commentsCount) }}
       </div>
       <div class="post__social-btn"><ng-icon name="heroShare" />{{ 'POST.share' | translate }}</div>
     </div>

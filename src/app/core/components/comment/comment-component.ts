@@ -1,7 +1,6 @@
-import { Component, Input, inject } from '@angular/core';
-import { PostComment } from '../../models/posts/comments.model';
+import { Component, Input } from '@angular/core';
+import { CommentSummary } from '../../models/comments/comment-summary.model';
 import { TranslatePipe } from '@ngx-translate/core';
-import { ApiUrlService } from '../../services/api-url.service';
 
 @Component({
   selector: 'app-comment-component',
@@ -10,9 +9,5 @@ import { ApiUrlService } from '../../services/api-url.service';
   styleUrl: './comment-component.scss',
 })
 export class CommentComponent {
-  @Input({ required: true }) comment!: PostComment;
-  private apiUrl = inject(ApiUrlService);
-  // get avatar() {
-  //   return this.apiUrl.path(`/images/avatars/${this.comment.author.id}`);
-  // }
+  @Input({ required: true }) comment!: CommentSummary;
 }

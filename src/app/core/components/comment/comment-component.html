@@ -4,15 +4,6 @@
     <div class="comment__content">
       <div class="comment__username">{{ comment.author.username }}</div>
       <div class="comment__text">{{ comment.content }}</div>
-      <div class="comment__likes">{{ comment.likesCount }} {{ 'POST.likes' | translate }}</div>
     </div>
   </div>
-
-  @if (comment.replies && comment.replies.length > 0) {
-    <div class="comment__replies">
-      @for (reply of comment.replies; track reply.commentId) {
-        <app-comment-component [comment]="reply" />
-      }
-    </div>
-  }
 </div>

@@ -1,6 +1,8 @@
 # Frontend
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.3.8.
+Node.js version required: v22.x
+npm: 10.x
 
 ## IMPORTANT
 This project has an Angular CLI installed locally, so every command must have a prefix 'npx'

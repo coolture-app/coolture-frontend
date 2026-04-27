@@ -6,6 +6,7 @@
         <input
           class="searchbar__input"
           type="text"
+          [formControl]="searchControl"
           placeholder="{{ 'MAIN_PAGE.searchbar' | translate }}"
         />
       </span>
@@ -17,7 +18,7 @@
       {{ 'MAIN_PAGE.sort' | translate }}
     </button>
   </div>
-  @for (item of posts(); track item.id) {
+  @for (item of posts().items; track item.id) {
     <app-post-component [data]="item" [isFullView]="false" />
   } @empty {
     <p class="empty">{{ 'MAIN_PAGE.no-posts' | translate }}</p>

@@ -1,8 +1,8 @@
 import { HttpClient } from '@angular/common/http';
-import { inject, Injectable, signal } from '@angular/core';
-import { UserRole } from '../../models/auth/role';
+import { inject, Injectable, signal, computed } from '@angular/core';
 import { catchError, map, Observable, of, tap } from 'rxjs';
 import { ApiUrlService } from '../api-url.service';
+import { UserProfile } from '../../models/users/user-profile.model';
 
 @Injectable({
   providedIn: 'root',
@@ -11,54 +11,28 @@ export class AuthService {
   private http = inject(HttpClient);
   private apiUrl = inject(ApiUrlService);
 
-  // ==== getters and setters for auth vars ====
-  readonly isAuthenticated = signal<boolean>(false);
-  readonly role = signal<UserRole>(UserRole.Guest);
-  readonly userId = signal<string>('');
+  readonly currentUser = signal<UserProfile | null>(null);
+  readonly isAuthenticated = computed(() => this.currentUser() !== null);
+  readonly userId = computed(() => this.currentUser()?.id ?? '');
 
-  setIsAuthenticated(value: boolean): void {
-    this.isAuthenticated.set(value);
-  }
-
-  getIsAuthenticated(): boolean {
-    return this.isAuthenticated();
-  }
-
-  setRole(value: UserRole): void {
-    this.role.set(value);
-  }
-
-  getRole(): UserRole {
-    return this.role();
-  }
-
-  setUserId(value: string): void {
-    this.userId.set(value);
-  }
-
-  getUserId(): string {
-    return this.userId();
-  }
-
-  // ==== api calls ====
+  // --- API Calls ---
   checkSession(): Observable<boolean> {
-    return this.http
-      .get(this.apiUrl.path('/users/me'), {
-        responseType: 'text',
-        withCredentials: true,
-      })
-      .pipe(
-        tap((response) => {
-          this.setIsAuthenticated(true);
-          this.setUserId(response);
-          console.log(this.getIsAuthenticated());
-        }),
-        map(() => true),
-        catchError(() => {
-          this.setIsAuthenticated(false);
-          this.setUserId('');
-          return of(false);
-        }),
-      );
+    return this.http.get<UserProfile>(this.apiUrl.path('/auth/me'), {}).pipe(
+      tap((userProfile) => {
+        this.currentUser.set(userProfile);
+        console.log('Logged in as', userProfile.username);
+      }),
+      map(() => true),
+      catchError((error) => {
+        console.error('There is no active session', error.status);
+        this.currentUser.set(null);
+        return of(false);
+      }),
+    );
+  }
+
+  logout(): void {
+    this.currentUser.set(null);
+    //TODO ADD LOGOUT TO CLEAR COOKIE
   }
 }

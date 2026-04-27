@@ -11,6 +11,8 @@ import { PostComponent } from '../../core/components/post-component/post-compone
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommentComponent } from '../../core/components/comment/comment-component';
 import { PostService } from '../../core/services/post/post.service';
+import { CommentsService } from '../../core/services/comments/comments.service';
+import { CommentSummary } from '../../core/models/comments/comment-summary.model';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
 
@@ -24,6 +26,7 @@ export class FullPostView implements OnInit, AfterViewInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private postService = inject(PostService);
+  private commentsService = inject(CommentsService);
   private isScrolling = false;
 
   commentSection = viewChild<ElementRef>('commentSection');
@@ -31,6 +34,7 @@ export class FullPostView implements OnInit, AfterViewInit {
   commentContent = signal<string>('');
   isCommentFocused = signal<boolean>(false);
   post = this.postService.activePost;
+  comments = signal<CommentSummary[]>([]);
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
@@ -38,10 +42,16 @@ export class FullPostView implements OnInit, AfterViewInit {
     if (id) {
       if (!this.post()) {
         this.postService.getPost(id).subscribe({
-          next: (data) => this.postService.setActivePost(data),
+          next: (data) => {
+            this.postService.setActivePost(data);
+          },
           error: (error) => console.log(error),
         });
       }
+      this.commentsService.getCommentsOfPost(id, undefined, { cursor: '', limit: 20 }).subscribe({
+        next: (res) => this.comments.set(res.items),
+        error: (err) => console.error(err),
+      });
     } else {
       console.error('NO ID IN URL ERRRR');
     }
@@ -59,9 +69,7 @@ export class FullPostView implements OnInit, AfterViewInit {
     }
   }
 
-  get comments() {
-    return this.post()?.comments ?? [];
-  }
+  // comments fetched via service are available in this.comments()
 
   goBack() {
     this.router.navigate(['/']);
