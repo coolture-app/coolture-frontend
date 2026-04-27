@@ -7,6 +7,7 @@ import {
   ViewChild,
   Output,
   EventEmitter,
+  DestroyRef,
 } from '@angular/core';
 import { PostCard } from '../../models/posts/post-card.model';
 import { PostDetail } from '../../models/posts/post-detail.model';
@@ -24,6 +25,7 @@ import { InteractionsService } from '../../services/interactions/interactions.se
 import { AuthService } from '../../services/auth/auth.service';
 import { ModalWindow } from '../modal/modal-window/modal-window';
 import { PostService } from '../../services/post/post.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-post-component',
@@ -45,6 +47,7 @@ export class PostComponent implements OnInit {
   private interactions = inject(InteractionsService);
   private authService = inject(AuthService);
   private postService = inject(PostService);
+  private destroyRef = inject(DestroyRef);
 
   isMyPost = signal<boolean>(false);
 
@@ -61,7 +64,7 @@ export class PostComponent implements OnInit {
       this.isParticipating.set(
         this.data.myParticipation === 'interested' || this.data.myParticipation === 'takes_part',
       );
-      this.isMyPost.set(this.authService.currentUser()?.id == this.data.author.id ? true : false);
+      this.isMyPost.set(this.authService.currentUser()?.id === this.data.author.id ? true : false);
     }
   }
 
@@ -85,11 +88,6 @@ export class PostComponent implements OnInit {
     return [];
   }
 
-  // get avatar() {
-  //   const url = this.data.author.avatar?.url;
-  //   return url;
-  // }
-
   formatNumber(value: number): string {
     if (value >= 1000000) {
       return (value / 1000000).toFixed(1) + 'mln';
@@ -104,23 +102,29 @@ export class PostComponent implements OnInit {
     if (!this.isLiked()) {
       this.data.positiveReactionCount++;
       this.isLiked.set(true);
-      this.interactions.setReaction(this.data.id, { type: 'like' }).subscribe({
-        error: () => {
-          // Revert on error
-          this.data.positiveReactionCount--;
-          this.isLiked.set(false);
-        },
-      });
+      this.interactions
+        .setReaction(this.data.id, { type: 'like' })
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          error: () => {
+            // Revert on error
+            this.data.positiveReactionCount--;
+            this.isLiked.set(false);
+          },
+        });
     } else {
       this.data.positiveReactionCount--;
       this.isLiked.set(false);
-      this.interactions.removeReaction(this.data.id).subscribe({
-        error: () => {
-          // Revert on error
-          this.data.positiveReactionCount++;
-          this.isLiked.set(true);
-        },
-      });
+      this.interactions
+        .removeReaction(this.data.id)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          error: () => {
+            // Revert on error
+            this.data.positiveReactionCount++;
+            this.isLiked.set(true);
+          },
+        });
     }
   }
 
@@ -128,23 +132,29 @@ export class PostComponent implements OnInit {
     if (!this.isParticipating()) {
       this.data.participantCount++;
       this.isParticipating.set(true);
-      this.interactions.setParticipation(this.data.id, { type: 'interested' }).subscribe({
-        error: () => {
-          // Revert on error
-          this.data.participantCount--;
-          this.isParticipating.set(false);
-        },
-      });
+      this.interactions
+        .setParticipation(this.data.id, { type: 'interested' })
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          error: () => {
+            // Revert on error
+            this.data.participantCount--;
+            this.isParticipating.set(false);
+          },
+        });
     } else {
       this.data.participantCount--;
       this.isParticipating.set(false);
-      this.interactions.removeParticipation(this.data.id).subscribe({
-        error: () => {
-          // Revert on error
-          this.data.participantCount++;
-          this.isParticipating.set(true);
-        },
-      });
+      this.interactions
+        .removeParticipation(this.data.id)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          error: () => {
+            // Revert on error
+            this.data.participantCount++;
+            this.isParticipating.set(true);
+          },
+        });
     }
   }
 
@@ -153,8 +163,17 @@ export class PostComponent implements OnInit {
   }
 
   deletePost(): void {
-    this.postService.deletePost(this.data.id).subscribe();
-    this.deleteRequest.emit(this.data.id);
+    this.postService
+      .deletePost(this.data.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.deleteRequest.emit(this.data.id);
+        },
+        error: (err) => {
+          console.error('Error while deleting post.', err);
+        },
+      });
   }
 
   handleModalResponse(action: string): void {

@@ -1,8 +1,8 @@
-import { Component, effect, inject, OnInit, signal } from '@angular/core';
+import { Component, effect, inject, OnInit, signal, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { lastValueFrom } from 'rxjs';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslatePipe } from '@ngx-translate/core';
 import { PostService } from '../../core/services/post/post.service';
 import { MediaService } from '../../core/services/media/media.service';
@@ -29,6 +29,7 @@ export class EditPostView implements OnInit {
   private dictionaryService = inject(DictionaryService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private destroyRef = inject(DestroyRef);
 
   currentPost = signal<PostDetail | null>(null);
   categories = toSignal(this.dictionaryService.getEventCategories(), { initialValue: [] });
@@ -63,18 +64,22 @@ export class EditPostView implements OnInit {
       }
     });
   }
+
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
-      this.postService.getPost(id).subscribe({
-        next: (post) => {
-          this.currentPost.set(post);
-        },
-        error: (err) => {
-          console.error('Błąd podczas pobierania wydarzenia', err);
-          this.router.navigate(['/404']);
-        },
-      });
+      this.postService
+        .getPost(id)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (post) => {
+            this.currentPost.set(post);
+          },
+          error: (err) => {
+            console.error('Error while fetching event', err);
+            this.router.navigate(['/404']);
+          },
+        });
     }
   }
 
@@ -102,7 +107,7 @@ export class EditPostView implements OnInit {
 
       this.newlyUploadedMedia.update((media) => [...media, completedMedia]);
     } catch (error) {
-      console.error('Błąd podczas wgrywania zdjęcia', error);
+      console.error('Error while uploadin image', error);
     } finally {
       this.isUploading.set(false);
       input.value = '';
@@ -110,21 +115,27 @@ export class EditPostView implements OnInit {
   }
 
   removeExistingMedia(mediaIdToRemove: string): void {
-    this.mediaService.deleteMedia(mediaIdToRemove).subscribe({
-      next: () => {
-        this.existingMedia.update((media) => media.filter((m) => m.media.id !== mediaIdToRemove));
-      },
-      error: (err) => console.error('Nie udało się usunąć istniejącego zdjęcia', err),
-    });
+    this.mediaService
+      .deleteMedia(mediaIdToRemove)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.existingMedia.update((media) => media.filter((m) => m.media.id !== mediaIdToRemove));
+        },
+        error: (err) => console.error('Couldnt delete existing image', err),
+      });
   }
 
   removeNewMedia(mediaIdToRemove: string): void {
-    this.mediaService.deleteMedia(mediaIdToRemove).subscribe({
-      next: () => {
-        this.newlyUploadedMedia.update((media) => media.filter((m) => m.id !== mediaIdToRemove));
-      },
-      error: (err) => console.error('Nie udało się usunąć świeżego zdjęcia', err),
-    });
+    this.mediaService
+      .deleteMedia(mediaIdToRemove)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.newlyUploadedMedia.update((media) => media.filter((m) => m.id !== mediaIdToRemove));
+        },
+        error: (err) => console.error('Coudlnt delete newly added image', err),
+      });
   }
 
   updatePost(): void {
@@ -153,17 +164,20 @@ export class EditPostView implements OnInit {
       coverMediaId: finalMediaIds.length > 0 ? finalMediaIds[0] : null,
     };
 
-    this.postService.updatePost(post.id, payload).subscribe({
-      next: (updatedPost) => {
-        console.log('Post pomyślnie zaktualizowany!', updatedPost);
-        this.newlyUploadedMedia.set([]);
-        const post = this.currentPost();
-        if (post != null) {
-          this.postService.clearActivePost();
-          this.router.navigate(['/post', post.id]);
-        }
-      },
-      error: (err) => console.error('Błąd aktualizacji posta', err),
-    });
+    this.postService
+      .updatePost(post.id, payload)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (updatedPost) => {
+          console.log('Post updated!', updatedPost);
+          this.newlyUploadedMedia.set([]);
+          const current = this.currentPost();
+          if (current != null) {
+            this.postService.clearActivePost();
+            this.router.navigate(['/post', current.id]);
+          }
+        },
+        error: (err) => console.error('Error while updating post', err),
+      });
   }
 }

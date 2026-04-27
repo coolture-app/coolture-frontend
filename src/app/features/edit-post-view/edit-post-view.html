@@ -4,6 +4,7 @@
   <form class="edit-form" [formGroup]="postForm" (ngSubmit)="updatePost()">
     <div class="form-group">
       <label for="title">{{ 'EDIT_POST.event-title' | translate }}</label>
+      <!-- TODO TRANSLATIOn -->
       <input id="title" type="text" formControlName="title" placeholder="Wpisz tytuł" />
     </div>
 

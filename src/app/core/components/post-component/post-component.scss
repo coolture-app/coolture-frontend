@@ -29,14 +29,6 @@
   justify-content: flex-end;
 }
 
-.editPost,
-.deletePost {
-  background-color: transparent;
-  cursor: pointer;
-  border: none;
-  font-size: var(--text-sm);
-}
-
 .post__header {
   @include flex-between;
   padding: var(--space-md);

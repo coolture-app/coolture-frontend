@@ -3,7 +3,11 @@
     {{ 'FULL_POST.back' | translate }}
   </button>
   @if (post()) {
-    <app-post-component [data]="post()!" [isFullView]="true" />
+    <app-post-component
+      (deleteRequest)="removeChild($event)"
+      [data]="post()!"
+      [isFullView]="true"
+    />
     <div #commentSection class="comments">
       @for (item of comments(); track $index) {
         <app-comment-component

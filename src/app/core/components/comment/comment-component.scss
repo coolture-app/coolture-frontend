@@ -27,14 +27,6 @@
   margin-bottom: var(--space-xs);
 }
 
-button {
-  border: none;
-  background-color: transparent;
-  color: var(--color-accent);
-  cursor: pointer;
-  text-align: center;
-}
-
 .comment__username {
   font-size: var(--text-sm);
   font-weight: var(--font-semibold);

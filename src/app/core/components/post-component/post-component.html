@@ -14,10 +14,10 @@
       </div>
       @if (isMyPost()) {
         <div class="right">
-          <button class="editPost" (click)="editPost()">
+          <button class="editPost button-plain" (click)="editPost()">
             {{ 'POST.edit' | translate }}
           </button>
-          <button class="deletePost" (click)="openModal()">
+          <button class="deletePost button-plain" (click)="openModal()">
             {{ 'POST.delete' | translate }}
           </button>
         </div>

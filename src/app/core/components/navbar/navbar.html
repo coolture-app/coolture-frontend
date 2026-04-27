@@ -23,7 +23,9 @@
       <button class="navbar__lang" (click)="changeLanguage()">
         {{ currentLang() === 'pl' ? 'EN' : 'PL' }}
       </button>
-      <button class="addPost" (click)="goToAddPost()">{{ 'NAVBAR.addPost' | translate }}</button>
+      <button class="addPost button-plain" (click)="goToAddPost()">
+        {{ 'NAVBAR.addPost' | translate }}
+      </button>
     </span>
   </div>
 </nav>

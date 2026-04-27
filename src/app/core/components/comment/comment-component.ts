@@ -6,17 +6,17 @@ import {
   inject,
   signal,
   OnInit,
-  OnDestroy,
   ViewChild,
   ElementRef,
+  DestroyRef,
 } from '@angular/core';
 import { CommentSummary } from '../../models/comments/comment-summary.model';
-import { Subscription } from 'rxjs';
 import { TranslatePipe } from '@ngx-translate/core';
 import { CommentsService } from '../../services/comments/comments.service';
 import { AuthService } from '../../services/auth/auth.service';
 import { CommentUpdateRequest } from '../../models/comments/comment-update-request.model';
 import { ModalWindow } from '../modal/modal-window/modal-window';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-comment-component',
@@ -24,16 +24,18 @@ import { ModalWindow } from '../modal/modal-window/modal-window';
   templateUrl: './comment-component.html',
   styleUrl: './comment-component.scss',
 })
-export class CommentComponent implements OnInit, OnDestroy {
+export class CommentComponent implements OnInit {
   @Input({ required: true }) comment!: CommentSummary;
   @Output() replyClicked = new EventEmitter<[string, string]>();
   @Output() commentDeleted = new EventEmitter<string>();
+
   private authService = inject(AuthService);
+  private commentsService = inject(CommentsService);
+  private destroyRef = inject(DestroyRef);
+
   isShowingReplies = signal(false);
   replies = signal<CommentSummary[]>([]);
-  private commentsService = inject(CommentsService);
   private hasFetchedReplies = false;
-  private commentAddedSub?: Subscription;
 
   @ViewChild('editInput') editInput?: ElementRef;
   @ViewChild('myModal') myModal?: ModalWindow;
@@ -42,32 +44,30 @@ export class CommentComponent implements OnInit, OnDestroy {
   isEditing = false;
 
   ngOnInit() {
-    this.commentAddedSub = this.commentsService.commentAdded$.subscribe((newComment) => {
-      if (newComment.parentCommentId === this.comment.id) {
-        const handleNewComment = () => {
-          if (!this.replies().find((c) => c.id === newComment.id)) {
-            this.replies.update((r) => [...r, newComment]);
-          }
-          this.isShowingReplies.set(true);
-          this.comment.repliesCount++;
-        };
+    this.commentsService.commentAdded$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((newComment) => {
+        if (newComment.parentCommentId === this.comment.id) {
+          const handleNewComment = () => {
+            if (!this.replies().find((c) => c.id === newComment.id)) {
+              this.replies.update((r) => [...r, newComment]);
+            }
+            this.isShowingReplies.set(true);
+            this.comment.repliesCount++;
+          };
 
-        if (this.comment.repliesCount > 0 && !this.hasFetchedReplies) {
-          this.loadReplies(() => handleNewComment());
-        } else {
-          this.hasFetchedReplies = true;
-          handleNewComment();
+          if (this.comment.repliesCount > 0 && !this.hasFetchedReplies) {
+            this.loadReplies(() => handleNewComment());
+          } else {
+            this.hasFetchedReplies = true;
+            handleNewComment();
+          }
         }
-      }
-    });
+      });
 
     if (this.authService.currentUser()?.id == this.comment.author.id) {
       this.isMyComment = true;
     }
-  }
-
-  ngOnDestroy() {
-    this.commentAddedSub?.unsubscribe();
   }
 
   onReply(): void {
@@ -84,6 +84,7 @@ export class CommentComponent implements OnInit, OnDestroy {
   private loadReplies(callback?: () => void): void {
     this.commentsService
       .getCommentsOfPost(this.comment.postId, this.comment.id, { cursor: '', limit: 20 })
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
           this.replies.set(res.items.filter((c) => c.status !== 'DELETED' || c.repliesCount > 0));
@@ -111,18 +112,20 @@ export class CommentComponent implements OnInit, OnDestroy {
     if (newContent.trim() === '' || newContent === this.comment.content) {
       return;
     }
+
     this.comment.content = newContent;
     const commentUpdateRequest: CommentUpdateRequest = {
       content: newContent,
     };
-    this.commentsService.editComment(this.comment.id, commentUpdateRequest).subscribe({
-      next: () => {
-        console.log('Edycja zapisana');
-      },
-      error: (err) => {
-        console.error(err);
-      },
-    });
+
+    this.commentsService
+      .editComment(this.comment.id, commentUpdateRequest)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        error: (err) => {
+          console.error(err);
+        },
+      });
   }
 
   handleModalResponse(action: string): void {
@@ -136,14 +139,17 @@ export class CommentComponent implements OnInit, OnDestroy {
   }
 
   deleteComment(): void {
-    this.commentsService.deleteComment(this.comment.id).subscribe({
-      next: () => {
-        this.commentDeleted.emit(this.comment.id);
-      },
-      error: (err) => {
-        console.error(err);
-      },
-    });
+    this.commentsService
+      .deleteComment(this.comment.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.commentDeleted.emit(this.comment.id);
+        },
+        error: (err) => {
+          console.error(err);
+        },
+      });
   }
 
   onCommentDeleted(deletedId: string): void {

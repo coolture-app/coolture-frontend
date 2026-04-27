@@ -28,13 +28,6 @@
   background: rgba(255, 255, 255, 0.9);
 }
 
-.addPost {
-  cursor: pointer;
-  background-color: transparent;
-  border: none;
-  font-size: var(--text-base);
-}
-
 .navbar__icon {
   @include button-icon;
   color: var(--color-text-secondary);

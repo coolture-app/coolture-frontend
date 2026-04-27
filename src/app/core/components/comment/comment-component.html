@@ -5,6 +5,7 @@
       <div class="row">
         <div class="comment__username">
           @if (comment.status === 'DELETED') {
+            <!-- TODO ADD TRANSLATION -->
             [Usunięty]
           } @else {
             {{ comment.author.username }}
@@ -12,13 +13,13 @@
         </div>
         @if (comment.status !== 'DELETED') {
           @if (comment.depth < 2) {
-            <button class="reply-button" (click)="onReply()">
+            <button class="reply-button button-plain-accent" (click)="onReply()">
               {{ 'COMMENT.reply' | translate }}
             </button>
           }
         }
         @if (comment.repliesCount > 0) {
-          <button class="show-anwsers" (click)="showReplies()">
+          <button class="show-anwsers button-plain-accent" (click)="showReplies()">
             {{
               isShowingReplies()
                 ? ('COMMENT.hide-replies' | translate)
@@ -27,10 +28,10 @@
           </button>
         }
         @if (comment.status !== 'DELETED' && isMyComment) {
-          <button class="edit-comment" (click)="startEditingComment()">
+          <button class="edit-comment button-plain-accent" (click)="startEditingComment()">
             {{ 'COMMENT.edit-comment' | translate }}
           </button>
-          <button class="delete-comment" (click)="openModal()">
+          <button class="delete-comment button-plain-accent" (click)="openModal()">
             {{ 'COMMENT.delete-comment' | translate }}
           </button>
           <app-modal-window

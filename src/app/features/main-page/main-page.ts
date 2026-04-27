@@ -1,9 +1,10 @@
-import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, signal, OnInit, DestroyRef } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { Subject, debounceTime, distinctUntilChanged, switchMap, startWith, takeUntil } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap, startWith } from 'rxjs';
 import { TranslatePipe } from '@ngx-translate/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { heroMagnifyingGlass } from '@ng-icons/heroicons/outline';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { PostComponent } from '../../core/components/post-component/post-component';
 import { HttpClient } from '@angular/common/http';
@@ -19,12 +20,12 @@ import { PaginatedResponse } from '../../core/models/common/paginated-response.m
   templateUrl: './main-page.html',
   styleUrl: './main-page.scss',
 })
-export class MainPage implements OnInit, OnDestroy {
+export class MainPage implements OnInit {
   private http = inject(HttpClient);
   private postService = inject(PostService);
+  private destroyRef = inject(DestroyRef);
 
   searchControl = new FormControl('');
-  private destroy$ = new Subject<void>();
 
   posts = signal<PaginatedResponse<PostCard>>({
     items: [],
@@ -41,7 +42,7 @@ export class MainPage implements OnInit, OnDestroy {
           const filters = query ? { limit: 20, q: query } : { limit: 20 };
           return this.postService.getPosts(filters);
         }),
-        takeUntil(this.destroy$),
+        takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
         next: (data) => this.posts.set(data),
@@ -49,11 +50,6 @@ export class MainPage implements OnInit, OnDestroy {
       });
 
     this.postService.clearActivePost();
-  }
-
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   removeChild(idToRemove: string) {

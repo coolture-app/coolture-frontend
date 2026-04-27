@@ -75,7 +75,7 @@ export class AddPostView {
         preview.mediaId = initRes.mediaId;
         preview.isUploading = false;
       } catch (err) {
-        console.error('Błąd podczas wgrywania pliku', file.name, err);
+        console.error('Error while loading file', file.name, err);
         this.mediaPreviews = this.mediaPreviews.filter((p) => p !== preview);
       }
     }
