@@ -1,0 +1,95 @@
+.page {
+  padding: 1rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.searchbar {
+  margin-bottom: 1.5rem;
+
+  &__inner {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  &__wrapper {
+    display: flex;
+    align-items: center;
+    background: var(--color-bg-secondary);
+    border-radius: 0.5rem;
+    padding: 0 0.75rem;
+    flex: 1;
+  }
+
+  &__icon {
+    color: var(--color-text-secondary);
+    margin-right: 0.5rem;
+  }
+
+  &__input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--color-text);
+    font-size: 1rem;
+    padding: 0.75rem 0;
+    width: 100%;
+
+    &::placeholder {
+      color: var(--color-text-secondary);
+    }
+  }
+}
+
+.empty {
+  text-align: center;
+  color: var(--color-text-secondary);
+  padding: 2rem;
+}
+
+.user-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: var(--color-bg-secondary);
+  border-radius: 0.5rem;
+  margin-bottom: 0.5rem;
+
+  &__avatar {
+    ng-icon {
+      font-size: 2.5rem;
+      color: var(--color-text-secondary);
+    }
+  }
+
+  &__info {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+
+  &__name {
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  &__username {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+  }
+
+  &__action {
+    padding: 0.375rem 0.75rem;
+    border-radius: 999px;
+    border: 1px solid var(--color-border);
+    background: transparent;
+    color: var(--color-text);
+    font-size: 0.875rem;
+    cursor: pointer;
+
+    &:hover {
+      background: var(--color-bg-hover);
+    }
+  }
+}

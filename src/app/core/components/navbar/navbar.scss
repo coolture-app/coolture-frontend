@@ -17,10 +17,6 @@
   background: rgba(255, 255, 255, 0.9);
 }
 
-.addPost {
-  cursor: pointer;
-}
-
 .navbar__icon {
   @include button-icon;
   color: var(--color-text-secondary);
@@ -43,7 +39,7 @@
 .navbar__actions {
   display: flex;
   align-items: center;
-  gap: var(--space-xs);
+  gap: var(--space-sm);
 }
 
 .navbar__lang {
@@ -59,5 +55,27 @@
   &:hover {
     background: var(--color-border-light);
     color: var(--color-text);
+  }
+}
+
+.navbar__btn {
+  @include button-base;
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  background: var(--color-surface-alt);
+  color: var(--color-text);
+
+  &:hover {
+    background: var(--color-border-light);
+  }
+
+  &--primary {
+    background: var(--color-primary);
+    color: var(--color-text-inverse);
+
+    &:hover {
+      background: var(--color-primary-light);
+    }
   }
 }

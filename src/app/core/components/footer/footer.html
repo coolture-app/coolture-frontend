@@ -1,8 +1,13 @@
 <nav class="footer">
-  <div class="footer__item" routerLink="/" routerLinkActive="active">
+  <div
+    class="footer__item"
+    routerLink="/"
+    routerLinkActive="active"
+    [routerLinkActiveOptions]="{ exact: true }"
+  >
     {{ 'FOOTER.main-page' | translate }}
   </div>
-  <div class="footer__item" routerLink="/friends" routerLinkActive="active">
+  <div class="footer__item" routerLink="/discover" routerLinkActive="active">
     {{ 'FOOTER.friends' | translate }}
   </div>
   <div class="footer__item" routerLink="/calendar" routerLinkActive="active">

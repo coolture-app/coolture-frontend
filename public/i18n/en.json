@@ -4,7 +4,8 @@
     "search": "Search",
     "sort": "Filters and sorting",
     "title": "Home Page",
-    "no-posts": "No posts to display... Sad face."
+    "no-posts": "No posts to display... Sad face.",
+    "addPost": "Add Post"
   },
   "FULL_POST": {
     "title": "Cool post",
@@ -24,14 +25,15 @@
   },
   "FOOTER": {
     "main-page": "Home",
-    "friends": "Friends",
+    "friends": "Find friends",
     "map-callendar": "Calendar",
     "my-profile": "Profile"
   },
   "NAVBAR": {
     "menu": "Menu",
-    "notifications": "Notifications",
-    "addPost": "Add post!"
+    "addPost": "Add post!",
+    "logout": "Log out",
+    "login": "Log in"
   },
   "LANG": {
     "pl": "PL",
@@ -50,5 +52,36 @@
   },
   "ADD_POST": {
     "title": "Add post!"
+  },
+  "PROFILE": {
+    "title": "My Profile",
+    "edit": "Edit Profile",
+    "editDescription": "Edit Description",
+    "cancel": "Cancel",
+    "save": "Save Changes",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "username": "Username",
+    "bio": "Bio",
+    "followers": "Followers",
+    "followers-subtitle": "People who follow this account",
+    "following-subtitle": "People this account follows",
+    "following": "Following",
+    "joined": "Joined",
+    "follow": "Follow",
+    "unfollow": "Unfollow",
+    "followBack": "Follow Back",
+    "block": "Block",
+    "unblock": "Unblock",
+    "blocked": "Blocked",
+    "no-blocked": "No blocked users",
+    "no-followers": "No followers yet",
+    "no-following": "Not following anyone yet",
+    "load-more": "Load More",
+    "loading": "Loading..."
+  },
+  "DISCOVER": {
+    "searchbar": "Search for people",
+    "no-users": "No users found"
   }
 }

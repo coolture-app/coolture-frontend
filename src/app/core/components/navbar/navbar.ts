@@ -1,6 +1,9 @@
-import { Component, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, inject, signal, PLATFORM_ID } from '@angular/core';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { firstValueFrom } from 'rxjs';
+
+import { AuthService } from '../../services/auth/auth.service';
+import { ApiUrlService } from '../../services/api-url.service';
 
 @Component({
   selector: 'app-navbar',
@@ -10,7 +13,9 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 })
 export class Navbar {
   private translate = inject(TranslateService);
-  private router = inject(Router);
+  authService = inject(AuthService);
+  private apiUrl = inject(ApiUrlService);
+  private platformId = inject(PLATFORM_ID);
   currentLang = signal(this.translate.currentLang);
 
   constructor() {
@@ -24,7 +29,12 @@ export class Navbar {
     this.translate.use(newLang);
   }
 
-  goToAddPost(): void {
-    this.router.navigate(['/addPost']);
+  login(): void {
+    window.location.href = this.apiUrl.oauthUrl + '/oauth2/authorization/keycloak?prompt=login';
+  }
+
+  async logout(): Promise<void> {
+    await firstValueFrom(this.authService.logout());
+    window.location.href = '/';
   }
 }

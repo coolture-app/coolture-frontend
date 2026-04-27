@@ -1,0 +1,162 @@
+<div class="profile">
+  @if (!isOwnProfile()) {
+    <button class="profile__back" routerLink="/profile">
+      <ng-icon name="heroArrowLeft" />
+    </button>
+  }
+  <div class="profile__header">
+    <div class="profile__avatar-wrapper">
+      @if (user()?.avatar; as avatar) {
+        <img [src]="avatar.url" [alt]="user()?.username" class="profile__avatar" />
+      } @else {
+        <div class="profile__avatar profile__avatar--placeholder">
+          {{ user()?.firstName?.charAt(0) }}{{ user()?.lastName?.charAt(0) }}
+        </div>
+      }
+      @if (isOwnProfile()) {
+        <label class="profile__avatar-upload">
+          <ng-icon name="heroCamera" />
+          <input
+            type="file"
+            accept="image/*"
+            (change)="onFileSelected($event)"
+            [disabled]="isUploadingAvatar()"
+          />
+        </label>
+        @if (user()?.avatar) {
+          <button
+            class="profile__avatar-remove"
+            (click)="onRemoveAvatar()"
+            [disabled]="isUploadingAvatar()"
+          >
+            <ng-icon name="heroXMark" />
+          </button>
+        }
+      }
+    </div>
+
+    <div class="profile__info">
+      <h1 class="profile__name">{{ user()?.firstName }} {{ user()?.lastName }}</h1>
+      <span class="profile__username">&#64;{{ user()?.username }}</span>
+      @if (user()?.bio) {
+        <p class="profile__bio">{{ user()?.bio }}</p>
+      }
+    </div>
+
+    @if (isOwnProfile()) {
+      <div class="profile__actions">
+        <button class="profile__edit-btn" (click)="toggleEdit()">
+          <ng-icon [name]="isEditing() ? 'heroXMark' : 'heroPencil'" />
+          {{ (isEditing() ? 'PROFILE.cancel' : 'PROFILE.editDescription') | translate }}
+        </button>
+        <button class="profile__edit-btn" (click)="toggleBlocked()">
+          <ng-icon name="heroNoSymbol" />
+          {{ 'PROFILE.blocked' | translate }}
+        </button>
+      </div>
+    } @else {
+      <button class="profile__edit-btn" (click)="toggleFollow()">
+        <ng-icon [name]="user()?.isFollowing ? 'heroUserMinus' : 'heroUserPlus'" />
+        {{ (user()?.isFollowing ? 'PROFILE.unfollow' : 'PROFILE.follow') | translate }}
+      </button>
+    }
+  </div>
+
+  <div class="profile__stats">
+    <button class="profile__stat" (click)="toggleFollowers()">
+      <span class="profile__stat-value">{{ followersCount() }}</span>
+      <span class="profile__stat-label">{{ 'PROFILE.followers' | translate }}</span>
+    </button>
+    <button class="profile__stat" (click)="toggleFollowing()">
+      <span class="profile__stat-value">{{ followingCount() }}</span>
+      <span class="profile__stat-label">{{ 'PROFILE.following' | translate }}</span>
+    </button>
+  </div>
+
+  @if (user()?.createdAt) {
+    <p class="profile__joined">
+      {{ 'PROFILE.joined' | translate }}: {{ user()?.createdAt | date: 'mediumDate' }}
+    </p>
+  }
+</div>
+
+@if (isEditing()) {
+  <div
+    class="profile__modal-overlay"
+    (click)="toggleEdit()"
+    (keydown.escape)="toggleEdit()"
+    tabindex="0"
+  >
+    <div
+      class="profile__modal"
+      (click)="$event.stopPropagation()"
+      (keydown.escape)="toggleEdit()"
+      tabindex="0"
+    >
+      <div class="profile__modal-header">
+        <h2>{{ 'PROFILE.editDescription' | translate }}</h2>
+        <button class="profile__modal-close" (click)="toggleEdit()">
+          <ng-icon name="heroXMark" />
+        </button>
+      </div>
+      <form [formGroup]="editForm" (ngSubmit)="onSave()">
+        <div class="profile__field">
+          <label class="profile__label" for="bio">{{ 'PROFILE.bio' | translate }}</label>
+          <textarea id="bio" formControlName="bio" class="profile__textarea" rows="4"></textarea>
+        </div>
+        <button type="submit" class="profile__save">
+          <ng-icon name="heroCheck" />
+          {{ 'PROFILE.save' | translate }}
+        </button>
+      </form>
+    </div>
+  </div>
+}
+
+@if (showFollowers() || showFollowing()) {
+  <app-follow-list
+    [userId]="user()?.id ?? ''"
+    [type]="showFollowers() ? 'followers' : 'following'"
+    [isOwnProfile]="isOwnProfile()"
+    (closeList)="showFollowers.set(false); showFollowing.set(false)"
+    (followChanged)="onFollowChanged($event)"
+  />
+}
+
+@if (showBlocked()) {
+  <div
+    class="profile__modal-overlay"
+    (click)="toggleBlocked()"
+    (keydown.escape)="toggleBlocked()"
+    tabindex="0"
+  >
+    <div
+      class="profile__modal"
+      (click)="$event.stopPropagation()"
+      (keydown.escape)="toggleBlocked()"
+      tabindex="0"
+    >
+      <div class="profile__modal-header">
+        <h2>{{ 'PROFILE.blocked' | translate }}</h2>
+        <button class="profile__modal-close" (click)="toggleBlocked()">
+          <ng-icon name="heroXMark" />
+        </button>
+      </div>
+      <div class="profile__blocked-list">
+        @for (user of blockedUsers(); track user.id) {
+          <div class="profile__blocked-user">
+            <div class="profile__blocked-info">
+              <span class="profile__blocked-name">{{ user.firstName }} {{ user.lastName }}</span>
+              <span class="profile__blocked-username">&#64;{{ user.username }}</span>
+            </div>
+            <button class="profile__blocked-unblock" (click)="onUnblock(user.id)">
+              {{ 'PROFILE.unblock' | translate }}
+            </button>
+          </div>
+        } @empty {
+          <p class="profile__empty">{{ 'PROFILE.no-blocked' | translate }}</p>
+        }
+      </div>
+    </div>
+  </div>
+}
