@@ -28,17 +28,6 @@
   background: rgba(255, 255, 255, 0.9);
 }
 
-.navbar__icon {
-  @include button-icon;
-  color: var(--color-text-secondary);
-
-  svg {
-    width: 22px;
-    height: 22px;
-    fill: currentColor;
-  }
-}
-
 .navbar__title {
   font-size: var(--text-lg);
   font-weight: var(--font-bold);
