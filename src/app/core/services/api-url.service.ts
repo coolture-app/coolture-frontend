@@ -13,6 +13,10 @@ export class ApiUrlService {
     return this.baseUrl;
   }
 
+  get oauthUrl(): string {
+    return this.baseUrl.replace('/api', '');
+  }
+
   path(path: string): string {
     return `${this.baseUrl}${path}`;
   }

@@ -143,7 +143,7 @@ export class FullPostView implements OnInit, AfterViewInit {
     }
   }
 
-  removeChild() {
+  removeChild(_id?: string) {
     this.router.navigate(['/']);
   }
 }

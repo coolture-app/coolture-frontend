@@ -2,6 +2,8 @@
 
 .page {
   padding: var(--space-md);
+  max-width: var(--container-max);
+  margin: 0 auto;
 }
 
 .searchbar {
@@ -11,7 +13,6 @@
   &__inner {
     @include flex-between;
     width: 100%;
-    max-width: var(--container-max);
     gap: var(--space-sm);
   }
 
@@ -56,59 +57,6 @@
       color: var(--color-text-tertiary);
     }
   }
-
-  &__btn {
-    @include button-primary;
-    flex-shrink: 0;
-
-    @media (max-width: 639px) {
-      display: none;
-    }
-  }
-}
-
-.addPost-btn {
-  @include button-primary;
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  flex-shrink: 0;
-
-  ng-icon {
-    width: 16px;
-    height: 16px;
-  }
-
-  &__text {
-    @media (max-width: 639px) {
-      display: none;
-    }
-  }
-
-  @media (max-width: 639px) {
-    position: fixed;
-    bottom: calc(var(--space-lg) + var(--footer-height));
-    right: var(--space-lg);
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    padding: 0;
-    justify-content: center;
-    box-shadow: var(--shadow-lg);
-    z-index: var(--z-sticky);
-  }
-}
-
-.sort {
-  display: flex;
-  justify-content: flex-end;
-  padding-bottom: var(--space-md);
-  max-width: var(--container-max);
-  margin: 0 auto;
-
-  &__btn {
-    @include button-ghost;
-  }
 }
 
 .empty {
@@ -117,4 +65,45 @@
   color: var(--color-text-tertiary);
   font-size: var(--text-sm);
   text-align: center;
+}
+
+.user-card {
+  @include card;
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  margin-bottom: var(--space-sm);
+
+  &__avatar {
+    ng-icon {
+      font-size: 2.5rem;
+      color: var(--color-text-tertiary);
+    }
+  }
+
+  &__info {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    cursor: pointer;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+
+  &__name {
+    font-weight: var(--font-semibold);
+    color: var(--color-text);
+  }
+
+  &__username {
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+  }
+
+  &__action {
+    @include button-ghost;
+  }
 }

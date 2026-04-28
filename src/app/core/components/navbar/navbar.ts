@@ -1,8 +1,9 @@
-import { Component, inject } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { Router } from '@angular/router';
+import { Component, inject, signal } from '@angular/core';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { map } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
+
+import { AuthService } from '../../services/auth/auth.service';
+import { ApiUrlService } from '../../services/api-url.service';
 
 @Component({
   selector: 'app-navbar',
@@ -12,17 +13,27 @@ import { map } from 'rxjs';
 })
 export class Navbar {
   private translate = inject(TranslateService);
-  private router = inject(Router);
-  currentLang = toSignal(this.translate.onLangChange.pipe(map((event) => event.lang)), {
-    initialValue: this.translate.currentLang,
-  });
+  authService = inject(AuthService);
+  private apiUrl = inject(ApiUrlService);
+  currentLang = signal(this.translate.currentLang);
+
+  constructor() {
+    this.translate.onLangChange.subscribe((event) => {
+      this.currentLang.set(event.lang);
+    });
+  }
 
   changeLanguage(): void {
     const newLang = this.currentLang() === 'pl' ? 'en' : 'pl';
     this.translate.use(newLang);
   }
 
-  goToAddPost(): void {
-    this.router.navigate(['/addPost']);
+  login(): void {
+    window.location.href = this.apiUrl.oauthUrl + '/oauth2/authorization/keycloak?prompt=login';
+  }
+
+  async logout(): Promise<void> {
+    await firstValueFrom(this.authService.logout());
+    window.location.href = '/';
   }
 }

@@ -4,7 +4,8 @@
     "search": "Szukaj",
     "sort": "Filtry i sortowanie",
     "title": "Strona główna",
-    "no-posts": "Brak postów do wyświetlenia... Smuteczek."
+    "no-posts": "Nie ma postów do wyświetlenia... Smutno.",
+    "addPost": "Dodaj post"
   },
   "FULL_POST": {
     "title": "Fajny post",
@@ -30,14 +31,15 @@
   },
   "FOOTER": {
     "main-page": "Strona główna",
-    "friends": "Znajomi",
-    "map-callendar": "Mapa/Kalendarz",
+    "friends": "Znajdź znajomych",
+    "map-callendar": "Kalendarz",
     "my-profile": "Mój Profil"
   },
   "NAVBAR": {
     "menu": "Menu",
-    "notifications": "Powiadomienia",
-    "addPost": "Dodaj post!"
+    "addPost": "Dodaj post!",
+    "logout": "Wyloguj się",
+    "login": "Zaloguj się"
   },
   "LANG": {
     "pl": "PL",
@@ -53,6 +55,38 @@
     "header": "Szukana przez ciebie strona nie istnieje.",
     "go-back-btn": "Wróc na stronę główną",
     "title": "Ups, zabładziliśmy..."
+  },
+  "PROFILE": {
+    "title": "Mój Profil",
+    "edit": "Edytuj Profil",
+    "editDescription": "Edytuj Opis",
+    "cancel": "Anuluj",
+    "save": "Zapisz Zmiany",
+    "firstName": "Imię",
+    "lastName": "Nazwisko",
+    "username": "Nazwa użytkownika",
+    "bio": "Bio",
+    "followers": "Obserwujący",
+    "followers-subtitle": "Osoby obserwujące to konto",
+    "following-subtitle": "Osoby obserwowane przez to konto",
+    "following": "Obserwowani",
+    "joined": "Dołączył",
+    "follow": "Obserwuj",
+    "unfollow": "Przestań obserwować",
+    "followBack": "Obserwuj",
+    "block": "Zablokuj",
+    "unblock": "Odblokuj",
+    "blocked": "Zablokowani",
+    "no-blocked": "Brak zablokowanych użytkowników",
+    "no-followers": "Nikt jeszcze nie obserwuje",
+    "no-following": "Nie obserwujesz nikogo",
+    "load-more": "Załaduj więcej",
+    "loading": "Ładowanie..."
+  },
+  "DISCOVER": {
+    "title": "Odkrywaj",
+    "searchbar": "Szukaj ludzi",
+    "no-users": "Nie znaleziono uzytkownikow"
   },
   "ADD_POST": {
     "title": "Dodaj post!",

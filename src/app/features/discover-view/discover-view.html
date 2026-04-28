@@ -1,0 +1,35 @@
+<div class="page">
+  <div class="searchbar">
+    <div class="searchbar__inner">
+      <span class="searchbar__wrapper">
+        <ng-icon class="searchbar__icon" name="heroMagnifyingGlass" />
+        <input
+          class="searchbar__input"
+          type="text"
+          [formControl]="searchControl"
+          placeholder="{{ 'DISCOVER.searchbar' | translate }}"
+        />
+      </span>
+    </div>
+  </div>
+  @for (item of users().items; track item.id) {
+    <div class="user-card">
+      <div class="user-card__avatar">
+        <ng-icon name="heroUserCircle" />
+      </div>
+      <div class="user-card__info" [routerLink]="['/u', item.username]">
+        <span class="user-card__name">{{ item.firstName }} {{ item.lastName }}</span>
+        <span class="user-card__username">&#64;{{ item.username }}</span>
+      </div>
+      <button class="user-card__action" (click)="toggleFollow(item)">
+        {{
+          followerIds().has(item.id)
+            ? ('PROFILE.unfollow' | translate)
+            : ('PROFILE.follow' | translate)
+        }}
+      </button>
+    </div>
+  } @empty {
+    <p class="empty">{{ 'DISCOVER.no-users' | translate }}</p>
+  }
+</div>

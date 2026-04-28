@@ -1,0 +1,116 @@
+<div class="follow-list">
+  <div
+    class="follow-list__backdrop"
+    (click)="onClose()"
+    (keydown.escape)="onClose()"
+    tabindex="-1"
+  ></div>
+
+  <div
+    class="follow-list__panel"
+    role="dialog"
+    [attr.aria-label]="type() === 'followers' ? 'Followers' : 'Following'"
+  >
+    <div class="follow-list__header">
+      <div class="follow-list__header-content">
+        <h3 class="follow-list__title">
+          {{ (isFollowersPanel() ? 'PROFILE.followers' : 'PROFILE.following') | translate }}
+          @if (!isLoadingInitial()) {
+            ({{ users().length }}{{ hasMore() ? '+' : '' }})
+          }
+        </h3>
+      </div>
+      <button
+        class="follow-list__close"
+        (click)="onClose()"
+        [attr.aria-label]="'PROFILE.close' | translate"
+      >
+        <ng-icon name="heroXMark" />
+      </button>
+    </div>
+
+    <div class="follow-list__content">
+      @if (isLoadingInitial()) {
+        <div class="follow-list__loading-state">
+          <div class="follow-list__spinner"></div>
+        </div>
+      } @else {
+        @for (user of users(); track user.id) {
+          <div class="follow-list__user">
+            <div class="follow-list__info" [routerLink]="['/u', user.username]">
+              @if (user.avatar; as avatar) {
+                <img [src]="avatar.url" [alt]="user.username" class="follow-list__avatar" />
+              } @else {
+                <div class="follow-list__avatar follow-list__avatar--placeholder">
+                  {{ user.firstName.charAt(0) }}{{ user.lastName.charAt(0) }}
+                </div>
+              }
+              <div class="follow-list__details">
+                <span class="follow-list__name">{{ user.firstName }} {{ user.lastName }}</span>
+                <span class="follow-list__username">&#64;{{ user.username }}</span>
+                <div class="follow-list__stats">
+                  <span class="follow-list__stat">
+                    <strong>{{ user.followersCount }}</strong>
+                    {{ 'PROFILE.followers' | translate }}
+                  </span>
+                  <span class="follow-list__stat">
+                    <strong>{{ user.followingCount }}</strong>
+                    {{ 'PROFILE.following' | translate }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div class="follow-list__actions">
+              @if (isOwnProfile() && isFollowersPanel()) {
+                @if (canFollow(user)) {
+                  <button
+                    class="follow-list__btn follow-list__btn--follow"
+                    (click)="onFollow(user)"
+                  >
+                    <ng-icon name="heroUserPlus" />
+                    {{ 'PROFILE.follow' | translate }}
+                  </button>
+                }
+                <button
+                  class="follow-list__btn follow-list__btn--remove"
+                  (click)="onRemoveFollower(user)"
+                >
+                  <ng-icon name="heroUserMinus" />
+                  {{ 'PROFILE.block' | translate }}
+                </button>
+              }
+              @if (isOwnProfile() && !isFollowersPanel()) {
+                <button
+                  class="follow-list__btn follow-list__btn--unfollow"
+                  (click)="onToggleFollow(user, true)"
+                >
+                  <ng-icon name="heroUserMinus" />
+                  {{ 'PROFILE.unfollow' | translate }}
+                </button>
+              }
+            </div>
+          </div>
+        } @empty {
+          <p class="follow-list__empty">
+            {{ (isFollowersPanel() ? 'PROFILE.no-followers' : 'PROFILE.no-following') | translate }}
+          </p>
+        }
+
+        @if (hasMore()) {
+          <div class="follow-list__footer">
+            @if (isLoadingMore()) {
+              <div class="follow-list__loading-more">
+                <div class="follow-list__spinner follow-list__spinner--sm"></div>
+              </div>
+            } @else {
+              <button class="follow-list__more" (click)="loadMore()">
+                {{ 'PROFILE.load-more' | translate }}
+              </button>
+            }
+          </div>
+        }
+      }
+    </div>
+  </div>
+</div>

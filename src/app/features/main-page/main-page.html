@@ -11,6 +11,12 @@
         />
       </span>
       <button class="searchbar__btn">{{ 'MAIN_PAGE.search' | translate }}</button>
+      @if (authService.isAuthenticated()) {
+        <button class="addPost-btn" (click)="goToAddPost()">
+          <ng-icon name="heroPlus" />
+          <span class="addPost-btn__text">{{ 'MAIN_PAGE.addPost' | translate }}</span>
+        </button>
+      }
     </div>
   </div>
   <div class="sort">
