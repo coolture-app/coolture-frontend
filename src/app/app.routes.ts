@@ -73,7 +73,6 @@ export const routes: Routes = [
       return translate.get('DISCOVER.title');
     },
   },
-  // ** WILDCARD must be on the bottom of the router!
   {
     path: 'api-test',
     component: ApiTestView,
