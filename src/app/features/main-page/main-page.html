@@ -19,7 +19,7 @@
     </button>
   </div>
   @for (item of posts().items; track item.id) {
-    <app-post-component [data]="item" [isFullView]="false" />
+    <app-post-component (deleteRequest)="removeChild($event)" [data]="item" [isFullView]="false" />
   } @empty {
     <p class="empty">{{ 'MAIN_PAGE.no-posts' | translate }}</p>
   }

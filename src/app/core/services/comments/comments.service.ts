@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { ApiUrlService } from '../api-url.service';
 import { CommentCreateRequest } from '../../models/comments/comment-create-request.model';
 import { CommentUpdateRequest } from '../../models/comments/comment-update-request.model';
@@ -13,6 +13,8 @@ import { PaginatedResponse, PaginationInfo } from '../../models/common/paginated
 export class CommentsService {
   private apiUrl = inject(ApiUrlService);
   private http = inject(HttpClient);
+
+  public commentAdded$ = new Subject<CommentSummary>();
 
   // Leave parentCommentId empty to fetch root-level comments.
   // Provide parentCommentId to fetch direct replies to a specific comment.

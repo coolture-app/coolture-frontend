@@ -10,7 +10,8 @@
     "title": "Fajny post",
     "back": "Wróć",
     "comment-placeholder": "Zostaw swój komentarz!",
-    "comment-btn": "Skomentuj"
+    "comment-btn": "Skomentuj",
+    "replying-to": "Odpowiadasz na komentarz"
   },
   "POST": {
     "share": "Udostępnij",
@@ -20,12 +21,17 @@
     "loading": "Ładowanie posta...",
     "likes": "polubień",
     "participating": "uczestników",
-    "comments": "komentarzy"
+    "comments": "komentarzy",
+    "photo-alt": "Zdjęcie z wydarzenia",
+    "edit": "Edytuj post",
+    "delete": "Usuń post",
+    "modal-delete-title": "Czy na pewno chcesz usunąć swój post?",
+    "modal-delete-body": "Tej akcji nie da się cofnąć."
   },
   "FOOTER": {
     "main-page": "Strona główna",
     "friends": "Znajomi",
-    "map-callendar": "Kalendarz",
+    "map-callendar": "Mapa/Kalendarz",
     "my-profile": "Mój Profil"
   },
   "NAVBAR": {
@@ -49,6 +55,62 @@
     "title": "Ups, zabładziliśmy..."
   },
   "ADD_POST": {
-    "title": "Dodaj post!"
+    "title": "Dodaj post!",
+    "header-title": "Dodaj nowe wydarzenie",
+    "header-desc": "Wypełnij formularz, aby opublikować nowy post.",
+    "form-title": "Tytuł wydarzenia",
+    "form-title-placeholder": "Wpisz tytuł...",
+    "form-title-error": "Tytuł jest wymagany (3-200 znaków).",
+    "form-category": "Kategoria",
+    "form-category-placeholder": "Wybierz kategorię",
+    "form-category-error": "Kategoria jest wymagana.",
+    "form-type": "Typ wydarzenia",
+    "form-type-online": "Online",
+    "form-type-offline": "Offline",
+    "form-date": "Data i godzina rozpoczęcia",
+    "form-date-error": "Data wydarzenia jest wymagana.",
+    "form-desc": "Opis wydarzenia",
+    "form-desc-placeholder": "Opisz swoje wydarzenie...",
+    "form-desc-error": "Opis jest wymagany (do 2000 znaków).",
+    "form-media": "Zdjęcia",
+    "form-media-click": "Kliknij, aby dodać zdjęcia",
+    "form-media-remove": "Usuń zdjęcie",
+    "submit-saving": "Zapisywanie...",
+    "submit-btn": "Opublikuj wydarzenie"
+  },
+  "EDIT_POST": {
+    "title": "Edytuj post!",
+    "form-title": "Edytuj wydarzenie",
+    "event-title": "Tytuł wydarzenia",
+    "category": "Kategoria",
+    "default-category": "Wybierz kategorię...",
+    "event-type": "Typ wydarzenia",
+    "default-type": "Wybierz typ...",
+    "date": "Data i czas rozpoczęcia",
+    "desc": "Opis",
+    "photos": "Zdjęcia",
+    "current-photos": "Obecne zdjęcia:",
+    "no-current-photos": "Brak dodanych zdjęć.",
+    "delete-permanently": "Usuń trwale",
+    "newly-added": "Nowo dodane zdjęcie (niezapisane)",
+    "add-new-photo": "Dodaj nowe zdjęcie:",
+    "uploading": "Trwa wrzucanie zdjęcia...",
+    "save": "Zapisz zmiany w wydarzeniu",
+    "insert_title": "Wpisz tytuł..."
+  },
+  "COMMENT": {
+    "reply": "Odpowiedz",
+    "hide-replies": "Schowaj odpowiedzi",
+    "show-replies": "Pokaż odpowiedzi",
+    "edit-comment": "Edytuj komentarz",
+    "delete-comment": "Usuń komentarz",
+    "modal-delete-title": "Czy na pewno chcesz usunąć swój komentarz?",
+    "modal-delete-body": "Tej akcji nie da się cofnąć.",
+    "deleted-comment": "Usunięty."
+  },
+  "MODAL": {
+    "yes": "Tak",
+    "no": "Nie",
+    "ok": "Okej"
   }
 }

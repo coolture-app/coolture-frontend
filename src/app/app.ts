@@ -6,6 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
 import translationEN from '../../public/i18n/en.json';
 import translationPL from '../../public/i18n/pl.json';
 import { AuthService } from './core/services/auth/auth.service';
+import { first } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -26,6 +27,6 @@ export class App implements OnInit {
     this.translate.use('pl');
   }
   ngOnInit(): void {
-    this.authService.checkSession().subscribe();
+    this.authService.checkSession().pipe(first()).subscribe();
   }
 }

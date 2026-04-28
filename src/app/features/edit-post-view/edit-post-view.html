@@ -1,0 +1,115 @@
+<div class="wrapper" *ngIf="currentPost()">
+  <h2>{{ 'EDIT_POST.form-title' | translate }}</h2>
+
+  <form class="edit-form" [formGroup]="postForm" (ngSubmit)="updatePost()">
+    <div class="form-group">
+      <label for="title">{{ 'EDIT_POST.event-title' | translate }}</label>
+      <input
+        id="title"
+        type="text"
+        formControlName="title"
+        placeholder="'EDIT_POST.insert_title | translate'"
+      />
+    </div>
+
+    <div class="form-group">
+      <label for="categoryId">{{ 'EDIT_POST.category' | translate }}</label>
+      <select id="categoryId" formControlName="categoryId">
+        <option value="" disabled>{{ 'EDIT_POST.default-category' | translate }}.</option>
+        @for (category of categories(); track category.id) {
+          <option [value]="category.id">{{ category.name }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="type">{{ 'EDIT_POST.event-type' | translate }}</label>
+      <select id="type" formControlName="type">
+        <option value="" disabled>{{ 'EDIT_POST.default-type' | translate }}</option>
+        @for (type of postTypes; track type) {
+          <option [value]="type">{{ type === 'ONLINE' ? 'Online' : 'Offline' }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="startsAt">{{ 'EDIT_POST.date' | translate }}</label>
+      <input id="startsAt" type="datetime-local" formControlName="startsAt" />
+    </div>
+
+    <div class="form-group">
+      <label for="description">{{ 'EDIT_POST.desc' | translate }}</label>
+      <textarea
+        id="description"
+        formControlName="description"
+        rows="5"
+        placeholder="Opisz wydarzenie..."
+      ></textarea>
+    </div>
+
+    <hr class="divider" />
+
+    <div class="media-section">
+      <h3>{{ 'EDIT_POST.photos' | translate }}</h3>
+
+      <div class="media-gallery">
+        <h4>{{ 'EDIT_POST.current-photos' | translate }}</h4>
+        <div class="gallery-grid">
+          @for (mediaItem of existingMedia(); track mediaItem.media.id) {
+            <div class="media-item existing">
+              <img [src]="mediaItem.media.url" alt="Zdjęcie posta" />
+              <button
+                class="btn-delete"
+                type="button"
+                (click)="removeExistingMedia(mediaItem.media.id)"
+              >
+                {{ 'EDIT_POST.delete-permanently' | translate }}
+              </button>
+            </div>
+          }
+          @if (existingMedia().length === 0) {
+            <p class="no-data">{{ 'EDIT_POST.no-current-photos' | translate }}</p>
+          }
+        </div>
+      </div>
+
+      <div class="media-gallery" *ngIf="newlyUploadedMedia().length > 0">
+        <h4>{{ 'EDIT_POST.newly-added' | translate }}</h4>
+        <div class="gallery-grid">
+          @for (media of newlyUploadedMedia(); track media.id) {
+            <div class="media-item new">
+              <img [src]="media.url" alt="Nowe zdjęcie" />
+              <button class="btn-delete" type="button" (click)="removeNewMedia(media.id)">
+                {{ 'EDIT_POST.delete-permanently' | translate }}
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="upload-section">
+        <label for="fileUpload" class="upload-label">{{
+          'EDIT_POST.add-new-photo' | translate
+        }}</label>
+        <div class="upload-controls">
+          <input
+            id="fileUpload"
+            type="file"
+            accept="image/*"
+            (change)="onFileSelected($event)"
+            [disabled]="isUploading()"
+          />
+          <span class="upload-status" *ngIf="isUploading()">{{
+            'EDIT_POST.uploading' | translate
+          }}</span>
+        </div>
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <button class="btn-submit" type="submit" [disabled]="postForm.invalid || isUploading()">
+      {{ 'EDIT_POST.save' | translate }}
+    </button>
+  </form>
+</div>

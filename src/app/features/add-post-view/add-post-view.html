@@ -1,28 +1,34 @@
 <div class="add-post-container">
-  <!-- TODO ADD TRANSLATION -->
   <div class="add-post-card">
     <header class="card-header">
-      <h2>Dodaj nowe wydarzenie</h2>
-      <p>Wypełnij formularz, aby opublikować nowy post.</p>
+      <h2>{{ 'ADD_POST.header-title' | translate }}</h2>
+      <p>{{ 'ADD_POST.header-desc' | translate }}</p>
     </header>
 
     <form [formGroup]="postForm" (ngSubmit)="onSubmit()" class="post-form">
       <div class="form-group">
-        <label for="title">Tytuł wydarzenia</label>
-        <input id="title" type="text" formControlName="title" placeholder="Wpisz tytuł..." />
+        <label for="title">{{ 'ADD_POST.form-title' | translate }}</label>
+        <input
+          id="title"
+          type="text"
+          formControlName="title"
+          [placeholder]="'ADD_POST.form-title-placeholder' | translate"
+        />
         <span
           class="error"
           *ngIf="postForm.get('title')?.invalid && postForm.get('title')?.touched"
         >
-          Tytuł jest wymagany (3-200 znaków).
+          {{ 'ADD_POST.form-title-error' | translate }}
         </span>
       </div>
 
       <div class="form-row">
         <div class="form-group half">
-          <label for="categoryId">Kategoria</label>
+          <label for="categoryId">{{ 'ADD_POST.form-category' | translate }}</label>
           <select id="categoryId" formControlName="categoryId">
-            <option value="" disabled selected>Wybierz kategorię</option>
+            <option value="" disabled selected>
+              {{ 'ADD_POST.form-category-placeholder' | translate }}
+            </option>
             <option *ngFor="let category of categories$ | async" [value]="category.id">
               {{ category.name }}
             </option>
@@ -31,48 +37,48 @@
             class="error"
             *ngIf="postForm.get('categoryId')?.invalid && postForm.get('categoryId')?.touched"
           >
-            Kategoria jest wymagana.
+            {{ 'ADD_POST.form-category-error' | translate }}
           </span>
         </div>
 
         <div class="form-group half">
-          <label for="type">Typ wydarzenia</label>
+          <label for="type">{{ 'ADD_POST.form-type' | translate }}</label>
           <select id="type" formControlName="type">
-            <option value="ONLINE">Online</option>
-            <option value="OFFLINE">Offline</option>
+            <option value="ONLINE">{{ 'ADD_POST.form-type-online' | translate }}</option>
+            <option value="OFFLINE">{{ 'ADD_POST.form-type-offline' | translate }}</option>
           </select>
         </div>
       </div>
 
       <div class="form-group">
-        <label for="startsAt">Data i godzina rozpoczęcia</label>
+        <label for="startsAt">{{ 'ADD_POST.form-date' | translate }}</label>
         <input id="startsAt" type="datetime-local" formControlName="startsAt" />
         <span
           class="error"
           *ngIf="postForm.get('startsAt')?.invalid && postForm.get('startsAt')?.touched"
         >
-          Data wydarzenia jest wymagana.
+          {{ 'ADD_POST.form-date-error' | translate }}
         </span>
       </div>
 
       <div class="form-group">
-        <label for="description">Opis wydarzenia</label>
+        <label for="description">{{ 'ADD_POST.form-desc' | translate }}</label>
         <textarea
           id="description"
           formControlName="description"
           rows="5"
-          placeholder="Opisz swoje wydarzenie..."
+          [placeholder]="'ADD_POST.form-desc-placeholder' | translate"
         ></textarea>
         <span
           class="error"
           *ngIf="postForm.get('description')?.invalid && postForm.get('description')?.touched"
         >
-          Opis jest wymagany (do 2000 znaków).
+          {{ 'ADD_POST.form-desc-error' | translate }}
         </span>
       </div>
 
       <div class="form-group media-upload-group">
-        <label for="mediaUploadBtn">Zdjęcia</label>
+        <label for="mediaUploadBtn">{{ 'ADD_POST.form-media' | translate }}</label>
         <button
           type="button"
           id="mediaUploadBtn"
@@ -95,7 +101,7 @@
               <circle cx="8.5" cy="8.5" r="1.5"></circle>
               <polyline points="21 15 16 10 5 21"></polyline>
             </svg>
-            <span>Kliknij, aby dodać zdjęcia</span>
+            <span>{{ 'ADD_POST.form-media-click' | translate }}</span>
           </div>
         </button>
         <input
@@ -118,7 +124,7 @@
               class="remove-btn"
               (click)="removeMedia(i)"
               *ngIf="!preview.isUploading"
-              title="Usuń zdjęcie"
+              [title]="'ADD_POST.form-media-remove' | translate"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -141,7 +147,11 @@
 
       <div class="form-actions">
         <button type="submit" class="submit-btn" [disabled]="postForm.invalid || isSubmitting">
-          {{ isSubmitting ? 'Zapisywanie...' : 'Opublikuj wydarzenie' }}
+          {{
+            isSubmitting
+              ? ('ADD_POST.submit-saving' | translate)
+              : ('ADD_POST.submit-btn' | translate)
+          }}
         </button>
       </div>
     </form>
