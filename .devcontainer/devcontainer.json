@@ -3,6 +3,7 @@
     "dockerComposeFile": "docker-compose.yml",
     "service": "devcontainer",
     "workspaceFolder": "/workspace",
+    "initializeCommand": "docker network inspect coolture-core_devnet || docker network create coolture-core_devnet",
     "forwardPorts": [4200, 4000],
     "portsAttributes": {
         "4200": {

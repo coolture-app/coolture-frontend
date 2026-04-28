@@ -1,0 +1,16 @@
+@use '_mixin' as *;
+
+.button-plain {
+  background-color: transparent;
+  cursor: pointer;
+  border: none;
+  font-size: var(--text-sm);
+}
+
+.button-plain-accent {
+  border: none;
+  background-color: transparent;
+  color: var(--color-accent);
+  cursor: pointer;
+  text-align: center;
+}

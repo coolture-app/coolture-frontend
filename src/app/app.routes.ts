@@ -9,6 +9,8 @@ import { DiscoverView } from './features/discover-view/discover-view';
 import { ApiTestView } from './features/api-test-view/api-test-view';
 import { UserProfileView } from './features/my-profile-view/my-profile-view';
 import { authGuard } from './core/auth/auth.guard';
+import { EditPostView } from './features/edit-post-view/edit-post-view';
+import { MapCallendarView } from './features/map-callendar-view/map-callendar-view';
 
 export const routes: Routes = [
   {
@@ -71,6 +73,21 @@ export const routes: Routes = [
     title: () => {
       const translate = inject(TranslateService);
       return translate.get('DISCOVER.title');
+    path: 'editPost/:id',
+    component: EditPostView,
+    canActivate: [authGuard],
+    title: () => {
+      const translate = inject(TranslateService);
+      return translate.get('EDIT_POST.title');
+    },
+  },
+  {
+    path: 'mapCalendar',
+    component: MapCallendarView,
+    canActivate: [authGuard],
+    title: () => {
+      const translate = inject(TranslateService);
+      return translate.get('MAP_CALLENDAR.title');
     },
   },
   {
@@ -79,6 +96,7 @@ export const routes: Routes = [
     canActivate: [authGuard],
     title: 'API Test Runner',
   },
+  // ** WILDCARD must be on the bottom of the router!
   {
     path: '**',
     component: NotFoundView,

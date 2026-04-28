@@ -1,15 +1,35 @@
 <div class="post">
   @if (data) {
     <div class="post__header">
-      <button
-        class="post__report"
-        (click)="viewPostPage(false)"
-        (keydown.enter)="viewPostPage(false)"
-        role="button"
-        tabindex="0"
-      >
-        !
-      </button>
+      <div class="left">
+        <button
+          class="post__report"
+          (click)="viewPostPage(false)"
+          (keydown.enter)="viewPostPage(false)"
+          role="button"
+          tabindex="0"
+        >
+          !
+        </button>
+      </div>
+      @if (isMyPost()) {
+        <div class="right">
+          <button class="editPost button-plain" (click)="editPost()">
+            {{ 'POST.edit' | translate }}
+          </button>
+          <button class="deletePost button-plain" (click)="openModal()">
+            {{ 'POST.delete' | translate }}
+          </button>
+        </div>
+        <app-modal-window
+          #myModal
+          modalType="YESNO"
+          [title]="'POST.modal-delete-title' | translate"
+          [text]="'POST.modal-delete-body' | translate"
+          (modalAction)="handleModalResponse($event)"
+        >
+        </app-modal-window>
+      }
     </div>
     <h3 class="post__title">{{ data.title }}</h3>
     <div class="post__meta">
@@ -53,7 +73,7 @@
       <div class="post__photos" [class]="'count-' + (photos.length > 3 ? 'more' : photos.length)">
         @for (photo of photos.slice(0, 3); track $index) {
           <div class="post__photo-item">
-            <img [src]="photo" alt="Zdjęcie z wydarzenia" />
+            <img [src]="photo" [alt]="'POST.photo-alt' | translate" />
 
             @if ($index === 2 && photos.length > 3) {
               <button

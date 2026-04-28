@@ -4,6 +4,11 @@ import { firstValueFrom } from 'rxjs';
 
 import { AuthService } from '../../services/auth/auth.service';
 import { ApiUrlService } from '../../services/api-url.service';
+import { Component, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { map } from 'rxjs';
 
 @Component({
   selector: 'app-navbar',
