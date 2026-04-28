@@ -95,7 +95,8 @@
     "newly-added": "Newly added photo (unsaved)",
     "add-new-photo": "Add new photo:",
     "uploading": "Uploading photo...",
-    "save": "Save event changes"
+    "save": "Save event changes",
+    "insert_title": "Insert title..."
   },
   "COMMENT": {
     "reply": "Reply",
@@ -104,7 +105,8 @@
     "edit-comment": "Edit comment",
     "delete-comment": "Delete comment",
     "modal-delete-title": "Do you really want to delete your comment?",
-    "modal-delete-body": "This action cannot be undone."
+    "modal-delete-body": "This action cannot be undone.",
+    "deleted-comment": "Deleted."
   },
   "MODAL": {
     "yes": "Yes",

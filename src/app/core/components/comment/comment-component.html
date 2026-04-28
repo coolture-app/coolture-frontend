@@ -5,8 +5,7 @@
       <div class="row">
         <div class="comment__username">
           @if (comment.status === 'DELETED') {
-            <!-- TODO ADD TRANSLATION -->
-            [Usunięty]
+            ['COMMENT.deleted-comment | translate']
           } @else {
             {{ comment.author.username }}
           }

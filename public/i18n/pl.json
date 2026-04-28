@@ -95,7 +95,8 @@
     "newly-added": "Nowo dodane zdjęcie (niezapisane)",
     "add-new-photo": "Dodaj nowe zdjęcie:",
     "uploading": "Trwa wrzucanie zdjęcia...",
-    "save": "Zapisz zmiany w wydarzeniu"
+    "save": "Zapisz zmiany w wydarzeniu",
+    "insert_title": "Wpisz tytuł..."
   },
   "COMMENT": {
     "reply": "Odpowiedz",
@@ -104,7 +105,8 @@
     "edit-comment": "Edytuj komentarz",
     "delete-comment": "Usuń komentarz",
     "modal-delete-title": "Czy na pewno chcesz usunąć swój komentarz?",
-    "modal-delete-body": "Tej akcji nie da się cofnąć."
+    "modal-delete-body": "Tej akcji nie da się cofnąć.",
+    "deleted-comment": "Usunięty."
   },
   "MODAL": {
     "yes": "Tak",
