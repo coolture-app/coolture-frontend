@@ -56,9 +56,6 @@
     "go-back-btn": "Wróc na stronę główną",
     "title": "Ups, zabładziliśmy..."
   },
-  "ADD_POST": {
-    "title": "Dodaj post!"
-  },
   "PROFILE": {
     "title": "Mój Profil",
     "edit": "Edytuj Profil",
@@ -90,6 +87,8 @@
     "title": "Odkrywaj",
     "searchbar": "Szukaj ludzi",
     "no-users": "Nie znaleziono uzytkownikow"
+  },
+  "ADD_POST": {
     "title": "Dodaj post!",
     "header-title": "Dodaj nowe wydarzenie",
     "header-desc": "Wypełnij formularz, aby opublikować nowy post.",

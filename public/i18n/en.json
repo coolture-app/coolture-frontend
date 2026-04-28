@@ -56,9 +56,6 @@
     "go-back-btn": "Go back to the main page",
     "title": "Ohh, we are lost..."
   },
-  "ADD_POST": {
-    "title": "Add post!"
-  },
   "PROFILE": {
     "title": "My Profile",
     "edit": "Edit Profile",
@@ -90,6 +87,8 @@
     "title": "Discover",
     "searchbar": "Search for people",
     "no-users": "No users found"
+  },
+  "ADD_POST": {
     "title": "Add post!",
     "header-title": "Add new event",
     "header-desc": "Fill the form to publish a new post.",

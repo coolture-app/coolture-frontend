@@ -1,14 +1,9 @@
-import { Component, inject, signal, PLATFORM_ID } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
 
 import { AuthService } from '../../services/auth/auth.service';
 import { ApiUrlService } from '../../services/api-url.service';
-import { Component, inject } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { Router } from '@angular/router';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { map } from 'rxjs';
 
 @Component({
   selector: 'app-navbar',
@@ -20,7 +15,6 @@ export class Navbar {
   private translate = inject(TranslateService);
   authService = inject(AuthService);
   private apiUrl = inject(ApiUrlService);
-  private platformId = inject(PLATFORM_ID);
   currentLang = signal(this.translate.currentLang);
 
   constructor() {

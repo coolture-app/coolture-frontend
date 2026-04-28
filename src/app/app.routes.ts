@@ -73,6 +73,9 @@ export const routes: Routes = [
     title: () => {
       const translate = inject(TranslateService);
       return translate.get('DISCOVER.title');
+    },
+  },
+  {
     path: 'editPost/:id',
     component: EditPostView,
     canActivate: [authGuard],
