@@ -68,7 +68,10 @@ export const routes: Routes = [
     path: 'discover',
     component: DiscoverView,
     canActivate: [authGuard],
-    title: 'Discover',
+    title: () => {
+      const translate = inject(TranslateService);
+      return translate.get('DISCOVER.title');
+    },
   },
   // ** WILDCARD must be on the bottom of the router!
   {

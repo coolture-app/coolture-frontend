@@ -81,7 +81,8 @@
     "loading": "Ładowanie..."
   },
   "DISCOVER": {
+    "title": "Odkrywaj",
     "searchbar": "Szukaj ludzi",
-    "no-users": "Nie znaleziono użytkowników"
+    "no-users": "Nie znaleziono uzytkownikow"
   }
 }

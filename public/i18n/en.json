@@ -81,6 +81,7 @@
     "loading": "Loading..."
   },
   "DISCOVER": {
+    "title": "Discover",
     "searchbar": "Search for people",
     "no-users": "No users found"
   }
