@@ -17,7 +17,7 @@
       <div class="user-card__avatar">
         <ng-icon name="heroUserCircle" />
       </div>
-      <div class="user-card__info">
+      <div class="user-card__info" [routerLink]="['/u', item.username]">
         <span class="user-card__name">{{ item.firstName }} {{ item.lastName }}</span>
         <span class="user-card__username">&#64;{{ item.username }}</span>
       </div>

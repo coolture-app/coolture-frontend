@@ -1,10 +1,10 @@
 <div class="profile">
-  @if (!isOwnProfile()) {
-    <button class="profile__back" routerLink="/profile">
-      <ng-icon name="heroArrowLeft" />
-    </button>
-  }
   <div class="profile__header">
+    @if (!isOwnProfile()) {
+      <button class="profile__back" routerLink="/profile">
+        <ng-icon name="heroArrowLeft" />
+      </button>
+    }
     <div class="profile__avatar-wrapper">
       @if (user()?.avatar; as avatar) {
         <img [src]="avatar.url" [alt]="user()?.username" class="profile__avatar" />
@@ -55,10 +55,23 @@
         </button>
       </div>
     } @else {
-      <button class="profile__edit-btn" (click)="toggleFollow()">
-        <ng-icon [name]="user()?.isFollowing ? 'heroUserMinus' : 'heroUserPlus'" />
-        {{ (user()?.isFollowing ? 'PROFILE.unfollow' : 'PROFILE.follow') | translate }}
-      </button>
+      <div class="profile__actions">
+        <button class="profile__edit-btn" (click)="toggleFollow()">
+          <ng-icon [name]="user()?.isFollowing ? 'heroUserMinus' : 'heroUserPlus'" />
+          {{ (user()?.isFollowing ? 'PROFILE.unfollow' : 'PROFILE.follow') | translate }}
+        </button>
+        @if (user()?.isBlocked) {
+          <button class="profile__edit-btn" (click)="onBlock()">
+            <ng-icon name="heroNoSymbol" />
+            {{ 'PROFILE.unblock' | translate }}
+          </button>
+        } @else {
+          <button class="profile__edit-btn profile__edit-btn--danger" (click)="onBlock()">
+            <ng-icon name="heroNoSymbol" />
+            {{ 'PROFILE.block' | translate }}
+          </button>
+        }
+      </div>
     }
   </div>
 

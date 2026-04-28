@@ -150,7 +150,9 @@ export class UserProfileView implements OnInit {
       const updated = await firstValueFrom(this.usersService.updateProfile(userValue.id, payload));
       if (updated) {
         this.authService.currentUser.set(updated);
+        this.user.set(updated);
         this.isEditing.set(false);
+        this.editForm.patchValue({ bio: updated.bio ?? '' });
       }
     } catch (err) {
       console.error('Error updating profile', err);
@@ -174,6 +176,26 @@ export class UserProfileView implements OnInit {
       }
     } catch (err) {
       console.error('Error toggling follow', err);
+    }
+  }
+
+  async onBlock() {
+    const u = this.user();
+    if (!u || this.isOwnProfile()) return;
+
+    const isCurrentlyBlocked = u.isBlocked;
+    if (!confirm(isCurrentlyBlocked ? 'Unblock this user?' : 'Block this user?')) return;
+
+    try {
+      if (isCurrentlyBlocked) {
+        await firstValueFrom(this.relationsService.unblock(u.id));
+        this.user.set({ ...u, isBlocked: false });
+      } else {
+        await firstValueFrom(this.relationsService.block(u.id));
+        this.user.set({ ...u, isBlocked: true });
+      }
+    } catch (err) {
+      console.error('Error blocking user', err);
     }
   }
 

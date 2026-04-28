@@ -1,5 +1,6 @@
 import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
 import {
   Subject,
   debounceTime,
@@ -21,7 +22,7 @@ import { PaginatedResponse } from '../../core/models/common/paginated-response.m
 
 @Component({
   selector: 'app-discover-view',
-  imports: [TranslatePipe, NgIcon, ReactiveFormsModule],
+  imports: [TranslatePipe, NgIcon, ReactiveFormsModule, RouterModule],
   viewProviders: [provideIcons({ heroMagnifyingGlass })],
   templateUrl: './discover-view.html',
   styleUrl: './discover-view.scss',
