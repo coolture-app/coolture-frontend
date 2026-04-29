@@ -81,8 +81,8 @@ export class MainPage implements OnInit {
               .map((t: string) => t.trim())
               .filter(Boolean),
           }),
-          ...(filters?.startsFrom && { startsFrom: filters.startsFrom }),
-          ...(filters?.startsTo && { startsTo: filters.startsTo }),
+          ...(filters?.startsFrom && { startsFrom: new Date(filters.startsFrom).toISOString() }),
+          ...(filters?.startsTo && { startsFrom: new Date(filters.startsTo).toISOString() }),
           ...(filters?.visibility && { visibility: filters.visibility as PostVisibility }),
           ...(filters?.status && { status: filters.status as PostStatus }),
         };
