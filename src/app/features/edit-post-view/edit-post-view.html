@@ -47,6 +47,65 @@
       ></textarea>
     </div>
 
+    @if (postForm.get('type')?.value === 'OFFLINE') {
+      <div class="location-section" formGroupName="location">
+        <h3>{{ 'EDIT_POST.location-title' | translate }}</h3>
+
+        <div class="location-row">
+          <div class="form-group">
+            <label for="countryCode">{{ 'EDIT_POST.location-country' | translate }}</label>
+            <select id="countryCode" formControlName="countryCode">
+              <option value="" disabled>{{ 'EDIT_POST.location-country-placeholder' | translate }}</option>
+              @for (country of countryCodes(); track country.code) {
+                <option [value]="country.code">{{ country.code }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="city">{{ 'EDIT_POST.location-city' | translate }}</label>
+            <input id="city" type="text" formControlName="city" />
+          </div>
+        </div>
+
+        <div class="location-row">
+          <div class="form-group">
+            <label for="postalCode">{{ 'EDIT_POST.location-postal-code' | translate }}</label>
+            <input id="postalCode" type="text" formControlName="postalCode" />
+          </div>
+
+          <div class="form-group">
+            <label for="street">{{ 'EDIT_POST.location-street' | translate }}</label>
+            <input id="street" type="text" formControlName="street" />
+          </div>
+        </div>
+
+        <div class="location-row">
+          <div class="form-group">
+            <label for="buildingNum">{{ 'EDIT_POST.location-building-num' | translate }}</label>
+            <input id="buildingNum" type="text" formControlName="buildingNum" />
+          </div>
+
+          <div class="form-group">
+            <label for="venueName">{{ 'EDIT_POST.location-venue-name' | translate }}</label>
+            <input id="venueName" type="text" formControlName="venueName" />
+          </div>
+        </div>
+
+        <div class="location-row" formGroupName="coordinates">
+          <div class="form-group">
+            <label for="latitude">{{ 'EDIT_POST.location-latitude' | translate }}</label>
+            <input id="latitude" type="number" step="any" formControlName="latitude" />
+          </div>
+
+          <div class="form-group">
+            <label for="longitude">{{ 'EDIT_POST.location-longitude' | translate }}</label>
+            <input id="longitude" type="number" step="any" formControlName="longitude" />
+          </div>
+        </div>
+      </div>
+    }
+
     <hr class="divider" />
 
     <div class="media-section">

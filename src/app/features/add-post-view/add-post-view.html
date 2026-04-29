@@ -61,6 +61,95 @@
         </span>
       </div>
 
+      <div class="location-section" *ngIf="postForm.get('type')?.value === 'OFFLINE'" formGroupName="location">
+        <h3>{{ 'ADD_POST.location-title' | translate }}</h3>
+
+        <div class="form-row">
+          <div class="form-group half">
+            <label for="countryCode">{{ 'ADD_POST.location-country' | translate }}</label>
+            <select id="countryCode" formControlName="countryCode">
+              <option value="" disabled selected>
+                {{ 'ADD_POST.location-country-placeholder' | translate }}
+              </option>
+              <option *ngFor="let country of countryCodes$ | async" [value]="country.code">
+                {{ country.code }}
+              </option>
+            </select>
+            <span
+              class="error"
+              *ngIf="postForm.get('location.countryCode')?.invalid && postForm.get('location.countryCode')?.touched"
+            >
+              {{ 'ADD_POST.location-country-error' | translate }}
+            </span>
+          </div>
+
+          <div class="form-group half">
+            <label for="city">{{ 'ADD_POST.location-city' | translate }}</label>
+            <input id="city" type="text" formControlName="city" />
+            <span
+              class="error"
+              *ngIf="postForm.get('location.city')?.invalid && postForm.get('location.city')?.touched"
+            >
+              {{ 'ADD_POST.location-city-error' | translate }}
+            </span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group half">
+            <label for="postalCode">{{ 'ADD_POST.location-postal-code' | translate }}</label>
+            <input id="postalCode" type="text" formControlName="postalCode" />
+            <span
+              class="error"
+              *ngIf="postForm.get('location.postalCode')?.invalid && postForm.get('location.postalCode')?.touched"
+            >
+              {{ 'ADD_POST.location-postal-code-error' | translate }}
+            </span>
+          </div>
+
+          <div class="form-group half">
+            <label for="street">{{ 'ADD_POST.location-street' | translate }}</label>
+            <input id="street" type="text" formControlName="street" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group half">
+            <label for="buildingNum">{{ 'ADD_POST.location-building-num' | translate }}</label>
+            <input id="buildingNum" type="text" formControlName="buildingNum" />
+          </div>
+
+          <div class="form-group half">
+            <label for="venueName">{{ 'ADD_POST.location-venue-name' | translate }}</label>
+            <input id="venueName" type="text" formControlName="venueName" />
+          </div>
+        </div>
+
+        <div class="form-row" formGroupName="coordinates">
+          <div class="form-group half">
+            <label for="latitude">{{ 'ADD_POST.location-latitude' | translate }}</label>
+            <input id="latitude" type="number" step="any" formControlName="latitude" />
+            <span
+              class="error"
+              *ngIf="postForm.get('location.coordinates.latitude')?.invalid && postForm.get('location.coordinates.latitude')?.touched"
+            >
+              {{ 'ADD_POST.location-latitude-error' | translate }}
+            </span>
+          </div>
+
+          <div class="form-group half">
+            <label for="longitude">{{ 'ADD_POST.location-longitude' | translate }}</label>
+            <input id="longitude" type="number" step="any" formControlName="longitude" />
+            <span
+              class="error"
+              *ngIf="postForm.get('location.coordinates.longitude')?.invalid && postForm.get('location.coordinates.longitude')?.touched"
+            >
+              {{ 'ADD_POST.location-longitude-error' | translate }}
+            </span>
+          </div>
+        </div>
+      </div>
+
       <div class="form-group">
         <label for="description">{{ 'ADD_POST.form-desc' | translate }}</label>
         <textarea
