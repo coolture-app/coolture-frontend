@@ -10,7 +10,7 @@ import { ApiTestView } from './features/api-test-view/api-test-view';
 import { UserProfileView } from './features/my-profile-view/my-profile-view';
 import { authGuard } from './core/auth/auth.guard';
 import { EditPostView } from './features/edit-post-view/edit-post-view';
-import { MapCallendarView } from './features/map-callendar-view/map-callendar-view';
+import { MyEventsView } from './features/my-events-view/my-events-view';
 
 export const routes: Routes = [
   {
@@ -85,12 +85,12 @@ export const routes: Routes = [
     },
   },
   {
-    path: 'mapCalendar',
-    component: MapCallendarView,
+    path: 'myEvents',
+    component: MyEventsView,
     canActivate: [authGuard],
     title: () => {
       const translate = inject(TranslateService);
-      return translate.get('MAP_CALLENDAR.title');
+      return translate.get('MY_EVENTS.title');
     },
   },
   {

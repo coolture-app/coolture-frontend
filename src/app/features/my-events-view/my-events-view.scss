@@ -1,0 +1,49 @@
+@use '_mixin' as *;
+
+.page {
+  padding: var(--space-md);
+}
+
+.my-events {
+  max-width: var(--container-max);
+  margin: 0 auto;
+
+  &__title {
+    font-size: var(--text-xl);
+    font-weight: 600;
+    margin-bottom: var(--space-md);
+  }
+
+  &__filters {
+    display: flex;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-lg);
+    flex-wrap: wrap;
+  }
+
+  &__filter {
+    @include button-ghost;
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+
+    &--active {
+      background: var(--color-accent);
+      color: white;
+    }
+  }
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  &__empty {
+    @include center-flex;
+    padding: var(--space-3xl) var(--space-md);
+    color: var(--color-text-tertiary);
+    font-size: var(--text-sm);
+    text-align: center;
+  }
+}

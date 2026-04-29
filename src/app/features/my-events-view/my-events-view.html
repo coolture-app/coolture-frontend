@@ -1,0 +1,41 @@
+<div class="my-events">
+  <h1 class="my-events__title">{{ 'MY_EVENTS.title' | translate }}</h1>
+
+  <div class="my-events__filters">
+    <button
+      class="my-events__filter"
+      [class.my-events__filter--active]="selectedFilter() === 'all'"
+      (click)="setFilter('all')"
+    >
+      All
+    </button>
+    <button
+      class="my-events__filter"
+      [class.my-events__filter--active]="selectedFilter() === 'interested'"
+      (click)="setFilter('interested')"
+    >
+      {{ 'MY_EVENTS.interested' | translate }}
+    </button>
+    <button
+      class="my-events__filter"
+      [class.my-events__filter--active]="selectedFilter() === 'takes_part'"
+      (click)="setFilter('takes_part')"
+    >
+      {{ 'MY_EVENTS.takes_part' | translate }}
+    </button>
+  </div>
+
+  <div class="my-events__list">
+    @if (posts().items.length === 0) {
+      <p class="my-events__empty">{{ 'MY_EVENTS.no-events' | translate }}</p>
+    } @else {
+      @for (post of posts().items; track post.id) {
+        <app-post-component
+          [data]="post"
+          [isFullView]="false"
+          (deleteRequest)="removeChild($event)"
+        />
+      }
+    }
+  </div>
+</div>

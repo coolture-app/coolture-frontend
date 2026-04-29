@@ -59,7 +59,7 @@
   "FOOTER": {
     "main-page": "Home",
     "friends": "Find friends",
-    "map-callendar": "Calendar",
+    "my-events": "My Events",
     "my-profile": "Profile"
   },
   "NAVBAR": {
@@ -173,5 +173,11 @@
     "yes": "Yes",
     "no": "No",
     "ok": "Okay"
+  },
+  "MY_EVENTS": {
+    "title": "My Events",
+    "no-events": "You don't have any events yet... Sad face.",
+    "interested": "Interested",
+    "takes_part": "Participating"
   }
 }
