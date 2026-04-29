@@ -53,6 +53,7 @@ export class PostComponent implements OnInit {
 
   @Input() data!: PostCard | PostDetail;
   @Input() isFullView!: boolean;
+  @Input() counter?: number;
 
   @Output() deleteRequest = new EventEmitter<string>();
 
@@ -88,12 +89,12 @@ export class PostComponent implements OnInit {
     return [];
   }
 
-  formatNumber(value: number): string {
+  formatNumber(value: number, suffixK: string, suffixM: string): string {
     if (value >= 1000000) {
-      return (value / 1000000).toFixed(1) + 'mln';
+      return (value / 1000000).toFixed(1) + suffixM;
     }
     if (value >= 1000) {
-      return (value / 1000).toFixed(1) + 'tyś';
+      return (value / 1000).toFixed(1) + suffixK;
     }
     return value.toString();
   }
@@ -184,5 +185,17 @@ export class PostComponent implements OnInit {
 
   openModal(): void {
     this.myModal?.open();
+  }
+
+  goToFullPost(): void {
+    const currentUrl = this.router.url;
+    const regex = /^\/post\/[a-zA-Z0-9_-]+$/;
+    if (!regex.test(currentUrl)) {
+      this.router.navigate([`/post/${this.data.id}`]);
+    }
+  }
+
+  goToUserProfile(): void {
+    this.router.navigate([`/u/${this.data.author.username}`]);
   }
 }

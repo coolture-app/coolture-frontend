@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { PostService } from '../../core/services/post/post.service';
@@ -30,6 +30,7 @@ export class AddPostView {
   private dictionaryService = inject(DictionaryService);
   private fb = inject(FormBuilder);
   private router = inject(Router);
+  private cdr = inject(ChangeDetectorRef);
 
   categories$: Observable<EventCategory[]> = this.dictionaryService.getEventCategories();
   mediaPreviews: MediaPreview[] = [];
@@ -74,9 +75,11 @@ export class AddPostView {
 
         preview.mediaId = initRes.mediaId;
         preview.isUploading = false;
+        this.cdr.detectChanges();
       } catch (err) {
         console.error('Error while loading file', file.name, err);
         this.mediaPreviews = this.mediaPreviews.filter((p) => p !== preview);
+        this.cdr.detectChanges();
       }
     }
     input.value = '';

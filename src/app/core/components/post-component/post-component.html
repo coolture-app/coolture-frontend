@@ -31,11 +31,27 @@
         </app-modal-window>
       }
     </div>
-    <h3 class="post__title">{{ data.title }}</h3>
+    <h3
+      class="post__title"
+      (click)="goToFullPost()"
+      (keydown.enter)="goToFullPost()"
+      role="link"
+      tabindex="0"
+    >
+      {{ data.title }}
+    </h3>
     <div class="post__meta">
       <!-- <img [src]="avatar" alt="" class="post__avatar" /> -->
       <div class="post__author">
-        <span class="post__username">{{ data.author.username }}</span>
+        <span
+          class="post__username"
+          (click)="goToUserProfile()"
+          (keydown.enter)="goToUserProfile()"
+          role="link"
+          tabindex="0"
+        >
+          {{ data.author.username }}
+        </span>
         <span class="post__date">{{ data.createdAt | date: 'short' }}</span>
         <span class="post__date">{{ data.startsAt | date: 'short' }}</span>
       </div>
@@ -97,7 +113,13 @@
         role="button"
         tabindex="3"
       >
-        <ng-icon name="heroHandThumbUp" />{{ formatNumber(data.positiveReactionCount) }}
+        <ng-icon name="heroHandThumbUp" />{{
+          formatNumber(
+            data.positiveReactionCount,
+            'POST.thousand' | translate,
+            'POST.million' | translate
+          )
+        }}
       </div>
       <div
         class="post__social-btn"
@@ -107,7 +129,13 @@
         role="button"
         tabindex="4"
       >
-        <ng-icon name="heroStar" />{{ formatNumber(data.participantCount) }}
+        <ng-icon name="heroStar" />{{
+          formatNumber(
+            data.participantCount,
+            'POST.thousand' | translate,
+            'POST.million' | translate
+          )
+        }}
       </div>
       <div
         class="post__social-btn"
@@ -116,7 +144,13 @@
         role="button"
         tabindex="5"
       >
-        <ng-icon name="heroChatBubbleLeftEllipsis" />{{ formatNumber(data.commentsCount) }}
+        <ng-icon name="heroChatBubbleLeftEllipsis" />{{
+          formatNumber(
+            counter !== undefined ? counter : data.commentsCount || 0,
+            'POST.thousand' | translate,
+            'POST.million' | translate
+          )
+        }}
       </div>
       <div class="post__social-btn"><ng-icon name="heroShare" />{{ 'POST.share' | translate }}</div>
     </div>
