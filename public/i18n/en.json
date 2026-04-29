@@ -27,7 +27,9 @@
     "edit": "Edit post",
     "delete": "Delete post",
     "modal-delete-title": "Do you really want to delete your post?",
-    "modal-delete-body": "This action cannot be undone."
+    "modal-delete-body": "This action cannot be undone.",
+    "thousand": "k",
+    "million": "mil"
   },
   "FOOTER": {
     "main-page": "Home",

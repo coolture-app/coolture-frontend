@@ -126,6 +126,13 @@ export class FullPostView implements OnInit, AfterViewInit {
             this.parentUsername = null;
             this.checkIfResize();
             this.commentInput()?.nativeElement.blur();
+            const currentPost = this.post();
+            if (currentPost) {
+              this.postService.setActivePost({
+                ...currentPost,
+                commentsCount: (currentPost.commentsCount || 0) + 1,
+              });
+            }
           },
           error: (err) => console.error(err),
         });
@@ -133,12 +140,18 @@ export class FullPostView implements OnInit, AfterViewInit {
   }
 
   onCommentDeleted(deletedId: string): void {
-    this.comments.update((comments) => comments.filter((c) => c.id !== deletedId));
+    this.comments.update((comments) => {
+      const comment = comments.find((c) => c.id === deletedId);
+      if (comment && comment.repliesCount > 0) {
+        return comments.map((c) => (c.id === deletedId ? { ...c, status: 'DELETED' } : c));
+      }
+      return comments.filter((c) => c.id !== deletedId);
+    });
     const currentPost = this.post();
     if (currentPost) {
       this.postService.setActivePost({
         ...currentPost,
-        commentsCount: Math.max(0, currentPost.commentsCount - 1),
+        commentsCount: Math.max(0, (currentPost.commentsCount || 0) - 1),
       });
     }
   }

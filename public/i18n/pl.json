@@ -27,7 +27,9 @@
     "edit": "Edytuj post",
     "delete": "Usuń post",
     "modal-delete-title": "Czy na pewno chcesz usunąć swój post?",
-    "modal-delete-body": "Tej akcji nie da się cofnąć."
+    "modal-delete-body": "Tej akcji nie da się cofnąć.",
+    "thousand": "tyś",
+    "million": "mil"
   },
   "FOOTER": {
     "main-page": "Strona główna",

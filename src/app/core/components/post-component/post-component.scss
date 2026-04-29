@@ -48,6 +48,7 @@
   color: var(--color-text);
   text-align: center;
   padding: 0 var(--space-md) var(--space-sm);
+  cursor: pointer;
 }
 
 .post__meta {
@@ -70,6 +71,7 @@
   font-size: var(--text-sm);
   font-weight: var(--font-medium);
   color: var(--color-text);
+  cursor: pointer;
 }
 
 .post__date {

@@ -5,7 +5,7 @@
       <div class="row">
         <div class="comment__username">
           @if (comment.status === 'DELETED') {
-            ['COMMENT.deleted-comment | translate']
+            {{ 'COMMENT.deleted-comment' | translate }}
           } @else {
             {{ comment.author.username }}
           }
@@ -44,19 +44,21 @@
         }
       </div>
       <div class="comment__text">
-        @if (isEditing) {
-          <textarea
-            #editInput
-            class="body-edit"
-            [value]="comment.content"
-            (blur)="saveEdit(editInput.value)"
-            (keydown.enter)="saveEdit(editInput.value)"
-          >
-          </textarea>
-        } @else {
-          <span class="body">
-            {{ comment.content }}
-          </span>
+        @if (comment.status !== 'DELETED') {
+          @if (isEditing) {
+            <textarea
+              #editInput
+              class="body-edit"
+              [value]="comment.content"
+              (blur)="saveEdit(editInput.value)"
+              (keydown.enter)="saveEdit(editInput.value)"
+            >
+            </textarea>
+          } @else {
+            <span class="body">
+              {{ comment.content }}
+            </span>
+          }
         }
       </div>
     </div>

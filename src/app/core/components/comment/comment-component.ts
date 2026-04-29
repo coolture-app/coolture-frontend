@@ -153,7 +153,14 @@ export class CommentComponent implements OnInit {
   }
 
   onCommentDeleted(deletedId: string): void {
-    this.replies.update((r) => r.filter((c) => c.id !== deletedId));
+    this.replies.update((r) => {
+      const comment = r.find((c) => c.id === deletedId);
+      if (comment && comment.repliesCount > 0) {
+        return r.map((c) => (c.id === deletedId ? { ...c, status: 'DELETED' } : c));
+      }
+      return r.filter((c) => c.id !== deletedId);
+    });
     this.comment.repliesCount = Math.max(0, this.comment.repliesCount - 1);
+    this.commentDeleted.emit(deletedId);
   }
 }
