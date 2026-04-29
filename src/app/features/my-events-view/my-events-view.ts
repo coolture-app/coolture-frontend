@@ -1,9 +1,9 @@
 import { Component, inject, signal, OnInit, DestroyRef } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
-import { RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-import { PostComponent } from '../../core/components/post-component/post-component';
+import { EventCard } from '../../core/components/event-card/event-card';
 import { PostCard } from '../../core/models/posts/post-card.model';
 import { PostFilterParams } from '../../core/models/posts/post-filter-params.model';
 import { PostService } from '../../core/services/post/post.service';
@@ -12,12 +12,13 @@ import { ParticipationType } from '../../core/models/common/enums';
 
 @Component({
   selector: 'app-my-events-view',
-  imports: [TranslatePipe, PostComponent, RouterLink],
+  imports: [TranslatePipe, EventCard],
   templateUrl: './my-events-view.html',
   styleUrl: './my-events-view.scss',
 })
 export class MyEventsView implements OnInit {
   private postService = inject(PostService);
+  private router = inject(Router);
   private destroyRef = inject(DestroyRef);
 
   selectedFilter = signal<ParticipationType | 'all'>('all');
@@ -51,10 +52,7 @@ export class MyEventsView implements OnInit {
     this.loadPosts();
   }
 
-  removeChild(idToRemove: string): void {
-    this.posts.update((currentData) => ({
-      ...currentData,
-      items: currentData.items.filter((post) => String(post.id) !== String(idToRemove)),
-    }));
+  goToPost(id: string): void {
+    this.router.navigate(['/post', id]);
   }
 }

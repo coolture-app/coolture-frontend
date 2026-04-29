@@ -43,7 +43,7 @@
     "share": "Udostępnij",
     "show-more": "Wyświetl więcej",
     "show-less": "Wyświetl mniej",
-    "show-all-photos": "Zobacz resztę zdjęć",
+    "show-all-photos": "Zobacz resztę",
     "loading": "Ładowanie posta...",
     "likes": "polubień",
     "participating": "uczestników",
@@ -54,7 +54,9 @@
     "modal-delete-title": "Czy na pewno chcesz usunąć swój post?",
     "modal-delete-body": "Tej akcji nie da się cofnąć.",
     "thousand": "tyś",
-    "million": "mil"
+    "million": "mil",
+    "interested": "Oznacz jako zainteresowany",
+    "takes_part": "Oznacz jako uczestniczę"
   },
   "FOOTER": {
     "main-page": "Strona główna",
@@ -169,6 +171,9 @@
     "modal-delete-body": "Tej akcji nie da się cofnąć.",
     "deleted-comment": "Usunięty."
   },
+  "EVENT_CARD": {
+    "by": "przez"
+  },
   "MODAL": {
     "yes": "Tak",
     "no": "Nie",
@@ -177,6 +182,7 @@
   "MY_EVENTS": {
     "title": "Moje Wydarzenia",
     "no-events": "Nie masz jeszcze żadnych wydarzeń... Smutno.",
+    "all": "Wszystkie",
     "interested": "Zainteresowany",
     "takes_part": "Uczestniczę"
   }

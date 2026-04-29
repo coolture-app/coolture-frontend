@@ -41,7 +41,6 @@
       {{ data.title }}
     </h3>
     <div class="post__meta">
-      <!-- <img [src]="avatar" alt="" class="post__avatar" /> -->
       <div class="post__author">
         <span
           class="post__username"
@@ -105,54 +104,68 @@
       </div>
     }
     <div class="post__social">
-      <div
-        class="post__social-btn"
-        [class.liked]="isLiked()"
-        (click)="likePost()"
-        (keydown.enter)="likePost()"
-        role="button"
-        tabindex="3"
-      >
-        <ng-icon name="heroHandThumbUp" />{{
-          formatNumber(
-            data.positiveReactionCount,
-            'POST.thousand' | translate,
-            'POST.million' | translate
-          )
-        }}
+      <div class="post__social-left">
+        <div
+          class="post__social-btn"
+          [class.liked]="isLiked()"
+          (click)="likePost()"
+          (keydown.enter)="likePost()"
+          role="button"
+          tabindex="3"
+        >
+          <ng-icon name="heroHandThumbUp" />
+          <span class="post__social-count">{{
+            formatNumber(
+              data.positiveReactionCount,
+              'POST.thousand' | translate,
+              'POST.million' | translate
+            )
+          }}</span>
+        </div>
+        <div
+          class="post__social-btn"
+          (click)="viewPostPage(true)"
+          (keydown.enter)="viewPostPage(true)"
+          role="button"
+          tabindex="4"
+        >
+          <ng-icon name="heroChatBubbleLeftEllipsis" />
+          <span class="post__social-count">{{
+            formatNumber(
+              counter !== undefined ? counter : data.commentsCount || 0,
+              'POST.thousand' | translate,
+              'POST.million' | translate
+            )
+          }}</span>
+        </div>
+        <div class="post__social-btn">
+          <ng-icon name="heroShare" />
+        </div>
       </div>
-      <div
-        class="post__social-btn"
-        [class.participating]="isParticipating()"
-        (click)="participatePost()"
-        (keydown.enter)="participatePost()"
-        role="button"
-        tabindex="4"
-      >
-        <ng-icon name="heroStar" />{{
-          formatNumber(
-            data.participantCount,
-            'POST.thousand' | translate,
-            'POST.million' | translate
-          )
-        }}
+      <div class="post__social-right">
+        <div
+          class="post__social-btn"
+          [class.interested]="isInterested()"
+          (click)="setInterested()"
+          (keydown.enter)="setInterested()"
+          role="button"
+          tabindex="5"
+          [title]="'POST.interested' | translate"
+        >
+          <ng-icon name="heroStar" />
+        </div>
+        <div
+          class="post__social-btn"
+          [class.takes-part]="isTakesPart()"
+          (click)="setTakesPart()"
+          (keydown.enter)="setTakesPart()"
+          role="button"
+          tabindex="6"
+          [title]="'POST.takes_part' | translate"
+        >
+          <ng-icon name="heroStarSolid" />
+        </div>
       </div>
-      <div
-        class="post__social-btn"
-        (click)="viewPostPage(true)"
-        (keydown.enter)="viewPostPage(true)"
-        role="button"
-        tabindex="5"
-      >
-        <ng-icon name="heroChatBubbleLeftEllipsis" />{{
-          formatNumber(
-            counter !== undefined ? counter : data.commentsCount || 0,
-            'POST.thousand' | translate,
-            'POST.million' | translate
-          )
-        }}
-      </div>
-      <div class="post__social-btn"><ng-icon name="heroShare" />{{ 'POST.share' | translate }}</div>
     </div>
   } @else {
     <div class="post__loading">{{ 'POST.loading' | translate }}</div>
