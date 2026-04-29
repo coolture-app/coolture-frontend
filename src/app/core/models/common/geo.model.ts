@@ -3,8 +3,7 @@ export interface GeoPoint {
   longitude: number;
 }
 
-export interface EventLocation {
-  id: string | null;
+export interface EventLocationRequest {
   countryCode: string;
   venueName: string | null;
   buildingNum: string | null;
@@ -12,4 +11,9 @@ export interface EventLocation {
   postalCode: string;
   city: string;
   coordinates: GeoPoint;
+}
+
+export interface EventLocation extends EventLocationRequest {
+  id: string;
+  createdAt: string;
 }

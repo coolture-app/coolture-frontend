@@ -44,6 +44,13 @@ export class PostService {
     if (filters.longitude) params = params.set('longitude', filters.longitude);
     if (filters.radiusKm) params = params.set('radiusKm', filters.radiusKm);
 
+    if (filters.participationTypes) {
+      filters.participationTypes.forEach((type) => {
+        params = params.append('participationTypes', type);
+      });
+    }
+    if (filters.reactionType) params = params.set('reactionType', filters.reactionType);
+
     if (filters.tags) {
       filters.tags.forEach((tag) => {
         params = params.append('tags', tag);

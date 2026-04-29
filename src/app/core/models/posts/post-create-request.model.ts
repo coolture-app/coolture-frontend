@@ -1,5 +1,5 @@
 import { PostType, PostVisibility } from '../common/enums';
-import { EventLocation } from '../common/geo.model';
+import { EventLocationRequest } from '../common/geo.model';
 
 export interface PostCreateRequest {
   categoryId: string; // UUID
@@ -11,7 +11,7 @@ export interface PostCreateRequest {
   tags?: string[];
   type: PostType;
   visibility?: PostVisibility;
-  location?: EventLocation | null;
+  location?: EventLocationRequest | null;
 
   // List of ids from S3
   mediaIds?: string[]; // Tablica UUID
