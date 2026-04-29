@@ -1,4 +1,10 @@
-import { PostType, PostStatus, PostVisibility } from '../common/enums';
+import {
+  PostType,
+  PostStatus,
+  PostVisibility,
+  ParticipationType,
+  ReactionType,
+} from '../common/enums';
 
 export interface PostFilterParams {
   cursor?: string;
@@ -15,4 +21,6 @@ export interface PostFilterParams {
   latitude?: number;
   longitude?: number;
   radiusKm?: number;
+  participationTypes?: ParticipationType[];
+  reactionType?: ReactionType;
 }

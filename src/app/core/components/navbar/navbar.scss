@@ -19,23 +19,20 @@
   justify-content: flex-end;
 }
 .navbar {
-  @include flex-between;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   height: var(--navbar-height);
   padding: 0 var(--space-md);
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-border-light);
   backdrop-filter: blur(8px);
   background: rgba(255, 255, 255, 0.9);
-}
+  position: relative;
 
-.navbar__icon {
-  @include button-icon;
-  color: var(--color-text-secondary);
-
-  svg {
-    width: 22px;
-    height: 22px;
-    fill: currentColor;
+  .navbar__actions {
+    position: absolute;
+    right: var(--space-md);
   }
 }
 
