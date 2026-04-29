@@ -46,7 +46,6 @@ export class MainPage implements OnInit {
     startsTo: new FormControl(''),
     visibility: new FormControl(''),
     status: new FormControl(''),
-    radiusKm: new FormControl(''),
   });
 
   posts = signal<PaginatedResponse<PostCard>>({
@@ -86,7 +85,6 @@ export class MainPage implements OnInit {
           ...(filters?.startsTo && { startsTo: filters.startsTo }),
           ...(filters?.visibility && { visibility: filters.visibility as PostVisibility }),
           ...(filters?.status && { status: filters.status as PostStatus }),
-          ...(filters?.radiusKm && { radiusKm: Number(filters.radiusKm) }),
         };
         this.postService.getPosts(filterParams).subscribe({
           next: (data) => this.posts.set(data),
