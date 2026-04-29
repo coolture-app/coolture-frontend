@@ -40,8 +40,6 @@ export class PostService {
     if (filters.type) params = params.set('type', filters.type);
     if (filters.startsFrom) params = params.set('startsFrom', filters.startsFrom);
     if (filters.startsTo) params = params.set('startsTo', filters.startsTo);
-    if (filters.latitude) params = params.set('latitude', filters.latitude);
-    if (filters.longitude) params = params.set('longitude', filters.longitude);
     if (filters.radiusKm) params = params.set('radiusKm', filters.radiusKm);
 
     if (filters.tags) {

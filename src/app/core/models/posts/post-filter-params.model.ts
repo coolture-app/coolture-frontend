@@ -12,7 +12,5 @@ export interface PostFilterParams {
   type?: PostType;
   startsFrom?: string; // ISO-8601
   startsTo?: string; // ISO-8601
-  latitude?: number;
-  longitude?: number;
   radiusKm?: number;
 }

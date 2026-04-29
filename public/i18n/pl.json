@@ -17,8 +17,6 @@
     "visibility": "Widoczność",
     "startsFrom": "Zaczyna się od",
     "startsTo": "Zaczyna się do",
-    "latitude": "Szerokość geograficzna",
-    "longitude": "Długość geograficzna",
     "radius": "Promień (km)",
     "allCategories": "Wszystkie kategorie",
     "allTypes": "Wszystkie typy",

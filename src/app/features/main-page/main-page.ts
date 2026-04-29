@@ -46,8 +46,6 @@ export class MainPage implements OnInit {
     startsTo: new FormControl(''),
     visibility: new FormControl(''),
     status: new FormControl(''),
-    latitude: new FormControl(''),
-    longitude: new FormControl(''),
     radiusKm: new FormControl(''),
   });
 
@@ -88,8 +86,6 @@ export class MainPage implements OnInit {
           ...(filters?.startsTo && { startsTo: filters.startsTo }),
           ...(filters?.visibility && { visibility: filters.visibility as PostVisibility }),
           ...(filters?.status && { status: filters.status as PostStatus }),
-          ...(filters?.latitude && { latitude: Number(filters.latitude) }),
-          ...(filters?.longitude && { longitude: Number(filters.longitude) }),
           ...(filters?.radiusKm && { radiusKm: Number(filters.radiusKm) }),
         };
         this.postService.getPosts(filterParams).subscribe({
