@@ -2,7 +2,7 @@ import { inject, Injectable, signal } from '@angular/core';
 import { PostModel } from '../../models/posts/post.model';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { CreatePostModel } from '../../models/posts/createPost.model';
+import { CreatePostModel, UpdatePostModel } from '../../models/posts/createPost.model';
 import { ApiUrlService } from '../api-url.service';
 
 @Injectable({
@@ -32,19 +32,11 @@ export class PostService {
     return this.http.get<PostModel>(this.apiUrl.path(`/posts/${id}`));
   }
 
-  addPost(payload: CreatePostModel, images?: File[]): Observable<PostModel> {
-    const formData = new FormData();
-    formData.append(
-      'postData',
-      new Blob([JSON.stringify(payload)], {
-        type: 'application/json',
-      }),
-    );
-    if (images) {
-      images.forEach((file) => {
-        formData.append('images', file);
-      });
-    }
-    return this.http.post<PostModel>(this.apiUrl.path('/posts'), formData);
+  addPost(payload: CreatePostModel): Observable<PostModel> {
+    return this.http.post<PostModel>(this.apiUrl.path('/posts'), payload);
+  }
+
+  updatePost(postId: string, payload: UpdatePostModel): Observable<PostModel> {
+    return this.http.patch<PostModel>(this.apiUrl.path(`/posts/${postId}`), payload);
   }
 }

@@ -33,6 +33,15 @@ export const routes: Routes = [
       return translate.get('ADD_POST.title');
     },
   },
+  {
+    path: 'post/:id/edit',
+    component: AddPostView,
+    canActivate: [authGuard],
+    title: () => {
+      const translate = inject(TranslateService);
+      return translate.get('ADD_POST.title');
+    },
+  },
   // ** WILDCARD must be on the bottom of the router!
   {
     path: '**',

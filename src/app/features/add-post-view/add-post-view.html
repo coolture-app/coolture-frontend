@@ -1,49 +1,72 @@
 <form [formGroup]="postForm" (ngSubmit)="onSubmit()">
   <div class="form-group">
+    <label for="categoryId">Kategoria (UUID):</label>
+    <input id="categoryId" type="text" formControlName="categoryId" />
+    <div class="error" *ngIf="postForm.get('categoryId')?.invalid && postForm.get('categoryId')?.touched">
+      Kategoria jest wymagana.
+    </div>
+  </div>
+
+  <div class="form-group">
     <label for="title">Tytuł:</label>
     <input id="title" type="text" formControlName="title" />
 
     <div class="error" *ngIf="postForm.get('title')?.invalid && postForm.get('title')?.touched">
-      Tytuł jest wymagany, musi mieć od 3 do 200 znaków i zawierać tylko litery, cyfry, spacje lub
-      podkreślenia.
+      Tytuł jest wymagany i nie może przekraczać 32 znaków.
     </div>
   </div>
 
   <div class="form-group">
-    <label for="authorUuid">Autor (UUID):</label>
-    <input id="authorUuid" type="text" formControlName="authorUuid" />
+    <label for="type">Typ wydarzenia:</label>
+    <select id="type" formControlName="type">
+      <option value="ONLINE">ONLINE</option>
+      <option value="OFFLINE">OFFLINE</option>
+    </select>
+  </div>
 
-    <div
-      class="error"
-      *ngIf="postForm.get('authorUuid')?.invalid && postForm.get('authorUuid')?.touched"
-    >
-      UUID autora jest wymagane.
+  <div class="form-group">
+    <label for="visibility">Widoczność:</label>
+    <select id="visibility" formControlName="visibility">
+      <option value="PUBLIC">PUBLIC</option>
+      <option value="PRIVATE">PRIVATE</option>
+      <option value="FRIENDS">FRIENDS</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label for="startsAt">Początek wydarzenia:</label>
+    <input id="startsAt" type="datetime-local" formControlName="startsAt" />
+    <div class="error" *ngIf="postForm.get('startsAt')?.invalid && postForm.get('startsAt')?.touched">
+      Data rozpoczęcia jest wymagana.
     </div>
   </div>
 
   <div class="form-group">
-    <label for="dateOfEvent">Data wydarzenia:</label>
-    <input id="dateOfEvent" type="datetime-local" formControlName="dateOfEvent" />
+    <label for="endsAt">Koniec wydarzenia:</label>
+    <input id="endsAt" type="datetime-local" formControlName="endsAt" />
+  </div>
 
-    <div
-      class="error"
-      *ngIf="postForm.get('dateOfEvent')?.invalid && postForm.get('dateOfEvent')?.touched"
-    >
-      Data wydarzenia jest wymagana.
+  <div class="form-group">
+    <label for="eventUrl">URL wydarzenia:</label>
+    <input id="eventUrl" type="url" formControlName="eventUrl" />
+    <div class="error" *ngIf="postForm.get('eventUrl')?.invalid && postForm.get('eventUrl')?.touched">
+      Podaj poprawny adres URL (np. https://example.com).
     </div>
   </div>
 
-  <!-- <div class="form-group">
-    <label for="locationUuid">Lokalizacja (UUID):</label>
-    <input id="locationUuid" type="text" formControlName="locationUuid" />
-
+  <div class="form-group">
+    <label for="tags">Tagi (oddzielone przecinkami):</label>
+    <input id="tags" type="text" formControlName="tags" />
+    <div class="error" *ngIf="postForm.get('tags')?.errors?.['maxTags'] && postForm.get('tags')?.touched">
+      Maksymalnie 10 tagów.
+    </div>
     <div
       class="error"
-      *ngIf="postForm.get('locationUuid')?.invalid && postForm.get('locationUuid')?.touched"
+      *ngIf="postForm.get('tags')?.errors?.['maxTagLength'] && postForm.get('tags')?.touched"
     >
-      UUID lokalizacji jest wymagane.
+      Każdy tag może mieć maksymalnie 32 znaki.
     </div>
-  </div> -->
+  </div>
 
   <div class="form-group">
     <label for="description">Opis:</label>
@@ -53,9 +76,81 @@
       class="error"
       *ngIf="postForm.get('description')?.invalid && postForm.get('description')?.touched"
     >
-      Opis jest wymagany i nie może przekraczać 2000 znaków.
+      Opis jest wymagany i nie może przekraczać 1024 znaków.
     </div>
   </div>
 
-  <button type="submit" [disabled]="postForm.invalid">Zapisz Post</button>
+  <div formGroupName="location" *ngIf="isOffline">
+    <h4>Lokalizacja (OFFLINE)</h4>
+
+    <div class="form-group">
+      <label for="countryCode">Kod kraju (ISO alpha-3):</label>
+      <input id="countryCode" type="text" formControlName="countryCode" />
+      <div class="error" *ngIf="postForm.get('location.countryCode')?.invalid && postForm.get('location.countryCode')?.touched">
+        Pole wymagane, dokładnie 3 wielkie litery (np. POL).
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="venueName">Nazwa miejsca:</label>
+      <input id="venueName" type="text" formControlName="venueName" />
+      <div class="error" *ngIf="postForm.get('location.venueName')?.invalid && postForm.get('location.venueName')?.touched">
+        Maksymalnie 64 znaki.
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="buildingNum">Numer budynku:</label>
+      <input id="buildingNum" type="text" formControlName="buildingNum" />
+      <div class="error" *ngIf="postForm.get('location.buildingNum')?.invalid && postForm.get('location.buildingNum')?.touched">
+        Maksymalnie 16 znaków.
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="street">Ulica:</label>
+      <input id="street" type="text" formControlName="street" />
+      <div class="error" *ngIf="postForm.get('location.street')?.invalid && postForm.get('location.street')?.touched">
+        Maksymalnie 128 znaków.
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="postalCode">Kod pocztowy:</label>
+      <input id="postalCode" type="text" formControlName="postalCode" />
+      <div class="error" *ngIf="postForm.get('location.postalCode')?.invalid && postForm.get('location.postalCode')?.touched">
+        Pole wymagane, maksymalnie 16 znaków.
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="city">Miasto:</label>
+      <input id="city" type="text" formControlName="city" />
+      <div class="error" *ngIf="postForm.get('location.city')?.invalid && postForm.get('location.city')?.touched">
+        Pole wymagane, maksymalnie 128 znaków.
+      </div>
+    </div>
+
+    <div formGroupName="coordinates">
+      <div class="form-group">
+        <label for="latitude">Szerokość geograficzna:</label>
+        <input id="latitude" type="number" formControlName="latitude" min="-90" max="90" step="any" />
+        <div class="error" *ngIf="postForm.get('location.coordinates.latitude')?.invalid && postForm.get('location.coordinates.latitude')?.touched">
+          Pole wymagane, zakres od -90 do 90.
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="longitude">Długość geograficzna:</label>
+        <input id="longitude" type="number" formControlName="longitude" min="-180" max="180" step="any" />
+        <div class="error" *ngIf="postForm.get('location.coordinates.longitude')?.invalid && postForm.get('location.coordinates.longitude')?.touched">
+          Pole wymagane, zakres od -180 do 180.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <button type="submit" [disabled]="postForm.invalid">
+    {{ editPostId ? 'Zaktualizuj post' : 'Zapisz post' }}
+  </button>
 </form>

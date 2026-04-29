@@ -1,5 +1,4 @@
 import { PostComment } from './comments.model';
-import { EventLocation } from './eventLocation.model';
 import { UserMin } from './userMin.model';
 
 export interface PostModel {
