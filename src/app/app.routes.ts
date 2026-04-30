@@ -34,10 +34,6 @@ export const routes: Routes = [
   {
     path: 'post/:id',
     component: FullPostView,
-    title: () => {
-      const translate = inject(TranslateService);
-      return translate.get('FULL_POST.title');
-    },
   },
   {
     path: 'addPost',

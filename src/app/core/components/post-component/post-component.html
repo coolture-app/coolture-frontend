@@ -59,9 +59,12 @@
           <span class="post__username">
             {{ data.author.username }}
           </span>
-          <span class="post__date">{{ data.createdAt | date: 'short' }}</span>
+          <span class="post__date">{{ data.createdAt | date: dateFormats().short }}</span>
           @if (data.startsAt) {
-            <span class="post__date">Starts: {{ data.startsAt | date: 'short' }}</span>
+            <span class="post__date"
+              >{{ 'POST.starts' | translate }}:
+              {{ data.startsAt | date: dateFormats().short }}</span
+            >
           }
         </div>
       </div>

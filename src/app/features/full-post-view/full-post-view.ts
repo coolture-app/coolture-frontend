@@ -8,6 +8,7 @@ import {
   viewChild,
   DestroyRef,
 } from '@angular/core';
+import { Title } from '@angular/platform-browser';
 import { PostComponent } from '../../core/components/post-component/post-component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommentComponent } from '../../core/components/comment/comment-component';
@@ -31,6 +32,7 @@ export class FullPostView implements OnInit, AfterViewInit {
   private postService = inject(PostService);
   private commentsService = inject(CommentsService);
   private destroyRef = inject(DestroyRef);
+  private title = inject(Title);
 
   private isScrolling = false;
   parentCommentId: string | null = null;
@@ -54,6 +56,7 @@ export class FullPostView implements OnInit, AfterViewInit {
           .subscribe({
             next: (data) => {
               this.postService.setActivePost(data);
+              this.title.setTitle(data.title);
             },
             error: (error) => console.log(error),
           });

@@ -43,11 +43,11 @@ export class EditPostView implements OnInit {
   postTypes: PostType[] = ['OFFLINE', 'ONLINE'];
 
   postForm: FormGroup = this.fb.group({
-    title: ['', Validators.required],
+    title: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(32)]],
     categoryId: ['', Validators.required],
     type: ['', Validators.required],
     startsAt: ['', Validators.required],
-    description: ['', Validators.required],
+    description: ['', [Validators.required, Validators.maxLength(1024)]],
     location: this.fb.group({
       countryCode: ['', [Validators.minLength(3), Validators.maxLength(3)]],
       venueName: ['', Validators.maxLength(64)],

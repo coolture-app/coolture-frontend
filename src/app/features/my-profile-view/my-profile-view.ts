@@ -26,6 +26,7 @@ import { UserProfile } from '../../core/models/users/user-profile.model';
 import { UserSummary } from '../../core/models/users/user-summary.model';
 import { UserProfileUpdateRequest } from '../../core/models/users/user-profile-update-request.model';
 import { FollowListComponent } from '../../core/components/follow-list/follow-list';
+import { DateFormatService } from '../../core/services/date-format/date-format.service';
 
 @Component({
   selector: 'app-user-profile-view',
@@ -62,8 +63,10 @@ export class UserProfileView implements OnInit {
   private mediaService = inject(MediaService);
   private fb = inject(FormBuilder);
   private route = inject(ActivatedRoute);
+  private dateFormatService = inject(DateFormatService);
 
   user = signal<UserProfile | null>(null);
+  readonly dateFormats = this.dateFormatService.formats;
   isOwnProfile = signal(true);
   followersCount = signal(0);
   followingCount = signal(0);

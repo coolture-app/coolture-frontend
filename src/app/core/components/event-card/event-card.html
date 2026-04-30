@@ -14,7 +14,7 @@
     </div>
   </div>
   <div class="event-card__right">
-    <span class="event-card__date">{{ post.startsAt | date: 'MMM d, HH:mm' }}</span>
+    <span class="event-card__date">{{ post.startsAt | date: dateFormats().short }}</span>
     @if (post.myParticipation === 'takes_part') {
       <span class="event-card__badge event-card__badge--going">{{
         'MY_EVENTS.takes_part' | translate

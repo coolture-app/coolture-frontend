@@ -1,7 +1,8 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
 import { PostCard } from '../../models/posts/post-card.model';
+import { DateFormatService } from '../../services/date-format/date-format.service';
 
 @Component({
   selector: 'app-event-card',
@@ -12,6 +13,9 @@ import { PostCard } from '../../models/posts/post-card.model';
 export class EventCard {
   @Input() post!: PostCard;
   @Output() cardClick = new EventEmitter<string>();
+
+  private dateFormatService = inject(DateFormatService);
+  readonly dateFormats = this.dateFormatService.formats;
 
   onClick(): void {
     this.cardClick.emit(this.post.id);

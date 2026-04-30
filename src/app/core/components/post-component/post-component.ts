@@ -26,6 +26,7 @@ import { InteractionsService } from '../../services/interactions/interactions.se
 import { AuthService } from '../../services/auth/auth.service';
 import { ModalWindow } from '../modal/modal-window/modal-window';
 import { PostService } from '../../services/post/post.service';
+import { DateFormatService } from '../../services/date-format/date-format.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
@@ -56,8 +57,10 @@ export class PostComponent implements OnInit {
   private authService = inject(AuthService);
   private postService = inject(PostService);
   private destroyRef = inject(DestroyRef);
+  private dateFormatService = inject(DateFormatService);
 
   isMyPost = signal<boolean>(false);
+  readonly dateFormats = this.dateFormatService.formats;
 
   @Input() data!: PostCard | PostDetail;
   @Input() isFullView!: boolean;

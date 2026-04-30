@@ -88,7 +88,7 @@
 
   @if (user()?.createdAt) {
     <p class="profile__joined">
-      {{ 'PROFILE.joined' | translate }}: {{ user()?.createdAt | date: 'mediumDate' }}
+      {{ 'PROFILE.joined' | translate }}: {{ user()?.createdAt | date: dateFormats().mediumDate }}
     </p>
   }
 </div>

@@ -41,11 +41,11 @@ export class AddPostView {
   isSubmitting = false;
 
   postForm = this.fb.group({
-    title: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(200)]],
+    title: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(32)]],
     categoryId: ['', Validators.required],
     type: ['ONLINE' as PostType, Validators.required],
     startsAt: ['', Validators.required],
-    description: ['', [Validators.required, Validators.maxLength(2000)]],
+    description: ['', [Validators.required, Validators.maxLength(1024)]],
     location: this.fb.group({
       countryCode: ['', [Validators.minLength(3), Validators.maxLength(3)]],
       venueName: ['', Validators.maxLength(64)],
