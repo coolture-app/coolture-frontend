@@ -7,6 +7,7 @@ import { MediaService } from '../../core/services/media/media.service';
 import { Users } from '../../core/services/users/users.service';
 import { DictionaryService } from '../../core/services/dictionary/dictionary.service';
 import { RelationsService } from '../../core/services/relations/relations.service';
+import { Btn } from '../../core/components/btn/btn';
 import { HttpErrorResponse } from '@angular/common/http';
 
 export interface TestResult {
@@ -18,7 +19,7 @@ export interface TestResult {
 
 @Component({
   selector: 'app-api-test-view',
-  imports: [CommonModule],
+  imports: [CommonModule, Btn],
   templateUrl: './api-test-view.html',
   styleUrl: './api-test-view.scss',
 })

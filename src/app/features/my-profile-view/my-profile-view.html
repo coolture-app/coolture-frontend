@@ -1,9 +1,9 @@
 <div class="profile">
   <div class="profile__header">
     @if (!isOwnProfile()) {
-      <button class="profile__back" routerLink="/profile">
+      <app-btn variant="icon" routerLink="/profile">
         <ng-icon name="heroArrowLeft" />
-      </button>
+      </app-btn>
     }
     <div class="profile__avatar-wrapper">
       @if (user()?.avatar; as avatar) {
@@ -24,13 +24,14 @@
           />
         </label>
         @if (user()?.avatar) {
-          <button
-            class="profile__avatar-remove"
-            (click)="onRemoveAvatar()"
+          <app-btn
+            variant="icon"
+            size="sm"
+            (btnClick)="onRemoveAvatar()"
             [disabled]="isUploadingAvatar()"
           >
             <ng-icon name="heroXMark" />
-          </button>
+          </app-btn>
         }
       }
     </div>
@@ -45,31 +46,35 @@
 
     @if (isOwnProfile()) {
       <div class="profile__actions">
-        <button class="profile__edit-btn" (click)="toggleEdit()">
+        <app-btn variant="secondary" size="sm" (btnClick)="toggleEdit()">
           <ng-icon [name]="isEditing() ? 'heroXMark' : 'heroPencil'" />
           {{ (isEditing() ? 'PROFILE.cancel' : 'PROFILE.editDescription') | translate }}
-        </button>
-        <button class="profile__edit-btn" (click)="toggleBlocked()">
+        </app-btn>
+        <app-btn variant="secondary" size="sm" (btnClick)="toggleBlocked()">
           <ng-icon name="heroNoSymbol" />
           {{ 'PROFILE.blocked' | translate }}
-        </button>
+        </app-btn>
       </div>
     } @else {
       <div class="profile__actions">
-        <button class="profile__edit-btn" (click)="toggleFollow()">
+        <app-btn
+          [variant]="user()?.isFollowing ? 'secondary' : 'primary'"
+          size="sm"
+          (btnClick)="toggleFollow()"
+        >
           <ng-icon [name]="user()?.isFollowing ? 'heroUserMinus' : 'heroUserPlus'" />
           {{ (user()?.isFollowing ? 'PROFILE.unfollow' : 'PROFILE.follow') | translate }}
-        </button>
+        </app-btn>
         @if (user()?.isBlocked) {
-          <button class="profile__edit-btn" (click)="onBlock()">
+          <app-btn variant="secondary" size="sm" (btnClick)="onBlock()">
             <ng-icon name="heroNoSymbol" />
             {{ 'PROFILE.unblock' | translate }}
-          </button>
+          </app-btn>
         } @else {
-          <button class="profile__edit-btn profile__edit-btn--danger" (click)="onBlock()">
+          <app-btn variant="danger" size="sm" (btnClick)="onBlock()">
             <ng-icon name="heroNoSymbol" />
             {{ 'PROFILE.block' | translate }}
-          </button>
+          </app-btn>
         }
       </div>
     }
@@ -108,19 +113,19 @@
     >
       <div class="profile__modal-header">
         <h2>{{ 'PROFILE.editDescription' | translate }}</h2>
-        <button class="profile__modal-close" (click)="toggleEdit()">
+        <app-btn variant="icon" (btnClick)="toggleEdit()">
           <ng-icon name="heroXMark" />
-        </button>
+        </app-btn>
       </div>
       <form [formGroup]="editForm" (ngSubmit)="onSave()">
         <div class="profile__field">
           <label class="profile__label" for="bio">{{ 'PROFILE.bio' | translate }}</label>
           <textarea id="bio" formControlName="bio" class="profile__textarea" rows="4"></textarea>
         </div>
-        <button type="submit" class="profile__save">
+        <app-btn variant="primary" type="submit">
           <ng-icon name="heroCheck" />
           {{ 'PROFILE.save' | translate }}
-        </button>
+        </app-btn>
       </form>
     </div>
   </div>
@@ -151,9 +156,9 @@
     >
       <div class="profile__modal-header">
         <h2>{{ 'PROFILE.blocked' | translate }}</h2>
-        <button class="profile__modal-close" (click)="toggleBlocked()">
+        <app-btn variant="icon" (btnClick)="toggleBlocked()">
           <ng-icon name="heroXMark" />
-        </button>
+        </app-btn>
       </div>
       <div class="profile__blocked-list">
         @for (user of blockedUsers(); track user.id) {
@@ -162,9 +167,9 @@
               <span class="profile__blocked-name">{{ user.firstName }} {{ user.lastName }}</span>
               <span class="profile__blocked-username">&#64;{{ user.username }}</span>
             </div>
-            <button class="profile__blocked-unblock" (click)="onUnblock(user.id)">
+            <app-btn variant="secondary" size="sm" (btnClick)="onUnblock(user.id)">
               {{ 'PROFILE.unblock' | translate }}
-            </button>
+            </app-btn>
           </div>
         } @empty {
           <p class="profile__empty">{{ 'PROFILE.no-blocked' | translate }}</p>

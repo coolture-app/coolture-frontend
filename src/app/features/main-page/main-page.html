@@ -10,16 +10,16 @@
           placeholder="{{ 'MAIN_PAGE.searchbar' | translate }}"
         />
       </span>
-      <button class="searchbar__btn">{{ 'MAIN_PAGE.search' | translate }}</button>
+      <app-btn variant="primary">{{ 'MAIN_PAGE.search' | translate }}</app-btn>
       @if (authService.isAuthenticated()) {
-        <button class="addPost-btn" (click)="goToAddPost()">
+        <app-btn variant="primary" (btnClick)="goToAddPost()">
           <ng-icon name="heroPlus" />
           <span class="addPost-btn__text">{{ 'MAIN_PAGE.addPost' | translate }}</span>
-        </button>
+        </app-btn>
       }
-      <button class="filter-btn" (click)="toggleFilters()" [class.active]="showFilters()">
+      <app-btn variant="icon" (btnClick)="toggleFilters()" [class.active]="showFilters()">
         <ng-icon name="heroFunnel" />
-      </button>
+      </app-btn>
     </div>
   </div>
 
@@ -27,9 +27,9 @@
     <div class="filters">
       <div class="filters__header">
         <span class="filters__title">{{ 'MAIN_PAGE.filters' | translate }}</span>
-        <button class="filters__clear" (click)="clearFilters()">
+        <app-btn variant="plain" size="sm" (btnClick)="clearFilters()">
           <ng-icon name="heroXMark" /> {{ 'MAIN_PAGE.clear' | translate }}
-        </button>
+        </app-btn>
       </div>
 
       <div class="filters__row">

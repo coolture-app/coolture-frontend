@@ -135,13 +135,13 @@
           @for (mediaItem of existingMedia(); track mediaItem.media.id) {
             <div class="media-item existing">
               <img [src]="mediaItem.media.url" alt="Zdjęcie posta" />
-              <button
-                class="btn-delete"
-                type="button"
-                (click)="removeExistingMedia(mediaItem.media.id)"
+              <app-btn
+                variant="danger"
+                size="sm"
+                (btnClick)="removeExistingMedia(mediaItem.media.id)"
               >
                 {{ 'EDIT_POST.delete-permanently' | translate }}
-              </button>
+              </app-btn>
             </div>
           }
           @if (existingMedia().length === 0) {
@@ -156,9 +156,9 @@
           @for (media of newlyUploadedMedia(); track media.id) {
             <div class="media-item new">
               <img [src]="media.url" alt="Nowe zdjęcie" />
-              <button class="btn-delete" type="button" (click)="removeNewMedia(media.id)">
+              <app-btn variant="danger" size="sm" (btnClick)="removeNewMedia(media.id)">
                 {{ 'EDIT_POST.delete-permanently' | translate }}
-              </button>
+              </app-btn>
             </div>
           }
         </div>
@@ -185,8 +185,8 @@
 
     <hr class="divider" />
 
-    <button class="btn-submit" type="submit" [disabled]="postForm.invalid || isUploading()">
+    <app-btn variant="primary" type="submit" [disabled]="postForm.invalid || isUploading()">
       {{ 'EDIT_POST.save' | translate }}
-    </button>
+    </app-btn>
   </form>
 </div>

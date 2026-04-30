@@ -4,10 +4,11 @@ import { firstValueFrom } from 'rxjs';
 
 import { AuthService } from '../../services/auth/auth.service';
 import { ApiUrlService } from '../../services/api-url.service';
+import { Btn } from '../btn/btn';
 
 @Component({
   selector: 'app-navbar',
-  imports: [TranslateModule],
+  imports: [TranslateModule, Btn],
   templateUrl: './navbar.html',
   styleUrl: './navbar.scss',
 })

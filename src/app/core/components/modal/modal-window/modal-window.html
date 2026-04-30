@@ -4,10 +4,10 @@
     <p class="body">{{ text() }}</p>
     <div class="optionWrapper" [class.center]="modalType() === 'OK'">
       @if (modalType() === 'OK') {
-        <button class="btn-ok" (click)="close('OK')">{{ 'MODAL.ok' | translate }}</button>
+        <app-btn variant="success" (btnClick)="close('OK')">{{ 'MODAL.ok' | translate }}</app-btn>
       } @else if (modalType() === 'YESNO') {
-        <button class="btn-yes" (click)="close('YES')">{{ 'MODAL.yes' | translate }}</button>
-        <button class="btn-no" (click)="close('NO')">{{ 'MODAL.no' | translate }}</button>
+        <app-btn variant="success" (btnClick)="close('YES')">{{ 'MODAL.yes' | translate }}</app-btn>
+        <app-btn variant="danger" (btnClick)="close('NO')">{{ 'MODAL.no' | translate }}</app-btn>
       }
     </div>
   </div>

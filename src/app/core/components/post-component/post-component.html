@@ -2,24 +2,16 @@
   @if (data) {
     <div class="post__header">
       <div class="left">
-        <button
-          class="post__report"
-          (click)="viewPostPage(false)"
-          (keydown.enter)="viewPostPage(false)"
-          role="button"
-          tabindex="0"
-        >
-          !
-        </button>
+        <app-btn variant="icon" (btnClick)="viewPostPage(false)"> ! </app-btn>
       </div>
       @if (isMyPost()) {
         <div class="right">
-          <button class="editPost button-plain" (click)="editPost()">
+          <app-btn variant="plain" (btnClick)="editPost()">
             {{ 'POST.edit' | translate }}
-          </button>
-          <button class="deletePost button-plain" (click)="openModal()">
+          </app-btn>
+          <app-btn variant="plain" (btnClick)="openModal()">
             {{ 'POST.delete' | translate }}
-          </button>
+          </app-btn>
         </div>
         <app-modal-window
           #myModal
@@ -119,14 +111,7 @@
     }
     <div class="post__social">
       <div class="post__social-left">
-        <div
-          class="post__social-btn"
-          [class.liked]="isLiked()"
-          (click)="likePost()"
-          (keydown.enter)="likePost()"
-          role="button"
-          tabindex="3"
-        >
+        <app-btn variant="social" [class]="isLiked() ? 'liked' : ''" (btnClick)="likePost()">
           <ng-icon name="heroHandThumbUp" />
           <span class="post__social-count">{{
             formatNumber(
@@ -135,14 +120,8 @@
               'POST.million' | translate
             )
           }}</span>
-        </div>
-        <div
-          class="post__social-btn"
-          (click)="viewPostPage(true)"
-          (keydown.enter)="viewPostPage(true)"
-          role="button"
-          tabindex="4"
-        >
+        </app-btn>
+        <app-btn variant="social" (btnClick)="viewPostPage(true)">
           <ng-icon name="heroChatBubbleLeftEllipsis" />
           <span class="post__social-count">{{
             formatNumber(
@@ -151,34 +130,26 @@
               'POST.million' | translate
             )
           }}</span>
-        </div>
-        <div class="post__social-btn">
+        </app-btn>
+        <app-btn variant="social">
           <ng-icon name="heroShare" />
-        </div>
+        </app-btn>
       </div>
       <div class="post__social-right">
-        <div
-          class="post__social-btn"
-          [class.interested]="isInterested()"
-          (click)="setInterested()"
-          (keydown.enter)="setInterested()"
-          role="button"
-          tabindex="5"
-          [title]="'POST.interested' | translate"
+        <app-btn
+          variant="social"
+          [class]="isInterested() ? 'interested' : ''"
+          (btnClick)="setInterested()"
         >
           <ng-icon name="heroStar" />
-        </div>
-        <div
-          class="post__social-btn"
-          [class.takes-part]="isTakesPart()"
-          (click)="setTakesPart()"
-          (keydown.enter)="setTakesPart()"
-          role="button"
-          tabindex="6"
-          [title]="'POST.takes_part' | translate"
+        </app-btn>
+        <app-btn
+          variant="social"
+          [class]="isTakesPart() ? 'takes-part' : ''"
+          (btnClick)="setTakesPart()"
         >
           <ng-icon name="heroStarSolid" />
-        </div>
+        </app-btn>
       </div>
     </div>
   } @else {

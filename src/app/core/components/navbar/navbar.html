@@ -1,15 +1,17 @@
 <nav class="navbar">
   <h1 class="navbar__title">COOLTURE</h1>
   <span class="navbar__actions">
-    <button class="navbar__lang" (click)="changeLanguage()">
+    <app-btn variant="secondary" size="sm" (btnClick)="changeLanguage()">
       {{ currentLang() === 'pl' ? 'EN' : 'PL' }}
-    </button>
+    </app-btn>
     @if (authService.isAuthenticated()) {
-      <button class="navbar__btn" (click)="logout()">{{ 'NAVBAR.logout' | translate }}</button>
+      <app-btn variant="secondary" size="sm" (btnClick)="logout()">{{
+        'NAVBAR.logout' | translate
+      }}</app-btn>
     } @else {
-      <button class="navbar__btn navbar__btn--primary" (click)="login()">
-        {{ 'NAVBAR.login' | translate }}
-      </button>
+      <app-btn variant="primary" size="sm" (btnClick)="login()">{{
+        'NAVBAR.login' | translate
+      }}</app-btn>
     }
   </span>
 </nav>

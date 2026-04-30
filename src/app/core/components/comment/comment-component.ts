@@ -16,11 +16,12 @@ import { CommentsService } from '../../services/comments/comments.service';
 import { AuthService } from '../../services/auth/auth.service';
 import { CommentUpdateRequest } from '../../models/comments/comment-update-request.model';
 import { ModalWindow } from '../modal/modal-window/modal-window';
+import { Btn } from '../btn/btn';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-comment-component',
-  imports: [TranslatePipe, ModalWindow],
+  imports: [TranslatePipe, ModalWindow, Btn],
   templateUrl: './comment-component.html',
   styleUrl: './comment-component.scss',
 })

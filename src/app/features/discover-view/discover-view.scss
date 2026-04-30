@@ -110,7 +110,7 @@
     color: var(--color-text-secondary);
   }
 
-  &__action {
-    @include button-ghost;
+  app-btn {
+    flex-shrink: 0;
   }
 }

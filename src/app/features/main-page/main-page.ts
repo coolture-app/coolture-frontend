@@ -8,6 +8,7 @@ import { heroMagnifyingGlass, heroPlus, heroFunnel, heroXMark } from '@ng-icons/
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { PostComponent } from '../../core/components/post-component/post-component';
+import { Btn } from '../../core/components/btn/btn';
 import { HttpClient } from '@angular/common/http';
 import { PostCard } from '../../core/models/posts/post-card.model';
 import { PostFilterParams } from '../../core/models/posts/post-filter-params.model';
@@ -20,7 +21,7 @@ import { PostType, PostStatus, PostVisibility } from '../../core/models/common/e
 
 @Component({
   selector: 'app-main-page',
-  imports: [TranslatePipe, NgIcon, PostComponent, ReactiveFormsModule],
+  imports: [TranslatePipe, NgIcon, PostComponent, ReactiveFormsModule, Btn],
   viewProviders: [provideIcons({ heroMagnifyingGlass, heroPlus, heroFunnel, heroXMark })],
   templateUrl: './main-page.html',
   styleUrl: './main-page.scss',

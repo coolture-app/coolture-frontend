@@ -19,10 +19,11 @@ import { Users } from '../../core/services/users/users.service';
 import { RelationsService } from '../../core/services/relations/relations.service';
 import { UserSummary } from '../../core/models/users/user-summary.model';
 import { PaginatedResponse } from '../../core/models/common/paginated-response.model';
+import { Btn } from '../../core/components/btn/btn';
 
 @Component({
   selector: 'app-discover-view',
-  imports: [TranslatePipe, NgIcon, ReactiveFormsModule, RouterModule],
+  imports: [TranslatePipe, NgIcon, ReactiveFormsModule, RouterModule, Btn],
   viewProviders: [provideIcons({ heroMagnifyingGlass })],
   templateUrl: './discover-view.html',
   styleUrl: './discover-view.scss',

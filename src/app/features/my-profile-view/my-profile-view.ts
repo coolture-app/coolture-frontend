@@ -26,6 +26,7 @@ import { UserProfile } from '../../core/models/users/user-profile.model';
 import { UserSummary } from '../../core/models/users/user-summary.model';
 import { UserProfileUpdateRequest } from '../../core/models/users/user-profile-update-request.model';
 import { FollowListComponent } from '../../core/components/follow-list/follow-list';
+import { Btn } from '../../core/components/btn/btn';
 import { DateFormatService } from '../../core/services/date-format/date-format.service';
 
 @Component({
@@ -38,6 +39,7 @@ import { DateFormatService } from '../../core/services/date-format/date-format.s
     NgIcon,
     FollowListComponent,
     RouterModule,
+    Btn,
   ],
   viewProviders: [
     provideIcons({

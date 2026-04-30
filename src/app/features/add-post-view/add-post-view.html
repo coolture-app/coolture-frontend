@@ -202,12 +202,7 @@
 
       <div class="form-group media-upload-group">
         <label for="mediaUploadBtn">{{ 'ADD_POST.form-media' | translate }}</label>
-        <button
-          type="button"
-          id="mediaUploadBtn"
-          class="media-upload-area"
-          (click)="fileInput.click()"
-        >
+        <app-btn variant="secondary" (btnClick)="fileInput.click()">
           <div class="upload-placeholder">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -226,7 +221,7 @@
             </svg>
             <span>{{ 'ADD_POST.form-media-click' | translate }}</span>
           </div>
-        </button>
+        </app-btn>
         <input
           #fileInput
           type="file"
@@ -242,10 +237,9 @@
             <div class="upload-overlay" *ngIf="preview.isUploading">
               <span class="spinner"></span>
             </div>
-            <button
-              type="button"
-              class="remove-btn"
-              (click)="removeMedia(i)"
+            <app-btn
+              variant="icon"
+              (btnClick)="removeMedia(i)"
               *ngIf="!preview.isUploading"
               [title]="'ADD_POST.form-media-remove' | translate"
             >
@@ -263,19 +257,19 @@
                 <line x1="18" y1="6" x2="6" y2="18"></line>
                 <line x1="6" y1="6" x2="18" y2="18"></line>
               </svg>
-            </button>
+            </app-btn>
           </div>
         </div>
       </div>
 
       <div class="form-actions">
-        <button type="submit" class="submit-btn" [disabled]="postForm.invalid || isSubmitting">
+        <app-btn variant="primary" type="submit" [disabled]="postForm.invalid || isSubmitting">
           {{
             isSubmitting
               ? ('ADD_POST.submit-saving' | translate)
               : ('ADD_POST.submit-btn' | translate)
           }}
-        </button>
+        </app-btn>
       </div>
     </form>
   </div>

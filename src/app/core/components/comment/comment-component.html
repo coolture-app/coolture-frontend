@@ -20,27 +20,27 @@
         </div>
         @if (comment.status !== 'DELETED') {
           @if (comment.depth < 2) {
-            <button class="reply-button button-plain-accent" (click)="onReply()">
+            <app-btn variant="plain" size="sm" (btnClick)="onReply()">
               {{ 'COMMENT.reply' | translate }}
-            </button>
+            </app-btn>
           }
         }
         @if (comment.repliesCount > 0) {
-          <button class="show-anwsers button-plain-accent" (click)="showReplies()">
+          <app-btn variant="plain" size="sm" (btnClick)="showReplies()">
             {{
               isShowingReplies()
                 ? ('COMMENT.hide-replies' | translate)
                 : ('COMMENT.show-replies' | translate) + ' (' + comment.repliesCount + ')'
             }}
-          </button>
+          </app-btn>
         }
         @if (comment.status !== 'DELETED' && isMyComment) {
-          <button class="edit-comment button-plain-accent" (click)="startEditingComment()">
+          <app-btn variant="plain" size="sm" (btnClick)="startEditingComment()">
             {{ 'COMMENT.edit-comment' | translate }}
-          </button>
-          <button class="delete-comment button-plain-accent" (click)="openModal()">
+          </app-btn>
+          <app-btn variant="plain" size="sm" (btnClick)="openModal()">
             {{ 'COMMENT.delete-comment' | translate }}
-          </button>
+          </app-btn>
           <app-modal-window
             #myModal
             modalType="YESNO"

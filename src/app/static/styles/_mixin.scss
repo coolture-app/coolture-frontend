@@ -31,69 +31,6 @@
   border: 1px solid var(--color-border-light);
 }
 
-@mixin button-base {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-xs);
-  padding: var(--space-sm) var(--space-md);
-  border: none;
-  border-radius: var(--radius-md);
-  font-family: var(--font-sans);
-  font-size: var(--text-sm);
-  font-weight: var(--font-medium);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  white-space: nowrap;
-
-  &:active {
-    transform: scale(0.97);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none;
-  }
-}
-
-@mixin button-primary {
-  @include button-base;
-  background: var(--color-accent);
-  color: var(--color-text-inverse);
-
-  &:hover:not(:disabled) {
-    background: var(--color-accent-hover);
-  }
-}
-
-@mixin button-ghost {
-  @include button-base;
-  background: transparent;
-  color: var(--color-text-secondary);
-
-  &:hover:not(:disabled) {
-    background: var(--color-surface-alt);
-    color: var(--color-text);
-  }
-}
-
-@mixin button-icon {
-  @include center-flex;
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  border: none;
-  border-radius: var(--radius-md);
-  background: transparent;
-  cursor: pointer;
-  transition: background var(--transition-fast);
-
-  &:hover {
-    background: var(--color-surface-alt);
-  }
-}
-
 @mixin input-base {
   width: 100%;
   padding: var(--space-sm) var(--space-md);

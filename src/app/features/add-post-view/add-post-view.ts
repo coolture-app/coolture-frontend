@@ -12,6 +12,7 @@ import { lastValueFrom, Observable } from 'rxjs';
 import { TranslatePipe } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth/auth.service';
+import { Btn } from '../../core/components/btn/btn';
 
 interface MediaPreview {
   file: File;
@@ -22,7 +23,7 @@ interface MediaPreview {
 
 @Component({
   selector: 'app-add-post-view',
-  imports: [ReactiveFormsModule, CommonModule, TranslatePipe],
+  imports: [ReactiveFormsModule, CommonModule, TranslatePipe, Btn],
   templateUrl: './add-post-view.html',
   styleUrl: './add-post-view.scss',
 })

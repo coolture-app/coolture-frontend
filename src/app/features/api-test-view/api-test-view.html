@@ -5,9 +5,9 @@
       Tests all PostService, MediaService, and Users endpoints against the live backend
     </p>
 
-    <button class="run-btn" [disabled]="running()" (click)="runAllTests()">
+    <app-btn variant="primary" [disabled]="running()" (btnClick)="runAllTests()">
       {{ running() ? '⏳ Running…' : '▶ Run All Tests' }}
-    </button>
+    </app-btn>
   </header>
 
   <!-- summary bar -->

@@ -8,6 +8,7 @@ import { PostService } from '../../core/services/post/post.service';
 import { MediaService } from '../../core/services/media/media.service';
 import { DictionaryService } from '../../core/services/dictionary/dictionary.service';
 import { AuthService } from '../../core/services/auth/auth.service';
+import { Btn } from '../../core/components/btn/btn';
 
 import { PostDetail, PostMedia } from '../../core/models/posts/post-detail.model';
 import { PostUpdateRequest } from '../../core/models/posts/post-update-request.model';
@@ -20,7 +21,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 @Component({
   selector: 'app-edit-post-view',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, TranslatePipe],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipe, Btn],
   templateUrl: './edit-post-view.html',
   styleUrl: './edit-post-view.scss',
 })

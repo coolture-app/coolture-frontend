@@ -1,26 +1,29 @@
 <div class="my-events">
   <div class="my-events__filters">
-    <button
-      class="my-events__filter"
-      [class.my-events__filter--active]="selectedFilter() === 'all'"
-      (click)="setFilter('all')"
+    <app-btn
+      variant="secondary"
+      size="sm"
+      [class]="selectedFilter() === 'all' ? 'active' : ''"
+      (btnClick)="setFilter('all')"
     >
       {{ 'MY_EVENTS.all' | translate }}
-    </button>
-    <button
-      class="my-events__filter"
-      [class.my-events__filter--active]="selectedFilter() === 'interested'"
-      (click)="setFilter('interested')"
+    </app-btn>
+    <app-btn
+      variant="secondary"
+      size="sm"
+      [class]="selectedFilter() === 'interested' ? 'active' : ''"
+      (btnClick)="setFilter('interested')"
     >
       {{ 'MY_EVENTS.interested' | translate }}
-    </button>
-    <button
-      class="my-events__filter"
-      [class.my-events__filter--active]="selectedFilter() === 'takes_part'"
-      (click)="setFilter('takes_part')"
+    </app-btn>
+    <app-btn
+      variant="secondary"
+      size="sm"
+      [class]="selectedFilter() === 'takes_part' ? 'active' : ''"
+      (btnClick)="setFilter('takes_part')"
     >
       {{ 'MY_EVENTS.takes_part' | translate }}
-    </button>
+    </app-btn>
   </div>
 
   <div class="my-events__list">

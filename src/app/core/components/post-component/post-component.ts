@@ -25,13 +25,14 @@ import { DatePipe } from '@angular/common';
 import { InteractionsService } from '../../services/interactions/interactions.service';
 import { AuthService } from '../../services/auth/auth.service';
 import { ModalWindow } from '../modal/modal-window/modal-window';
+import { Btn } from '../btn/btn';
 import { PostService } from '../../services/post/post.service';
 import { DateFormatService } from '../../services/date-format/date-format.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-post-component',
-  imports: [NgIcon, TranslatePipe, DatePipe, ModalWindow],
+  imports: [NgIcon, TranslatePipe, DatePipe, ModalWindow, Btn],
   viewProviders: [
     provideIcons({
       heroHandThumbUp,
