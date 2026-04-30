@@ -14,6 +14,7 @@ import { PostUpdateRequest } from '../../core/models/posts/post-update-request.m
 import { PostType } from '../../core/models/common/enums';
 import { MediaUploadInitRequest } from '../../core/models/media/media-upload-init-request.model';
 import { MediaResource } from '../../core/models/media/media-resource.model';
+import { CountryCode } from '../../core/models/dictionary/country-code.model';
 import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
@@ -35,6 +36,9 @@ export class EditPostView implements OnInit {
 
   currentPost = signal<PostDetail | null>(null);
   categories = toSignal(this.dictionaryService.getEventCategories(), { initialValue: [] });
+  countryCodes = toSignal(this.dictionaryService.getCountryCodes(), {
+    initialValue: [] as CountryCode[],
+  });
 
   postTypes: PostType[] = ['OFFLINE', 'ONLINE'];
 
@@ -44,6 +48,18 @@ export class EditPostView implements OnInit {
     type: ['', Validators.required],
     startsAt: ['', Validators.required],
     description: ['', Validators.required],
+    location: this.fb.group({
+      countryCode: ['', [Validators.minLength(3), Validators.maxLength(3)]],
+      venueName: ['', Validators.maxLength(64)],
+      buildingNum: ['', Validators.maxLength(16)],
+      street: ['', Validators.maxLength(128)],
+      postalCode: ['', Validators.maxLength(16)],
+      city: ['', Validators.maxLength(128)],
+      coordinates: this.fb.group({
+        latitude: [null as number | null, [Validators.min(-90), Validators.max(90)]],
+        longitude: [null as number | null, [Validators.min(-180), Validators.max(180)]],
+      }),
+    }),
   });
 
   existingMedia = signal<PostMedia[]>([]);
@@ -60,11 +76,68 @@ export class EditPostView implements OnInit {
           type: post.type,
           startsAt: post.startsAt ? post.startsAt.substring(0, 16) : '',
           description: post.description,
+          location: {
+            countryCode: post.location?.countryCode ?? '',
+            venueName: post.location?.venueName ?? '',
+            buildingNum: post.location?.buildingNum ?? '',
+            street: post.location?.street ?? '',
+            postalCode: post.location?.postalCode ?? '',
+            city: post.location?.city ?? '',
+            coordinates: {
+              latitude: post.location?.coordinates.latitude ?? null,
+              longitude: post.location?.coordinates.longitude ?? null,
+            },
+          },
         });
 
         this.existingMedia.set(post.media || []);
+        this.toggleLocationValidators(post.type);
       }
     });
+
+    this.postForm
+      .get('type')
+      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((type) => this.toggleLocationValidators(type ?? 'ONLINE'));
+  }
+
+  private toggleLocationValidators(type: PostType): void {
+    const locationGroup = this.postForm.get('location');
+    const countryCodeControl = locationGroup?.get('countryCode');
+    const postalCodeControl = locationGroup?.get('postalCode');
+    const cityControl = locationGroup?.get('city');
+    const latitudeControl = locationGroup?.get('coordinates.latitude');
+    const longitudeControl = locationGroup?.get('coordinates.longitude');
+
+    if (
+      !countryCodeControl ||
+      !postalCodeControl ||
+      !cityControl ||
+      !latitudeControl ||
+      !longitudeControl
+    ) {
+      return;
+    }
+
+    if (type === 'OFFLINE') {
+      countryCodeControl.addValidators(Validators.required);
+      postalCodeControl.addValidators(Validators.required);
+      cityControl.addValidators(Validators.required);
+      latitudeControl.addValidators(Validators.required);
+      longitudeControl.addValidators(Validators.required);
+    } else {
+      countryCodeControl.removeValidators(Validators.required);
+      postalCodeControl.removeValidators(Validators.required);
+      cityControl.removeValidators(Validators.required);
+      latitudeControl.removeValidators(Validators.required);
+      longitudeControl.removeValidators(Validators.required);
+    }
+
+    countryCodeControl.updateValueAndValidity({ emitEvent: false });
+    postalCodeControl.updateValueAndValidity({ emitEvent: false });
+    cityControl.updateValueAndValidity({ emitEvent: false });
+    latitudeControl.updateValueAndValidity({ emitEvent: false });
+    longitudeControl.updateValueAndValidity({ emitEvent: false });
   }
 
   ngOnInit(): void {
@@ -155,6 +228,7 @@ export class EditPostView implements OnInit {
     const finalMediaIds = [...existingIds, ...newIds];
 
     const formValues = this.postForm.value;
+    const isOffline = formValues.type === 'OFFLINE';
 
     const payload: PostUpdateRequest = {
       title: formValues.title,
@@ -162,6 +236,20 @@ export class EditPostView implements OnInit {
       type: formValues.type,
       startsAt: new Date(formValues.startsAt).toISOString(),
       description: formValues.description,
+      location: isOffline
+        ? {
+            countryCode: formValues.location?.countryCode ?? '',
+            venueName: formValues.location?.venueName || null,
+            buildingNum: formValues.location?.buildingNum || null,
+            street: formValues.location?.street || null,
+            postalCode: formValues.location?.postalCode ?? '',
+            city: formValues.location?.city ?? '',
+            coordinates: {
+              latitude: Number(formValues.location?.coordinates?.latitude),
+              longitude: Number(formValues.location?.coordinates?.longitude),
+            },
+          }
+        : null,
       mediaIds: finalMediaIds,
       coverMediaId: finalMediaIds.length > 0 ? finalMediaIds[0] : null,
     };

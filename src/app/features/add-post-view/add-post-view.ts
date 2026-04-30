@@ -7,6 +7,7 @@ import { PostType } from '../../core/models/common/enums';
 import { MediaService } from '../../core/services/media/media.service';
 import { DictionaryService } from '../../core/services/dictionary/dictionary.service';
 import { EventCategory } from '../../core/models/dictionary/event-category.model';
+import { CountryCode } from '../../core/models/dictionary/country-code.model';
 import { lastValueFrom, Observable } from 'rxjs';
 import { TranslatePipe } from '@ngx-translate/core';
 import { Router } from '@angular/router';
@@ -35,6 +36,7 @@ export class AddPostView {
   public authService = inject(AuthService);
 
   categories$: Observable<EventCategory[]> = this.dictionaryService.getEventCategories();
+  countryCodes$: Observable<CountryCode[]> = this.dictionaryService.getCountryCodes();
   mediaPreviews: MediaPreview[] = [];
   isSubmitting = false;
 
@@ -44,7 +46,65 @@ export class AddPostView {
     type: ['ONLINE' as PostType, Validators.required],
     startsAt: ['', Validators.required],
     description: ['', [Validators.required, Validators.maxLength(2000)]],
+    location: this.fb.group({
+      countryCode: ['', [Validators.minLength(3), Validators.maxLength(3)]],
+      venueName: ['', Validators.maxLength(64)],
+      buildingNum: ['', Validators.maxLength(16)],
+      street: ['', Validators.maxLength(128)],
+      postalCode: ['', Validators.maxLength(16)],
+      city: ['', Validators.maxLength(128)],
+      coordinates: this.fb.group({
+        latitude: [null as number | null, [Validators.min(-90), Validators.max(90)]],
+        longitude: [null as number | null, [Validators.min(-180), Validators.max(180)]],
+      }),
+    }),
   });
+
+  constructor() {
+    this.postForm
+      .get('type')
+      ?.valueChanges.subscribe((type) => this.toggleLocationValidators(type ?? 'ONLINE'));
+    this.toggleLocationValidators(this.postForm.get('type')?.value ?? 'ONLINE');
+  }
+
+  private toggleLocationValidators(type: PostType): void {
+    const locationGroup = this.postForm.get('location');
+    const countryCodeControl = locationGroup?.get('countryCode');
+    const postalCodeControl = locationGroup?.get('postalCode');
+    const cityControl = locationGroup?.get('city');
+    const latitudeControl = locationGroup?.get('coordinates.latitude');
+    const longitudeControl = locationGroup?.get('coordinates.longitude');
+
+    if (
+      !countryCodeControl ||
+      !postalCodeControl ||
+      !cityControl ||
+      !latitudeControl ||
+      !longitudeControl
+    ) {
+      return;
+    }
+
+    if (type === 'OFFLINE') {
+      countryCodeControl.addValidators(Validators.required);
+      postalCodeControl.addValidators(Validators.required);
+      cityControl.addValidators(Validators.required);
+      latitudeControl.addValidators(Validators.required);
+      longitudeControl.addValidators(Validators.required);
+    } else {
+      countryCodeControl.removeValidators(Validators.required);
+      postalCodeControl.removeValidators(Validators.required);
+      cityControl.removeValidators(Validators.required);
+      latitudeControl.removeValidators(Validators.required);
+      longitudeControl.removeValidators(Validators.required);
+    }
+
+    countryCodeControl.updateValueAndValidity({ emitEvent: false });
+    postalCodeControl.updateValueAndValidity({ emitEvent: false });
+    cityControl.updateValueAndValidity({ emitEvent: false });
+    latitudeControl.updateValueAndValidity({ emitEvent: false });
+    longitudeControl.updateValueAndValidity({ emitEvent: false });
+  }
 
   async onFilesSelected(event: Event) {
     const input = event.target as HTMLInputElement;
@@ -103,6 +163,7 @@ export class AddPostView {
     try {
       const formValue = this.postForm.getRawValue();
       const uploadedMediaIds = this.mediaPreviews.map((p) => p.mediaId!).filter(Boolean);
+      const isOffline = formValue.type === 'OFFLINE';
 
       const payload: PostCreateRequest = {
         title: formValue.title ?? '',
@@ -110,12 +171,40 @@ export class AddPostView {
         type: formValue.type ?? 'OFFLINE',
         startsAt: formValue.startsAt ? new Date(formValue.startsAt).toISOString() : '',
         description: formValue.description ?? '',
+        location: isOffline
+          ? {
+              countryCode: formValue.location?.countryCode ?? '',
+              venueName: formValue.location?.venueName || null,
+              buildingNum: formValue.location?.buildingNum || null,
+              street: formValue.location?.street || null,
+              postalCode: formValue.location?.postalCode ?? '',
+              city: formValue.location?.city ?? '',
+              coordinates: {
+                latitude: Number(formValue.location?.coordinates?.latitude),
+                longitude: Number(formValue.location?.coordinates?.longitude),
+              },
+            }
+          : null,
         mediaIds: uploadedMediaIds.length > 0 ? uploadedMediaIds : undefined,
         coverMediaId: uploadedMediaIds.length > 0 ? uploadedMediaIds[0] : undefined,
       };
 
       const createdPost = await lastValueFrom(this.postService.addPost(payload));
-      this.postForm.reset({ type: 'ONLINE' });
+      this.postForm.reset({
+        type: 'ONLINE',
+        location: {
+          countryCode: '',
+          venueName: '',
+          buildingNum: '',
+          street: '',
+          postalCode: '',
+          city: '',
+          coordinates: {
+            latitude: null,
+            longitude: null,
+          },
+        },
+      });
       this.mediaPreviews.forEach((p) => URL.revokeObjectURL(p.previewUrl));
       this.mediaPreviews = [];
       this.router.navigate(['/post', createdPost.id]);
