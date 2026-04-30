@@ -1,6 +1,12 @@
 <div class="comment">
   <div class="comment__main">
-    <!-- <img [src]="avatar" alt="" class="comment__avatar" /> -->
+    @if (comment.author.avatar; as avatar) {
+      <img [src]="avatar.url" [alt]="comment.author.username" class="comment__avatar" />
+    } @else {
+      <div class="comment__avatar comment__avatar--placeholder">
+        {{ comment.author.firstName.charAt(0) }}{{ comment.author.lastName.charAt(0) }}
+      </div>
+    }
     <div class="comment__content">
       <div class="row">
         <div class="comment__username">

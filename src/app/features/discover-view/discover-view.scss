@@ -76,9 +76,16 @@
   margin-bottom: var(--space-sm);
 
   &__avatar {
-    ng-icon {
-      font-size: 2.5rem;
-      color: var(--color-text-tertiary);
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+
+    &-img {
+      @include avatar(48px);
+    }
+
+    \u0026--placeholder {
+      @include avatar-placeholder(48px);
     }
   }
 

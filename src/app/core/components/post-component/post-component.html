@@ -41,19 +41,29 @@
       {{ data.title }}
     </h3>
     <div class="post__meta">
-      <!-- <img [src]="avatar" alt="" class="post__avatar" /> -->
-      <div class="post__author">
-        <span
-          class="post__username"
-          (click)="goToUserProfile()"
-          (keydown.enter)="goToUserProfile()"
-          role="link"
-          tabindex="0"
-        >
-          {{ data.author.username }}
-        </span>
-        <span class="post__date">{{ data.createdAt | date: 'short' }}</span>
-        <span class="post__date">{{ data.startsAt | date: 'short' }}</span>
+      <div
+        class="post__author-wrapper"
+        (click)="goToUserProfile()"
+        (keydown.enter)="goToUserProfile()"
+        role="link"
+        tabindex="0"
+      >
+        @if (data.author.avatar; as avatar) {
+          <img [src]="avatar.url" [alt]="data.author.username" class="post__avatar" />
+        } @else {
+          <div class="post__avatar post__avatar--placeholder">
+            {{ data.author.firstName.charAt(0) }}{{ data.author.lastName.charAt(0) }}
+          </div>
+        }
+        <div class="post__author">
+          <span class="post__username">
+            {{ data.author.username }}
+          </span>
+          <span class="post__date">{{ data.createdAt | date: 'short' }}</span>
+          @if (data.startsAt) {
+            <span class="post__date">Starts: {{ data.startsAt | date: 'short' }}</span>
+          }
+        </div>
       </div>
     </div>
     <div class="post__desc">

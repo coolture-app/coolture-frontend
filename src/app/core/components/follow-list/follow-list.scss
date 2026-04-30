@@ -1,3 +1,5 @@
+@use '_mixin' as *;
+
 .follow-list {
   position: fixed;
   top: 0;
@@ -127,13 +129,9 @@
     flex-shrink: 0;
 
     &--placeholder {
+      @include avatar-placeholder(48px);
       background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 600;
       color: #fff;
-      font-size: 0.875rem;
     }
   }
 
