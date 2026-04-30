@@ -1,6 +1,22 @@
 <div class="wrapper" *ngIf="currentPost()">
   <h2>{{ 'EDIT_POST.form-title' | translate }}</h2>
 
+  @if (authService.currentUser(); as user) {
+    <div class="posting-as">
+      @if (user.avatar; as avatar) {
+        <img [src]="avatar.url" [alt]="user.username" class="user-avatar" />
+      } @else {
+        <div class="user-avatar user-avatar--placeholder">
+          {{ user.firstName.charAt(0) }}{{ user.lastName.charAt(0) }}
+        </div>
+      }
+      <div class="user-info">
+        <span class="label">{{ 'EDIT_POST.editing-as' | translate }}</span>
+        <span class="username">@{{ user.username }}</span>
+      </div>
+    </div>
+  }
+
   <form class="edit-form" [formGroup]="postForm" (ngSubmit)="updatePost()">
     <div class="form-group">
       <label for="title">{{ 'EDIT_POST.event-title' | translate }}</label>

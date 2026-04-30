@@ -12,6 +12,10 @@
 
 .comment__avatar {
   @include avatar(36px);
+
+  &--placeholder {
+    @include avatar-placeholder(36px);
+  }
 }
 
 .comment__content {

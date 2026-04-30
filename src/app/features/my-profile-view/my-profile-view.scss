@@ -1,3 +1,5 @@
+@use '_mixin' as *;
+
 .profile {
   max-width: 600px;
   margin: 0 auto;
@@ -39,18 +41,11 @@
   }
 
   &__avatar {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    object-fit: cover;
+    @include avatar(100%);
 
     &--placeholder {
-      background: #d1d5db;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      @include avatar-placeholder(120px);
       font-size: 2rem;
-      font-weight: 600;
       color: #fff;
     }
   }

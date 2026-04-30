@@ -7,6 +7,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { PostService } from '../../core/services/post/post.service';
 import { MediaService } from '../../core/services/media/media.service';
 import { DictionaryService } from '../../core/services/dictionary/dictionary.service';
+import { AuthService } from '../../core/services/auth/auth.service';
 
 import { PostDetail, PostMedia } from '../../core/models/posts/post-detail.model';
 import { PostUpdateRequest } from '../../core/models/posts/post-update-request.model';
@@ -30,6 +31,7 @@ export class EditPostView implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private destroyRef = inject(DestroyRef);
+  public authService = inject(AuthService);
 
   currentPost = signal<PostDetail | null>(null);
   categories = toSignal(this.dictionaryService.getEventCategories(), { initialValue: [] });

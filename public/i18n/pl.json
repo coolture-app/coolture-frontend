@@ -139,7 +139,8 @@
     "form-media-click": "Kliknij, aby dodać zdjęcia",
     "form-media-remove": "Usuń zdjęcie",
     "submit-saving": "Zapisywanie...",
-    "submit-btn": "Opublikuj wydarzenie"
+    "submit-btn": "Opublikuj wydarzenie",
+    "posting-as": "Publikujesz jako"
   },
   "EDIT_POST": {
     "title": "Edytuj post!",
@@ -159,7 +160,8 @@
     "add-new-photo": "Dodaj nowe zdjęcie:",
     "uploading": "Trwa wrzucanie zdjęcia...",
     "save": "Zapisz zmiany w wydarzeniu",
-    "insert_title": "Wpisz tytuł..."
+    "insert_title": "Wpisz tytuł...",
+    "editing-as": "Edytujesz jako"
   },
   "COMMENT": {
     "reply": "Odpowiedz",

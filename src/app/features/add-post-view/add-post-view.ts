@@ -10,6 +10,7 @@ import { EventCategory } from '../../core/models/dictionary/event-category.model
 import { lastValueFrom, Observable } from 'rxjs';
 import { TranslatePipe } from '@ngx-translate/core';
 import { Router } from '@angular/router';
+import { AuthService } from '../../core/services/auth/auth.service';
 
 interface MediaPreview {
   file: File;
@@ -31,6 +32,7 @@ export class AddPostView {
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
+  public authService = inject(AuthService);
 
   categories$: Observable<EventCategory[]> = this.dictionaryService.getEventCategories();
   mediaPreviews: MediaPreview[] = [];
