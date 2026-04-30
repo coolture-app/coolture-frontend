@@ -52,26 +52,43 @@
 }
 
 .post__meta {
-  @include flex-between;
+  display: flex;
+  justify-content: flex-start;
   padding: 0 var(--space-md) var(--space-md);
+}
+
+.post__author-wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  cursor: pointer;
+  padding: var(--space-xs) var(--space-md);
+  border-radius: var(--radius-lg);
+  transition: background var(--transition-fast);
+
+  &:hover {
+    background: var(--color-surface-alt);
+  }
 }
 
 .post__avatar {
   @include avatar(40px);
+
+  &--placeholder {
+    @include avatar-placeholder(40px);
+  }
 }
 
 .post__author {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: var(--space-xs);
+  gap: 2px;
 }
 
 .post__username {
   font-size: var(--text-sm);
-  font-weight: var(--font-medium);
+  font-weight: var(--font-semibold);
   color: var(--color-text);
-  cursor: pointer;
 }
 
 .post__date {

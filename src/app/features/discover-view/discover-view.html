@@ -16,9 +16,9 @@
     <div class="user-card">
       <div class="user-card__avatar">
         @if (item.avatar; as avatar) {
-          <img [src]="avatar.url" [alt]="item.username" class="user-card__avatar" />
+          <img [src]="avatar.url" [alt]="item.username" class="user-card__avatar-img" />
         } @else {
-          <div class="user-card__avatar user-card__avatar--placeholder">
+          <div class="user-card__avatar--placeholder">
             {{ item.firstName.charAt(0) }}{{ item.lastName.charAt(0) }}
           </div>
         }

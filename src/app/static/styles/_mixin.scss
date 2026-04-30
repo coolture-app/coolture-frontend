@@ -146,3 +146,15 @@
   object-fit: cover;
   flex-shrink: 0;
 }
+
+@mixin avatar-placeholder($size: 40px) {
+  @include avatar($size);
+  background: var(--color-border-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: var(--font-semibold);
+  color: var(--color-text-secondary);
+  font-size: calc($size * 0.4);
+  user-select: none;
+}

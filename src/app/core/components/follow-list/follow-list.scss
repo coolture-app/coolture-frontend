@@ -1,3 +1,5 @@
+@use '_mixin' as *;
+
 .follow-list {
   position: fixed;
   top: 0;
@@ -120,20 +122,12 @@
   }
 
   &__avatar {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    object-fit: cover;
-    flex-shrink: 0;
+    @include avatar(48px);
 
     &--placeholder {
+      @include avatar-placeholder(48px);
       background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 600;
       color: #fff;
-      font-size: 0.875rem;
     }
   }
 
