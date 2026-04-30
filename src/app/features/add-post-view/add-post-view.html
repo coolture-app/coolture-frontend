@@ -77,7 +77,11 @@
         </span>
       </div>
 
-      <div class="location-section" *ngIf="postForm.get('type')?.value === 'OFFLINE'" formGroupName="location">
+      <div
+        class="location-section"
+        *ngIf="postForm.get('type')?.value === 'OFFLINE'"
+        formGroupName="location"
+      >
         <h3>{{ 'ADD_POST.location-title' | translate }}</h3>
 
         <div class="form-row">
@@ -93,7 +97,10 @@
             </select>
             <span
               class="error"
-              *ngIf="postForm.get('location.countryCode')?.invalid && postForm.get('location.countryCode')?.touched"
+              *ngIf="
+                postForm.get('location.countryCode')?.invalid &&
+                postForm.get('location.countryCode')?.touched
+              "
             >
               {{ 'ADD_POST.location-country-error' | translate }}
             </span>
@@ -104,7 +111,9 @@
             <input id="city" type="text" formControlName="city" />
             <span
               class="error"
-              *ngIf="postForm.get('location.city')?.invalid && postForm.get('location.city')?.touched"
+              *ngIf="
+                postForm.get('location.city')?.invalid && postForm.get('location.city')?.touched
+              "
             >
               {{ 'ADD_POST.location-city-error' | translate }}
             </span>
@@ -117,7 +126,10 @@
             <input id="postalCode" type="text" formControlName="postalCode" />
             <span
               class="error"
-              *ngIf="postForm.get('location.postalCode')?.invalid && postForm.get('location.postalCode')?.touched"
+              *ngIf="
+                postForm.get('location.postalCode')?.invalid &&
+                postForm.get('location.postalCode')?.touched
+              "
             >
               {{ 'ADD_POST.location-postal-code-error' | translate }}
             </span>
@@ -147,7 +159,10 @@
             <input id="latitude" type="number" step="any" formControlName="latitude" />
             <span
               class="error"
-              *ngIf="postForm.get('location.coordinates.latitude')?.invalid && postForm.get('location.coordinates.latitude')?.touched"
+              *ngIf="
+                postForm.get('location.coordinates.latitude')?.invalid &&
+                postForm.get('location.coordinates.latitude')?.touched
+              "
             >
               {{ 'ADD_POST.location-latitude-error' | translate }}
             </span>
@@ -158,7 +173,10 @@
             <input id="longitude" type="number" step="any" formControlName="longitude" />
             <span
               class="error"
-              *ngIf="postForm.get('location.coordinates.longitude')?.invalid && postForm.get('location.coordinates.longitude')?.touched"
+              *ngIf="
+                postForm.get('location.coordinates.longitude')?.invalid &&
+                postForm.get('location.coordinates.longitude')?.touched
+              "
             >
               {{ 'ADD_POST.location-longitude-error' | translate }}
             </span>

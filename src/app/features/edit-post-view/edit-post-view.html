@@ -71,7 +71,9 @@
           <div class="form-group">
             <label for="countryCode">{{ 'EDIT_POST.location-country' | translate }}</label>
             <select id="countryCode" formControlName="countryCode">
-              <option value="" disabled>{{ 'EDIT_POST.location-country-placeholder' | translate }}</option>
+              <option value="" disabled>
+                {{ 'EDIT_POST.location-country-placeholder' | translate }}
+              </option>
               @for (country of countryCodes(); track country.code) {
                 <option [value]="country.code">{{ country.code }}</option>
               }
