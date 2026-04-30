@@ -1,0 +1,35 @@
+<div class="my-events">
+  <div class="my-events__filters">
+    <button
+      class="my-events__filter"
+      [class.my-events__filter--active]="selectedFilter() === 'all'"
+      (click)="setFilter('all')"
+    >
+      {{ 'MY_EVENTS.all' | translate }}
+    </button>
+    <button
+      class="my-events__filter"
+      [class.my-events__filter--active]="selectedFilter() === 'interested'"
+      (click)="setFilter('interested')"
+    >
+      {{ 'MY_EVENTS.interested' | translate }}
+    </button>
+    <button
+      class="my-events__filter"
+      [class.my-events__filter--active]="selectedFilter() === 'takes_part'"
+      (click)="setFilter('takes_part')"
+    >
+      {{ 'MY_EVENTS.takes_part' | translate }}
+    </button>
+  </div>
+
+  <div class="my-events__list">
+    @if (posts().items.length === 0) {
+      <p class="my-events__empty">{{ 'MY_EVENTS.no-events' | translate }}</p>
+    } @else {
+      @for (post of posts().items; track post.id) {
+        <app-event-card [post]="post" (cardClick)="goToPost($event)" />
+      }
+    }
+  </div>
+</div>

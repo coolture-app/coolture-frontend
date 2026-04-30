@@ -54,12 +54,14 @@
     "modal-delete-title": "Do you really want to delete your post?",
     "modal-delete-body": "This action cannot be undone.",
     "thousand": "k",
-    "million": "mil"
+    "million": "mil",
+    "interested": "Mark as interested",
+    "takes_part": "Mark as taking part"
   },
   "FOOTER": {
     "main-page": "Home",
     "friends": "Find friends",
-    "map-callendar": "Calendar",
+    "my-events": "My Events",
     "my-profile": "Profile"
   },
   "NAVBAR": {
@@ -169,9 +171,19 @@
     "modal-delete-body": "This action cannot be undone.",
     "deleted-comment": "Deleted."
   },
+  "EVENT_CARD": {
+    "by": "by"
+  },
   "MODAL": {
     "yes": "Yes",
     "no": "No",
     "ok": "Okay"
+  },
+  "MY_EVENTS": {
+    "title": "My Events",
+    "no-events": "You don't have any events yet... Sad face.",
+    "all": "All",
+    "interested": "Interested",
+    "takes_part": "Participating"
   }
 }

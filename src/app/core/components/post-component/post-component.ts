@@ -20,6 +20,7 @@ import {
   heroStar,
   heroShare,
 } from '@ng-icons/heroicons/outline';
+import { heroStarSolid } from '@ng-icons/heroicons/solid';
 import { DatePipe } from '@angular/common';
 import { InteractionsService } from '../../services/interactions/interactions.service';
 import { AuthService } from '../../services/auth/auth.service';
@@ -31,7 +32,13 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
   selector: 'app-post-component',
   imports: [NgIcon, TranslatePipe, DatePipe, ModalWindow],
   viewProviders: [
-    provideIcons({ heroHandThumbUp, heroChatBubbleLeftEllipsis, heroStar, heroShare }),
+    provideIcons({
+      heroHandThumbUp,
+      heroChatBubbleLeftEllipsis,
+      heroStar,
+      heroStarSolid,
+      heroShare,
+    }),
   ],
   templateUrl: './post-component.html',
   styleUrl: './post-component.scss',
@@ -41,7 +48,8 @@ export class PostComponent implements OnInit {
   maxLengthOfShortDesc = 150;
 
   isLiked = signal(false);
-  isParticipating = signal(false);
+  isInterested = signal(false);
+  isTakesPart = signal(false);
 
   private router = inject(Router);
   private interactions = inject(InteractionsService);
@@ -62,11 +70,14 @@ export class PostComponent implements OnInit {
   ngOnInit(): void {
     if (this.data) {
       this.isLiked.set(this.data.myReaction === 'like');
-      this.isParticipating.set(
-        this.data.myParticipation === 'interested' || this.data.myParticipation === 'takes_part',
-      );
+      this.isInterested.set(this.data.myParticipation === 'interested');
+      this.isTakesPart.set(this.data.myParticipation === 'takes_part');
       this.isMyPost.set(this.authService.currentUser()?.id === this.data.author.id ? true : false);
     }
+  }
+
+  isParticipating(): boolean {
+    return this.isInterested() || this.isTakesPart();
   }
 
   viewPostPage(isScrolling: boolean): void {
@@ -129,31 +140,59 @@ export class PostComponent implements OnInit {
     }
   }
 
-  participatePost(): void {
-    if (!this.isParticipating()) {
-      this.data.participantCount++;
-      this.isParticipating.set(true);
-      this.interactions
-        .setParticipation(this.data.id, { type: 'interested' })
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe({
-          error: () => {
-            // Revert on error
-            this.data.participantCount--;
-            this.isParticipating.set(false);
-          },
-        });
-    } else {
+  setInterested(): void {
+    if (this.isInterested()) {
       this.data.participantCount--;
-      this.isParticipating.set(false);
+      this.isInterested.set(false);
       this.interactions
         .removeParticipation(this.data.id)
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           error: () => {
-            // Revert on error
             this.data.participantCount++;
-            this.isParticipating.set(true);
+            this.isInterested.set(true);
+          },
+        });
+    } else {
+      this.data.participantCount++;
+      this.isInterested.set(true);
+      this.isTakesPart.set(false);
+      this.interactions
+        .setParticipation(this.data.id, { type: 'interested' })
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          error: () => {
+            this.data.participantCount--;
+            this.isInterested.set(false);
+          },
+        });
+    }
+  }
+
+  setTakesPart(): void {
+    if (this.isTakesPart()) {
+      this.data.participantCount--;
+      this.isTakesPart.set(false);
+      this.interactions
+        .removeParticipation(this.data.id)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          error: () => {
+            this.data.participantCount++;
+            this.isTakesPart.set(true);
+          },
+        });
+    } else {
+      this.data.participantCount++;
+      this.isTakesPart.set(true);
+      this.isInterested.set(false);
+      this.interactions
+        .setParticipation(this.data.id, { type: 'takes_part' })
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          error: () => {
+            this.data.participantCount--;
+            this.isTakesPart.set(false);
           },
         });
     }

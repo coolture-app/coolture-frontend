@@ -15,7 +15,13 @@
   @for (item of users().items; track item.id) {
     <div class="user-card">
       <div class="user-card__avatar">
-        <ng-icon name="heroUserCircle" />
+        @if (item.avatar; as avatar) {
+          <img [src]="avatar.url" [alt]="item.username" class="user-card__avatar" />
+        } @else {
+          <div class="user-card__avatar user-card__avatar--placeholder">
+            {{ item.firstName.charAt(0) }}{{ item.lastName.charAt(0) }}
+          </div>
+        }
       </div>
       <div class="user-card__info" [routerLink]="['/u', item.username]">
         <span class="user-card__name">{{ item.firstName }} {{ item.lastName }}</span>
