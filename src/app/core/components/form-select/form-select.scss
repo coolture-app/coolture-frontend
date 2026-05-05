@@ -1,0 +1,88 @@
+@use '_mixin' as *;
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+
+  &__label {
+    font-weight: var(--font-medium);
+    font-size: var(--text-sm);
+    color: var(--color-text);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+
+  &__optional {
+    font-weight: var(--font-normal);
+    font-size: var(--text-xs);
+    color: var(--color-text-tertiary);
+    font-style: italic;
+  }
+
+  &__select-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  &__select {
+    @include input-base;
+    appearance: none;
+    padding-right: calc(var(--space-md) + 20px);
+    cursor: pointer;
+
+    &:focus {
+      border-color: var(--color-accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    }
+  }
+
+  &__chevron {
+    position: absolute;
+    right: var(--space-md);
+    color: var(--color-text-tertiary);
+    pointer-events: none;
+    transition: transform var(--transition-fast);
+  }
+
+  &__errors {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-height: 0;
+  }
+
+  &__error {
+    color: var(--color-danger);
+    font-size: var(--text-xs);
+    line-height: 1.3;
+    animation: fadeInError 200ms ease;
+  }
+
+  &.has-error {
+    .form-field__select {
+      border-color: var(--color-danger);
+
+      &:focus {
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
+      }
+    }
+
+    .form-field__label {
+      color: var(--color-danger);
+    }
+  }
+}
+
+@keyframes fadeInError {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

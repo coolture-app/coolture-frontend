@@ -1,0 +1,27 @@
+<div class="form-field" [class.has-error]="showErrors" [class.is-focused]="false">
+  <label *ngIf="label" [for]="inputId" class="form-field__label">
+    {{ label }}
+    <span *ngIf="!required" class="form-field__optional">{{ optionalLabel | translate }}</span>
+  </label>
+
+  <input
+    [id]="inputId"
+    [type]="type"
+    [formControl]="control"
+    [placeholder]="placeholder"
+    [attr.step]="step || null"
+    [attr.maxlength]="maxLength || null"
+    class="form-field__input"
+  />
+
+  <div class="form-field__footer">
+    <div class="form-field__errors">
+      <span *ngFor="let msg of activeErrors" class="form-field__error">
+        {{ msg }}
+      </span>
+    </div>
+    <span *ngIf="maxLength && type !== 'number' && type !== 'datetime-local'" class="form-field__counter" [class.form-field__counter--warn]="currentLength > maxLength">
+      {{ currentLength }}/{{ maxLength }}
+    </span>
+  </div>
+</div>
