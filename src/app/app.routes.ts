@@ -6,7 +6,6 @@ import { inject } from '@angular/core';
 import { NotFoundView } from './features/not-found-view/not-found-view';
 import { AddPostView } from './features/add-post-view/add-post-view';
 import { DiscoverView } from './features/discover-view/discover-view';
-import { ApiTestView } from './features/api-test-view/api-test-view';
 import { UserProfileView } from './features/my-profile-view/my-profile-view';
 import { authGuard } from './core/auth/auth.guard';
 import { EditPostView } from './features/edit-post-view/edit-post-view';
@@ -88,12 +87,6 @@ export const routes: Routes = [
       const translate = inject(TranslateService);
       return translate.get('MY_EVENTS.title');
     },
-  },
-  {
-    path: 'api-test',
-    component: ApiTestView,
-    canActivate: [authGuard],
-    title: 'API Test Runner',
   },
   // ** WILDCARD must be on the bottom of the router!
   {

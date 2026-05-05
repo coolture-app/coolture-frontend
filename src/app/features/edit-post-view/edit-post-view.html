@@ -12,7 +12,7 @@
       }
       <div class="user-info">
         <span class="label">{{ 'EDIT_POST.editing-as' | translate }}</span>
-        <span class="username">@{{ user.username }}</span>
+        <span class="username">{{ user.username }}</span>
       </div>
     </div>
   }
@@ -24,7 +24,7 @@
         id="title"
         type="text"
         formControlName="title"
-        placeholder="'EDIT_POST.insert_title | translate'"
+        placeholder="'EDIT_POST.insert_title' | translate"
       />
     </div>
 
