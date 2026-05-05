@@ -19,7 +19,11 @@
         {{ msg }}
       </span>
     </div>
-    <span *ngIf="maxLength" class="form-field__counter" [class.form-field__counter--warn]="currentLength > maxLength">
+    <span
+      *ngIf="maxLength"
+      class="form-field__counter"
+      [class.form-field__counter--warn]="currentLength > maxLength"
+    >
       {{ currentLength }}/{{ maxLength }}
     </span>
   </div>

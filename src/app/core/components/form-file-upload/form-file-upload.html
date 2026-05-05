@@ -1,7 +1,9 @@
 <div class="form-file-upload">
   <label *ngIf="label" for="fileUploadInput" class="form-file-upload__label">
     {{ label }}
-    <span *ngIf="!required" class="form-file-upload__optional">{{ optionalLabel | translate }}</span>
+    <span *ngIf="!required" class="form-file-upload__optional">{{
+      optionalLabel | translate
+    }}</span>
   </label>
 
   <div
@@ -47,4 +49,3 @@
     hidden
   />
 </div>
-

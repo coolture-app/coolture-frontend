@@ -101,7 +101,9 @@
     align-items: center;
     justify-content: center;
     opacity: 0;
-    transition: opacity var(--transition-fast), background var(--transition-fast);
+    transition:
+      opacity var(--transition-fast),
+      background var(--transition-fast);
 
     .post-form__media-item:hover & {
       opacity: 1;

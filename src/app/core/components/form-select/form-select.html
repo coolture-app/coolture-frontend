@@ -5,15 +5,22 @@
   </label>
 
   <div class="form-field__select-wrapper">
-    <select
-      [id]="inputId"
-      [formControl]="control"
-      class="form-field__select"
-    >
+    <select [id]="inputId" [formControl]="control" class="form-field__select">
       <option *ngIf="placeholder" value="" disabled>{{ placeholder }}</option>
       <option *ngFor="let opt of options" [value]="opt.value">{{ opt.label }}</option>
     </select>
-    <svg class="form-field__chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <svg
+      class="form-field__chevron"
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
       <polyline points="6 9 12 15 18 9"></polyline>
     </svg>
   </div>
