@@ -1,4 +1,3 @@
-@use '_mixin' as *;
 @keyframes modal-pop-in {
   from {
     opacity: 0;
@@ -38,8 +37,14 @@
 }
 
 .modal-content {
-  @include card;
-  @include flex-center-col;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border-light);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 
   padding: var(--space-lg) var(--space-md);
   width: 90vw;
@@ -66,49 +71,18 @@
 }
 
 .optionWrapper {
-  @include flex-between;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   width: 100%;
   gap: var(--space-md);
 
   &.center {
     justify-content: center;
   }
-}
 
-.btn-ok,
-.btn-yes,
-.btn-no {
-  @include button-base;
-  border-radius: var(--radius-full);
-  flex: 1;
-  max-width: 150px;
-  color: white;
-}
-.btn-ok {
-  background: #3b82f6;
-  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
-
-  &:hover:not(:disabled) {
-    background: #2563eb;
-    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6);
-  }
-}
-
-.btn-yes {
-  background: #10b981;
-  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
-
-  &:hover:not(:disabled) {
-    background: #059669;
-    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
-  }
-}
-.btn-no {
-  background: #ef4444;
-  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
-
-  &:hover:not(:disabled) {
-    background: #dc2626;
-    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.6);
+  app-btn {
+    flex: 1;
+    max-width: 150px;
   }
 }

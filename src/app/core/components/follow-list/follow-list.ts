@@ -20,13 +20,14 @@ import { AuthService } from '../../services/auth/auth.service';
 import { RelationsService } from '../../services/relations/relations.service';
 import { UserSummary } from '../../models/users/user-summary.model';
 import { PaginationInfo } from '../../models/common/paginated-response.model';
+import { Btn } from '../btn/btn';
 
 export type FollowListType = 'followers' | 'following';
 
 @Component({
   selector: 'app-follow-list',
   standalone: true,
-  imports: [CommonModule, TranslatePipe, NgIcon, RouterModule],
+  imports: [CommonModule, TranslatePipe, NgIcon, RouterModule, Btn],
   viewProviders: [provideIcons({ heroUserPlus, heroUserMinus, heroNoSymbol, heroXMark })],
   templateUrl: './follow-list.html',
   styleUrl: './follow-list.scss',

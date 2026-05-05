@@ -6,12 +6,6 @@
   margin: 0 auto;
 }
 
-.back {
-  @include button-ghost;
-  margin-bottom: var(--space-md);
-  padding-left: 0;
-}
-
 .comments {
   margin-top: var(--space-lg);
 }
@@ -37,19 +31,6 @@
   margin-bottom: var(--space-sm);
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
-
-  .cancel-reply {
-    background: transparent;
-    border: none;
-    color: var(--color-text-secondary);
-    cursor: pointer;
-    padding: 0 var(--space-xs);
-    font-size: var(--font-size-md);
-
-    &:hover {
-      color: var(--color-primary);
-    }
-  }
 }
 
 .commentfield {
@@ -66,8 +47,7 @@
     flex: 1;
   }
 
-  button {
-    @include button-primary;
+  app-btn {
     flex-shrink: 0;
   }
 }

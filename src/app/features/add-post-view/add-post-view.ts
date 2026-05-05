@@ -12,6 +12,7 @@ import { lastValueFrom, Observable } from 'rxjs';
 import { TranslatePipe } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth/auth.service';
+import { Btn } from '../../core/components/btn/btn';
 
 interface MediaPreview {
   file: File;
@@ -22,7 +23,7 @@ interface MediaPreview {
 
 @Component({
   selector: 'app-add-post-view',
-  imports: [ReactiveFormsModule, CommonModule, TranslatePipe],
+  imports: [ReactiveFormsModule, CommonModule, TranslatePipe, Btn],
   templateUrl: './add-post-view.html',
   styleUrl: './add-post-view.scss',
 })
@@ -41,11 +42,11 @@ export class AddPostView {
   isSubmitting = false;
 
   postForm = this.fb.group({
-    title: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(200)]],
+    title: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(32)]],
     categoryId: ['', Validators.required],
     type: ['ONLINE' as PostType, Validators.required],
     startsAt: ['', Validators.required],
-    description: ['', [Validators.required, Validators.maxLength(2000)]],
+    description: ['', [Validators.required, Validators.maxLength(1024)]],
     location: this.fb.group({
       countryCode: ['', [Validators.minLength(3), Validators.maxLength(3)]],
       venueName: ['', Validators.maxLength(64)],

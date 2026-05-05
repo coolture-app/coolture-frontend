@@ -1,7 +1,7 @@
 <div class="page">
-  <button class="back" (click)="goBack()" (keydown.enter)="goBack()" role="button" tabindex="0">
+  <app-btn variant="secondary" (btnClick)="goBack()">
     {{ 'FULL_POST.back' | translate }}
-  </button>
+  </app-btn>
   @if (post()) {
     <app-post-component
       (deleteRequest)="removeChild($event)"
@@ -26,13 +26,13 @@
           <span class="reply-indicator__text"
             >{{ 'FULL_POST.replying-to' | translate }} {{ this.parentUsername }}</span
           >
-          <button
-            (mousedown)="$event.preventDefault()"
-            (click)="parentCommentId = null; parentUsername = null"
-            class="cancel-reply"
+          <app-btn
+            variant="icon"
+            size="sm"
+            (btnClick)="parentCommentId = null; parentUsername = null"
           >
             ✕
-          </button>
+          </app-btn>
         </div>
       }
       <div class="commentfield">
@@ -46,9 +46,9 @@
           (focus)="isCommentFocused.set(true)"
           (blur)="isCommentFocused.set(false)"
         ></textarea>
-        <button (mousedown)="$event.preventDefault()" (click)="addComment()">
+        <app-btn variant="primary" (btnClick)="addComment()">
           {{ 'FULL_POST.comment-btn' | translate }}
-        </button>
+        </app-btn>
       </div>
     </div>
   }

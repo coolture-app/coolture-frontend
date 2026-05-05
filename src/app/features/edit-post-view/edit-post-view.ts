@@ -8,6 +8,7 @@ import { PostService } from '../../core/services/post/post.service';
 import { MediaService } from '../../core/services/media/media.service';
 import { DictionaryService } from '../../core/services/dictionary/dictionary.service';
 import { AuthService } from '../../core/services/auth/auth.service';
+import { Btn } from '../../core/components/btn/btn';
 
 import { PostDetail, PostMedia } from '../../core/models/posts/post-detail.model';
 import { PostUpdateRequest } from '../../core/models/posts/post-update-request.model';
@@ -20,7 +21,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 @Component({
   selector: 'app-edit-post-view',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, TranslatePipe],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipe, Btn],
   templateUrl: './edit-post-view.html',
   styleUrl: './edit-post-view.scss',
 })
@@ -43,11 +44,11 @@ export class EditPostView implements OnInit {
   postTypes: PostType[] = ['OFFLINE', 'ONLINE'];
 
   postForm: FormGroup = this.fb.group({
-    title: ['', Validators.required],
+    title: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(32)]],
     categoryId: ['', Validators.required],
     type: ['', Validators.required],
     startsAt: ['', Validators.required],
-    description: ['', Validators.required],
+    description: ['', [Validators.required, Validators.maxLength(1024)]],
     location: this.fb.group({
       countryCode: ['', [Validators.minLength(3), Validators.maxLength(3)]],
       venueName: ['', Validators.maxLength(64)],

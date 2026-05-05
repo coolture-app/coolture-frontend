@@ -16,7 +16,7 @@
         }
         <div class="user-info">
           <span class="label">{{ 'ADD_POST.posting-as' | translate }}</span>
-          <span class="username">@{{ user.username }}</span>
+          <span class="username">{{ user.username }}</span>
         </div>
       </div>
     }
@@ -77,7 +77,11 @@
         </span>
       </div>
 
-      <div class="location-section" *ngIf="postForm.get('type')?.value === 'OFFLINE'" formGroupName="location">
+      <div
+        class="location-section"
+        *ngIf="postForm.get('type')?.value === 'OFFLINE'"
+        formGroupName="location"
+      >
         <h3>{{ 'ADD_POST.location-title' | translate }}</h3>
 
         <div class="form-row">
@@ -93,7 +97,10 @@
             </select>
             <span
               class="error"
-              *ngIf="postForm.get('location.countryCode')?.invalid && postForm.get('location.countryCode')?.touched"
+              *ngIf="
+                postForm.get('location.countryCode')?.invalid &&
+                postForm.get('location.countryCode')?.touched
+              "
             >
               {{ 'ADD_POST.location-country-error' | translate }}
             </span>
@@ -104,7 +111,9 @@
             <input id="city" type="text" formControlName="city" />
             <span
               class="error"
-              *ngIf="postForm.get('location.city')?.invalid && postForm.get('location.city')?.touched"
+              *ngIf="
+                postForm.get('location.city')?.invalid && postForm.get('location.city')?.touched
+              "
             >
               {{ 'ADD_POST.location-city-error' | translate }}
             </span>
@@ -117,7 +126,10 @@
             <input id="postalCode" type="text" formControlName="postalCode" />
             <span
               class="error"
-              *ngIf="postForm.get('location.postalCode')?.invalid && postForm.get('location.postalCode')?.touched"
+              *ngIf="
+                postForm.get('location.postalCode')?.invalid &&
+                postForm.get('location.postalCode')?.touched
+              "
             >
               {{ 'ADD_POST.location-postal-code-error' | translate }}
             </span>
@@ -147,7 +159,10 @@
             <input id="latitude" type="number" step="any" formControlName="latitude" />
             <span
               class="error"
-              *ngIf="postForm.get('location.coordinates.latitude')?.invalid && postForm.get('location.coordinates.latitude')?.touched"
+              *ngIf="
+                postForm.get('location.coordinates.latitude')?.invalid &&
+                postForm.get('location.coordinates.latitude')?.touched
+              "
             >
               {{ 'ADD_POST.location-latitude-error' | translate }}
             </span>
@@ -158,7 +173,10 @@
             <input id="longitude" type="number" step="any" formControlName="longitude" />
             <span
               class="error"
-              *ngIf="postForm.get('location.coordinates.longitude')?.invalid && postForm.get('location.coordinates.longitude')?.touched"
+              *ngIf="
+                postForm.get('location.coordinates.longitude')?.invalid &&
+                postForm.get('location.coordinates.longitude')?.touched
+              "
             >
               {{ 'ADD_POST.location-longitude-error' | translate }}
             </span>
@@ -184,12 +202,7 @@
 
       <div class="form-group media-upload-group">
         <label for="mediaUploadBtn">{{ 'ADD_POST.form-media' | translate }}</label>
-        <button
-          type="button"
-          id="mediaUploadBtn"
-          class="media-upload-area"
-          (click)="fileInput.click()"
-        >
+        <app-btn variant="secondary" (btnClick)="fileInput.click()">
           <div class="upload-placeholder">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -208,7 +221,7 @@
             </svg>
             <span>{{ 'ADD_POST.form-media-click' | translate }}</span>
           </div>
-        </button>
+        </app-btn>
         <input
           #fileInput
           type="file"
@@ -224,10 +237,9 @@
             <div class="upload-overlay" *ngIf="preview.isUploading">
               <span class="spinner"></span>
             </div>
-            <button
-              type="button"
-              class="remove-btn"
-              (click)="removeMedia(i)"
+            <app-btn
+              variant="icon"
+              (btnClick)="removeMedia(i)"
               *ngIf="!preview.isUploading"
               [title]="'ADD_POST.form-media-remove' | translate"
             >
@@ -245,19 +257,19 @@
                 <line x1="18" y1="6" x2="6" y2="18"></line>
                 <line x1="6" y1="6" x2="18" y2="18"></line>
               </svg>
-            </button>
+            </app-btn>
           </div>
         </div>
       </div>
 
       <div class="form-actions">
-        <button type="submit" class="submit-btn" [disabled]="postForm.invalid || isSubmitting">
+        <app-btn variant="primary" type="submit" [disabled]="postForm.invalid || isSubmitting">
           {{
             isSubmitting
               ? ('ADD_POST.submit-saving' | translate)
               : ('ADD_POST.submit-btn' | translate)
           }}
-        </button>
+        </app-btn>
       </div>
     </form>
   </div>

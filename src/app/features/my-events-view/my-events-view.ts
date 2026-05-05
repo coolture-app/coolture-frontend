@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { EventCard } from '../../core/components/event-card/event-card';
+import { Btn } from '../../core/components/btn/btn';
 import { PostCard } from '../../core/models/posts/post-card.model';
 import { PostFilterParams } from '../../core/models/posts/post-filter-params.model';
 import { PostService } from '../../core/services/post/post.service';
@@ -12,7 +13,7 @@ import { ParticipationType } from '../../core/models/common/enums';
 
 @Component({
   selector: 'app-my-events-view',
-  imports: [TranslatePipe, EventCard],
+  imports: [TranslatePipe, EventCard, Btn],
   templateUrl: './my-events-view.html',
   styleUrl: './my-events-view.scss',
 })

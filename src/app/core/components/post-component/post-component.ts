@@ -25,12 +25,14 @@ import { DatePipe } from '@angular/common';
 import { InteractionsService } from '../../services/interactions/interactions.service';
 import { AuthService } from '../../services/auth/auth.service';
 import { ModalWindow } from '../modal/modal-window/modal-window';
+import { Btn } from '../btn/btn';
 import { PostService } from '../../services/post/post.service';
+import { DateFormatService } from '../../services/date-format/date-format.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-post-component',
-  imports: [NgIcon, TranslatePipe, DatePipe, ModalWindow],
+  imports: [NgIcon, TranslatePipe, DatePipe, ModalWindow, Btn],
   viewProviders: [
     provideIcons({
       heroHandThumbUp,
@@ -56,8 +58,10 @@ export class PostComponent implements OnInit {
   private authService = inject(AuthService);
   private postService = inject(PostService);
   private destroyRef = inject(DestroyRef);
+  private dateFormatService = inject(DateFormatService);
 
   isMyPost = signal<boolean>(false);
+  readonly dateFormats = this.dateFormatService.formats;
 
   @Input() data!: PostCard | PostDetail;
   @Input() isFullView!: boolean;

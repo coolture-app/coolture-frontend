@@ -1,6 +1,8 @@
 <div class="page">
   <div class="info">
     <h1>{{ '404.header' | translate }}</h1>
-    <button (click)="goBackToMainPage()">{{ '404.go-back-btn' | translate }}</button>
+    <app-btn variant="primary" (btnClick)="goBackToMainPage()">{{
+      '404.go-back-btn' | translate
+    }}</app-btn>
   </div>
 </div>

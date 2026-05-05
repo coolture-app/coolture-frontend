@@ -1,4 +1,9 @@
 {
+  "DATE_FORMATS": {
+    "short": "MM/dd/yyyy, h:mm a",
+    "mediumDate": "MMMM d, yyyy",
+    "eventCard": "MMM d, HH:mm"
+  },
   "MAIN_PAGE": {
     "searchbar": "Search for events",
     "search": "Search",
@@ -40,6 +45,7 @@
     "replying-to": "Replying to comment"
   },
   "POST": {
+    "starts": "Starts",
     "share": "Share",
     "show-more": "Show more",
     "show-less": "Show less",
@@ -123,7 +129,7 @@
     "header-desc": "Fill the form to publish a new post.",
     "form-title": "Event title",
     "form-title-placeholder": "Enter title...",
-    "form-title-error": "Title is required (3-200 characters).",
+    "form-title-error": "Title is required (3-32 characters).",
     "form-category": "Category",
     "form-category-placeholder": "Select category",
     "form-category-error": "Category is required.",
@@ -134,7 +140,7 @@
     "form-date-error": "Event date is required.",
     "form-desc": "Event description",
     "form-desc-placeholder": "Describe your event...",
-    "form-desc-error": "Description is required (up to 2000 characters).",
+    "form-desc-error": "Description is required (up to 1024 characters).",
     "location-title": "Event location",
     "location-country": "Country code",
     "location-country-placeholder": "Select country code",

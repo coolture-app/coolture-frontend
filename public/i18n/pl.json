@@ -1,4 +1,9 @@
 {
+  "DATE_FORMATS": {
+    "short": "dd.MM.yyyy, HH:mm",
+    "mediumDate": "d MMMM yyyy",
+    "eventCard": "d MMM, HH:mm"
+  },
   "MAIN_PAGE": {
     "searchbar": "Szukaj wydarzeń",
     "search": "Szukaj",
@@ -40,6 +45,7 @@
     "replying-to": "Odpowiadasz na komentarz"
   },
   "POST": {
+    "starts": "Rozpoczyna się",
     "share": "Udostępnij",
     "show-more": "Wyświetl więcej",
     "show-less": "Wyświetl mniej",
@@ -123,7 +129,7 @@
     "header-desc": "Wypełnij formularz, aby opublikować nowy post.",
     "form-title": "Tytuł wydarzenia",
     "form-title-placeholder": "Wpisz tytuł...",
-    "form-title-error": "Tytuł jest wymagany (3-200 znaków).",
+    "form-title-error": "Tytuł jest wymagany (3-32 znaki).",
     "form-category": "Kategoria",
     "form-category-placeholder": "Wybierz kategorię",
     "form-category-error": "Kategoria jest wymagana.",
@@ -134,7 +140,7 @@
     "form-date-error": "Data wydarzenia jest wymagana.",
     "form-desc": "Opis wydarzenia",
     "form-desc-placeholder": "Opisz swoje wydarzenie...",
-    "form-desc-error": "Opis jest wymagany (do 2000 znaków).",
+    "form-desc-error": "Opis jest wymagany (do 1024 znaków).",
     "location-title": "Lokalizacja wydarzenia",
     "location-country": "Kod kraju",
     "location-country-placeholder": "Wybierz kod kraju",

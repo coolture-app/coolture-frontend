@@ -12,7 +12,7 @@
       }
       <div class="user-info">
         <span class="label">{{ 'EDIT_POST.editing-as' | translate }}</span>
-        <span class="username">@{{ user.username }}</span>
+        <span class="username">{{ user.username }}</span>
       </div>
     </div>
   }
@@ -24,7 +24,7 @@
         id="title"
         type="text"
         formControlName="title"
-        placeholder="'EDIT_POST.insert_title | translate'"
+        placeholder="'EDIT_POST.insert_title' | translate"
       />
     </div>
 
@@ -71,7 +71,9 @@
           <div class="form-group">
             <label for="countryCode">{{ 'EDIT_POST.location-country' | translate }}</label>
             <select id="countryCode" formControlName="countryCode">
-              <option value="" disabled>{{ 'EDIT_POST.location-country-placeholder' | translate }}</option>
+              <option value="" disabled>
+                {{ 'EDIT_POST.location-country-placeholder' | translate }}
+              </option>
               @for (country of countryCodes(); track country.code) {
                 <option [value]="country.code">{{ country.code }}</option>
               }
@@ -133,13 +135,13 @@
           @for (mediaItem of existingMedia(); track mediaItem.media.id) {
             <div class="media-item existing">
               <img [src]="mediaItem.media.url" alt="Zdjęcie posta" />
-              <button
-                class="btn-delete"
-                type="button"
-                (click)="removeExistingMedia(mediaItem.media.id)"
+              <app-btn
+                variant="danger"
+                size="sm"
+                (btnClick)="removeExistingMedia(mediaItem.media.id)"
               >
                 {{ 'EDIT_POST.delete-permanently' | translate }}
-              </button>
+              </app-btn>
             </div>
           }
           @if (existingMedia().length === 0) {
@@ -154,9 +156,9 @@
           @for (media of newlyUploadedMedia(); track media.id) {
             <div class="media-item new">
               <img [src]="media.url" alt="Nowe zdjęcie" />
-              <button class="btn-delete" type="button" (click)="removeNewMedia(media.id)">
+              <app-btn variant="danger" size="sm" (btnClick)="removeNewMedia(media.id)">
                 {{ 'EDIT_POST.delete-permanently' | translate }}
-              </button>
+              </app-btn>
             </div>
           }
         </div>
@@ -183,8 +185,8 @@
 
     <hr class="divider" />
 
-    <button class="btn-submit" type="submit" [disabled]="postForm.invalid || isUploading()">
+    <app-btn variant="primary" type="submit" [disabled]="postForm.invalid || isUploading()">
       {{ 'EDIT_POST.save' | translate }}
-    </button>
+    </app-btn>
   </form>
 </div>

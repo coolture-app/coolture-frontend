@@ -20,13 +20,13 @@
           }
         </h3>
       </div>
-      <button
-        class="follow-list__close"
-        (click)="onClose()"
+      <app-btn
+        variant="icon"
+        (btnClick)="onClose()"
         [attr.aria-label]="'PROFILE.close' | translate"
       >
         <ng-icon name="heroXMark" />
-      </button>
+      </app-btn>
     </div>
 
     <div class="follow-list__content">
@@ -64,30 +64,21 @@
             <div class="follow-list__actions">
               @if (isOwnProfile() && isFollowersPanel()) {
                 @if (canFollow(user)) {
-                  <button
-                    class="follow-list__btn follow-list__btn--follow"
-                    (click)="onFollow(user)"
-                  >
+                  <app-btn variant="primary" size="sm" (btnClick)="onFollow(user)">
                     <ng-icon name="heroUserPlus" />
                     {{ 'PROFILE.follow' | translate }}
-                  </button>
+                  </app-btn>
                 }
-                <button
-                  class="follow-list__btn follow-list__btn--remove"
-                  (click)="onRemoveFollower(user)"
-                >
+                <app-btn variant="danger" size="sm" (btnClick)="onRemoveFollower(user)">
                   <ng-icon name="heroUserMinus" />
                   {{ 'PROFILE.block' | translate }}
-                </button>
+                </app-btn>
               }
               @if (isOwnProfile() && !isFollowersPanel()) {
-                <button
-                  class="follow-list__btn follow-list__btn--unfollow"
-                  (click)="onToggleFollow(user, true)"
-                >
+                <app-btn variant="secondary" size="sm" (btnClick)="onToggleFollow(user, true)">
                   <ng-icon name="heroUserMinus" />
                   {{ 'PROFILE.unfollow' | translate }}
-                </button>
+                </app-btn>
               }
             </div>
           </div>
@@ -104,9 +95,9 @@
                 <div class="follow-list__spinner follow-list__spinner--sm"></div>
               </div>
             } @else {
-              <button class="follow-list__more" (click)="loadMore()">
+              <app-btn variant="secondary" (btnClick)="loadMore()">
                 {{ 'PROFILE.load-more' | translate }}
-              </button>
+              </app-btn>
             }
           </div>
         }
