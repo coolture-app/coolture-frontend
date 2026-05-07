@@ -1,0 +1,30 @@
+<div class="form-field" [class.has-error]="showErrors">
+  <label *ngIf="label" [for]="inputId" class="form-field__label">
+    {{ label }}
+    <span *ngIf="!required" class="form-field__optional">{{ optionalLabel | translate }}</span>
+  </label>
+
+  <textarea
+    [id]="inputId"
+    [formControl]="control"
+    [placeholder]="placeholder"
+    [rows]="rows"
+    [attr.maxlength]="maxLength || null"
+    class="form-field__textarea"
+  ></textarea>
+
+  <div class="form-field__footer">
+    <div class="form-field__errors">
+      <span *ngFor="let msg of activeErrors" class="form-field__error">
+        {{ msg }}
+      </span>
+    </div>
+    <span
+      *ngIf="maxLength"
+      class="form-field__counter"
+      [class.form-field__counter--warn]="currentLength > maxLength"
+    >
+      {{ currentLength }}/{{ maxLength }}
+    </span>
+  </div>
+</div>

@@ -1,0 +1,306 @@
+<form [formGroup]="postForm" (ngSubmit)="onSubmit()" class="post-form">
+  <!-- Title -->
+  <app-form-input
+    [control]="titleControl"
+    [label]="'POST_FORM.title' | translate"
+    [placeholder]="'POST_FORM.title-placeholder' | translate"
+    [required]="true"
+    [maxLength]="32"
+    inputId="title"
+    [errorMessages]="{
+      required: ('POST_FORM.title-error-required' | translate),
+      maxlength: ('POST_FORM.title-error-maxlength' | translate),
+    }"
+  ></app-form-input>
+
+  <!-- Category + Type row -->
+  <div class="post-form__row">
+    <app-form-select
+      [control]="categoryIdControl"
+      [label]="'POST_FORM.category' | translate"
+      [placeholder]="'POST_FORM.category-placeholder' | translate"
+      [options]="categoryOptions"
+      [required]="true"
+      inputId="categoryId"
+      [errorMessages]="{ required: ('POST_FORM.category-error' | translate) }"
+    ></app-form-select>
+
+    <app-form-select
+      [control]="typeControl"
+      [label]="'POST_FORM.type' | translate"
+      [options]="typeOptions"
+      [required]="true"
+      inputId="type"
+    ></app-form-select>
+  </div>
+
+  <!-- Visibility -->
+  <app-form-select
+    [control]="visibilityControl"
+    [label]="'POST_FORM.visibility' | translate"
+    [options]="visibilityOptions"
+    [required]="true"
+    inputId="visibility"
+  ></app-form-select>
+
+  <!-- Start date + End date row -->
+  <div class="post-form__row">
+    <app-form-input
+      [control]="startsAtControl"
+      [label]="'POST_FORM.starts-at' | translate"
+      type="datetime-local"
+      [required]="true"
+      inputId="startsAt"
+      [errorMessages]="{ required: ('POST_FORM.starts-at-error' | translate) }"
+    ></app-form-input>
+
+    <app-form-input
+      [control]="endsAtControl"
+      [label]="'POST_FORM.ends-at' | translate"
+      type="datetime-local"
+      [required]="false"
+      inputId="endsAt"
+    ></app-form-input>
+  </div>
+
+  <!-- Event URL -->
+  <app-form-input
+    [control]="eventUrlControl"
+    [label]="'POST_FORM.event-url' | translate"
+    [placeholder]="'POST_FORM.event-url-placeholder' | translate"
+    type="url"
+    [required]="false"
+    inputId="eventUrl"
+  ></app-form-input>
+
+  <!-- Description -->
+  <app-form-textarea
+    [control]="descriptionControl"
+    [label]="'POST_FORM.description' | translate"
+    [placeholder]="'POST_FORM.description-placeholder' | translate"
+    [required]="true"
+    [maxLength]="1024"
+    [rows]="5"
+    inputId="description"
+    [errorMessages]="{
+      required: ('POST_FORM.description-error-required' | translate),
+      maxlength: ('POST_FORM.description-error-maxlength' | translate),
+    }"
+  ></app-form-textarea>
+
+  <!-- Tags -->
+  <app-form-input
+    [control]="tagsControl"
+    [label]="'POST_FORM.tags' | translate"
+    [placeholder]="'POST_FORM.tags-placeholder' | translate"
+    type="text"
+    [required]="false"
+    inputId="tags"
+  ></app-form-input>
+
+  <!-- Location section (OFFLINE only) -->
+  @if (isOffline) {
+    <div class="post-form__location" formGroupName="location">
+      <h3 class="post-form__section-title">{{ 'POST_FORM.location-title' | translate }}</h3>
+
+      <div class="post-form__row">
+        <app-form-select
+          [control]="countryCodeControl"
+          [label]="'POST_FORM.location-country' | translate"
+          [placeholder]="'POST_FORM.location-country-placeholder' | translate"
+          [options]="countryCodeOptions"
+          [required]="true"
+          inputId="countryCode"
+          [errorMessages]="{ required: ('POST_FORM.location-country-error' | translate) }"
+        ></app-form-select>
+
+        <app-form-input
+          [control]="cityControl"
+          [label]="'POST_FORM.location-city' | translate"
+          [required]="true"
+          [maxLength]="128"
+          inputId="city"
+          [errorMessages]="{ required: ('POST_FORM.location-city-error' | translate) }"
+        ></app-form-input>
+      </div>
+
+      <div class="post-form__row">
+        <app-form-input
+          [control]="postalCodeControl"
+          [label]="'POST_FORM.location-postal-code' | translate"
+          [required]="true"
+          [maxLength]="16"
+          inputId="postalCode"
+          [errorMessages]="{ required: ('POST_FORM.location-postal-code-error' | translate) }"
+        ></app-form-input>
+
+        <app-form-input
+          [control]="streetControl"
+          [label]="'POST_FORM.location-street' | translate"
+          [required]="false"
+          [maxLength]="128"
+          inputId="street"
+        ></app-form-input>
+      </div>
+
+      <div class="post-form__row">
+        <app-form-input
+          [control]="buildingNumControl"
+          [label]="'POST_FORM.location-building-num' | translate"
+          [required]="false"
+          [maxLength]="16"
+          inputId="buildingNum"
+        ></app-form-input>
+
+        <app-form-input
+          [control]="venueNameControl"
+          [label]="'POST_FORM.location-venue-name' | translate"
+          [required]="false"
+          [maxLength]="64"
+          inputId="venueName"
+        ></app-form-input>
+      </div>
+
+      <div class="post-form__row" formGroupName="coordinates">
+        <app-form-input
+          [control]="latitudeControl"
+          [label]="'POST_FORM.location-latitude' | translate"
+          type="number"
+          step="any"
+          [required]="true"
+          inputId="latitude"
+          [errorMessages]="{
+            required: ('POST_FORM.location-latitude-error' | translate),
+            min: ('POST_FORM.location-latitude-error' | translate),
+            max: ('POST_FORM.location-latitude-error' | translate),
+          }"
+        ></app-form-input>
+
+        <app-form-input
+          [control]="longitudeControl"
+          [label]="'POST_FORM.location-longitude' | translate"
+          type="number"
+          step="any"
+          [required]="true"
+          inputId="longitude"
+          [errorMessages]="{
+            required: ('POST_FORM.location-longitude-error' | translate),
+            min: ('POST_FORM.location-longitude-error' | translate),
+            max: ('POST_FORM.location-longitude-error' | translate),
+          }"
+        ></app-form-input>
+      </div>
+    </div>
+  }
+
+  <!-- Media section -->
+  <div class="post-form__media-section">
+    <!-- Existing media (edit mode) -->
+    @if (mode === 'edit' && existingMedia.length > 0) {
+      <div class="post-form__media-gallery">
+        <h4 class="post-form__media-subtitle">{{ 'POST_FORM.current-photos' | translate }}</h4>
+        <div class="post-form__gallery-grid">
+          @for (mediaItem of existingMedia; track mediaItem.media.id) {
+            <div class="post-form__media-item post-form__media-item--existing">
+              <img [src]="mediaItem.media.url" [alt]="'POST_FORM.photo-alt' | translate" />
+              <button
+                type="button"
+                class="post-form__media-remove"
+                (click)="removeExisting(mediaItem.media.id)"
+                [title]="'POST_FORM.remove-photo' | translate"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    @if (mode === 'edit' && existingMedia.length === 0) {
+      <p class="post-form__no-photos">{{ 'POST_FORM.no-current-photos' | translate }}</p>
+    }
+
+    <!-- Newly uploaded previews -->
+    @if (mediaPreviews.length > 0) {
+      <div class="post-form__media-gallery">
+        @if (mode === 'edit') {
+          <h4 class="post-form__media-subtitle">{{ 'POST_FORM.newly-added' | translate }}</h4>
+        }
+        <div class="post-form__gallery-grid">
+          @for (preview of mediaPreviews; track $index) {
+            <div class="post-form__media-item post-form__media-item--new">
+              <img [src]="preview.previewUrl" [alt]="preview.file.name" />
+              <div class="post-form__upload-overlay" *ngIf="preview.isUploading">
+                <span class="post-form__spinner"></span>
+              </div>
+              <button
+                *ngIf="!preview.isUploading"
+                type="button"
+                class="post-form__media-remove"
+                (click)="removeNewPreview($index)"
+                [title]="'POST_FORM.remove-photo' | translate"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Upload button -->
+    <app-form-file-upload
+      [label]="'POST_FORM.media-label' | translate"
+      [buttonText]="'POST_FORM.media-click'"
+      accept="image/*"
+      [multiple]="true"
+      [required]="false"
+      [disabled]="hasUploading"
+      (filesSelected)="onFilesSelected($event)"
+    ></app-form-file-upload>
+  </div>
+
+  <!-- Submit -->
+  <div class="post-form__actions">
+    <app-btn
+      variant="primary"
+      type="submit"
+      [disabled]="postForm.invalid || isSubmitting || hasUploading"
+    >
+      {{
+        isSubmitting
+          ? ('POST_FORM.submit-saving' | translate)
+          : mode === 'create'
+            ? ('POST_FORM.submit-create' | translate)
+            : ('POST_FORM.submit-edit' | translate)
+      }}
+    </app-btn>
+  </div>
+</form>
