@@ -35,7 +35,7 @@ export class DiscoverView implements OnInit, OnDestroy {
 
   searchControl = new FormControl('');
   private destroy$ = new Subject<void>();
-  followerIds = signal<Set<string>>(new Set());
+  followingIds = signal<Set<string>>(new Set());
 
   users = signal<PaginatedResponse<UserSummary>>({
     items: [],
@@ -43,7 +43,7 @@ export class DiscoverView implements OnInit, OnDestroy {
   });
 
   ngOnInit() {
-    this.loadFollowerIds();
+    this.loadFollowingIds();
     this.searchControl.valueChanges
       .pipe(
         startWith(''),
@@ -55,53 +55,46 @@ export class DiscoverView implements OnInit, OnDestroy {
       .subscribe({
         next: (data) => {
           const currentUserId = this.authService.currentUser()?.id;
-          const followers = this.followerIds();
           this.users.set({
             ...data,
-            items: data.items.filter(
-              (user) => user.id !== currentUserId && !followers.has(user.id),
-            ),
+            items: data.items.filter((user) => user.id !== currentUserId),
           });
         },
         error: (err) => console.error('Error while searching users', err),
       });
   }
 
-  private async loadFollowerIds(): Promise<void> {
+  private async loadFollowingIds(): Promise<void> {
     try {
       const currentUserId = this.authService.currentUser()?.id;
       if (!currentUserId) return;
       const res = await firstValueFrom(
-        this.relationsService.getFollowers(currentUserId, { limit: 100, cursor: '' }),
+        this.relationsService.getFollowing(currentUserId, { limit: 100, cursor: '' }),
       );
-      this.followerIds.set(new Set(res.items.map((u) => u.id)));
+      this.followingIds.set(new Set(res.items.map((u) => u.id)));
     } catch {
       // ignore
     }
   }
 
   async toggleFollow(user: UserSummary) {
-    const isCurrentlyFollowing = this.followerIds().has(user.id);
+    const isCurrentlyFollowing = this.followingIds().has(user.id);
     try {
       if (isCurrentlyFollowing) {
         await firstValueFrom(this.relationsService.unfollow(user.id));
-        this.followerIds.update((set) => {
+        this.followingIds.update((set) => {
           const newSet = new Set(set);
           newSet.delete(user.id);
           return newSet;
         });
       } else {
         await firstValueFrom(this.relationsService.follow(user.id));
-        this.followerIds.update((set) => {
+        this.followingIds.update((set) => {
           const newSet = new Set(set);
           newSet.add(user.id);
           return newSet;
         });
       }
-      this.users.update((u) => ({
-        ...u,
-        items: u.items.filter((item) => item.id !== user.id),
-      }));
     } catch (err) {
       console.error('Error toggling follow', err);
     }

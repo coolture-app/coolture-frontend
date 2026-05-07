@@ -28,12 +28,12 @@
         <span class="user-card__username">&#64;{{ item.username }}</span>
       </div>
       <app-btn
-        [variant]="followerIds().has(item.id) ? 'secondary' : 'primary'"
+        [variant]="followingIds().has(item.id) ? 'secondary' : 'primary'"
         size="sm"
         (btnClick)="toggleFollow(item)"
       >
         {{
-          followerIds().has(item.id)
+          followingIds().has(item.id)
             ? ('PROFILE.unfollow' | translate)
             : ('PROFILE.follow' | translate)
         }}
