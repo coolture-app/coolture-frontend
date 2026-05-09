@@ -1,4 +1,5 @@
 <div class="page">
+  <!-- MAIN VIEW WITH MAP OFF -->
   <div class="searchbar">
     <div class="searchbar__inner">
       <span class="searchbar__wrapper">
@@ -20,84 +21,96 @@
       <app-btn variant="icon" (btnClick)="toggleFilters()" [class.active]="showFilters()">
         <ng-icon name="heroFunnel" />
       </app-btn>
+      <app-switch class="map-switch" (switchState)="toggleMapView($event)"></app-switch>
     </div>
   </div>
 
   @if (showFilters()) {
-    <div class="filters">
-      <div class="filters__header">
-        <span class="filters__title">{{ 'MAIN_PAGE.filters' | translate }}</span>
-        <app-btn variant="plain" size="sm" (btnClick)="clearFilters()">
-          <ng-icon name="heroXMark" /> {{ 'MAIN_PAGE.clear' | translate }}
-        </app-btn>
-      </div>
-
-      <div class="filters__row">
-        <div class="filters__field">
-          <label for="categoryId">{{ 'MAIN_PAGE.category' | translate }}</label>
-          <select id="categoryId" [formControl]="filtersForm.controls.categoryId">
-            <option value="">{{ 'MAIN_PAGE.allCategories' | translate }}</option>
-            @for (cat of categories(); track cat.id) {
-              <option [value]="cat.id">{{ cat.name }}</option>
-            }
-          </select>
+    <div class="filter-wrapper">
+      <div class="filters">
+        <div class="filters__header">
+          <span class="filters__title">{{ 'MAIN_PAGE.filters' | translate }}</span>
+          <app-btn variant="plain" size="sm" (btnClick)="clearFilters()">
+            <ng-icon name="heroXMark" /> {{ 'MAIN_PAGE.clear' | translate }}
+          </app-btn>
         </div>
 
-        <div class="filters__field">
-          <label for="type">{{ 'MAIN_PAGE.type' | translate }}</label>
-          <select id="type" [formControl]="filtersForm.controls.type">
-            <option value="">{{ 'MAIN_PAGE.allTypes' | translate }}</option>
-            <option value="OFFLINE">{{ 'MAIN_PAGE.offline' | translate }}</option>
-            <option value="ONLINE">{{ 'MAIN_PAGE.online' | translate }}</option>
-          </select>
+        <div class="filters__row">
+          <div class="filters__field">
+            <label for="categoryId">{{ 'MAIN_PAGE.category' | translate }}</label>
+            <select id="categoryId" [formControl]="filtersForm.controls.categoryId">
+              <option value="">{{ 'MAIN_PAGE.allCategories' | translate }}</option>
+              @for (cat of categories(); track cat.id) {
+                <option [value]="cat.id">{{ cat.name }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="filters__field">
+            <label for="type">{{ 'MAIN_PAGE.type' | translate }}</label>
+            <select id="type" [formControl]="filtersForm.controls.type">
+              <option value="">{{ 'MAIN_PAGE.allTypes' | translate }}</option>
+              <option value="OFFLINE">{{ 'MAIN_PAGE.offline' | translate }}</option>
+              <option value="ONLINE">{{ 'MAIN_PAGE.online' | translate }}</option>
+            </select>
+          </div>
+
+          <div class="filters__field">
+            <label for="tags">{{ 'MAIN_PAGE.tags' | translate }}</label>
+            <input
+              id="tags"
+              type="text"
+              [formControl]="filtersForm.controls.tags"
+              placeholder="{{ 'MAIN_PAGE.tagsPlaceholder' | translate }}"
+            />
+          </div>
+
+          <div class="filters__field">
+            <label for="visibility">{{ 'MAIN_PAGE.visibility' | translate }}</label>
+            <select id="visibility" [formControl]="filtersForm.controls.visibility">
+              <option value="">{{ 'MAIN_PAGE.allVisibility' | translate }}</option>
+              <option value="PUBLIC">{{ 'MAIN_PAGE.public' | translate }}</option>
+              <option value="PRIVATE">{{ 'MAIN_PAGE.private' | translate }}</option>
+              <option value="FRIENDS">{{ 'MAIN_PAGE.friends' | translate }}</option>
+            </select>
+          </div>
         </div>
 
-        <div class="filters__field">
-          <label for="tags">{{ 'MAIN_PAGE.tags' | translate }}</label>
-          <input
-            id="tags"
-            type="text"
-            [formControl]="filtersForm.controls.tags"
-            placeholder="{{ 'MAIN_PAGE.tagsPlaceholder' | translate }}"
-          />
-        </div>
+        <div class="filters__row">
+          <div class="filters__field">
+            <label for="startsFrom">{{ 'MAIN_PAGE.startsFrom' | translate }}</label>
+            <input
+              id="startsFrom"
+              type="datetime-local"
+              [formControl]="filtersForm.controls.startsFrom"
+            />
+          </div>
 
-        <div class="filters__field">
-          <label for="visibility">{{ 'MAIN_PAGE.visibility' | translate }}</label>
-          <select id="visibility" [formControl]="filtersForm.controls.visibility">
-            <option value="">{{ 'MAIN_PAGE.allVisibility' | translate }}</option>
-            <option value="PUBLIC">{{ 'MAIN_PAGE.public' | translate }}</option>
-            <option value="PRIVATE">{{ 'MAIN_PAGE.private' | translate }}</option>
-            <option value="FRIENDS">{{ 'MAIN_PAGE.friends' | translate }}</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="filters__row">
-        <div class="filters__field">
-          <label for="startsFrom">{{ 'MAIN_PAGE.startsFrom' | translate }}</label>
-          <input
-            id="startsFrom"
-            type="datetime-local"
-            [formControl]="filtersForm.controls.startsFrom"
-          />
-        </div>
-
-        <div class="filters__field">
-          <label for="startsTo">{{ 'MAIN_PAGE.startsTo' | translate }}</label>
-          <input
-            id="startsTo"
-            type="datetime-local"
-            [formControl]="filtersForm.controls.startsTo"
-          />
+          <div class="filters__field">
+            <label for="startsTo">{{ 'MAIN_PAGE.startsTo' | translate }}</label>
+            <input
+              id="startsTo"
+              type="datetime-local"
+              [formControl]="filtersForm.controls.startsTo"
+            />
+          </div>
         </div>
       </div>
     </div>
   }
-
-  @for (item of posts().items; track item.id) {
-    <app-post-component (deleteRequest)="removeChild($event)" [data]="item" [isFullView]="false" />
-  } @empty {
-    <p class="empty">{{ 'MAIN_PAGE.no-posts' | translate }}</p>
+  @if (!isMapView()) {
+    @for (item of posts().items; track item.id) {
+      <app-post-component
+        (deleteRequest)="removeChild($event)"
+        [data]="item"
+        [isFullView]="false"
+      />
+    } @empty {
+      <p class="empty">{{ 'MAIN_PAGE.no-posts' | translate }}</p>
+    }
+  }
+  <!-- VIEW WITH MAP ON -->
+  @else {
+    <app-map></app-map>
   }
 </div>

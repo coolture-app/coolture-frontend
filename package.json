@@ -34,6 +34,7 @@
     "@angular/platform-server": "^20.3.0",
     "@angular/router": "^20.3.0",
     "@angular/ssr": "^20.3.8",
+    "@maplibre/ngx-maplibre-gl": "^20.1.2",
     "@ng-icons/core": "^32.0.0",
     "@ng-icons/font-awesome": "^32.0.0",
     "@ng-icons/heroicons": "^32.0.0",
@@ -43,6 +44,7 @@
     "express": "^5.1.0",
     "keycloak-angular": "^20.0.0",
     "keycloak-js": "^26.2.2",
+    "maplibre-gl": "^5.24.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },

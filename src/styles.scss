@@ -2,6 +2,7 @@
 @use 'app/static/styles/reset';
 @use 'app/static/styles/headers';
 @use 'app/static/styles/flex';
+@import 'maplibre-gl/dist/maplibre-gl.css';
 
 @font-face {
   font-family: 'Helvetica';
@@ -75,6 +76,9 @@ html {
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 body {
@@ -86,6 +90,14 @@ body {
   background-color: var(--color-background);
   padding-bottom: var(--footer-height);
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+app-root {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
 }
 
 a {

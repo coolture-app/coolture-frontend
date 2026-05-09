@@ -18,10 +18,12 @@ import { AuthService } from '../../core/services/auth/auth.service';
 import { DictionaryService } from '../../core/services/dictionary/dictionary.service';
 import { EventCategory } from '../../core/models/dictionary/event-category.model';
 import { PostType, PostStatus, PostVisibility } from '../../core/models/common/enums';
+import { Switch } from '../../core/components/switch/switch/switch';
+import { Map } from '../../core/components/map/map/map';
 
 @Component({
   selector: 'app-main-page',
-  imports: [TranslatePipe, NgIcon, PostComponent, ReactiveFormsModule, Btn],
+  imports: [TranslatePipe, NgIcon, PostComponent, ReactiveFormsModule, Btn, Switch, Map],
   viewProviders: [provideIcons({ heroMagnifyingGlass, heroPlus, heroFunnel, heroXMark })],
   templateUrl: './main-page.html',
   styleUrl: './main-page.scss',
@@ -38,6 +40,8 @@ export class MainPage implements OnInit {
 
   categories = signal<EventCategory[]>([]);
   showFilters = signal(false);
+
+  isMapView = signal(false);
 
   filtersForm = new FormGroup({
     categoryId: new FormControl(''),
@@ -114,5 +118,10 @@ export class MainPage implements OnInit {
       ...currentData,
       items: currentData.items.filter((post) => String(post.id) !== String(idToRemove)),
     }));
+  }
+
+  toggleMapView(isToggled: boolean): void {
+    this.isMapView.set(isToggled);
+    console.log(this.isMapView());
   }
 }
