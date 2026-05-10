@@ -43,6 +43,7 @@ export class PostService {
     if (filters.latitude) params = params.set('latitude', filters.latitude);
     if (filters.longitude) params = params.set('longitude', filters.longitude);
     if (filters.radiusKm) params = params.set('radiusKm', filters.radiusKm);
+    if (filters.sortBy) params = params.set('sortBy', filters.sortBy);
 
     if (filters.participationTypes) {
       filters.participationTypes.forEach((type) => {
