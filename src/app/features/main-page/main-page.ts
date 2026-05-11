@@ -30,10 +30,12 @@ import { AuthService } from '../../core/services/auth/auth.service';
 import { DictionaryService } from '../../core/services/dictionary/dictionary.service';
 import { EventCategory } from '../../core/models/dictionary/event-category.model';
 import { PostType, PostStatus, PostVisibility, PostSortBy } from '../../core/models/common/enums';
+import { Switch } from '../../core/components/switch/switch/switch';
+import { Map } from '../../core/components/map/map/map';
 
 @Component({
   selector: 'app-main-page',
-  imports: [TranslatePipe, NgIcon, PostComponent, ReactiveFormsModule, Btn],
+  imports: [TranslatePipe, NgIcon, PostComponent, ReactiveFormsModule, Btn, Switch, Map],
   viewProviders: [
     provideIcons({ heroMagnifyingGlass, heroPlus, heroFunnel, heroXMark, heroChevronDown }),
   ],
@@ -61,6 +63,8 @@ export class MainPage implements OnInit {
     { value: 'popular', labelKey: 'MAIN_PAGE.sortPopular' },
     { value: 'upcoming', labelKey: 'MAIN_PAGE.sortUpcoming' },
   ];
+
+  isMapView = signal(false);
 
   filtersForm = new FormGroup({
     categoryId: new FormControl(''),
@@ -157,5 +161,10 @@ export class MainPage implements OnInit {
   getSortLabelKey(): string {
     const sort = this.sortOptions.find((o) => o.value === this.currentSortBy);
     return sort ? sort.labelKey : 'MAIN_PAGE.sortRecent';
+  }
+
+  toggleMapView(isToggled: boolean): void {
+    this.isMapView.set(isToggled);
+    console.log(this.isMapView());
   }
 }

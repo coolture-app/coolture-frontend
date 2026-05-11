@@ -1,0 +1,15 @@
+<div class="map-wrapper">
+  <mgl-map [mapStyle]="mapStyle" [zoom]="zoomLevel" [center]="centerCoords">
+    <!-- MARKER I POPUP BEDA TWORZONE DLA KAZDEGO WYDARZENIA / KAŻDEGO KLASTRA -->
+    <mgl-marker #testMarker [lngLat]="[18.236371, 54.606134]">
+      <app-map-marker></app-map-marker>
+    </mgl-marker>
+    <mgl-popup [marker]="testMarker">
+      <app-map-popup
+        popupTitle="Testowy popup"
+        popupBody="Testowy body testowego popupu"
+      ></app-map-popup>
+    </mgl-popup>
+    <!--------------------------------->
+  </mgl-map>
+</div>
