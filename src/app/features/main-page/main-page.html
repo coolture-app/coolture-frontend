@@ -17,6 +17,25 @@
           <span class="addPost-btn__text">{{ 'MAIN_PAGE.addPost' | translate }}</span>
         </app-btn>
       }
+      <div class="sort-wrapper">
+        <button class="sort-btn" (click)="toggleSortMenu()">
+          <span>{{ getSortLabelKey() | translate }}</span>
+          <ng-icon name="heroChevronDown" />
+        </button>
+        @if (showSortMenu()) {
+          <div class="sort-menu">
+            @for (option of sortOptions; track option.value) {
+              <button
+                class="sort-menu__item"
+                [class.active]="currentSortBy === option.value"
+                (click)="setSortBy(option.value)"
+              >
+                {{ option.labelKey | translate }}
+              </button>
+            }
+          </div>
+        }
+      </div>
       <app-btn variant="icon" (btnClick)="toggleFilters()" [class.active]="showFilters()">
         <ng-icon name="heroFunnel" />
       </app-btn>
