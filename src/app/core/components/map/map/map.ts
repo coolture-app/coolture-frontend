@@ -15,4 +15,5 @@ export class Map {
   mapStyle = 'https://tiles.stadiamaps.com/styles/alidade_smooth.json';
   centerCoords: [number, number] = [18.23, 54.6];
   zoomLevel: [number] = [12];
+  //TODO WGS
 }
