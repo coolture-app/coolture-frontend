@@ -11,16 +11,16 @@
     <app-btn
       variant="secondary"
       size="sm"
-      [class]="selectedFilter() === 'interested' ? 'active' : ''"
-      (btnClick)="setFilter('interested')"
+      [class]="selectedFilter() === 'INTERESTED' ? 'active' : ''"
+      (btnClick)="setFilter('INTERESTED')"
     >
       {{ 'MY_EVENTS.interested' | translate }}
     </app-btn>
     <app-btn
       variant="secondary"
       size="sm"
-      [class]="selectedFilter() === 'takes_part' ? 'active' : ''"
-      (btnClick)="setFilter('takes_part')"
+      [class]="selectedFilter() === 'TAKES_PART' ? 'active' : ''"
+      (btnClick)="setFilter('TAKES_PART')"
     >
       {{ 'MY_EVENTS.takes_part' | translate }}
     </app-btn>

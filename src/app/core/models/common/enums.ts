@@ -1,13 +1,13 @@
 export type PostType = 'OFFLINE' | 'ONLINE';
 export type PostStatus = 'ACTIVE' | 'EDITED' | 'DELETED';
 export type PostVisibility = 'PUBLIC' | 'PRIVATE' | 'FRIENDS';
-export type ReactionType = 'like' | 'dislike';
-export type ParticipationType = 'interested' | 'takes_part';
-export type PostSortBy = 'recent' | 'popular' | 'upcoming';
+export type ReactionType = 'LIKE' | 'DISLIKE';
+export type ParticipationType = 'INTERESTED' | 'TAKES_PART';
+export type PostSortBy = 'RECENT' | 'POPULAR' | 'UPCOMING';
 export type MediaPurpose =
-  | 'profile_image'
-  | 'profile_image_thumbnail'
-  | 'event_cover'
-  | 'event_media';
+  | 'PROFILE_IMAGE'
+  | 'PROFILE_IMAGE_THUMBNAIL'
+  | 'EVENT_COVER'
+  | 'EVENT_MEDIA';
 export type MediaStatus = 'PENDING' | 'UPLOADED' | 'ATTACHED' | 'DELETED';
 export type CommentStatus = 'ACTIVE' | 'DELETED';
