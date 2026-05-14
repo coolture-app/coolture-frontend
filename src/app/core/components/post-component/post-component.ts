@@ -73,9 +73,9 @@ export class PostComponent implements OnInit {
 
   ngOnInit(): void {
     if (this.data) {
-      this.isLiked.set(this.data.myReaction === 'like');
-      this.isInterested.set(this.data.myParticipation === 'interested');
-      this.isTakesPart.set(this.data.myParticipation === 'takes_part');
+      this.isLiked.set(this.data.myReaction === 'LIKE');
+      this.isInterested.set(this.data.myParticipation === 'INTERESTED');
+      this.isTakesPart.set(this.data.myParticipation === 'TAKES_PART');
       this.isMyPost.set(this.authService.currentUser()?.id === this.data.author.id ? true : false);
     }
   }
@@ -119,7 +119,7 @@ export class PostComponent implements OnInit {
       this.data.positiveReactionCount++;
       this.isLiked.set(true);
       this.interactions
-        .setReaction(this.data.id, { type: 'like' })
+        .setReaction(this.data.id, { type: 'LIKE' })
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           error: () => {
@@ -162,7 +162,7 @@ export class PostComponent implements OnInit {
       this.isInterested.set(true);
       this.isTakesPart.set(false);
       this.interactions
-        .setParticipation(this.data.id, { type: 'interested' })
+        .setParticipation(this.data.id, { type: 'INTERESTED' })
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           error: () => {
@@ -191,7 +191,7 @@ export class PostComponent implements OnInit {
       this.isTakesPart.set(true);
       this.isInterested.set(false);
       this.interactions
-        .setParticipation(this.data.id, { type: 'takes_part' })
+        .setParticipation(this.data.id, { type: 'TAKES_PART' })
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           error: () => {

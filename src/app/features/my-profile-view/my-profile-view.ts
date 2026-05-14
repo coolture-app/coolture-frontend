@@ -217,7 +217,7 @@ export class UserProfileView implements OnInit {
     try {
       const initRes = await firstValueFrom(
         this.mediaService.initUpload({
-          purpose: 'profile_image',
+          purpose: 'PROFILE_IMAGE',
           mimeType: file.type,
           sizeBytes: file.size,
           fileName: file.name,

@@ -56,12 +56,12 @@ export class MainPage implements OnInit {
   showFilters = signal(false);
   showSortMenu = signal(false);
 
-  private sortBy$ = new BehaviorSubject<PostSortBy>('recent');
+  private sortBy$ = new BehaviorSubject<PostSortBy>('RECENT');
 
   sortOptions: { value: PostSortBy; labelKey: string }[] = [
-    { value: 'recent', labelKey: 'MAIN_PAGE.sortRecent' },
-    { value: 'popular', labelKey: 'MAIN_PAGE.sortPopular' },
-    { value: 'upcoming', labelKey: 'MAIN_PAGE.sortUpcoming' },
+    { value: 'RECENT', labelKey: 'MAIN_PAGE.sortRecent' },
+    { value: 'POPULAR', labelKey: 'MAIN_PAGE.sortPopular' },
+    { value: 'UPCOMING', labelKey: 'MAIN_PAGE.sortUpcoming' },
   ];
 
   isMapView = signal(false);

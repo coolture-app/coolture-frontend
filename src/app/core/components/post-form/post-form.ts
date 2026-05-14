@@ -299,7 +299,7 @@ export class PostForm implements OnInit, OnChanges {
       try {
         const initRes = await lastValueFrom(
           this.mediaService.initUpload({
-            purpose: 'event_media',
+            purpose: 'EVENT_MEDIA',
             mimeType: file.type,
             sizeBytes: file.size,
             fileName: file.name,

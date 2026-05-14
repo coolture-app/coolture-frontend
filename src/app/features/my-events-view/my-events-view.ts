@@ -36,7 +36,7 @@ export class MyEventsView implements OnInit {
     const filter = this.selectedFilter();
     const filterParams: PostFilterParams = {
       limit: 20,
-      participationTypes: filter === 'all' ? ['interested', 'takes_part'] : [filter],
+      participationTypes: filter === 'all' ? ['INTERESTED', 'TAKES_PART'] : [filter],
     };
 
     this.postService
