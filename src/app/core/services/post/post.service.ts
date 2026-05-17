@@ -33,7 +33,6 @@ export class PostService {
     if (filters.cursor) params = params.set('cursor', filters.cursor);
     if (filters.limit) params = params.set('limit', filters.limit);
     if (filters.q) params = params.set('q', filters.q);
-    if (filters.categoryId) params = params.set('categoryId', filters.categoryId);
     if (filters.authorId) params = params.set('authorId', filters.authorId);
     if (filters.status) params = params.set('status', filters.status);
     if (filters.visibility) params = params.set('visibility', filters.visibility);

@@ -27,7 +27,6 @@ import { PostDetail, PostMedia } from '../../models/posts/post-detail.model';
 import { PostType, PostVisibility } from '../../models/common/enums';
 import { MediaService } from '../../services/media/media.service';
 import { DictionaryService } from '../../services/dictionary/dictionary.service';
-import { EventCategory } from '../../models/dictionary/event-category.model';
 import { CountryCode } from '../../models/dictionary/country-code.model';
 import { MediaResource } from '../../models/media/media-resource.model';
 
@@ -69,10 +68,8 @@ export class PostForm implements OnInit, OnChanges {
   private destroyRef = inject(DestroyRef);
   private translate = inject(TranslateService);
 
-  categories$: Observable<EventCategory[]> = this.dictionaryService.getEventCategories();
   countryCodes$: Observable<CountryCode[]> = this.dictionaryService.getCountryCodes();
 
-  categoryOptions: SelectOption[] = [];
   countryCodeOptions: SelectOption[] = [];
 
   mediaPreviews: MediaPreview[] = [];
@@ -93,7 +90,6 @@ export class PostForm implements OnInit, OnChanges {
   // Form definition with validation matching API contract + DB schema
   postForm = this.fb.group({
     title: ['', [Validators.required, Validators.maxLength(32)]],
-    categoryId: ['', Validators.required],
     type: ['ONLINE' as PostType, Validators.required],
     startsAt: ['', Validators.required],
     endsAt: [''],
@@ -118,9 +114,6 @@ export class PostForm implements OnInit, OnChanges {
   // FormControl getters for template
   get titleControl(): FormControl {
     return this.postForm.get('title') as FormControl;
-  }
-  get categoryIdControl(): FormControl {
-    return this.postForm.get('categoryId') as FormControl;
   }
   get typeControl(): FormControl {
     return this.postForm.get('type') as FormControl;
@@ -178,14 +171,6 @@ export class PostForm implements OnInit, OnChanges {
 
   ngOnInit(): void {
     // Load dictionaries, then re-patch form if initialData already arrived
-    this.categories$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((categories) => {
-      this.categoryOptions = categories.map((c) => ({ value: c.id, label: c.name }));
-      // Re-sync select after options are available
-      if (this.initialData) {
-        this.categoryIdControl.setValue(this.initialData.category?.id ?? '', { emitEvent: false });
-      }
-    });
-
     this.countryCodes$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((codes) => {
       this.countryCodeOptions = codes.map((c) => ({ value: c.code, label: c.code }));
       // Re-sync select after options are available
@@ -234,7 +219,6 @@ export class PostForm implements OnInit, OnChanges {
 
     this.postForm.patchValue({
       title: post.title,
-      categoryId: post.category?.id,
       type: post.type,
       startsAt: post.startsAt ? post.startsAt.substring(0, 16) : '',
       endsAt: post.endsAt ? post.endsAt.substring(0, 16) : '',
@@ -362,7 +346,6 @@ export class PostForm implements OnInit, OnChanges {
 
     const data: PostFormData = {
       title: formValue.title ?? '',
-      categoryId: formValue.categoryId ?? '',
       type: formValue.type ?? 'ONLINE',
       startsAt: formValue.startsAt ? new Date(formValue.startsAt).toISOString() : '',
       endsAt: formValue.endsAt ? new Date(formValue.endsAt).toISOString() : null,

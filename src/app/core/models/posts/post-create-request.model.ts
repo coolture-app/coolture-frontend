@@ -2,7 +2,6 @@ import { PostType, PostVisibility } from '../common/enums';
 import { EventLocationRequest } from '../common/geo.model';
 
 export interface PostCreateRequest {
-  categoryId: string; // UUID
   title: string;
   description: string;
   eventUrl?: string | null;

@@ -13,26 +13,14 @@
     }"
   ></app-form-input>
 
-  <!-- Category + Type row -->
-  <div class="post-form__row">
-    <app-form-select
-      [control]="categoryIdControl"
-      [label]="'POST_FORM.category' | translate"
-      [placeholder]="'POST_FORM.category-placeholder' | translate"
-      [options]="categoryOptions"
-      [required]="true"
-      inputId="categoryId"
-      [errorMessages]="{ required: ('POST_FORM.category-error' | translate) }"
-    ></app-form-select>
-
-    <app-form-select
-      [control]="typeControl"
-      [label]="'POST_FORM.type' | translate"
-      [options]="typeOptions"
-      [required]="true"
-      inputId="type"
-    ></app-form-select>
-  </div>
+  <!-- Type -->
+  <app-form-select
+    [control]="typeControl"
+    [label]="'POST_FORM.type' | translate"
+    [options]="typeOptions"
+    [required]="true"
+    inputId="type"
+  ></app-form-select>
 
   <!-- Visibility -->
   <app-form-select

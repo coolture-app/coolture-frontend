@@ -56,16 +56,6 @@
 
         <div class="filters__row">
           <div class="filters__field">
-            <label for="categoryId">{{ 'MAIN_PAGE.category' | translate }}</label>
-            <select id="categoryId" [formControl]="filtersForm.controls.categoryId">
-              <option value="">{{ 'MAIN_PAGE.allCategories' | translate }}</option>
-              @for (cat of categories(); track cat.id) {
-                <option [value]="cat.id">{{ cat.name }}</option>
-              }
-            </select>
-          </div>
-
-          <div class="filters__field">
             <label for="type">{{ 'MAIN_PAGE.type' | translate }}</label>
             <select id="type" [formControl]="filtersForm.controls.type">
               <option value="">{{ 'MAIN_PAGE.allTypes' | translate }}</option>

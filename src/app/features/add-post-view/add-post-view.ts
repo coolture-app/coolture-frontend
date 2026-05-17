@@ -27,7 +27,6 @@ export class AddPostView {
     try {
       const payload: PostCreateRequest = {
         title: data.title,
-        categoryId: data.categoryId,
         type: data.type,
         startsAt: data.startsAt,
         endsAt: data.endsAt,
