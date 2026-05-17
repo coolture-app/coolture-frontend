@@ -1,6 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { firstValueFrom } from 'rxjs';
 
 import { AuthService } from '../../services/auth/auth.service';
 import { ApiUrlService } from '../../services/api-url.service';
@@ -34,7 +33,6 @@ export class Navbar {
   }
 
   async logout(): Promise<void> {
-    await firstValueFrom(this.authService.logout());
-    window.location.href = '/';
+    this.authService.logout();
   }
 }

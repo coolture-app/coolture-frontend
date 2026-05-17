@@ -34,15 +34,12 @@ export class AuthService {
     );
   }
 
-  logout(): Observable<void> {
-    this.currentUser.set(null);
-    return this.http.post<void>(this.apiUrl.path('/auth/logout'), {}).pipe(
-      tap(() => {
-        if (isPlatformBrowser(this.platformId)) {
-          this.clearAllCookies();
-        }
-      }),
-    );
+  logout(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      this.currentUser.set(null);
+      this.clearAllCookies();
+      window.location.href = `${this.apiUrl.oauthUrl}/logout`;
+    }
   }
 
   private clearAllCookies(): void {
