@@ -69,7 +69,6 @@ export class EditPostView implements OnInit {
 
     const payload: PostUpdateRequest = {
       title: data.title,
-      categoryId: data.categoryId,
       type: data.type,
       startsAt: data.startsAt,
       endsAt: data.endsAt,

@@ -27,8 +27,6 @@ import { PostFilterParams } from '../../core/models/posts/post-filter-params.mod
 import { PostService } from '../../core/services/post/post.service';
 import { PaginatedResponse } from '../../core/models/common/paginated-response.model';
 import { AuthService } from '../../core/services/auth/auth.service';
-import { DictionaryService } from '../../core/services/dictionary/dictionary.service';
-import { EventCategory } from '../../core/models/dictionary/event-category.model';
 import { PostType, PostStatus, PostVisibility, PostSortBy } from '../../core/models/common/enums';
 import { Switch } from '../../core/components/switch/switch/switch';
 import { Map } from '../../core/components/map/map/map';
@@ -48,11 +46,9 @@ export class MainPage implements OnInit {
   private router = inject(Router);
   private destroyRef = inject(DestroyRef);
   authService = inject(AuthService);
-  private dictionaryService = inject(DictionaryService);
 
   searchControl = new FormControl('');
 
-  categories = signal<EventCategory[]>([]);
   showFilters = signal(false);
   showSortMenu = signal(false);
 
@@ -67,7 +63,6 @@ export class MainPage implements OnInit {
   isMapView = signal(false);
 
   filtersForm = new FormGroup({
-    categoryId: new FormControl(''),
     type: new FormControl(''),
     tags: new FormControl(''),
     startsFrom: new FormControl(''),
@@ -82,10 +77,6 @@ export class MainPage implements OnInit {
   });
 
   ngOnInit() {
-    this.dictionaryService.getEventCategories().subscribe({
-      next: (categories) => this.categories.set(categories),
-      error: (err) => console.error('Error loading categories', err),
-    });
 
     const search$ = this.searchControl.valueChanges.pipe(
       startWith(''),
@@ -102,7 +93,6 @@ export class MainPage implements OnInit {
           limit: 20,
           sortBy,
           ...(search && { q: search }),
-          ...(filters?.categoryId && { categoryId: filters.categoryId }),
           ...(filters?.type && { type: filters.type as PostType }),
           ...(filters?.tags && {
             tags: (filters.tags as string)

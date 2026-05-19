@@ -3,7 +3,6 @@ import { EventLocationRequest } from '../common/geo.model';
 
 export interface PostFormData {
   title: string;
-  categoryId: string;
   type: PostType;
   startsAt: string;
   endsAt: string | null;

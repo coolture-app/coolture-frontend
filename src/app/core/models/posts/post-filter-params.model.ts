@@ -11,7 +11,6 @@ export interface PostFilterParams {
   cursor?: string;
   limit?: number;
   q?: string;
-  categoryId?: string; // UUID
   tags?: string[];
   authorId?: string; // UUID
   status?: PostStatus;

@@ -1,5 +1,4 @@
 import { UserSummary } from '../users/user-summary.model';
-import { Category } from './category.model';
 import { EventLocation } from '../common/geo.model';
 import { MediaResource } from '../media/media-resource.model';
 import {
@@ -13,7 +12,6 @@ import {
 export interface PostBase {
   id: string; // UUID
   author: UserSummary;
-  category: Category;
   location: EventLocation | null;
   title: string;
   description: string;
