@@ -89,7 +89,7 @@ export class PostForm implements OnInit, OnChanges {
 
   // Form definition with validation matching API contract + DB schema
   postForm = this.fb.group({
-    title: ['', [Validators.required, Validators.maxLength(32)]],
+    title: ['', [Validators.required, Validators.maxLength(128)]],
     type: ['ONLINE' as PostType, Validators.required],
     startsAt: ['', Validators.required],
     endsAt: [''],

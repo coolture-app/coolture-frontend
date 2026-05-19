@@ -77,7 +77,6 @@ export class MainPage implements OnInit {
   });
 
   ngOnInit() {
-
     const search$ = this.searchControl.valueChanges.pipe(
       startWith(''),
       debounceTime(400),
