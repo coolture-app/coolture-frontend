@@ -1,12 +1,51 @@
 .popup-wrapper {
-  width: 100px;
-  height: auto;
-  background-color: white;
+  padding: 8px 12px;
+  max-width: 200px;
+
   .popup-title {
-    font-size: 15px;
-    font-weight: bold;
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--color-accent);
+    cursor: pointer;
+    text-decoration: none;
+    display: block;
+    margin-bottom: 4px;
+
+    &:hover {
+      text-decoration: underline;
+    }
   }
+
   .popup-body {
-    font-size: 10px;
+    margin: 0;
+    font-size: 12px;
+    color: var(--gray-600, #4b5563);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+// Override MapLibre default popup styles
+:host {
+  ::ng-deep .maplibregl-popup-content {
+    border-radius: 12px;
+    padding: 0;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    border: none;
+  }
+
+  ::ng-deep .maplibregl-popup-close-button {
+    font-size: 16px;
+    color: var(--gray-400, #9ca3af);
+    right: 4px;
+    top: 4px;
+
+    &:hover {
+      background: transparent;
+      color: var(--gray-700, #374151);
+    }
   }
 }

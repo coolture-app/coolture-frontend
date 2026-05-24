@@ -8,6 +8,7 @@ import { PostCreateRequest } from '../../models/posts/post-create-request.model'
 import { PostUpdateRequest } from '../../models/posts/post-update-request.model';
 import { PaginatedResponse } from '../../models/common/paginated-response.model';
 import { PostFilterParams } from '../../models/posts/post-filter-params.model';
+import { PostMark } from '../../models/posts/post-mark.model';
 
 @Injectable({
   providedIn: 'root',
@@ -58,6 +59,44 @@ export class PostService {
     }
 
     return this.http.get<PaginatedResponse<PostCard>>(this.apiUrl.path('/posts'), { params });
+  }
+
+  getMapMarks(
+    filters: PostFilterParams = {},
+    bounds: {
+      leftUpper: { latitude: number; longitude: number };
+      rightBottom: { latitude: number; longitude: number };
+    },
+  ): Observable<PostMark[]> {
+    let params = new HttpParams();
+
+    if (filters.q) params = params.set('q', filters.q);
+    if (filters.authorId) params = params.set('authorId', filters.authorId);
+    if (filters.status) params = params.set('status', filters.status);
+    if (filters.visibility) params = params.set('visibility', filters.visibility);
+    if (filters.type) params = params.set('type', filters.type);
+    if (filters.startsFrom) params = params.set('startsFrom', filters.startsFrom);
+    if (filters.startsTo) params = params.set('startsTo', filters.startsTo);
+
+    if (filters.participationTypes) {
+      filters.participationTypes.forEach((type) => {
+        params = params.append('participationTypes', type);
+      });
+    }
+    if (filters.reactionType) params = params.set('reactionType', filters.reactionType);
+
+    if (filters.tags) {
+      filters.tags.forEach((tag) => {
+        params = params.append('tags', tag);
+      });
+    }
+
+    params = params.set('leftUpper.latitude', bounds.leftUpper.latitude.toString());
+    params = params.set('leftUpper.longitude', bounds.leftUpper.longitude.toString());
+    params = params.set('rightBottom.latitude', bounds.rightBottom.latitude.toString());
+    params = params.set('rightBottom.longitude', bounds.rightBottom.longitude.toString());
+
+    return this.http.get<PostMark[]>(this.apiUrl.path('/posts/map'), { params });
   }
 
   getPost(id: string): Observable<PostDetail> {

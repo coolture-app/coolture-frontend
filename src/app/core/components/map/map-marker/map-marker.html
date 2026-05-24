@@ -1,1 +1,12 @@
-<div class="wrapper"></div>
+<div class="marker" [class.marker--cluster]="isCluster()">
+  @if (coverImageUrl()) {
+    <img class="marker__image" [src]="coverImageUrl()" alt="Event cover" />
+  } @else {
+    <div class="marker__placeholder">
+      <i class="fi fi-rr-map-marker"></i>
+    </div>
+  }
+  @if (isCluster() && clusterCount()) {
+    <span class="marker__badge">{{ clusterCount() }}</span>
+  }
+</div>
