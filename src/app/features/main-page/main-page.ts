@@ -62,6 +62,8 @@ export class MainPage implements OnInit {
 
   isMapView = signal(false);
 
+  currentFiltersForMap = signal<PostFilterParams>({});
+
   filtersForm = new FormGroup({
     type: new FormControl(''),
     tags: new FormControl(''),
@@ -88,9 +90,7 @@ export class MainPage implements OnInit {
     combineLatest([search$, filter$, this.sortBy$])
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(([search, filters, sortBy]) => {
-        const filterParams: PostFilterParams = {
-          limit: 20,
-          sortBy,
+        const mapParams: PostFilterParams = {
           ...(search && { q: search }),
           ...(filters?.type && { type: filters.type as PostType }),
           ...(filters?.tags && {
@@ -103,6 +103,14 @@ export class MainPage implements OnInit {
           ...(filters?.startsTo && { startsTo: new Date(filters.startsTo).toISOString() }),
           ...(filters?.visibility && { visibility: filters.visibility as PostVisibility }),
           ...(filters?.status && { status: filters.status as PostStatus }),
+        };
+
+        this.currentFiltersForMap.set(mapParams);
+
+        const filterParams: PostFilterParams = {
+          ...mapParams,
+          limit: 20,
+          sortBy,
         };
 
         this.postService.getPosts(filterParams).subscribe({

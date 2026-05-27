@@ -1,9 +1,12 @@
-import { Component } from '@angular/core';
+import { Component, input } from '@angular/core';
 
 @Component({
   selector: 'app-map-marker',
-  imports: [],
   templateUrl: './map-marker.html',
-  styleUrl: './map-marker.scss',
+  styleUrls: ['./map-marker.scss'],
 })
-export class MapMarker {}
+export class MapMarker {
+  coverImageUrl = input<string | null>(null);
+  clusterCount = input<number | undefined>();
+  isCluster = input<boolean>(false);
+}

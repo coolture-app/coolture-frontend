@@ -1,15 +1,72 @@
 <div class="map-wrapper">
-  <mgl-map [mapStyle]="mapStyle" [zoom]="zoomLevel" [center]="centerCoords">
-    <!-- MARKER I POPUP BEDA TWORZONE DLA KAZDEGO WYDARZENIA / KAŻDEGO KLASTRA -->
-    <mgl-marker #testMarker [lngLat]="[18.236371, 54.606134]">
-      <app-map-marker></app-map-marker>
-    </mgl-marker>
-    <mgl-popup [marker]="testMarker">
-      <app-map-popup
-        popupTitle="Testowy popup"
-        popupBody="Testowy body testowego popupu"
-      ></app-map-popup>
-    </mgl-popup>
-    <!--------------------------------->
+  <mgl-map
+    #map
+    [style]="'https://tiles.stadiamaps.com/styles/alidade_smooth.json'"
+    [zoom]="[12]"
+    [center]="[18.23, 54.6]"
+    (mapLoad)="onMapLoad($event)"
+    (moveEnd)="onMoveEnd($event)"
+  >
+    <mgl-geojson-source
+      id="posts"
+      [data]="postsGeoJson()"
+      [cluster]="true"
+      [clusterMaxZoom]="14"
+      [clusterRadius]="50"
+      [clusterProperties]="{
+        coverMediaUrl: ['max', ['get', 'coverMediaUrl']]
+      }"
+    ></mgl-geojson-source>
+
+    <mgl-markers-for-clusters source="posts">
+      <!-- Template for single marker -->
+      <ng-template mglPoint let-feature>
+        <mgl-marker #marker [lngLat]="feature.geometry.coordinates">
+          <div
+            role="button"
+            tabindex="0"
+            (click)="onPointClick($event, feature)"
+            (keydown.enter)="onPointClick($event, feature)"
+          >
+            <app-map-marker
+              [coverImageUrl]="feature.properties.coverMediaUrl"
+              [isCluster]="false"
+            ></app-map-marker>
+          </div>
+        </mgl-marker>
+      </ng-template>
+
+      <!-- Template for cluster -->
+      <ng-template mglClusterPoint let-feature>
+        <mgl-marker [lngLat]="feature.geometry.coordinates">
+          <div
+            role="button"
+            tabindex="0"
+            (click)="onClusterClick($event, feature)"
+            (keydown.enter)="onClusterClick($event, feature)"
+          >
+            <app-map-marker
+              [coverImageUrl]="feature.properties.coverMediaUrl"
+              [clusterCount]="feature.properties.point_count"
+              [isCluster]="true"
+            ></app-map-marker>
+          </div>
+        </mgl-marker>
+      </ng-template>
+    </mgl-markers-for-clusters>
+
+    @if (selectedFeature(); as feature) {
+      <mgl-popup
+        [lngLat]="[feature.geometry.coordinates[0], feature.geometry.coordinates[1]]"
+        [offset]="[0, -20]"
+        (popupClose)="selectedFeature.set(null)"
+      >
+        <app-map-popup
+          [postId]="feature.properties?.['id'] ?? ''"
+          [popupTitle]="feature.properties?.['title'] ?? ''"
+          [popupBody]="feature.properties?.['desc'] ?? ''"
+        ></app-map-popup>
+      </mgl-popup>
+    }
   </mgl-map>
 </div>

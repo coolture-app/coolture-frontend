@@ -1,12 +1,19 @@
-import { Component, Input } from '@angular/core';
+import { Component, input, inject } from '@angular/core';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-map-popup',
-  imports: [],
   templateUrl: './map-popup.html',
-  styleUrl: './map-popup.scss',
+  styleUrls: ['./map-popup.scss'],
 })
 export class MapPopup {
-  @Input() popupTitle!: string;
-  @Input() popupBody!: string;
+  private router = inject(Router);
+
+  postId = input.required<string>();
+  popupTitle = input.required<string>();
+  popupBody = input.required<string>();
+
+  onTitleClick(): void {
+    this.router.navigate(['/post', this.postId()]);
+  }
 }
