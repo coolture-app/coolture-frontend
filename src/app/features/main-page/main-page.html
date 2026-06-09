@@ -26,7 +26,7 @@
           </button>
           @if (showSortMenu()) {
             <div class="sort-menu">
-              @for (option of sortOptions; track option.value) {
+              @for (option of visibleSortOptions; track option.value) {
                 <button
                   class="sort-menu__item"
                   [class.active]="currentSortBy === option.value"
@@ -42,7 +42,9 @@
       <app-btn variant="icon" (btnClick)="toggleFilters()" [class.active]="showFilters()">
         <ng-icon name="heroFunnel" />
       </app-btn>
-      <app-switch class="map-switch" (switchState)="toggleMapView($event)"></app-switch>
+      @if (currentSortBy !== 'RECOMMENDED') {
+        <app-switch class="map-switch" (switchState)="toggleMapView($event)"></app-switch>
+      }
     </div>
   </div>
 

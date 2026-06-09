@@ -24,4 +24,5 @@ export interface PostFilterParams {
   participationTypes?: ParticipationType[];
   reactionType?: ReactionType;
   sortBy?: PostSortBy;
+  recommended?: boolean;
 }

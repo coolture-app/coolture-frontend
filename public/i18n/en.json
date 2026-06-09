@@ -30,13 +30,15 @@
     "sortRecent": "Recent",
     "sortPopular": "Popular",
     "sortUpcoming": "Upcoming",
+    "sortRecommended": "Recommended",
     "orderDesc": "Descending",
     "orderAsc": "Ascending",
     "offline": "Offline",
     "online": "Online",
     "public": "Public",
     "private": "Private",
-    "friends": "Friends"
+    "friends": "Friends",
+    "recommended": "Recommended"
   },
   "FULL_POST": {
     "title": "Cool post",

@@ -58,7 +58,15 @@ export class MainPage implements OnInit {
     { value: 'RECENT', labelKey: 'MAIN_PAGE.sortRecent' },
     { value: 'POPULAR', labelKey: 'MAIN_PAGE.sortPopular' },
     { value: 'UPCOMING', labelKey: 'MAIN_PAGE.sortUpcoming' },
+    { value: 'RECOMMENDED', labelKey: 'MAIN_PAGE.sortRecommended' },
   ];
+
+  get visibleSortOptions(): { value: PostSortBy; labelKey: string }[] {
+    if (this.authService.isAuthenticated()) {
+      return this.sortOptions;
+    }
+    return this.sortOptions.filter((o) => o.value !== 'RECOMMENDED');
+  }
 
   isMapView = signal(false);
 
@@ -79,6 +87,36 @@ export class MainPage implements OnInit {
   });
 
   ngOnInit() {
+    this.sortBy$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((sortBy) => {
+        const controls = this.filtersForm.controls;
+        if (sortBy === 'RECOMMENDED') {
+          controls.type.setValue('', { emitEvent: false });
+          controls.tags.setValue('', { emitEvent: false });
+          controls.visibility.setValue('', { emitEvent: false });
+          controls.startsFrom.setValue('', { emitEvent: false });
+          controls.startsTo.setValue('', { emitEvent: false });
+          this.searchControl.setValue('', { emitEvent: false });
+
+          controls.type.disable({ emitEvent: false });
+          controls.tags.disable({ emitEvent: false });
+          controls.visibility.disable({ emitEvent: false });
+          controls.startsFrom.disable({ emitEvent: false });
+          controls.startsTo.disable({ emitEvent: false });
+          this.searchControl.disable({ emitEvent: false });
+
+          this.isMapView.set(false);
+        } else {
+          controls.type.enable({ emitEvent: false });
+          controls.tags.enable({ emitEvent: false });
+          controls.visibility.enable({ emitEvent: false });
+          controls.startsFrom.enable({ emitEvent: false });
+          controls.startsTo.enable({ emitEvent: false });
+          this.searchControl.enable({ emitEvent: false });
+        }
+      });
+
     const search$ = this.searchControl.valueChanges.pipe(
       startWith(''),
       debounceTime(400),
@@ -89,34 +127,44 @@ export class MainPage implements OnInit {
 
     combineLatest([search$, filter$, this.sortBy$])
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(([search, filters, sortBy]) => {
-        const mapParams: PostFilterParams = {
-          ...(search && { q: search }),
-          ...(filters?.type && { type: filters.type as PostType }),
-          ...(filters?.tags && {
-            tags: (filters.tags as string)
-              .split(',')
-              .map((t: string) => t.trim())
-              .filter(Boolean),
-          }),
-          ...(filters?.startsFrom && { startsFrom: new Date(filters.startsFrom).toISOString() }),
-          ...(filters?.startsTo && { startsTo: new Date(filters.startsTo).toISOString() }),
-          ...(filters?.visibility && { visibility: filters.visibility as PostVisibility }),
-          ...(filters?.status && { status: filters.status as PostStatus }),
-        };
+      .subscribe(([search, _, sortBy]) => {
+        const filters = this.filtersForm.getRawValue();
+        const recommended = sortBy === 'RECOMMENDED';
 
-        this.currentFiltersForMap.set(mapParams);
+        if (recommended) {
+          this.postService.getRecommendations(undefined, 20).subscribe({
+            next: (data) => this.posts.set(data),
+            error: (err) => console.error('Error while fetching recommendations', err),
+          });
+        } else {
+          const mapParams: PostFilterParams = {
+            ...(search && { q: search }),
+            ...(filters.type && { type: filters.type as PostType }),
+            ...(filters.tags && {
+              tags: (filters.tags as string)
+                .split(',')
+                .map((t: string) => t.trim())
+                .filter(Boolean),
+            }),
+            ...(filters.startsFrom && { startsFrom: new Date(filters.startsFrom).toISOString() }),
+            ...(filters.startsTo && { startsTo: new Date(filters.startsTo).toISOString() }),
+            ...(filters.visibility && { visibility: filters.visibility as PostVisibility }),
+            ...(filters.status && { status: filters.status as PostStatus }),
+          };
 
-        const filterParams: PostFilterParams = {
-          ...mapParams,
-          limit: 20,
-          sortBy,
-        };
+          this.currentFiltersForMap.set(mapParams);
 
-        this.postService.getPosts(filterParams).subscribe({
-          next: (data) => this.posts.set(data),
-          error: (err) => console.error('Error while fetching posts', err),
-        });
+          const filterParams: PostFilterParams = {
+            ...mapParams,
+            limit: 20,
+            sortBy,
+          };
+
+          this.postService.getPosts(filterParams).subscribe({
+            next: (data) => this.posts.set(data),
+            error: (err) => console.error('Error while fetching posts', err),
+          });
+        }
       });
 
     this.postService.clearActivePost();

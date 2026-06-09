@@ -61,6 +61,13 @@ export class PostService {
     return this.http.get<PaginatedResponse<PostCard>>(this.apiUrl.path('/posts'), { params });
   }
 
+  getRecommendations(cursor?: string, limit?: number): Observable<PaginatedResponse<PostCard>> {
+    let params = new HttpParams();
+    if (cursor) params = params.set('cursor', cursor);
+    if (limit) params = params.set('limit', limit);
+    return this.http.get<PaginatedResponse<PostCard>>(this.apiUrl.path('/posts/recommendations'), { params });
+  }
+
   getMapMarks(
     filters: PostFilterParams = {},
     bounds: {

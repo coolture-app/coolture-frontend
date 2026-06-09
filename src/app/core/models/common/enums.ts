@@ -3,7 +3,7 @@ export type PostStatus = 'ACTIVE' | 'EDITED' | 'DELETED';
 export type PostVisibility = 'PUBLIC' | 'PRIVATE' | 'FRIENDS';
 export type ReactionType = 'LIKE' | 'DISLIKE';
 export type ParticipationType = 'INTERESTED' | 'TAKES_PART';
-export type PostSortBy = 'RECENT' | 'POPULAR' | 'UPCOMING';
+export type PostSortBy = 'RECENT' | 'POPULAR' | 'UPCOMING' | 'RECOMMENDED';
 export type MediaPurpose =
   | 'PROFILE_IMAGE'
   | 'PROFILE_IMAGE_THUMBNAIL'

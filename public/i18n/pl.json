@@ -30,13 +30,15 @@
     "sortRecent": "Najnowsze",
     "sortPopular": "Popularne",
     "sortUpcoming": "Nadchodzące",
+    "sortRecommended": "Rekomendowane",
     "orderDesc": "Malejąco",
     "orderAsc": "Rosnąco",
     "offline": "Offline",
     "online": "Online",
     "public": "Publiczne",
     "private": "Prywatne",
-    "friends": "Znajomi"
+    "friends": "Znajomi",
+    "recommended": "Rekomendowane"
   },
   "FULL_POST": {
     "title": "Fajny post",
