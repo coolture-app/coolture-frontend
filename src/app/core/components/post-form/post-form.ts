@@ -9,12 +9,28 @@ import {
   OnChanges,
   SimpleChanges,
   DestroyRef,
+  ViewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { lastValueFrom, Observable } from 'rxjs';
+import {
+  lastValueFrom,
+  Observable,
+  of,
+  Subject,
+  debounceTime,
+  distinctUntilChanged,
+  switchMap,
+  catchError,
+} from 'rxjs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { MapComponent as MglMapComponent, MarkerComponent } from '@maplibre/ngx-maplibre-gl';
+import { MapMouseEvent } from 'maplibre-gl';
+import {
+  GeocodingService,
+  NominatimSearchResult,
+} from '../../services/geocoding/geocoding.service';
 
 import { FormInput } from '../form-input/form-input';
 import { FormSelect, SelectOption } from '../form-select/form-select';
@@ -49,6 +65,8 @@ interface MediaPreview {
     FormTextarea,
     FormFileUpload,
     Btn,
+    MglMapComponent,
+    MarkerComponent,
   ],
   templateUrl: './post-form.html',
   styleUrl: './post-form.scss',
@@ -64,9 +82,24 @@ export class PostForm implements OnInit, OnChanges {
   private fb = inject(FormBuilder);
   private mediaService = inject(MediaService);
   private dictionaryService = inject(DictionaryService);
+  private geocodingService = inject(GeocodingService);
   private cdr = inject(ChangeDetectorRef);
   private destroyRef = inject(DestroyRef);
   private translate = inject(TranslateService);
+
+  @ViewChild('formMap') mapComponent?: MglMapComponent;
+
+  // Address search state
+  addressSearchQuery = '';
+  addressSuggestions: NominatimSearchResult[] = [];
+  isSearchingAddress = false;
+  hasSearched = false;
+
+  // Map settings
+  mapCenter: [number, number] = [18.6, 54.4]; // Gdańsk/Tricity center
+  mapZoom: [number] = [12];
+
+  private searchSubject = new Subject<string>();
 
   countryCodes$: Observable<CountryCode[]> = this.dictionaryService.getCountryCodes();
 
@@ -194,6 +227,39 @@ export class PostForm implements OnInit, OnChanges {
     this.translate.onLangChange
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.updateTranslatedOptions());
+
+    // Autocomplete search subscription
+    this.searchSubject
+      .pipe(
+        debounceTime(400),
+        distinctUntilChanged(),
+        switchMap((query) => {
+          if (!query || query.trim().length < 3) {
+            this.addressSuggestions = [];
+            this.isSearchingAddress = false;
+            this.hasSearched = false;
+            this.cdr.markForCheck();
+            return of([]);
+          }
+          this.isSearchingAddress = true;
+          this.hasSearched = true;
+          this.cdr.markForCheck();
+          return this.geocodingService.search(query).pipe(
+            catchError((err) => {
+              console.error('Error searching address', err);
+              this.isSearchingAddress = false;
+              this.cdr.markForCheck();
+              return of([]);
+            }),
+          );
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((results) => {
+        this.addressSuggestions = results;
+        this.isSearchingAddress = false;
+        this.cdr.markForCheck();
+      });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -239,6 +305,33 @@ export class PostForm implements OnInit, OnChanges {
         },
       },
     });
+
+    if (
+      post.location?.coordinates?.latitude !== undefined &&
+      post.location?.coordinates?.longitude !== undefined
+    ) {
+      const lat = post.location.coordinates.latitude;
+      const lon = post.location.coordinates.longitude;
+      if (lat !== null && lon !== null) {
+        this.mapCenter = [lon, lat];
+        this.mapZoom = [15];
+        if (this.mapComponent?.mapInstance) {
+          this.mapComponent.mapInstance.setCenter([lon, lat]);
+          this.mapComponent.mapInstance.setZoom(15);
+        }
+        // Prefill addressSearchQuery in edit mode if address fields exist
+        if (post.location?.city) {
+          const parts = [
+            post.location.venueName,
+            post.location.street
+              ? `${post.location.street} ${post.location.buildingNum || ''}`
+              : '',
+            post.location.city,
+          ].filter(Boolean);
+          this.addressSearchQuery = parts.join(', ');
+        }
+      }
+    }
 
     this.toggleLocationValidators(post.type);
   }
@@ -395,6 +488,145 @@ export class PostForm implements OnInit, OnChanges {
     this.mediaPreviews.forEach((p) => URL.revokeObjectURL(p.previewUrl));
     this.mediaPreviews = [];
     this.newlyUploadedMedia = [];
+    this.addressSearchQuery = '';
+    this.addressSuggestions = [];
+    this.isSearchingAddress = false;
+    this.hasSearched = false;
+    this.mapCenter = [18.6, 54.4];
+    this.mapZoom = [12];
     this.isSubmitting = false;
+  }
+
+  onAddressSearchInput(event: Event): void {
+    const inputEl = event.target as HTMLInputElement;
+    this.addressSearchQuery = inputEl.value;
+    this.searchSubject.next(inputEl.value);
+  }
+
+  selectAddress(suggestion: NominatimSearchResult): void {
+    const address = suggestion.address || {};
+    const city = address.city || address.town || address.village || address.municipality || '';
+    const street = address.road || '';
+    const postcode = address.postcode || '';
+    const country2Letter = address.country_code || '';
+    const countryCode = this.geocodingService.mapCountryCode(country2Letter);
+    const houseNumber = address.house_number || '';
+
+    const lat = Number(suggestion.lat);
+    const lon = Number(suggestion.lon);
+
+    // Patch fields in form
+    this.postForm.patchValue({
+      location: {
+        countryCode,
+        city,
+        postalCode: postcode,
+        street,
+        buildingNum: houseNumber,
+        coordinates: {
+          latitude: lat,
+          longitude: lon,
+        },
+      },
+    });
+
+    this.postForm.get('location.coordinates')?.markAsDirty();
+    this.postForm.get('location')?.markAsDirty();
+
+    // Clear suggestions
+    this.addressSuggestions = [];
+    this.addressSearchQuery = suggestion.display_name;
+    this.hasSearched = false;
+
+    // Center map on the selected address
+    this.mapCenter = [lon, lat];
+    this.mapZoom = [15];
+    if (this.mapComponent?.mapInstance) {
+      this.mapComponent.mapInstance.flyTo({
+        center: [lon, lat],
+        zoom: 15,
+        duration: 800,
+      });
+    }
+
+    this.cdr.markForCheck();
+  }
+
+  onMapClick(event: MapMouseEvent): void {
+    const lat = event.lngLat.lat;
+    const lon = event.lngLat.lng;
+
+    // Update coordinate fields
+    this.postForm.patchValue({
+      location: {
+        coordinates: {
+          latitude: lat,
+          longitude: lon,
+        },
+      },
+    });
+
+    this.postForm.get('location.coordinates')?.markAsDirty();
+
+    // Call reverse geocoding to pre-fill address details
+    this.isSearchingAddress = true;
+    this.cdr.markForCheck();
+    this.geocodingService
+      .reverse(lat, lon)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (result) => {
+          this.isSearchingAddress = false;
+          if (result && result.address) {
+            const address = result.address;
+            const city =
+              address.city || address.town || address.village || address.municipality || '';
+            const street = address.road || '';
+            const postcode = address.postcode || '';
+            const country2Letter = address.country_code || '';
+            const countryCode = this.geocodingService.mapCountryCode(country2Letter);
+            const houseNumber = address.house_number || '';
+
+            // Update remaining fields on pin/map selection
+            this.postForm.patchValue({
+              location: {
+                countryCode: countryCode || '',
+                city: city || '',
+                postalCode: postcode || '',
+                street: street || '',
+                buildingNum: houseNumber || '',
+              },
+            });
+
+            // Set search query input value to display name
+            this.addressSearchQuery = result.display_name;
+          }
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          console.error('Error reverse geocoding coordinates', err);
+          this.isSearchingAddress = false;
+          this.cdr.markForCheck();
+        },
+      });
+  }
+
+  onFormMapLoad(map: maplibregl.Map): void {
+    // If edit mode and already have coordinates, center map there
+    const lat = this.latitudeControl.value;
+    const lon = this.longitudeControl.value;
+    if (lat !== null && lon !== null) {
+      this.mapCenter = [lon, lat];
+      this.mapZoom = [15];
+      map.setCenter([lon, lat]);
+      map.setZoom(15);
+    }
+  }
+
+  closeSuggestions(): void {
+    setTimeout(() => {
+      this.addressSuggestions = [];
+      this.cdr.markForCheck();
+    }, 250);
   }
 }
