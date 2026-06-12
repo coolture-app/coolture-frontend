@@ -187,7 +187,11 @@
     "newly-added": "Newly added photos",
     "submit-saving": "Saving...",
     "submit-create": "Publish event",
-    "submit-edit": "Save changes"
+    "submit-edit": "Save changes",
+    "address-search": "Search address",
+    "address-search-placeholder": "Enter address (e.g. Baker Street 221B London)...",
+    "address-searching": "Searching address...",
+    "address-no-results": "No results found."
   },
   "COMMENT": {
     "reply": "Reply",

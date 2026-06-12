@@ -91,6 +91,49 @@
     <div class="post-form__location" formGroupName="location">
       <h3 class="post-form__section-title">{{ 'POST_FORM.location-title' | translate }}</h3>
 
+      <!-- Autocomplete Address Search -->
+      <div class="post-form__row">
+        <div class="post-form__search-wrapper">
+          <label for="addressSearch" class="post-form__search-label">
+            {{ 'POST_FORM.address-search' | translate }}
+          </label>
+          <div class="post-form__search-input-container">
+            <input
+              id="addressSearch"
+              type="text"
+              [placeholder]="'POST_FORM.address-search-placeholder' | translate"
+              (input)="onAddressSearchInput($event)"
+              (blur)="closeSuggestions()"
+              [value]="addressSearchQuery"
+              class="post-form__search-field"
+              autocomplete="off"
+            />
+            @if (isSearchingAddress) {
+              <span class="post-form__search-spinner"></span>
+            }
+          </div>
+
+          @if (addressSuggestions.length > 0) {
+            <ul class="post-form__suggestions">
+              @for (suggestion of addressSuggestions; track suggestion.place_id) {
+                <li (mousedown)="selectAddress(suggestion)" role="button" tabindex="0">
+                  {{ suggestion.display_name }}
+                </li>
+              }
+            </ul>
+          } @else if (
+            addressSearchQuery.length >= 3 &&
+            !isSearchingAddress &&
+            hasSearched &&
+            addressSuggestions.length === 0
+          ) {
+            <div class="post-form__suggestions post-form__suggestions--empty">
+              {{ 'POST_FORM.address-no-results' | translate }}
+            </div>
+          }
+        </div>
+      </div>
+
       <div class="post-form__row">
         <app-form-select
           [control]="countryCodeControl"
@@ -177,6 +220,24 @@
             max: ('POST_FORM.location-longitude-error' | translate),
           }"
         ></app-form-input>
+      </div>
+
+      <!-- Map Selection -->
+      <div class="post-form__map-container">
+        <mgl-map
+          #formMap
+          [style]="'https://tiles.stadiamaps.com/styles/alidade_smooth.json'"
+          [zoom]="mapZoom"
+          [center]="mapCenter"
+          (mapClick)="onMapClick($event)"
+          (mapLoad)="onFormMapLoad($event)"
+        >
+          @if (latitudeControl.value !== null && longitudeControl.value !== null) {
+            <mgl-marker [lngLat]="[longitudeControl.value, latitudeControl.value]">
+              <div class="post-form__map-pin"></div>
+            </mgl-marker>
+          }
+        </mgl-map>
       </div>
     </div>
   }

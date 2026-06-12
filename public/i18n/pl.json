@@ -187,7 +187,11 @@
     "newly-added": "Nowo dodane zdjęcia",
     "submit-saving": "Zapisywanie...",
     "submit-create": "Opublikuj wydarzenie",
-    "submit-edit": "Zapisz zmiany"
+    "submit-edit": "Zapisz zmiany",
+    "address-search": "Wyszukaj adres",
+    "address-search-placeholder": "Wpisz adres (np. Grunwaldzka 12 Gdańsk)...",
+    "address-searching": "Wyszukiwanie adresu...",
+    "address-no-results": "Brak wyników wyszukiwania."
   },
   "COMMENT": {
     "reply": "Odpowiedz",

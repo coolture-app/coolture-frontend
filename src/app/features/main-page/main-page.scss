@@ -245,7 +245,7 @@
       height: auto;
     }
 
-    input[type="checkbox"] {
+    input[type='checkbox'] {
       width: 20px;
       height: 20px;
       margin: 0;
@@ -253,7 +253,7 @@
       accent-color: var(--color-accent);
       padding: 0;
       border-radius: var(--radius-sm);
-      
+
       &:focus {
         box-shadow: none;
       }
