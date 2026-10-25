@@ -12,7 +12,8 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideTranslateService } from '@ngx-translate/core';
 import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
 import { errorInterceptor } from './core/auth/auth.interceptor';
-import { credentialsInterceptor } from './core/auth/credentials.interceptor';
+import { authTokenInterceptor } from './core/auth/auth-token.interceptor';
+import { originVerifyInterceptor } from './core/auth/origin-verify.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -20,7 +21,9 @@ export const appConfig: ApplicationConfig = {
     provideZonelessChangeDetection(),
     provideRouter(routes),
     provideClientHydration(withEventReplay()),
-    provideHttpClient(withInterceptors([errorInterceptor, credentialsInterceptor])),
+    provideHttpClient(
+      withInterceptors([errorInterceptor, authTokenInterceptor, originVerifyInterceptor]),
+    ),
     provideTranslateService({
       loader: provideTranslateHttpLoader({ prefix: './i18n/', suffix: '.json' }),
     }),
