@@ -87,35 +87,33 @@ export class MainPage implements OnInit {
   });
 
   ngOnInit() {
-    this.sortBy$
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((sortBy) => {
-        const controls = this.filtersForm.controls;
-        if (sortBy === 'RECOMMENDED') {
-          controls.type.setValue('', { emitEvent: false });
-          controls.tags.setValue('', { emitEvent: false });
-          controls.visibility.setValue('', { emitEvent: false });
-          controls.startsFrom.setValue('', { emitEvent: false });
-          controls.startsTo.setValue('', { emitEvent: false });
-          this.searchControl.setValue('', { emitEvent: false });
+    this.sortBy$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((sortBy) => {
+      const controls = this.filtersForm.controls;
+      if (sortBy === 'RECOMMENDED') {
+        controls.type.setValue('', { emitEvent: false });
+        controls.tags.setValue('', { emitEvent: false });
+        controls.visibility.setValue('', { emitEvent: false });
+        controls.startsFrom.setValue('', { emitEvent: false });
+        controls.startsTo.setValue('', { emitEvent: false });
+        this.searchControl.setValue('', { emitEvent: false });
 
-          controls.type.disable({ emitEvent: false });
-          controls.tags.disable({ emitEvent: false });
-          controls.visibility.disable({ emitEvent: false });
-          controls.startsFrom.disable({ emitEvent: false });
-          controls.startsTo.disable({ emitEvent: false });
-          this.searchControl.disable({ emitEvent: false });
+        controls.type.disable({ emitEvent: false });
+        controls.tags.disable({ emitEvent: false });
+        controls.visibility.disable({ emitEvent: false });
+        controls.startsFrom.disable({ emitEvent: false });
+        controls.startsTo.disable({ emitEvent: false });
+        this.searchControl.disable({ emitEvent: false });
 
-          this.isMapView.set(false);
-        } else {
-          controls.type.enable({ emitEvent: false });
-          controls.tags.enable({ emitEvent: false });
-          controls.visibility.enable({ emitEvent: false });
-          controls.startsFrom.enable({ emitEvent: false });
-          controls.startsTo.enable({ emitEvent: false });
-          this.searchControl.enable({ emitEvent: false });
-        }
-      });
+        this.isMapView.set(false);
+      } else {
+        controls.type.enable({ emitEvent: false });
+        controls.tags.enable({ emitEvent: false });
+        controls.visibility.enable({ emitEvent: false });
+        controls.startsFrom.enable({ emitEvent: false });
+        controls.startsTo.enable({ emitEvent: false });
+        this.searchControl.enable({ emitEvent: false });
+      }
+    });
 
     const search$ = this.searchControl.valueChanges.pipe(
       startWith(''),
