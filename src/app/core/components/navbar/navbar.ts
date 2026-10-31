@@ -2,7 +2,6 @@ import { Component, inject, signal } from '@angular/core';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 import { AuthService } from '../../services/auth/auth.service';
-import { ApiUrlService } from '../../services/api-url.service';
 import { Btn } from '../btn/btn';
 
 @Component({
@@ -14,7 +13,6 @@ import { Btn } from '../btn/btn';
 export class Navbar {
   private translate = inject(TranslateService);
   authService = inject(AuthService);
-  private apiUrl = inject(ApiUrlService);
   currentLang = signal(this.translate.currentLang);
 
   constructor() {
@@ -29,7 +27,7 @@ export class Navbar {
   }
 
   login(): void {
-    window.location.href = this.apiUrl.oauthUrl + '/oauth2/authorization/keycloak?prompt=login';
+    void this.authService.login();
   }
 
   async logout(): Promise<void> {

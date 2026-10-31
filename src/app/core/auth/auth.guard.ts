@@ -1,13 +1,11 @@
 import { inject, PLATFORM_ID } from '@angular/core';
 import { CanActivateFn } from '@angular/router';
 import { AuthService } from '../services/auth/auth.service';
-import { ApiUrlService } from '../services/api-url.service';
 import { isPlatformBrowser } from '@angular/common';
 import { map } from 'rxjs';
 
-export const authGuard: CanActivateFn = () => {
+export const authGuard: CanActivateFn = (_route, state) => {
   const authService = inject(AuthService);
-  const apiUrl = inject(ApiUrlService);
   const platformId = inject(PLATFORM_ID);
 
   return authService.checkSession().pipe(
@@ -17,7 +15,7 @@ export const authGuard: CanActivateFn = () => {
       }
 
       if (isPlatformBrowser(platformId as object)) {
-        window.location.href = apiUrl.url.replace('/api', '') + '/oauth2/authorization/keycloak';
+        void authService.login(state.url);
       } else {
         console.log('SSR: User not logged in, allowing render for client-side redirect.');
         return true;
