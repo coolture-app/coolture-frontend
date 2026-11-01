@@ -1,4 +1,4 @@
-import { Component, signal, inject, OnInit } from '@angular/core';
+import { Component, computed, signal, inject, OnInit } from '@angular/core';
 import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
 import { Navbar } from './core/components/navbar/navbar';
 import { Footer } from './core/components/footer/footer';
@@ -6,11 +6,12 @@ import { TranslateService } from '@ngx-translate/core';
 import translationEN from '../../public/i18n/en.json';
 import translationPL from '../../public/i18n/pl.json';
 import { AuthService } from './core/services/auth/auth.service';
+import { InterestsView } from './features/interests-view/interests-view';
 import { filter, first } from 'rxjs';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, Navbar, Footer],
+  imports: [RouterOutlet, Navbar, Footer, InterestsView],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
@@ -19,6 +20,10 @@ export class App implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
   protected readonly title = signal('frontend');
+  protected readonly interestsDismissed = signal(false);
+  protected readonly interestsRequired = computed(
+    () => this.authService.currentUser()?.interestsSelected === false && !this.interestsDismissed(),
+  );
 
   constructor() {
     this.translate.addLangs(['pl', 'en']);
