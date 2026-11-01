@@ -39,7 +39,6 @@ export class InterestsView implements OnInit {
   });
   protected catalog = signal<InterestCatalog | null>(null);
   protected selected = signal<ReadonlySet<string>>(new Set());
-  protected openedCategories = signal<ReadonlySet<string>>(new Set());
   protected expandedCategory = signal<string | null>(null);
   protected saving = signal(false);
   protected errorKey = signal<string | null>(null);
@@ -71,12 +70,8 @@ export class InterestsView implements OnInit {
             : this.interestsService.getUserInterests(this.authService.userId()),
         }),
       );
-      const categoryKeys = new Set(catalog.categories.map((category) => category.key));
       this.catalog.set(catalog);
-      this.selected.set(new Set(selection.interests.filter((key) => !categoryKeys.has(key))));
-      this.openedCategories.set(
-        new Set(selection.interests.filter((key) => categoryKeys.has(key))),
-      );
+      this.selected.set(new Set(selection.interests));
       this.savedInterests = this.interestsSnapshot();
     } catch (error) {
       console.error('Error while fetching interests', error);
@@ -102,7 +97,6 @@ export class InterestsView implements OnInit {
   }
 
   protected toggleCategory(key: string): void {
-    this.openedCategories.update((keys) => new Set(keys).add(key));
     this.expandedCategory.update((expanded) => (expanded === key ? null : key));
   }
 
@@ -136,10 +130,7 @@ export class InterestsView implements OnInit {
     this.errorKey.set(null);
     try {
       await firstValueFrom(
-        this.interestsService.replaceUserInterests(this.authService.userId(), [
-          ...this.selected(),
-          ...this.openedCategories(),
-        ]),
+        this.interestsService.replaceUserInterests(this.authService.userId(), [...this.selected()]),
       );
       this.savedInterests = this.interestsSnapshot();
       this.authService.currentUser.update((user) => user && { ...user, interestsSelected: true });

@@ -119,7 +119,7 @@ describe('InterestsView', () => {
     expect(tile('jazz').disabled).toBeFalse();
   });
 
-  it('sends the interests and the opened category on save', async () => {
+  it('sends only the selected interests on save', async () => {
     await render();
     spyOn(TestBed.inject(Router), 'navigateByUrl').and.resolveTo(true);
     await click(tile('Muzyka'));
@@ -130,7 +130,7 @@ describe('InterestsView', () => {
 
     expect(interestsService.replaceUserInterests).toHaveBeenCalledOnceWith(
       'user-1',
-      jasmine.arrayWithExactContents(['jazz', 'music', 'rock']),
+      jasmine.arrayWithExactContents(['jazz', 'rock']),
     );
   });
 
