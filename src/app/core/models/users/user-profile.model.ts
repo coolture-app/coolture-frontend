@@ -5,5 +5,9 @@ export interface UserProfile extends UserSummary {
   createdAt: string;
   isFollowing: boolean;
   isBlocked: boolean;
-  interestsSelected?: boolean;
+}
+
+/** The `/auth/me` response: the caller's profile plus account state only the caller sees. */
+export interface Me extends UserProfile {
+  interestsSelected: boolean;
 }

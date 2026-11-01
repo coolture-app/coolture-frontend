@@ -22,7 +22,7 @@ export class App implements OnInit {
   protected readonly title = signal('frontend');
   protected readonly interestsDismissed = signal(false);
   protected readonly interestsRequired = computed(
-    () => this.authService.currentUser()?.interestsSelected === false && !this.interestsDismissed(),
+    () => this.authService.interestsSelected() === false && !this.interestsDismissed(),
   );
 
   constructor() {

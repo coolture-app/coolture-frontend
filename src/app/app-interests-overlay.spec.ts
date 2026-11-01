@@ -4,11 +4,10 @@ import { provideRouter } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { of } from 'rxjs';
 import { App } from './app';
-import { UserProfile } from './core/models/users/user-profile.model';
 import { AuthService } from './core/services/auth/auth.service';
 
 describe('App interests overlay', () => {
-  const currentUser = signal<Partial<UserProfile> | null>(null);
+  const interestsSelected = signal<boolean | null>(null);
   let fixture: ComponentFixture<App>;
 
   async function render(): Promise<HTMLElement> {
@@ -17,7 +16,7 @@ describe('App interests overlay', () => {
       providers: [
         provideZonelessChangeDetection(),
         provideRouter([]),
-        { provide: AuthService, useValue: { currentUser, checkSession: () => of(true) } },
+        { provide: AuthService, useValue: { interestsSelected, checkSession: () => of(true) } },
       ],
     })
       .overrideComponent(App, { set: { imports: [], schemas: [CUSTOM_ELEMENTS_SCHEMA] } })
@@ -30,7 +29,7 @@ describe('App interests overlay', () => {
   beforeEach(() => TestBed.resetTestingModule());
 
   it('opens the page again when the selection is skipped', async () => {
-    currentUser.set({ interestsSelected: false });
+    interestsSelected.set(false);
     const element = await render();
 
     fixture.componentRef.instance['interestsDismissed'].set(true);
@@ -41,20 +40,19 @@ describe('App interests overlay', () => {
   });
 
   it('covers the page for a user without interests', async () => {
-    currentUser.set({ interestsSelected: false });
+    interestsSelected.set(false);
     const element = await render();
 
     expect(element.querySelector('.app__interests')).not.toBeNull();
     expect(element.querySelector('.app__content')?.hasAttribute('inert')).toBeTrue();
   });
 
-  for (const [name, user] of [
-    ['a user with interests', { interestsSelected: true }],
+  for (const [name, selected] of [
+    ['a user with interests', true],
     ['an anonymous visitor', null],
-    ['a response without the flag', {}],
   ] as const) {
     it(`leaves the page open for ${name}`, async () => {
-      currentUser.set(user);
+      interestsSelected.set(selected);
       const element = await render();
 
       expect(element.querySelector('.app__interests')).toBeNull();

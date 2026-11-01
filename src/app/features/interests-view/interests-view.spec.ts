@@ -1,10 +1,9 @@
-import { provideZonelessChangeDetection, signal } from '@angular/core';
+import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { Observable, of, Subject, throwError } from 'rxjs';
 import { InterestCatalog, UserInterests } from '../../core/models/interests/interest.model';
-import { UserProfile } from '../../core/models/users/user-profile.model';
 import { AuthService } from '../../core/services/auth/auth.service';
 import { InterestsService } from '../../core/services/interests/interests.service';
 import { InterestsView } from './interests-view';
@@ -29,10 +28,9 @@ const CATALOG: InterestCatalog = {
 describe('InterestsView', () => {
   let fixture: ComponentFixture<InterestsView>;
   let element: HTMLElement;
-  const currentUser = signal<Partial<UserProfile> | null>(null);
   const authService = {
-    currentUser,
     userId: () => 'user-1',
+    markInterestsSelected: jasmine.createSpy('markInterestsSelected'),
   };
   const interestsService = jasmine.createSpyObj<InterestsService>('InterestsService', [
     'getCatalog',
@@ -58,7 +56,6 @@ describe('InterestsView', () => {
     onboarding = false,
     catalog: Observable<InterestCatalog> = of(CATALOG),
   ) {
-    currentUser.set({ interestsSelected: !onboarding });
     interestsService.getCatalog.and.returnValue(catalog);
     interestsService.getUserInterests.and.returnValue(of({ interests: saved }));
     interestsService.replaceUserInterests.and.callFake((_id, interests) => of({ interests }));
@@ -338,7 +335,7 @@ describe('InterestsView', () => {
     expect(tile('Muzyka (2)')).toBeDefined();
   });
 
-  it('marks the flag on the user after saving', async () => {
+  it('marks the interests as selected after saving', async () => {
     await render([], true);
     spyOn(TestBed.inject(Router), 'navigateByUrl').and.resolveTo(true);
     await click(tile('Muzyka'));
@@ -347,7 +344,7 @@ describe('InterestsView', () => {
 
     await click(saveButton());
 
-    expect(currentUser()?.interestsSelected).toBeTrue();
+    expect(authService.markInterestsSelected).toHaveBeenCalled();
     expect(fixture.componentInstance.confirmLeave()).toBeTrue();
   });
 });

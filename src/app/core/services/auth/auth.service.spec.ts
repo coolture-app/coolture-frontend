@@ -2,7 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { UserProfile } from '../../models/users/user-profile.model';
+import { Me } from '../../models/users/user-profile.model';
 import { AuthService } from './auth.service';
 
 describe('AuthService', () => {
@@ -12,7 +12,7 @@ describe('AuthService', () => {
   const respond = (interestsSelected: boolean) =>
     http
       .expectOne((request) => request.url.endsWith('/auth/me'))
-      .flush({ id: 'user-1', interestsSelected } as UserProfile);
+      .flush({ id: 'user-1', interestsSelected } as Me);
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -45,7 +45,7 @@ describe('AuthService', () => {
     service.checkSession().subscribe();
     respond(false);
 
-    expect(service.currentUser()?.interestsSelected).toBeFalse();
+    expect(service.interestsSelected()).toBeFalse();
   });
 
   it('sends one request for session checks made at the same time', () => {
@@ -74,7 +74,7 @@ describe('AuthService', () => {
     service.checkSession().subscribe();
     respond(false);
 
-    expect(service.currentUser()?.interestsSelected).toBeTrue();
+    expect(service.interestsSelected()).toBeTrue();
   });
 
   it('keeps the user when the session check fails on the server side', () => {

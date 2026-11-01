@@ -140,7 +140,7 @@ export class InterestsView implements OnInit {
         this.interestsService.replaceUserInterests(this.authService.userId(), [...this.selected()]),
       );
       this.savedInterests = this.interestsSnapshot();
-      this.authService.currentUser.update((user) => user && { ...user, interestsSelected: true });
+      this.authService.markInterestsSelected();
       return true;
     } catch (error) {
       console.error('Error while saving interests', error);

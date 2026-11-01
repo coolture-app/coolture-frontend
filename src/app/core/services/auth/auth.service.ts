@@ -3,7 +3,7 @@ import { inject, Injectable, signal, computed, PLATFORM_ID } from '@angular/core
 import { isPlatformBrowser } from '@angular/common';
 import { catchError, finalize, map, Observable, of, shareReplay, tap } from 'rxjs';
 import { ApiUrlService } from '../api-url.service';
-import { UserProfile } from '../../models/users/user-profile.model';
+import { Me, UserProfile } from '../../models/users/user-profile.model';
 import { environment } from '../../../../environments/environment';
 
 interface StoredTokens {
@@ -41,20 +41,29 @@ export class AuthService {
   private sessionCheck: Observable<boolean> | null = null;
 
   readonly currentUser = signal<UserProfile | null>(null);
+  /**
+   * Whether the signed-in user has picked interests, or null while unknown.
+   * A selection can only be replaced, never removed, so once true it stays true for the session
+   * and a /auth/me response sent before a save cannot undo it.
+   */
+  readonly interestsSelected = signal<boolean | null>(null);
   readonly isAuthenticated = computed(() => this.currentUser() !== null);
   readonly userId = computed(() => this.currentUser()?.id ?? '');
 
   checkSession(): Observable<boolean> {
     if (this.isSignedOut()) {
-      this.currentUser.set(null);
+      this.clearUser();
       return of(false);
     }
-    this.sessionCheck ??= this.http.get<UserProfile>(this.apiUrl.path('/auth/me')).pipe(
-      tap((userProfile) => this.setUser(userProfile)),
+    this.sessionCheck ??= this.http.get<Me>(this.apiUrl.path('/auth/me')).pipe(
+      tap(({ interestsSelected, ...profile }) => {
+        this.currentUser.set(profile);
+        this.interestsSelected.update((selected) => selected || interestsSelected);
+      }),
       map(() => true),
       catchError((error: HttpErrorResponse) => {
         if (error.status === 401 || error.status === 403) {
-          this.currentUser.set(null);
+          this.clearUser();
         }
         return of(false);
       }),
@@ -64,10 +73,13 @@ export class AuthService {
     return this.sessionCheck;
   }
 
-  private setUser(userProfile: UserProfile): void {
-    const interestsSelected =
-      this.currentUser()?.interestsSelected || userProfile.interestsSelected;
-    this.currentUser.set({ ...userProfile, interestsSelected });
+  markInterestsSelected(): void {
+    this.interestsSelected.set(true);
+  }
+
+  private clearUser(): void {
+    this.currentUser.set(null);
+    this.interestsSelected.set(null);
   }
 
   async login(returnUrl?: string): Promise<void> {
@@ -136,7 +148,7 @@ export class AuthService {
       return;
     }
     this.clearTokens();
-    this.currentUser.set(null);
+    this.clearUser();
     if (!this.isCognitoConfigured()) {
       localStorage.setItem(LOCAL_LOGOUT_KEY, 'true');
       window.location.assign('/');
@@ -159,7 +171,7 @@ export class AuthService {
       return tokens.id_token;
     } catch {
       this.clearTokens();
-      this.currentUser.set(null);
+      this.clearUser();
       return null;
     }
   }
