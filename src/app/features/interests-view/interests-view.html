@@ -61,7 +61,7 @@
 
   @if (errorKey() === 'INTERESTS.load-error') {
     <div class="interests__footer">
-      @if (requiredByApp()) {
+      @if (onboarding()) {
         <app-btn variant="secondary" (btnClick)="dismissed.emit()">
           {{ 'INTERESTS.skip' | translate }}
         </app-btn>

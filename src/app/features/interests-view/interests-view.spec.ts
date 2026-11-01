@@ -55,10 +55,10 @@ describe('InterestsView', () => {
 
   async function render(
     saved: string[] = [],
-    interestsSelected = true,
+    onboarding = false,
     catalog: Observable<InterestCatalog> = of(CATALOG),
   ) {
-    currentUser.set({ interestsSelected });
+    currentUser.set({ interestsSelected: !onboarding });
     interestsService.getCatalog.and.returnValue(catalog);
     interestsService.getUserInterests.and.returnValue(of({ interests: saved }));
     interestsService.replaceUserInterests.and.callFake((_id, interests) => of({ interests }));
@@ -75,6 +75,7 @@ describe('InterestsView', () => {
     }).compileComponents();
 
     fixture = TestBed.createComponent(InterestsView);
+    fixture.componentRef.setInput('onboarding', onboarding);
     element = fixture.nativeElement;
     fixture.detectChanges();
     await fixture.whenStable();
@@ -137,7 +138,7 @@ describe('InterestsView', () => {
   it('shows an error instead of the loading text when the catalogue fails', async () => {
     await render(
       [],
-      false,
+      true,
       throwError(() => new Error('down')),
     );
 
@@ -148,7 +149,7 @@ describe('InterestsView', () => {
   it('offers a retry after a catalogue failure and recovers', async () => {
     await render(
       [],
-      false,
+      true,
       throwError(() => new Error('down')),
     );
     interestsService.getCatalog.and.returnValue(of(CATALOG));
@@ -162,7 +163,7 @@ describe('InterestsView', () => {
   it('lets a new user skip the selection when the catalogue is down', async () => {
     await render(
       [],
-      false,
+      true,
       throwError(() => new Error('down')),
     );
     const dismissed = jasmine.createSpy('dismissed');
@@ -176,7 +177,7 @@ describe('InterestsView', () => {
   it('offers no skip when editing a saved selection', async () => {
     await render(
       ['jazz'],
-      true,
+      false,
       throwError(() => new Error('down')),
     );
 
@@ -185,7 +186,7 @@ describe('InterestsView', () => {
   });
 
   it('locks the interests while saving', async () => {
-    await render([], false);
+    await render([], true);
     const pending = new Subject<UserInterests>();
     interestsService.replaceUserInterests.and.returnValue(pending);
     await click(tile('Muzyka'));
@@ -203,14 +204,14 @@ describe('InterestsView', () => {
   it('does not ask for a saved selection during the first selection', async () => {
     interestsService.getUserInterests.calls.reset();
 
-    await render([], false);
+    await render([], true);
 
     expect(interestsService.getUserInterests).not.toHaveBeenCalled();
     expect(tile('Muzyka')).toBeDefined();
   });
 
   it('stays on the current page after the first save', async () => {
-    await render([], false);
+    await render([], true);
     const navigate = spyOn(TestBed.inject(Router), 'navigateByUrl').and.resolveTo(true);
     await click(tile('Muzyka'));
     await click(tile('jazz'));
@@ -338,7 +339,7 @@ describe('InterestsView', () => {
   });
 
   it('marks the flag on the user after saving', async () => {
-    await render([], false);
+    await render([], true);
     spyOn(TestBed.inject(Router), 'navigateByUrl').and.resolveTo(true);
     await click(tile('Muzyka'));
     await click(tile('jazz'));

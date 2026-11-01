@@ -5,6 +5,6 @@
 </div>
 @if (interestsRequired()) {
   <div class="app__interests" role="dialog" aria-modal="true">
-    <app-interests-view (dismissed)="interestsDismissed.set(true)" />
+    <app-interests-view onboarding (dismissed)="interestsDismissed.set(true)" />
   </div>
 }

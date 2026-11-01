@@ -1,4 +1,14 @@
-import { Component, computed, inject, OnInit, output, signal, viewChild } from '@angular/core';
+import {
+  booleanAttribute,
+  Component,
+  computed,
+  inject,
+  input,
+  OnInit,
+  output,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { CanDeactivateFn, Router } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -28,6 +38,8 @@ export class InterestsView implements OnInit {
   private router = inject(Router);
   private translate = inject(TranslateService);
 
+  /** First selection after sign-up, shown as an overlay: nothing saved yet, may be skipped, no navigation after saving. */
+  readonly onboarding = input(false, { transform: booleanAttribute });
   readonly dismissed = output<void>();
 
   private leaveModal = viewChild.required(ModalWindow);
@@ -42,10 +54,6 @@ export class InterestsView implements OnInit {
   protected expandedCategory = signal<string | null>(null);
   protected saving = signal(false);
   protected errorKey = signal<string | null>(null);
-
-  protected requiredByApp = computed(
-    () => this.authService.currentUser()?.interestsSelected === false,
-  );
 
   protected canSave = computed(() => {
     const catalog = this.catalog();
@@ -65,7 +73,7 @@ export class InterestsView implements OnInit {
       const { catalog, selection } = await firstValueFrom(
         forkJoin({
           catalog: this.interestsService.getCatalog(),
-          selection: this.requiredByApp()
+          selection: this.onboarding()
             ? of({ interests: [] })
             : this.interestsService.getUserInterests(this.authService.userId()),
         }),
@@ -112,8 +120,7 @@ export class InterestsView implements OnInit {
   }
 
   protected async save(): Promise<void> {
-    const wasRequired = this.requiredByApp();
-    if ((await this.persist()) && !wasRequired) {
+    if ((await this.persist()) && !this.onboarding()) {
       await this.router.navigateByUrl('/profile');
     }
   }
