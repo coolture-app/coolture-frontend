@@ -22,6 +22,7 @@ export class Btn {
   @Input() size: BtnSize = 'md';
   @Input() disabled = false;
   @Input() fullWidth = false;
+  @Input() pressed?: boolean;
   @Input() type: 'button' | 'submit' | 'reset' = 'button';
 
   @Output() btnClick = new EventEmitter<Event>();

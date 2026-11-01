@@ -5,4 +5,5 @@ export interface UserProfile extends UserSummary {
   createdAt: string;
   isFollowing: boolean;
   isBlocked: boolean;
+  interestsSelected?: boolean;
 }

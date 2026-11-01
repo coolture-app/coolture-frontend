@@ -1,4 +1,4 @@
-<dialog #modalDialog class="wrapper">
+<dialog #modalDialog class="wrapper" (cancel)="close('CANCEL')">
   <div class="modal-content">
     <h3 class="title">{{ title() }}</h3>
     <p class="body">{{ text() }}</p>

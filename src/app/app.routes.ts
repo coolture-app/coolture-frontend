@@ -11,6 +11,7 @@ import { authGuard } from './core/auth/auth.guard';
 import { EditPostView } from './features/edit-post-view/edit-post-view';
 import { MyEventsView } from './features/my-events-view/my-events-view';
 import { AuthCallbackView } from './features/auth-callback-view/auth-callback-view';
+import { InterestsView, unsavedInterestsGuard } from './features/interests-view/interests-view';
 
 export const routes: Routes = [
   {
@@ -87,6 +88,16 @@ export const routes: Routes = [
     title: () => {
       const translate = inject(TranslateService);
       return translate.get('MY_EVENTS.title');
+    },
+  },
+  {
+    path: 'interests',
+    component: InterestsView,
+    canActivate: [authGuard],
+    canDeactivate: [unsavedInterestsGuard],
+    title: () => {
+      const translate = inject(TranslateService);
+      return translate.get('INTERESTS.title');
     },
   },
   {
