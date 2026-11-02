@@ -1,0 +1,20 @@
+.app__content {
+  display: contents;
+}
+
+.app__interests {
+  position: fixed;
+  inset: var(--navbar-height) 0 0;
+  z-index: var(--z-sticky);
+  overflow-y: auto;
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(1px);
+
+  app-interests-view {
+    display: block;
+    max-width: 720px;
+    margin: var(--space-xl) auto;
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+  }
+}

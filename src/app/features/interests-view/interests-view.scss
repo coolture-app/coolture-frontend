@@ -1,0 +1,39 @@
+@use '_mixin' as *;
+
+.interests {
+  @include container;
+  padding: var(--space-xl) var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+
+  &__subtitle,
+  &__counter {
+    color: var(--color-text-secondary);
+  }
+
+  &__tiles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+
+    &--nested {
+      padding: var(--space-md);
+      border-radius: var(--radius-lg);
+      background: var(--color-surface-alt);
+    }
+  }
+
+  &__footer {
+    @include flex-between;
+    gap: var(--space-md);
+  }
+
+  &__counter {
+    font-size: var(--text-sm);
+  }
+
+  &__error {
+    color: var(--color-danger);
+  }
+}

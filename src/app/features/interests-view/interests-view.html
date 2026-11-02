@@ -1,0 +1,79 @@
+<main class="interests">
+  <h1>{{ 'INTERESTS.title' | translate }}</h1>
+
+  @if (catalog(); as catalog) {
+    <p class="interests__subtitle">
+      {{
+        'INTERESTS.subtitle' | translate: { min: catalog.minSelections, max: catalog.maxSelections }
+      }}
+    </p>
+
+    <div class="interests__tiles">
+      @for (category of catalog.categories; track category.key) {
+        <app-btn
+          variant="secondary"
+          size="sm"
+          [class]="expandedCategory() === category.key ? 'active' : ''"
+          [pressed]="expandedCategory() === category.key"
+          (btnClick)="toggleCategory(category.key)"
+        >
+          {{ categoryLabel(category) }}
+        </app-btn>
+      }
+    </div>
+
+    @for (category of catalog.categories; track category.key) {
+      @if (expandedCategory() === category.key) {
+        <div class="interests__tiles interests__tiles--nested">
+          @for (interest of category.interests; track interest.key) {
+            <app-btn
+              variant="secondary"
+              size="sm"
+              [class]="isSelected(interest.key) ? 'active' : ''"
+              [pressed]="isSelected(interest.key)"
+              [disabled]="isAtLimit(interest.key) || saving()"
+              (btnClick)="toggleInterest(interest.key)"
+            >
+              {{ label(interest) }}
+            </app-btn>
+          }
+        </div>
+      }
+    }
+
+    <div class="interests__footer">
+      <span class="interests__counter" aria-live="polite">
+        {{
+          'INTERESTS.counter' | translate: { count: selected().size, max: catalog.maxSelections }
+        }}
+      </span>
+      <app-btn variant="primary" [disabled]="!canSave() || saving()" (btnClick)="save()">
+        {{ 'INTERESTS.save' | translate }}
+      </app-btn>
+    </div>
+  } @else if (!errorKey()) {
+    <p class="interests__subtitle">{{ 'INTERESTS.loading' | translate }}</p>
+  }
+
+  @if (errorKey(); as key) {
+    <p class="interests__error" role="alert">{{ key | translate }}</p>
+  }
+
+  @if (errorKey() === 'INTERESTS.load-error') {
+    <div class="interests__footer">
+      @if (onboarding()) {
+        <app-btn variant="secondary" (btnClick)="dismissed.emit()">
+          {{ 'INTERESTS.skip' | translate }}
+        </app-btn>
+      }
+      <app-btn variant="primary" (btnClick)="load()">{{ 'INTERESTS.retry' | translate }}</app-btn>
+    </div>
+  }
+
+  <app-modal-window
+    [title]="'INTERESTS.leave-title' | translate"
+    [text]="'INTERESTS.leave-text' | translate"
+    modalType="YESNO"
+    (modalAction)="onLeaveAnswer($event)"
+  />
+</main>

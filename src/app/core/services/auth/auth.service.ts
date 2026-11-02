@@ -1,9 +1,9 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable, signal, computed, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { catchError, map, Observable, of, tap } from 'rxjs';
+import { catchError, finalize, map, Observable, of, shareReplay, tap } from 'rxjs';
 import { ApiUrlService } from '../api-url.service';
-import { UserProfile } from '../../models/users/user-profile.model';
+import { Me, UserProfile } from '../../models/users/user-profile.model';
 import { environment } from '../../../../environments/environment';
 
 interface StoredTokens {
@@ -26,6 +26,7 @@ interface TokenResponse {
 
 const TOKENS_KEY = 'coolture.auth.tokens';
 const PENDING_LOGIN_KEY = 'coolture.auth.pending-login';
+const LOCAL_LOGOUT_KEY = 'coolture.auth.local-logout';
 const REFRESH_MARGIN_MS = 60_000;
 const SCOPES = 'openid email profile';
 
@@ -37,24 +38,48 @@ export class AuthService {
   private apiUrl = inject(ApiUrlService);
   private platformId = inject(PLATFORM_ID);
   private refreshing: Promise<string | null> | null = null;
+  private sessionCheck: Observable<boolean> | null = null;
 
   readonly currentUser = signal<UserProfile | null>(null);
+  /**
+   * Whether the signed-in user has picked interests, or null while unknown.
+   * A selection can only be replaced, never removed, so once true it stays true for the session
+   * and a /auth/me response sent before a save cannot undo it.
+   */
+  readonly interestsSelected = signal<boolean | null>(null);
   readonly isAuthenticated = computed(() => this.currentUser() !== null);
   readonly userId = computed(() => this.currentUser()?.id ?? '');
 
   checkSession(): Observable<boolean> {
-    if (this.isCognitoConfigured() && !this.readTokens()) {
-      this.currentUser.set(null);
+    if (this.isSignedOut()) {
+      this.clearUser();
       return of(false);
     }
-    return this.http.get<UserProfile>(this.apiUrl.path('/auth/me')).pipe(
-      tap((userProfile) => this.currentUser.set(userProfile)),
+    this.sessionCheck ??= this.http.get<Me>(this.apiUrl.path('/auth/me')).pipe(
+      tap(({ interestsSelected, ...profile }) => {
+        this.currentUser.set(profile);
+        this.interestsSelected.update((selected) => selected || interestsSelected);
+      }),
       map(() => true),
-      catchError(() => {
-        this.currentUser.set(null);
+      catchError((error: HttpErrorResponse) => {
+        if (error.status === 401 || error.status === 403) {
+          this.clearUser();
+        }
         return of(false);
       }),
+      finalize(() => (this.sessionCheck = null)),
+      shareReplay(1),
     );
+    return this.sessionCheck;
+  }
+
+  markInterestsSelected(): void {
+    this.interestsSelected.set(true);
+  }
+
+  private clearUser(): void {
+    this.currentUser.set(null);
+    this.interestsSelected.set(null);
   }
 
   async login(returnUrl?: string): Promise<void> {
@@ -62,7 +87,8 @@ export class AuthService {
       return;
     }
     if (!this.isCognitoConfigured()) {
-      console.warn('Cognito is not configured for this build - login is unavailable.');
+      localStorage.removeItem(LOCAL_LOGOUT_KEY);
+      window.location.assign(returnUrl ?? '/');
       return;
     }
     const verifier = randomBase64Url(64);
@@ -122,8 +148,9 @@ export class AuthService {
       return;
     }
     this.clearTokens();
-    this.currentUser.set(null);
+    this.clearUser();
     if (!this.isCognitoConfigured()) {
+      localStorage.setItem(LOCAL_LOGOUT_KEY, 'true');
       window.location.assign('/');
       return;
     }
@@ -144,7 +171,7 @@ export class AuthService {
       return tokens.id_token;
     } catch {
       this.clearTokens();
-      this.currentUser.set(null);
+      this.clearUser();
       return null;
     }
   }
@@ -159,6 +186,13 @@ export class AuthService {
       throw new Error(`Token request failed with status ${response.status}`);
     }
     return response.json();
+  }
+
+  private isSignedOut(): boolean {
+    if (this.isCognitoConfigured()) {
+      return !this.readTokens();
+    }
+    return isPlatformBrowser(this.platformId) && !!localStorage.getItem(LOCAL_LOGOUT_KEY);
   }
 
   private isCognitoConfigured(): boolean {

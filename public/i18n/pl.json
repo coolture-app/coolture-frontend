@@ -98,6 +98,7 @@
     "title": "Mój Profil",
     "edit": "Edytuj Profil",
     "editDescription": "Edytuj Opis",
+    "interests": "Zainteresowania",
     "cancel": "Anuluj",
     "save": "Zapisz Zmiany",
     "firstName": "Imię",
@@ -213,5 +214,19 @@
     "all": "Wszystkie",
     "interested": "Zainteresowany",
     "takes_part": "Uczestniczę"
+  },
+  "INTERESTS": {
+    "title": "Twoje zainteresowania",
+    "subtitle": "Wybierz od {{min}} do {{max}} zainteresowań. Kliknij kategorię, aby zobaczyć szczegóły.",
+    "counter": "Wybrano {{count}} z {{max}}",
+    "save": "Zapisz",
+    "save-error": "Nie udało się zapisać zainteresowań. Spróbuj ponownie.",
+    "selection-error": "Liczba zainteresowań jest poza dozwolonym zakresem.",
+    "loading": "Wczytywanie...",
+    "load-error": "Nie udało się wczytać zainteresowań.",
+    "retry": "Spróbuj ponownie",
+    "skip": "Pomiń na razie",
+    "leave-title": "Niezapisane zmiany",
+    "leave-text": "Czy zatwierdzić zmiany przed wyjściem?"
   }
 }

@@ -14,6 +14,10 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Client,
   },
   {
+    path: 'interests',
+    renderMode: RenderMode.Client,
+  },
+  {
     path: 'post/:id',
     renderMode: RenderMode.Server,
   },

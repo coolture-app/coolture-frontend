@@ -98,6 +98,7 @@
     "title": "My Profile",
     "edit": "Edit Profile",
     "editDescription": "Edit Description",
+    "interests": "Interests",
     "cancel": "Cancel",
     "save": "Save Changes",
     "firstName": "First Name",
@@ -213,5 +214,19 @@
     "all": "All",
     "interested": "Interested",
     "takes_part": "Participating"
+  },
+  "INTERESTS": {
+    "title": "Your interests",
+    "subtitle": "Choose {{min}} to {{max}} interests. Click a category to see the details.",
+    "counter": "{{count}} of {{max}} selected",
+    "save": "Save",
+    "save-error": "Could not save your interests. Please try again.",
+    "selection-error": "The number of interests is outside the allowed range.",
+    "loading": "Loading...",
+    "load-error": "Could not load the interests.",
+    "retry": "Try again",
+    "skip": "Skip for now",
+    "leave-title": "Unsaved changes",
+    "leave-text": "Do you want to save your changes before leaving?"
   }
 }
