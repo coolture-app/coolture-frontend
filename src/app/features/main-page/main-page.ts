@@ -56,7 +56,7 @@ const LOCATION_WAIT_MS = 1500;
  * the same on any screen, and it's under the page size of 20, so a new page can't ask for the next one
  * by itself. A page took about 1.1 s locally, and a fast flick covers about 6000 px a second.
  */
-const CARDS_BEFORE_END = 12;
+const CARDS_BEFORE_END = 15;
 const NO_FILTERS = {
   type: '',
   tags: '',

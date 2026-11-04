@@ -439,7 +439,7 @@ describe('MainPage', () => {
       expectFeed().flush({ ...page(['b']), mode: 'RANKED' });
     });
 
-    it('asks for the next page from 12 cards before the end, on any screen', async () => {
+    it('asks for the next page from 15 cards before the end, on any screen', async () => {
       const ids = Array.from({ length: 20 }, (_, i) => `c${i}`);
       await open();
       expectFeed().flush({
@@ -452,7 +452,7 @@ describe('MainPage', () => {
       const triggers = fixture.nativeElement.querySelectorAll('.list-trigger');
       expect(triggers.length).toBe(1);
       expect(triggers[0].nextElementSibling.querySelector('.post__title').textContent.trim()).toBe(
-        'Post c8',
+        'Post c5',
       );
     });
 
