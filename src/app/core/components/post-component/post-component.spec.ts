@@ -3,6 +3,8 @@ import { HttpTestingController } from '@angular/common/http/testing';
 
 import { PostComponent } from './post-component';
 import { PostCard } from '../../models/posts/post-card.model';
+import { AuthService } from '../../services/auth/auth.service';
+import { UserProfile } from '../../models/users/user-profile.model';
 
 function card(overrides: Partial<PostCard> = {}): PostCard {
   return {
@@ -59,6 +61,19 @@ describe('PostComponent', () => {
 
   it('renders an author with no first or last name', () => {
     expect(() => render(card())).not.toThrow();
+  });
+
+  it('shows the edit and delete row only on your own post', () => {
+    render(card());
+
+    expect(element().querySelector('.post__header')).toBeNull();
+  });
+
+  it('shows them on your own post', () => {
+    TestBed.inject(AuthService).currentUser.set({ id: 'u1' } as UserProfile);
+    render(card());
+
+    expect(element().querySelector('.post__header')?.textContent).toContain('POST.edit');
   });
 
   describe('description', () => {

@@ -1,18 +1,13 @@
 <div class="post">
   @if (data) {
-    <div class="post__header">
-      <div class="left">
-        <app-btn variant="icon" (btnClick)="viewPostPage(false)"> ! </app-btn>
-      </div>
-      @if (isMyPost()) {
-        <div class="right">
-          <app-btn variant="plain" (btnClick)="editPost()">
-            {{ 'POST.edit' | translate }}
-          </app-btn>
-          <app-btn variant="plain" (btnClick)="openModal()">
-            {{ 'POST.delete' | translate }}
-          </app-btn>
-        </div>
+    @if (isMyPost()) {
+      <div class="post__header">
+        <app-btn variant="plain" (btnClick)="editPost()">
+          {{ 'POST.edit' | translate }}
+        </app-btn>
+        <app-btn variant="plain" (btnClick)="openModal()">
+          {{ 'POST.delete' | translate }}
+        </app-btn>
         <app-modal-window
           #myModal
           modalType="YESNO"
@@ -21,8 +16,8 @@
           (modalAction)="handleModalResponse($event)"
         >
         </app-modal-window>
-      }
-    </div>
+      </div>
+    }
     <h3
       class="post__title"
       (click)="goToFullPost()"
@@ -118,6 +113,8 @@
               [alt]="'POST.photo-alt' | translate"
               loading="lazy"
               decoding="async"
+              [class.is-loaded]="loadedPhotos().has(photo)"
+              (load)="photoLoaded(photo)"
             />
 
             @if ($index === 2 && photos.length > 3) {

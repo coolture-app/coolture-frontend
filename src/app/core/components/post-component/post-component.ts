@@ -69,6 +69,7 @@ export class PostComponent implements OnInit {
   isExpanded = signal(false);
   /** Whether the clamped text has more than it shows, which only the browser's layout can tell. */
   overflows = signal(false);
+  loadedPhotos = signal<ReadonlySet<string>>(new Set());
 
   isLiked = signal(false);
   isInterested = signal(false);
@@ -136,6 +137,10 @@ export class PostComponent implements OnInit {
     }
   }
 
+  photoLoaded(photo: string): void {
+    this.loadedPhotos.update((loaded) => new Set(loaded).add(photo));
+  }
+
   /** Measures again whenever the width changes, as a text that fits on a desktop may not on a phone. */
   private watchDescription(): void {
     const text = this.descText()?.nativeElement;
@@ -159,14 +164,11 @@ export class PostComponent implements OnInit {
     return this.data.description?.trim() ?? '';
   }
 
-  get photos() {
-    if (this.isFullView && this.data && 'media' in this.data && Array.isArray(this.data.media)) {
-      return this.data.media.map((m) => m.media.url);
-    }
-    if (this.data?.coverMedia?.url) {
-      return [this.data.coverMedia.url];
-    }
-    return [];
+  get photos(): string[] {
+    const media =
+      this.isFullView && 'media' in this.data ? this.data.media.map((m) => m.media) : [];
+    const urls = media.length > 0 ? media.map((m) => m.url) : [this.data.coverMedia?.url];
+    return urls.filter((url): url is string => !!url);
   }
 
   formatNumber(value: number, suffixK: string, suffixM: string): string {
