@@ -404,13 +404,16 @@ describe('MainPage', () => {
       const request = expectFeed();
       await settle();
 
-      expect(text()).toContain('MAIN_PAGE.loading');
+      expect(fixture.nativeElement.querySelectorAll('app-post-skeleton').length).toBe(3);
+      expect(fixture.nativeElement.querySelector('[role=status]').getAttribute('aria-label')).toBe(
+        'MAIN_PAGE.loading',
+      );
       expect(text()).not.toContain('MAIN_PAGE.no-posts');
 
       request.flush({ ...page(), mode: 'RANKED' });
       await settle();
 
-      expect(text()).not.toContain('MAIN_PAGE.loading');
+      expect(fixture.nativeElement.querySelector('app-post-skeleton')).toBeNull();
       expect(text()).toContain('MAIN_PAGE.no-posts');
     });
 

@@ -28,6 +28,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { PostComponent } from '../../core/components/post-component/post-component';
 import { Btn } from '../../core/components/btn/btn';
+import { PostSkeleton } from '../../core/components/post-skeleton/post-skeleton';
 import { InfiniteScroll } from '../../core/directives/infinite-scroll';
 import { PostFilterParams } from '../../core/models/posts/post-filter-params.model';
 import { PostService } from '../../core/services/post/post.service';
@@ -71,6 +72,7 @@ type FilterValues = typeof NO_FILTERS;
     Switch,
     Map,
     InfiniteScroll,
+    PostSkeleton,
   ],
   viewProviders: [
     provideIcons({
@@ -97,6 +99,7 @@ export class MainPage implements OnDestroy {
   list = inject(PostListStore);
 
   searchControl = new FormControl('', { nonNullable: true });
+  readonly skeletons = Array(3);
 
   showFilters = signal(false);
   showSortMenu = signal(false);

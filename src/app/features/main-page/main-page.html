@@ -166,7 +166,11 @@
         }}</app-btn>
       </div>
     } @else if (list.loading() || !list.query()) {
-      <p class="empty" role="status">{{ 'MAIN_PAGE.loading' | translate }}</p>
+      <div role="status" [attr.aria-label]="'MAIN_PAGE.loading' | translate">
+        @for (_ of skeletons; track $index) {
+          <app-post-skeleton />
+        }
+      </div>
     } @else if (list.items().length === 0) {
       <div class="empty empty--action">
         <span>{{ 'MAIN_PAGE.no-posts' | translate }}</span>

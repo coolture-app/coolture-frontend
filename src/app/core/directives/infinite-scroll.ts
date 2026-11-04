@@ -8,9 +8,10 @@ import {
   output,
 } from '@angular/core';
 
-const START_EARLY = '0px 0px 600px 0px';
+/** Three screens ahead, on any screen, so that the next page normally arrives before anyone sees the end. */
+const START_EARLY = '0px 0px 300% 0px';
 
-/** Goes on an element at the end of a list, and asks for more when that gets within 600 px of view. */
+/** Goes on an element at the end of a list, and asks for more well before it comes into view. */
 @Directive({
   selector: '[appInfiniteScroll]',
 })
