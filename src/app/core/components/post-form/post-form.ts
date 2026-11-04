@@ -10,7 +10,7 @@ import {
   SimpleChanges,
   DestroyRef,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, formatDate } from '@angular/common';
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { lastValueFrom, Observable } from 'rxjs';
@@ -35,15 +35,7 @@ import { MediaResource } from '../../models/media/media-resource.model';
  * onSubmit reads the input back as local time, so it has to be filled with local time too.
  */
 function toLocalInputValue(iso: string | undefined): string {
-  if (!iso) {
-    return '';
-  }
-  const date = new Date(iso);
-  const pad = (value: number) => String(value).padStart(2, '0');
-  return (
-    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` +
-    `T${pad(date.getHours())}:${pad(date.getMinutes())}`
-  );
+  return iso ? formatDate(iso, "yyyy-MM-dd'T'HH:mm", 'en-US') : '';
 }
 
 interface MediaPreview {
