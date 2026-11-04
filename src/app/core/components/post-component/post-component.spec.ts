@@ -62,22 +62,93 @@ describe('PostComponent', () => {
   });
 
   describe('description', () => {
-    it('renders a post with no description', () => {
-      expect(() => render(card())).not.toThrow();
+    const LONG = `Pierwszy akapit opisu wydarzenia.${String.fromCharCode(10)}${'Drugi akapit, dużo dłuższy. '.repeat(60)}`;
+
+    async function measured(): Promise<void> {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      await fixture.whenStable();
+    }
+
+    function text(): HTMLElement {
+      return element().querySelector<HTMLElement>('.post__desc-text')!;
+    }
+
+    function toggle(): HTMLButtonElement | null {
+      return element().querySelector('.post__desc-toggle');
+    }
+
+    it('renders a post with no description, without an empty block', () => {
+      render(card());
+
+      expect(element().querySelector('.post__desc')).toBeNull();
     });
 
-    it('offers more only when there is more', () => {
+    it('offers no toggle for a text that fits', async () => {
       render(card({ description: 'Krótki opis' }));
+      await measured();
 
-      expect(element().querySelector('.post__desc')?.textContent?.trim()).toBe('Krótki opis');
-      expect(element().querySelector('.post__desc-action')).toBeNull();
+      expect(text().textContent?.trim()).toBe('Krótki opis');
+      expect(toggle()).toBeNull();
     });
 
-    it('cuts a long description on a card', () => {
-      render(card({ description: 'x'.repeat(151) }));
+    it('clamps by lines, keeps the paragraphs and shows the whole text in the DOM', async () => {
+      render(card({ description: LONG }));
+      await measured();
 
-      expect(element().querySelector('.post__desc')?.textContent).toContain('...');
-      expect(element().querySelector('.post__desc-action')).not.toBeNull();
+      expect(getComputedStyle(text()).whiteSpace).toBe('pre-line');
+      expect(text().clientHeight).toBeLessThan(text().scrollHeight);
+      expect(text().textContent?.trim()).toBe(LONG.trim());
+      expect(toggle()?.textContent).toContain('POST.show-more');
+    });
+
+    it('showing the toggle does not change the height of the card', async () => {
+      render(card({ description: LONG }));
+      const before = element().getBoundingClientRect().height;
+      await measured();
+
+      expect(toggle()).not.toBeNull();
+      expect(element().getBoundingClientRect().height).toBe(before);
+    });
+
+    it('expands and collapses, and says which it is', async () => {
+      render(card({ description: LONG }));
+      await measured();
+      const clamped = text().clientHeight;
+
+      toggle()!.click();
+      await measured();
+      expect(text().clientHeight).toBeGreaterThan(clamped);
+      expect(toggle()?.getAttribute('aria-expanded')).toBe('true');
+      expect(toggle()?.textContent).toContain('POST.show-less');
+
+      toggle()!.click();
+      await measured();
+      expect(text().clientHeight).toBe(clamped);
+      expect(toggle()?.getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('stays expanded when the same post is shown again, as on coming back to the list', async () => {
+      const data = card({ description: LONG });
+      render(data);
+      await measured();
+      toggle()!.click();
+      await measured();
+
+      const again = TestBed.createComponent(PostComponent);
+      again.componentRef.setInput('data', data);
+      again.componentRef.setInput('isFullView', false);
+      again.detectChanges();
+
+      expect(again.componentInstance.isExpanded()).toBeTrue();
+      expect(again.nativeElement.querySelector('.post__desc-text--clamped')).toBeNull();
+    });
+
+    it('shows the whole text with no toggle on the post page', async () => {
+      render(card({ description: LONG }), true);
+      await measured();
+
+      expect(element().querySelector('.post__desc-text--clamped')).toBeNull();
+      expect(toggle()).toBeNull();
     });
   });
 

@@ -1,10 +1,14 @@
 import {
+  afterNextRender,
   Component,
+  ElementRef,
+  Injector,
   Input,
   signal,
   inject,
   OnInit,
   ViewChild,
+  viewChild,
   Output,
   EventEmitter,
   DestroyRef,
@@ -17,6 +21,8 @@ import { TranslatePipe } from '@ngx-translate/core';
 import {
   heroHandThumbUp,
   heroChatBubbleLeftEllipsis,
+  heroChevronDown,
+  heroChevronUp,
   heroGlobeAlt,
   heroMapPin,
   heroStar,
@@ -34,6 +40,12 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { postPlace } from '../../models/posts/post-place';
 import { ParticipationType } from '../../models/common/enums';
 
+/**
+ * Posts whose text someone expanded, by the object the list holds. The list gives back the same
+ * objects when coming back to it, so a card keeps its height and the saved scroll position still fits.
+ */
+const expandedPosts = new WeakSet<PostCard | PostDetail>();
+
 @Component({
   selector: 'app-post-component',
   imports: [NgIcon, TranslatePipe, DatePipe, ModalWindow, Btn],
@@ -41,6 +53,8 @@ import { ParticipationType } from '../../models/common/enums';
     provideIcons({
       heroHandThumbUp,
       heroChatBubbleLeftEllipsis,
+      heroChevronDown,
+      heroChevronUp,
       heroGlobeAlt,
       heroMapPin,
       heroStar,
@@ -53,7 +67,8 @@ import { ParticipationType } from '../../models/common/enums';
 })
 export class PostComponent implements OnInit {
   isExpanded = signal(false);
-  maxLengthOfShortDesc = 150;
+  /** Whether the clamped text has more than it shows, which only the browser's layout can tell. */
+  overflows = signal(false);
 
   isLiked = signal(false);
   isInterested = signal(false);
@@ -64,6 +79,9 @@ export class PostComponent implements OnInit {
   private authService = inject(AuthService);
   private postService = inject(PostService);
   private destroyRef = inject(DestroyRef);
+  private injector = inject(Injector);
+  private host: HTMLElement = inject(ElementRef).nativeElement;
+  private descText = viewChild<ElementRef<HTMLElement>>('descText');
   private dateFormatService = inject(DateFormatService);
 
   isMyPost = signal<boolean>(false);
@@ -77,8 +95,13 @@ export class PostComponent implements OnInit {
 
   @ViewChild('myModal') myModal?: ModalWindow;
 
+  constructor() {
+    afterNextRender(() => this.watchDescription());
+  }
+
   ngOnInit(): void {
     if (this.data) {
+      this.isExpanded.set(expandedPosts.has(this.data));
       this.isLiked.set(this.data.myReaction === 'LIKE');
       this.isInterested.set(this.data.myParticipation === 'INTERESTED');
       this.isTakesPart.set(this.data.myParticipation === 'TAKES_PART');
@@ -97,7 +120,35 @@ export class PostComponent implements OnInit {
   }
 
   toggleExpanded(): void {
-    this.isExpanded.update((v) => !v);
+    const expanded = !this.isExpanded();
+    this.isExpanded.set(expanded);
+    if (expanded) {
+      expandedPosts.add(this.data);
+    } else {
+      expandedPosts.delete(this.data);
+      // Collapsing a long text can leave the card above the view, with the reader lost in the list.
+      afterNextRender(
+        () => this.host.querySelector('.post')?.scrollIntoView({ block: 'nearest' }),
+        {
+          injector: this.injector,
+        },
+      );
+    }
+  }
+
+  /** Measures again whenever the width changes, as a text that fits on a desktop may not on a phone. */
+  private watchDescription(): void {
+    const text = this.descText()?.nativeElement;
+    if (!text || this.isFullView) {
+      return;
+    }
+    const observer = new ResizeObserver(() => {
+      if (!this.isExpanded()) {
+        this.overflows.set(text.scrollHeight > text.clientHeight + 1);
+      }
+    });
+    observer.observe(text);
+    this.destroyRef.onDestroy(() => observer.disconnect());
   }
 
   get place(): string {
@@ -105,7 +156,7 @@ export class PostComponent implements OnInit {
   }
 
   get description(): string {
-    return this.data.description ?? '';
+    return this.data.description?.trim() ?? '';
   }
 
   get photos() {

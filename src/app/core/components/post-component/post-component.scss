@@ -11,6 +11,8 @@
   max-width: var(--container-max);
   margin: var(--space-md) auto;
   overflow: hidden;
+  scroll-margin: calc(var(--navbar-height) + var(--space-md)) 0
+    calc(var(--footer-height) + var(--space-md));
   transition: box-shadow var(--transition-base);
 
   &:hover {
@@ -112,20 +114,53 @@
 }
 
 .post__desc {
+  position: relative;
   padding: 0 var(--space-md) var(--space-md);
   font-size: var(--text-sm);
   line-height: 1.6;
   color: var(--color-text-secondary);
 }
 
-.post__desc-action {
-  color: var(--color-accent);
+.post__desc-text {
+  margin: 0;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+
+  &--clamped {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 5;
+    line-clamp: 5;
+    overflow: hidden;
+  }
+}
+
+.post__desc-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-top: var(--space-xs);
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
   font-weight: var(--font-medium);
+  color: var(--color-accent);
   cursor: pointer;
   transition: color var(--transition-fast);
 
   &:hover {
     color: var(--color-accent-hover);
+  }
+
+  // Over the end of the last line, so that showing it never changes the card's height.
+  &--over {
+    position: absolute;
+    right: var(--space-md);
+    bottom: var(--space-md);
+    margin: 0;
+    padding-left: var(--space-2xl);
+    background: linear-gradient(to right, transparent, var(--color-surface) var(--space-xl));
   }
 }
 
@@ -139,6 +174,7 @@
 .post__photo-item {
   position: relative;
   overflow: hidden;
+  background: var(--color-border-light);
 
   img {
     width: 100%;

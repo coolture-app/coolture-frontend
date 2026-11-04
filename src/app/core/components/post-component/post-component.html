@@ -77,40 +77,48 @@
         </span>
       }
     </div>
-    <div class="post__desc">
-      @if (this.isFullView || description.length <= maxLengthOfShortDesc) {
-        {{ description }}
-      } @else {
-        @if (!isExpanded()) {
-          {{ description.slice(0, maxLengthOfShortDesc) + '...' }}
-          <span
-            class="post__desc-action"
-            (click)="toggleExpanded()"
-            (keydown.enter)="toggleExpanded()"
-            role="button"
-            tabindex="1"
-          >
-            {{ 'POST.show-more' | translate }}
-          </span>
-        } @else {
+    @if (description) {
+      <div class="post__desc">
+        <p
+          #descText
+          class="post__desc-text"
+          [class.post__desc-text--clamped]="!isFullView && !isExpanded()"
+        >
           {{ description }}
-          <span
-            class="post__desc-action"
+        </p>
+        @if (!isFullView && isExpanded()) {
+          <button
+            type="button"
+            class="post__desc-toggle"
+            aria-expanded="true"
             (click)="toggleExpanded()"
-            (keydown.enter)="toggleExpanded()"
-            role="button"
-            tabindex="2"
           >
             {{ 'POST.show-less' | translate }}
-          </span>
+            <ng-icon name="heroChevronUp" />
+          </button>
+        } @else if (!isFullView && overflows()) {
+          <button
+            type="button"
+            class="post__desc-toggle post__desc-toggle--over"
+            aria-expanded="false"
+            (click)="toggleExpanded()"
+          >
+            {{ 'POST.show-more' | translate }}
+            <ng-icon name="heroChevronDown" />
+          </button>
         }
-      }
-    </div>
+      </div>
+    }
     @if (photos.length > 0) {
       <div class="post__photos" [class]="'count-' + (photos.length > 3 ? 'more' : photos.length)">
         @for (photo of photos.slice(0, 3); track $index) {
           <div class="post__photo-item">
-            <img [src]="photo" [alt]="'POST.photo-alt' | translate" loading="lazy" />
+            <img
+              [src]="photo"
+              [alt]="'POST.photo-alt' | translate"
+              loading="lazy"
+              decoding="async"
+            />
 
             @if ($index === 2 && photos.length > 3) {
               <button
