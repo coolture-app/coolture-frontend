@@ -13,6 +13,9 @@ describe('MapPopup', () => {
 
     fixture = TestBed.createComponent(MapPopup);
     component = fixture.componentInstance;
+    fixture.componentRef.setInput('postId', 'p1');
+    fixture.componentRef.setInput('popupTitle', 'Title');
+    fixture.componentRef.setInput('popupBody', 'Body');
     fixture.detectChanges();
   });
 

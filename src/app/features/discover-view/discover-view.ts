@@ -39,7 +39,7 @@ export class DiscoverView implements OnInit, OnDestroy {
 
   users = signal<PaginatedResponse<UserSummary>>({
     items: [],
-    page: { limit: 20, hasMore: false, nextCursor: null },
+    page: { limit: 20, hasMore: false },
   });
 
   ngOnInit() {

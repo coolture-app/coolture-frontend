@@ -9,15 +9,16 @@ import {
   ParticipationType,
 } from '../common/enums';
 
+// Fields without a value are left out of the JSON, not sent as null.
 export interface PostBase {
   id: string; // UUID
   author: UserSummary;
-  location: EventLocation | null;
+  location?: EventLocation;
   title: string;
-  description: string;
-  eventUrl: string | null;
+  description?: string;
+  eventUrl?: string;
   startsAt: string; // ISO-8601
-  endsAt: string | null; // ISO-8601
+  endsAt?: string; // ISO-8601
   tags: string[];
   positiveReactionCount: number;
   negativeReactionCount: number;
@@ -27,9 +28,9 @@ export interface PostBase {
   status: PostStatus;
   visibility: PostVisibility;
   createdAt: string; // ISO-8601
-  lastModifiedAt: string | null; // ISO-8601
-  deletedAt: string | null; // ISO-8601
-  myReaction: ReactionType | null;
-  myParticipation: ParticipationType | null;
-  coverMedia: MediaResource | null;
+  lastModifiedAt?: string; // ISO-8601
+  deletedAt?: string; // ISO-8601
+  myReaction?: ReactionType;
+  myParticipation?: ParticipationType;
+  coverMedia?: MediaResource;
 }

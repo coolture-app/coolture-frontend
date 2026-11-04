@@ -38,7 +38,17 @@
     "public": "Public",
     "private": "Private",
     "friends": "Friends",
-    "recommended": "Recommended"
+    "recommended": "Recommended",
+    "loading": "Loading...",
+    "endOfList": "That's everything",
+    "loadError": "Could not load posts.",
+    "retry": "Try again",
+    "refresh": "Refresh",
+    "nearMe": "Near me",
+    "locationFailed": "Could not get your location. Check the browser permissions.",
+    "includePast": "Show past events",
+    "searchPast": "Search past events too",
+    "mapView": "Map view"
   },
   "FULL_POST": {
     "title": "Cool post",
@@ -65,15 +75,14 @@
     "thousand": "k",
     "million": "mil",
     "interested": "Mark as interested",
-    "takes_part": "Mark as taking part"
+    "takes_part": "Mark as taking part",
+    "online": "Online"
   },
-  "FOOTER": {
+  "NAVBAR": {
     "main-page": "Home",
     "friends": "Find friends",
     "my-events": "My Events",
-    "my-profile": "Profile"
-  },
-  "NAVBAR": {
+    "my-profile": "Profile",
     "menu": "Menu",
     "addPost": "Add post!",
     "logout": "Log out",

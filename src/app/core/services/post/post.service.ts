@@ -8,7 +8,16 @@ import { PostCreateRequest } from '../../models/posts/post-create-request.model'
 import { PostUpdateRequest } from '../../models/posts/post-update-request.model';
 import { PaginatedResponse } from '../../models/common/paginated-response.model';
 import { PostFilterParams } from '../../models/posts/post-filter-params.model';
+import { FeedPage } from '../../models/posts/feed-page.model';
+import { GeoPoint } from '../../models/common/geo.model';
 import { PostMark } from '../../models/posts/post-mark.model';
+
+/** The first page may send a location. Every later page sends only the cursor, which holds it. */
+export interface FeedParams {
+  cursor?: string;
+  limit?: number;
+  location?: GeoPoint;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -44,6 +53,7 @@ export class PostService {
     if (filters.longitude) params = params.set('longitude', filters.longitude);
     if (filters.radiusKm) params = params.set('radiusKm', filters.radiusKm);
     if (filters.sortBy) params = params.set('sortBy', filters.sortBy);
+    if (filters.includePast) params = params.set('includePast', true);
 
     if (filters.participationTypes) {
       filters.participationTypes.forEach((type) => {
@@ -61,13 +71,15 @@ export class PostService {
     return this.http.get<PaginatedResponse<PostCard>>(this.apiUrl.path('/posts'), { params });
   }
 
-  getRecommendations(cursor?: string, limit?: number): Observable<PaginatedResponse<PostCard>> {
+  getFeed({ cursor, limit, location }: FeedParams = {}): Observable<FeedPage> {
     let params = new HttpParams();
-    if (cursor) params = params.set('cursor', cursor);
     if (limit) params = params.set('limit', limit);
-    return this.http.get<PaginatedResponse<PostCard>>(this.apiUrl.path('/posts/recommendations'), {
-      params,
-    });
+    if (cursor) {
+      params = params.set('cursor', cursor);
+    } else if (location) {
+      params = params.set('latitude', location.latitude).set('longitude', location.longitude);
+    }
+    return this.http.get<FeedPage>(this.apiUrl.path('/feed'), { params });
   }
 
   getMapMarks(
@@ -86,6 +98,7 @@ export class PostService {
     if (filters.type) params = params.set('type', filters.type);
     if (filters.startsFrom) params = params.set('startsFrom', filters.startsFrom);
     if (filters.startsTo) params = params.set('startsTo', filters.startsTo);
+    if (filters.includePast) params = params.set('includePast', true);
 
     if (filters.participationTypes) {
       filters.participationTypes.forEach((type) => {

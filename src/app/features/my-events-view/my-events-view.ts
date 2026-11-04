@@ -25,7 +25,7 @@ export class MyEventsView implements OnInit {
   selectedFilter = signal<ParticipationType | 'all'>('all');
   posts = signal<PaginatedResponse<PostCard>>({
     items: [],
-    page: { limit: 20, hasMore: false, nextCursor: null },
+    page: { limit: 20, hasMore: false },
   });
 
   ngOnInit() {
@@ -36,6 +36,7 @@ export class MyEventsView implements OnInit {
     const filter = this.selectedFilter();
     const filterParams: PostFilterParams = {
       limit: 20,
+      includePast: true,
       participationTypes: filter === 'all' ? ['INTERESTED', 'TAKES_PART'] : [filter],
     };
 

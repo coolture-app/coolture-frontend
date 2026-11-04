@@ -1,17 +1,24 @@
-import { Component, inject, signal, OnInit, DestroyRef } from '@angular/core';
-import { FormControl, ReactiveFormsModule, FormGroup } from '@angular/forms';
-import { Router } from '@angular/router';
 import {
-  debounceTime,
-  distinctUntilChanged,
-  startWith,
-  combineLatest,
-  BehaviorSubject,
-} from 'rxjs';
+  afterNextRender,
+  Component,
+  computed,
+  DestroyRef,
+  effect,
+  inject,
+  OnDestroy,
+  signal,
+  untracked,
+} from '@angular/core';
+import { ViewportScroller } from '@angular/common';
+import { FormControl, ReactiveFormsModule, FormGroup } from '@angular/forms';
+import { NavigationStart, Router } from '@angular/router';
+import { debounceTime, filter, merge } from 'rxjs';
 import { TranslatePipe } from '@ngx-translate/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
+  heroArrowPath,
   heroMagnifyingGlass,
+  heroMapPin,
   heroPlus,
   heroFunnel,
   heroXMark,
@@ -21,151 +28,182 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { PostComponent } from '../../core/components/post-component/post-component';
 import { Btn } from '../../core/components/btn/btn';
-import { HttpClient } from '@angular/common/http';
-import { PostCard } from '../../core/models/posts/post-card.model';
+import { PostSkeleton } from '../../core/components/post-skeleton/post-skeleton';
+import { InfiniteScroll } from '../../core/directives/infinite-scroll';
 import { PostFilterParams } from '../../core/models/posts/post-filter-params.model';
+import { GeoPoint } from '../../core/models/common/geo.model';
 import { PostService } from '../../core/services/post/post.service';
-import { PaginatedResponse } from '../../core/models/common/paginated-response.model';
 import { AuthService } from '../../core/services/auth/auth.service';
-import { PostType, PostStatus, PostVisibility, PostSortBy } from '../../core/models/common/enums';
+import { LocationService } from '../../core/services/location/location.service';
+import {
+  PostListStore,
+  PostListView,
+  RESTORE_LIST_KEY,
+} from '../../core/services/post-list/post-list.store';
+import {
+  PostType,
+  PostStatus,
+  PostVisibility,
+  PostSortBy,
+  PostsSort,
+} from '../../core/models/common/enums';
 import { Switch } from '../../core/components/switch/switch/switch';
 import { Map } from '../../core/components/map/map/map';
 
+const LOCATION_WAIT_MS = 1500;
+/**
+ * How many cards before the end the next page is requested. Counted in cards, not pixels, so it means
+ * the same on any screen, and it's under the page size of 20, so a new page can't ask for the next one
+ * by itself. A page took about 1.1 s locally, and a fast flick covers about 6000 px a second.
+ */
+const CARDS_BEFORE_END = 15;
+const NO_FILTERS = {
+  type: '',
+  tags: '',
+  startsFrom: '',
+  startsTo: '',
+  visibility: '',
+  status: '',
+  includePast: false,
+};
+type FilterValues = typeof NO_FILTERS;
+
 @Component({
   selector: 'app-main-page',
-  imports: [TranslatePipe, NgIcon, PostComponent, ReactiveFormsModule, Btn, Switch, Map],
+  imports: [
+    TranslatePipe,
+    NgIcon,
+    PostComponent,
+    ReactiveFormsModule,
+    Btn,
+    Switch,
+    Map,
+    InfiniteScroll,
+    PostSkeleton,
+  ],
   viewProviders: [
-    provideIcons({ heroMagnifyingGlass, heroPlus, heroFunnel, heroXMark, heroChevronDown }),
+    provideIcons({
+      heroArrowPath,
+      heroMagnifyingGlass,
+      heroMapPin,
+      heroPlus,
+      heroFunnel,
+      heroXMark,
+      heroChevronDown,
+    }),
   ],
   templateUrl: './main-page.html',
   styleUrl: './main-page.scss',
+  host: { '(document:click)': 'closeSortMenu($event)' },
 })
-export class MainPage implements OnInit {
-  private http = inject(HttpClient);
+export class MainPage implements OnDestroy {
   private postService = inject(PostService);
   private router = inject(Router);
   private destroyRef = inject(DestroyRef);
+  private location = inject(LocationService);
+  private scroller = inject(ViewportScroller);
   authService = inject(AuthService);
+  list = inject(PostListStore);
 
-  searchControl = new FormControl('');
+  searchControl = new FormControl('', { nonNullable: true });
 
   showFilters = signal(false);
   showSortMenu = signal(false);
-
-  private sortBy$ = new BehaviorSubject<PostSortBy>('RECENT');
+  isMapView = signal(false);
+  locationFailed = signal(false);
+  locating = signal(false);
 
   sortOptions: { value: PostSortBy; labelKey: string }[] = [
+    { value: 'RECOMMENDED', labelKey: 'MAIN_PAGE.sortRecommended' },
     { value: 'RECENT', labelKey: 'MAIN_PAGE.sortRecent' },
     { value: 'POPULAR', labelKey: 'MAIN_PAGE.sortPopular' },
     { value: 'UPCOMING', labelKey: 'MAIN_PAGE.sortUpcoming' },
-    { value: 'RECOMMENDED', labelKey: 'MAIN_PAGE.sortRecommended' },
   ];
 
-  get visibleSortOptions(): { value: PostSortBy; labelKey: string }[] {
-    if (this.authService.isAuthenticated()) {
-      return this.sortOptions;
-    }
-    return this.sortOptions.filter((o) => o.value !== 'RECOMMENDED');
-  }
-
-  isMapView = signal(false);
-
-  currentFiltersForMap = signal<PostFilterParams>({});
-
   filtersForm = new FormGroup({
-    type: new FormControl(''),
-    tags: new FormControl(''),
-    startsFrom: new FormControl(''),
-    startsTo: new FormControl(''),
-    visibility: new FormControl(''),
-    status: new FormControl(''),
+    type: new FormControl(NO_FILTERS.type, { nonNullable: true }),
+    tags: new FormControl(NO_FILTERS.tags, { nonNullable: true }),
+    startsFrom: new FormControl(NO_FILTERS.startsFrom, { nonNullable: true }),
+    startsTo: new FormControl(NO_FILTERS.startsTo, { nonNullable: true }),
+    visibility: new FormControl(NO_FILTERS.visibility, { nonNullable: true }),
+    status: new FormControl(NO_FILTERS.status, { nonNullable: true }),
+    includePast: new FormControl(NO_FILTERS.includePast, { nonNullable: true }),
   });
 
-  posts = signal<PaginatedResponse<PostCard>>({
-    items: [],
-    page: { limit: 20, hasMore: false, nextCursor: null },
+  /** The applied search and filters, also what the map shows. */
+  readonly activeFilters = signal<PostFilterParams>({});
+  /** A sort the user chose. Without one, the list follows the search and filters. */
+  private pickedSort = signal<PostsSort | null>(null);
+
+  readonly currentSortBy = computed<PostSortBy>(() => {
+    const noCriteria = Object.keys(this.activeFilters()).length === 0;
+    return this.pickedSort() ?? (noCriteria ? 'RECOMMENDED' : 'RECENT');
+  });
+  readonly isFeed = computed(() => this.currentSortBy() === 'RECOMMENDED');
+  readonly isNearMe = computed(() => {
+    const query = this.list.query();
+    return query?.kind === 'feed' && !!query.location;
+  });
+  /** A screenful for the first page. After that one is enough, and the posts stay what's on screen. */
+  readonly skeletons = computed(() => Array(this.list.items().length > 0 ? 1 : 3));
+  readonly nextPageTrigger = computed(() =>
+    Math.max(0, this.list.items().length - CARDS_BEFORE_END),
+  );
+  readonly canLoadMore = computed(
+    () => this.list.hasMore() && !this.list.loading() && !this.list.failed(),
+  );
+
+  /** When an empty result could change by looking at past events too. See the contract's table. */
+  readonly canOfferPast = computed(() => {
+    const { includePast, startsFrom, startsTo } = this.activeFilters();
+    const windowApplies = !includePast && !startsFrom && !startsTo;
+    return !this.isFeed() && windowApplies && this.currentSortBy() !== 'UPCOMING';
   });
 
-  ngOnInit() {
-    this.sortBy$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((sortBy) => {
-      const controls = this.filtersForm.controls;
-      if (sortBy === 'RECOMMENDED') {
-        controls.type.setValue('', { emitEvent: false });
-        controls.tags.setValue('', { emitEvent: false });
-        controls.visibility.setValue('', { emitEvent: false });
-        controls.startsFrom.setValue('', { emitEvent: false });
-        controls.startsTo.setValue('', { emitEvent: false });
-        this.searchControl.setValue('', { emitEvent: false });
+  /** False until the first render in the browser, so a prerendered page never holds a response. */
+  private ready = signal(false);
+  private loadRun = 0;
+  private listOutdated = false;
 
-        controls.type.disable({ emitEvent: false });
-        controls.tags.disable({ emitEvent: false });
-        controls.visibility.disable({ emitEvent: false });
-        controls.startsFrom.disable({ emitEvent: false });
-        controls.startsTo.disable({ emitEvent: false });
-        this.searchControl.disable({ emitEvent: false });
+  constructor() {
+    const restored = this.restoreView();
+    this.postService.clearActivePost();
 
-        this.isMapView.set(false);
-      } else {
-        controls.type.enable({ emitEvent: false });
-        controls.tags.enable({ emitEvent: false });
-        controls.visibility.enable({ emitEvent: false });
-        controls.startsFrom.enable({ emitEvent: false });
-        controls.startsTo.enable({ emitEvent: false });
-        this.searchControl.enable({ emitEvent: false });
+    afterNextRender(() => {
+      if (restored) {
+        this.scroller.scrollToPosition([0, restored.scrollY]);
+      }
+      this.ready.set(true);
+    });
+
+    // First open, and again if the store was cleared because the user changed.
+    effect(() => {
+      if (this.ready() && this.list.query() === null) {
+        untracked(() => this.load());
       }
     });
 
-    const search$ = this.searchControl.valueChanges.pipe(
-      startWith(''),
-      debounceTime(400),
-      distinctUntilChanged(),
-    );
+    merge(this.searchControl.valueChanges, this.filtersForm.valueChanges)
+      .pipe(debounceTime(400), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.applyControls());
 
-    const filter$ = this.filtersForm.valueChanges.pipe(startWith(this.filtersForm.value));
+    this.router.events
+      .pipe(
+        filter((event) => event instanceof NavigationStart),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(() => this.saveView());
+  }
 
-    combineLatest([search$, filter$, this.sortBy$])
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(([search, _, sortBy]) => {
-        const filters = this.filtersForm.getRawValue();
-        const recommended = sortBy === 'RECOMMENDED';
+  ngOnDestroy(): void {
+    // The next page isn't scrolled by itself, and would otherwise open at the end of a long list.
+    if (this.router.currentNavigation()?.trigger !== 'popstate') {
+      this.scroller.scrollToPosition([0, 0]);
+    }
+  }
 
-        if (recommended) {
-          this.postService.getRecommendations(undefined, 20).subscribe({
-            next: (data) => this.posts.set(data),
-            error: (err) => console.error('Error while fetching recommendations', err),
-          });
-        } else {
-          const mapParams: PostFilterParams = {
-            ...(search && { q: search }),
-            ...(filters.type && { type: filters.type as PostType }),
-            ...(filters.tags && {
-              tags: (filters.tags as string)
-                .split(',')
-                .map((t: string) => t.trim())
-                .filter(Boolean),
-            }),
-            ...(filters.startsFrom && { startsFrom: new Date(filters.startsFrom).toISOString() }),
-            ...(filters.startsTo && { startsTo: new Date(filters.startsTo).toISOString() }),
-            ...(filters.visibility && { visibility: filters.visibility as PostVisibility }),
-            ...(filters.status && { status: filters.status as PostStatus }),
-          };
-
-          this.currentFiltersForMap.set(mapParams);
-
-          const filterParams: PostFilterParams = {
-            ...mapParams,
-            limit: 20,
-            sortBy,
-          };
-
-          this.postService.getPosts(filterParams).subscribe({
-            next: (data) => this.posts.set(data),
-            error: (err) => console.error('Error while fetching posts', err),
-          });
-        }
-      });
-
-    this.postService.clearActivePost();
+  applyControls(): void {
+    this.changeList(() => this.activeFilters.set(this.readFilters()));
   }
 
   toggleFilters(): void {
@@ -173,8 +211,15 @@ export class MainPage implements OnInit {
   }
 
   clearFilters(): void {
-    this.filtersForm.reset();
-    this.searchControl.setValue('');
+    this.resetControls();
+    this.applyControls();
+  }
+
+  /** The empty state's shortcut. The panel opens, so that the user can see and undo what's now on. */
+  searchPastToo(): void {
+    this.showFilters.set(true);
+    this.filtersForm.controls.includePast.setValue(true, { emitEvent: false });
+    this.applyControls();
   }
 
   goToAddPost(): void {
@@ -182,32 +227,167 @@ export class MainPage implements OnInit {
   }
 
   removeChild(idToRemove: string): void {
-    this.posts.update((currentData) => ({
-      ...currentData,
-      items: currentData.items.filter((post) => String(post.id) !== String(idToRemove)),
-    }));
+    this.list.removeItem(idToRemove);
   }
 
   toggleSortMenu(): void {
     this.showSortMenu.update((v) => !v);
   }
 
-  setSortBy(sortBy: PostSortBy): void {
-    this.sortBy$.next(sortBy);
-    this.showSortMenu.set(false);
+  closeSortMenu(event: Event): void {
+    if (!(event.target as Element).closest?.('.sort-wrapper')) {
+      this.showSortMenu.set(false);
+    }
   }
 
-  get currentSortBy(): PostSortBy {
-    return this.sortBy$.value;
+  setSortBy(sortBy: PostSortBy): void {
+    this.showSortMenu.set(false);
+    this.changeList(() => {
+      if (sortBy === 'RECOMMENDED') {
+        this.resetControls();
+      }
+      this.pickedSort.set(sortBy === 'RECOMMENDED' ? null : sortBy);
+      this.activeFilters.set(this.readFilters());
+    });
   }
 
   getSortLabelKey(): string {
-    const sort = this.sortOptions.find((o) => o.value === this.currentSortBy);
+    const sort = this.sortOptions.find((o) => o.value === this.currentSortBy());
     return sort ? sort.labelKey : 'MAIN_PAGE.sortRecent';
   }
 
   toggleMapView(isToggled: boolean): void {
     this.isMapView.set(isToggled);
-    console.log(this.isMapView());
+    if (!isToggled && (this.listOutdated || this.list.query() === null)) {
+      this.load();
+    }
+  }
+
+  refresh(): void {
+    this.scroller.scrollToPosition([0, 0]);
+    this.list.refresh();
+  }
+
+  /** Turns nearby ranking on or off. It asks only when tapped, and a refusal leaves the feed as it is. */
+  async toggleNearMe(): Promise<void> {
+    if (this.locating()) {
+      return;
+    }
+    this.locationFailed.set(false);
+    if (this.isNearMe()) {
+      this.location.turnOff();
+      this.startFeedAt(undefined);
+      return;
+    }
+    this.locating.set(true);
+    const location = await this.location.request();
+    this.locating.set(false);
+    if (!location) {
+      this.locationFailed.set(true);
+    } else if (this.isFeed() && !this.isMapView()) {
+      this.startFeedAt(location);
+    }
+  }
+
+  private startFeedAt(location: GeoPoint | undefined): void {
+    this.loadRun++;
+    this.scroller.scrollToPosition([0, 0]);
+    this.list.start({ kind: 'feed', ...(location && { location }) });
+  }
+
+  /** Applies a change, and starts a new list only if it changes which list should be showing. */
+  private changeList(change: () => void): void {
+    const listKey = () => JSON.stringify([this.currentSortBy(), this.activeFilters()]);
+    const before = listKey();
+    change();
+    if (listKey() !== before) {
+      this.load();
+    }
+  }
+
+  private load(): void {
+    this.listOutdated = this.isMapView();
+    if (this.isMapView()) {
+      return;
+    }
+    const run = ++this.loadRun;
+    if (this.isFeed()) {
+      void this.startFeed(run);
+    } else {
+      this.list.start({
+        kind: 'posts',
+        filters: { ...this.activeFilters(), sortBy: this.currentSortBy() as PostsSort },
+      });
+    }
+  }
+
+  /** Uses the position only if it's already allowed and arrives quickly, so nobody waits for it. */
+  private async startFeed(run: number): Promise<void> {
+    const location = await this.location.currentIfAllowed(LOCATION_WAIT_MS);
+    if (run === this.loadRun) {
+      this.list.start({ kind: 'feed', ...(location && { location }) });
+    }
+  }
+
+  private resetControls(): void {
+    this.filtersForm.reset(NO_FILTERS, { emitEvent: false });
+    this.searchControl.setValue('', { emitEvent: false });
+  }
+
+  private readFilters(): PostFilterParams {
+    const search = this.searchControl.value.trim();
+    const { type, tags, startsFrom, startsTo, visibility, status, includePast } =
+      this.filtersForm.getRawValue();
+    const tagList = tags
+      .split(',')
+      .map((tag) => tag.trim())
+      .filter(Boolean);
+
+    return {
+      ...(search && { q: search }),
+      ...(type && { type: type as PostType }),
+      ...(tagList.length > 0 && { tags: tagList }),
+      ...(startsFrom && { startsFrom: new Date(startsFrom).toISOString() }),
+      ...(startsTo && { startsTo: new Date(startsTo).toISOString() }),
+      ...(visibility && { visibility: visibility as PostVisibility }),
+      ...(status && { status: status as PostStatus }),
+      ...(includePast && { includePast }),
+    };
+  }
+
+  private saveView(): void {
+    this.list.saveView({
+      search: this.searchControl.value,
+      filters: this.filtersForm.getRawValue(),
+      pickedSort: this.pickedSort(),
+      showFilters: this.showFilters(),
+      isMapView: this.isMapView(),
+      scrollY: this.scroller.getScrollPosition()[1],
+    });
+  }
+
+  /** Puts the page back as it was left, and returns the view. Otherwise a new list will start. */
+  private restoreView(): PostListView | null {
+    const navigation = this.router.currentNavigation();
+    const comingBack =
+      navigation?.trigger === 'popstate' || !!navigation?.extras.state?.[RESTORE_LIST_KEY];
+    const view = comingBack ? this.list.savedView() : null;
+    if (!view) {
+      this.list.clear();
+      return null;
+    }
+
+    this.searchControl.setValue(view.search, { emitEvent: false });
+    this.filtersForm.setValue(view.filters as FilterValues, { emitEvent: false });
+    this.pickedSort.set(view.pickedSort);
+    this.showFilters.set(view.showFilters);
+    this.isMapView.set(view.isMapView);
+    this.activeFilters.set(this.readFilters());
+
+    const post = this.postService.activePost();
+    if (post) {
+      this.list.updateItem(post);
+    }
+    return view;
   }
 }

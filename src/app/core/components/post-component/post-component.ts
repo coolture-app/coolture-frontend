@@ -1,10 +1,14 @@
 import {
+  afterNextRender,
   Component,
+  ElementRef,
+  Injector,
   Input,
   signal,
   inject,
   OnInit,
   ViewChild,
+  viewChild,
   Output,
   EventEmitter,
   DestroyRef,
@@ -16,9 +20,14 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { TranslatePipe } from '@ngx-translate/core';
 import {
   heroHandThumbUp,
+  heroCalendar,
   heroChatBubbleLeftEllipsis,
+  heroGlobeAlt,
+  heroMapPin,
+  heroPencilSquare,
   heroStar,
   heroShare,
+  heroTrash,
 } from '@ng-icons/heroicons/outline';
 import { heroStarSolid } from '@ng-icons/heroicons/solid';
 import { DatePipe } from '@angular/common';
@@ -29,6 +38,17 @@ import { Btn } from '../btn/btn';
 import { PostService } from '../../services/post/post.service';
 import { DateFormatService } from '../../services/date-format/date-format.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { postPlace } from '../../models/posts/post-place';
+import { ParticipationType } from '../../models/common/enums';
+
+const MIN_CROPPED_SHAPE = 1.4;
+const MAX_CROPPED_SHAPE = 2.6;
+
+/**
+ * Posts whose text someone expanded, by the object the list holds. The list gives back the same
+ * objects when coming back to it, so a card keeps its height and the saved scroll position still fits.
+ */
+const expandedPosts = new WeakSet<PostCard | PostDetail>();
 
 @Component({
   selector: 'app-post-component',
@@ -36,10 +56,15 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
   viewProviders: [
     provideIcons({
       heroHandThumbUp,
+      heroCalendar,
       heroChatBubbleLeftEllipsis,
+      heroGlobeAlt,
+      heroMapPin,
+      heroPencilSquare,
       heroStar,
       heroStarSolid,
       heroShare,
+      heroTrash,
     }),
   ],
   templateUrl: './post-component.html',
@@ -47,7 +72,11 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 })
 export class PostComponent implements OnInit {
   isExpanded = signal(false);
-  maxLengthOfShortDesc = 150;
+  /** Whether the clamped text has more than it shows, which only the browser's layout can tell. */
+  overflows = signal(false);
+  loadedPhotos = signal<ReadonlySet<string>>(new Set());
+  /** Too tall or too wide for the frame to crop well, such as posters, so they're shown whole. */
+  containedPhotos = signal<ReadonlySet<string>>(new Set());
 
   isLiked = signal(false);
   isInterested = signal(false);
@@ -58,6 +87,9 @@ export class PostComponent implements OnInit {
   private authService = inject(AuthService);
   private postService = inject(PostService);
   private destroyRef = inject(DestroyRef);
+  private injector = inject(Injector);
+  private host: HTMLElement = inject(ElementRef).nativeElement;
+  private descText = viewChild<ElementRef<HTMLElement>>('descText');
   private dateFormatService = inject(DateFormatService);
 
   isMyPost = signal<boolean>(false);
@@ -71,8 +103,13 @@ export class PostComponent implements OnInit {
 
   @ViewChild('myModal') myModal?: ModalWindow;
 
+  constructor() {
+    afterNextRender(() => this.watchDescription());
+  }
+
   ngOnInit(): void {
     if (this.data) {
+      this.isExpanded.set(expandedPosts.has(this.data));
       this.isLiked.set(this.data.myReaction === 'LIKE');
       this.isInterested.set(this.data.myParticipation === 'INTERESTED');
       this.isTakesPart.set(this.data.myParticipation === 'TAKES_PART');
@@ -91,17 +128,64 @@ export class PostComponent implements OnInit {
   }
 
   toggleExpanded(): void {
-    this.isExpanded.update((v) => !v);
+    const expanded = !this.isExpanded();
+    this.isExpanded.set(expanded);
+    if (expanded) {
+      expandedPosts.add(this.data);
+    } else {
+      expandedPosts.delete(this.data);
+      // Collapsing a long text can leave the card above the view, with the reader lost in the list.
+      afterNextRender(
+        () => this.host.querySelector('.post')?.scrollIntoView({ block: 'nearest' }),
+        {
+          injector: this.injector,
+        },
+      );
+    }
   }
 
-  get photos() {
-    if (this.isFullView && this.data && 'media' in this.data && Array.isArray(this.data.media)) {
-      return this.data.media.map((m) => m.media.url);
+  /** The image itself, blurred by the styles, fills the sides of one that's shown whole. */
+  backdrop(photo: string): string | null {
+    return this.containedPhotos().has(photo) ? `url("${photo}")` : null;
+  }
+
+  photoLoaded(photo: string, event: Event): void {
+    const { naturalWidth, naturalHeight } = event.target as HTMLImageElement;
+    const shape = naturalWidth / naturalHeight;
+    if (this.photos.length === 1 && (shape < MIN_CROPPED_SHAPE || shape > MAX_CROPPED_SHAPE)) {
+      this.containedPhotos.update((contained) => new Set(contained).add(photo));
     }
-    if (this.data?.coverMedia?.url) {
-      return [this.data.coverMedia.url];
+    this.loadedPhotos.update((loaded) => new Set(loaded).add(photo));
+  }
+
+  /** Measures again whenever the width changes, as a text that fits on a desktop may not on a phone. */
+  private watchDescription(): void {
+    const text = this.descText()?.nativeElement;
+    if (!text || this.isFullView) {
+      return;
     }
-    return [];
+    const observer = new ResizeObserver(() => {
+      if (!this.isExpanded()) {
+        this.overflows.set(text.scrollHeight > text.clientHeight + 1);
+      }
+    });
+    observer.observe(text);
+    this.destroyRef.onDestroy(() => observer.disconnect());
+  }
+
+  get place(): string {
+    return postPlace(this.data, this.isFullView);
+  }
+
+  get description(): string {
+    return this.data.description?.trim() ?? '';
+  }
+
+  get photos(): string[] {
+    const media =
+      this.isFullView && 'media' in this.data ? this.data.media.map((m) => m.media) : [];
+    const urls = media.length > 0 ? media.map((m) => m.url) : [this.data.coverMedia?.url];
+    return urls.filter((url): url is string => !!url);
   }
 
   formatNumber(value: number, suffixK: string, suffixM: string): string {
@@ -116,90 +200,57 @@ export class PostComponent implements OnInit {
 
   likePost(): void {
     if (!this.isLiked()) {
-      this.data.positiveReactionCount++;
-      this.isLiked.set(true);
+      this.applyReaction(true);
       this.interactions
         .setReaction(this.data.id, { type: 'LIKE' })
         .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe({
-          error: () => {
-            // Revert on error
-            this.data.positiveReactionCount--;
-            this.isLiked.set(false);
-          },
-        });
+        .subscribe({ error: () => this.applyReaction(false) });
     } else {
-      this.data.positiveReactionCount--;
-      this.isLiked.set(false);
+      this.applyReaction(false);
       this.interactions
         .removeReaction(this.data.id)
         .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe({
-          error: () => {
-            // Revert on error
-            this.data.positiveReactionCount++;
-            this.isLiked.set(true);
-          },
-        });
+        .subscribe({ error: () => this.applyReaction(true) });
     }
   }
 
   setInterested(): void {
-    if (this.isInterested()) {
-      this.data.participantCount--;
-      this.isInterested.set(false);
-      this.interactions
-        .removeParticipation(this.data.id)
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe({
-          error: () => {
-            this.data.participantCount++;
-            this.isInterested.set(true);
-          },
-        });
-    } else {
-      this.data.participantCount++;
-      this.isInterested.set(true);
-      this.isTakesPart.set(false);
-      this.interactions
-        .setParticipation(this.data.id, { type: 'INTERESTED' })
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe({
-          error: () => {
-            this.data.participantCount--;
-            this.isInterested.set(false);
-          },
-        });
-    }
+    this.toggleParticipation('INTERESTED');
   }
 
   setTakesPart(): void {
-    if (this.isTakesPart()) {
-      this.data.participantCount--;
-      this.isTakesPart.set(false);
+    this.toggleParticipation('TAKES_PART');
+  }
+
+  // `data` is what a card shows again after coming back to the list, so it has to stay in step.
+  private applyReaction(liked: boolean): void {
+    this.data.positiveReactionCount += liked ? 1 : -1;
+    this.data.myReaction = liked ? 'LIKE' : undefined;
+    this.isLiked.set(liked);
+  }
+
+  private toggleParticipation(type: ParticipationType): void {
+    const previous = this.data.myParticipation;
+    if (previous === type) {
+      this.applyParticipation(undefined);
       this.interactions
         .removeParticipation(this.data.id)
         .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe({
-          error: () => {
-            this.data.participantCount++;
-            this.isTakesPart.set(true);
-          },
-        });
+        .subscribe({ error: () => this.applyParticipation(previous) });
     } else {
-      this.data.participantCount++;
-      this.isTakesPart.set(true);
-      this.isInterested.set(false);
+      this.applyParticipation(type);
       this.interactions
-        .setParticipation(this.data.id, { type: 'TAKES_PART' })
+        .setParticipation(this.data.id, { type })
         .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe({
-          error: () => {
-            this.data.participantCount--;
-            this.isTakesPart.set(false);
-          },
-        });
+        .subscribe({ error: () => this.applyParticipation(previous) });
     }
+  }
+
+  private applyParticipation(type: ParticipationType | undefined): void {
+    this.data.participantCount += (type ? 1 : 0) - (this.data.myParticipation ? 1 : 0);
+    this.data.myParticipation = type;
+    this.isInterested.set(type === 'INTERESTED');
+    this.isTakesPart.set(type === 'TAKES_PART');
   }
 
   editPost(): void {

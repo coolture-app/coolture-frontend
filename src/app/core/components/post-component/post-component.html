@@ -1,17 +1,66 @@
-<div class="post">
+<div class="post" [class.post--feed]="!isFullView">
   @if (data) {
     <div class="post__header">
-      <div class="left">
-        <app-btn variant="icon" (btnClick)="viewPostPage(false)"> ! </app-btn>
+      <div
+        class="post__author-wrapper"
+        (click)="goToUserProfile()"
+        (keydown.enter)="goToUserProfile()"
+        role="link"
+        tabindex="0"
+      >
+        @if (data.author.avatar; as avatar) {
+          <img
+            [src]="avatar.url"
+            [alt]="data.author.username"
+            class="post__avatar"
+            loading="lazy"
+          />
+        } @else {
+          <div class="post__avatar post__avatar--placeholder">
+            {{ data.author.firstName?.charAt(0) }}{{ data.author.lastName?.charAt(0) }}
+          </div>
+        }
+        <div class="post__author">
+          <span class="post__username">{{ data.author.username }}</span>
+          <div class="post__info">
+            <span class="post__date" [title]="'POST.starts' | translate">
+              <ng-icon name="heroCalendar" />
+              {{ data.startsAt | date: dateFormats().short }}
+            </span>
+            @if (data.type === 'ONLINE') {
+              <span class="post__location">
+                <ng-icon name="heroGlobeAlt" />
+                {{ 'POST.online' | translate }}
+              </span>
+            } @else if (place) {
+              <span class="post__location">
+                <ng-icon name="heroMapPin" />
+                {{ place }}
+              </span>
+            }
+          </div>
+        </div>
       </div>
       @if (isMyPost()) {
-        <div class="right">
-          <app-btn variant="plain" (btnClick)="editPost()">
-            {{ 'POST.edit' | translate }}
-          </app-btn>
-          <app-btn variant="plain" (btnClick)="openModal()">
-            {{ 'POST.delete' | translate }}
-          </app-btn>
+        <div class="post__owner-actions">
+          <button
+            type="button"
+            class="post__icon-btn"
+            [title]="'POST.edit' | translate"
+            [attr.aria-label]="'POST.edit' | translate"
+            (click)="editPost()"
+          >
+            <ng-icon name="heroPencilSquare" />
+          </button>
+          <button
+            type="button"
+            class="post__icon-btn"
+            [title]="'POST.delete' | translate"
+            [attr.aria-label]="'POST.delete' | translate"
+            (click)="openModal()"
+          >
+            <ng-icon name="heroTrash" />
+          </button>
         </div>
         <app-modal-window
           #myModal
@@ -32,69 +81,49 @@
     >
       {{ data.title }}
     </h3>
-    <div class="post__meta">
-      <div
-        class="post__author-wrapper"
-        (click)="goToUserProfile()"
-        (keydown.enter)="goToUserProfile()"
-        role="link"
-        tabindex="0"
-      >
-        @if (data.author.avatar; as avatar) {
-          <img [src]="avatar.url" [alt]="data.author.username" class="post__avatar" />
-        } @else {
-          <div class="post__avatar post__avatar--placeholder">
-            {{ data.author.firstName.charAt(0) }}{{ data.author.lastName.charAt(0) }}
-          </div>
-        }
-        <div class="post__author">
-          <span class="post__username">
-            {{ data.author.username }}
-          </span>
-          <span class="post__date">{{ data.createdAt | date: dateFormats().short }}</span>
-          @if (data.startsAt) {
-            <span class="post__date"
-              >{{ 'POST.starts' | translate }}:
-              {{ data.startsAt | date: dateFormats().short }}</span
-            >
-          }
-        </div>
-      </div>
-    </div>
-    <div class="post__desc">
-      @if (this.isFullView) {
-        {{ data.description }}
-      } @else {
-        @if (!isExpanded()) {
-          {{ data.description.slice(0, maxLengthOfShortDesc) + '...' }}
-          <span
-            class="post__desc-action"
+    @if (description) {
+      <div class="post__desc">
+        <p
+          #descText
+          class="post__desc-text"
+          [class.post__desc-text--clamped]="!isFullView && !isExpanded()"
+        >
+          {{ description }}
+        </p>
+        @if (!isFullView && isExpanded()) {
+          <button
+            type="button"
+            class="post__desc-toggle"
+            aria-expanded="true"
             (click)="toggleExpanded()"
-            (keydown.enter)="toggleExpanded()"
-            role="button"
-            tabindex="1"
-          >
-            {{ 'POST.show-more' | translate }}
-          </span>
-        } @else {
-          {{ data.description }}
-          <span
-            class="post__desc-action"
-            (click)="toggleExpanded()"
-            (keydown.enter)="toggleExpanded()"
-            role="button"
-            tabindex="2"
           >
             {{ 'POST.show-less' | translate }}
-          </span>
+          </button>
+        } @else if (!isFullView && overflows()) {
+          <button
+            type="button"
+            class="post__desc-toggle post__desc-toggle--over"
+            aria-expanded="false"
+            (click)="toggleExpanded()"
+          >
+            {{ 'POST.show-more' | translate }}
+          </button>
         }
-      }
-    </div>
+      </div>
+    }
     @if (photos.length > 0) {
       <div class="post__photos" [class]="'count-' + (photos.length > 3 ? 'more' : photos.length)">
         @for (photo of photos.slice(0, 3); track $index) {
-          <div class="post__photo-item">
-            <img [src]="photo" [alt]="'POST.photo-alt' | translate" />
+          <div class="post__photo-item" [style.background-image]="backdrop(photo)">
+            <img
+              [src]="photo"
+              [alt]="'POST.photo-alt' | translate"
+              loading="lazy"
+              decoding="async"
+              [class.is-loaded]="loadedPhotos().has(photo)"
+              [class.is-contained]="containedPhotos().has(photo)"
+              (load)="photoLoaded(photo, $event)"
+            />
 
             @if ($index === 2 && photos.length > 3) {
               <button
@@ -110,47 +139,58 @@
       </div>
     }
     <div class="post__social">
-      <div class="post__social-left">
-        <app-btn variant="social" [class]="isLiked() ? 'liked' : ''" (btnClick)="likePost()">
-          <ng-icon name="heroHandThumbUp" />
-          <span class="post__social-count">{{
-            formatNumber(
-              data.positiveReactionCount,
-              'POST.thousand' | translate,
-              'POST.million' | translate
-            )
-          }}</span>
-        </app-btn>
-        <app-btn variant="social" (btnClick)="viewPostPage(true)">
-          <ng-icon name="heroChatBubbleLeftEllipsis" />
-          <span class="post__social-count">{{
-            formatNumber(
-              counter !== undefined ? counter : data.commentsCount || 0,
-              'POST.thousand' | translate,
-              'POST.million' | translate
-            )
-          }}</span>
-        </app-btn>
-        <app-btn variant="social">
-          <ng-icon name="heroShare" />
-        </app-btn>
-      </div>
-      <div class="post__social-right">
-        <app-btn
-          variant="social"
-          [class]="isInterested() ? 'interested' : ''"
-          (btnClick)="setInterested()"
-        >
-          <ng-icon name="heroStar" />
-        </app-btn>
-        <app-btn
-          variant="social"
-          [class]="isTakesPart() ? 'takes-part' : ''"
-          (btnClick)="setTakesPart()"
-        >
-          <ng-icon name="heroStarSolid" />
-        </app-btn>
-      </div>
+      <app-btn
+        variant="social"
+        [fullWidth]="true"
+        [class]="isLiked() ? 'liked' : ''"
+        [title]="'POST.likes' | translate"
+        (btnClick)="likePost()"
+      >
+        <ng-icon name="heroHandThumbUp" />
+        <span class="post__social-count">{{
+          formatNumber(
+            data.positiveReactionCount,
+            'POST.thousand' | translate,
+            'POST.million' | translate
+          )
+        }}</span>
+      </app-btn>
+      <app-btn
+        variant="social"
+        [fullWidth]="true"
+        [title]="'POST.comments' | translate"
+        (btnClick)="viewPostPage(true)"
+      >
+        <ng-icon name="heroChatBubbleLeftEllipsis" />
+        <span class="post__social-count">{{
+          formatNumber(
+            counter !== undefined ? counter : data.commentsCount || 0,
+            'POST.thousand' | translate,
+            'POST.million' | translate
+          )
+        }}</span>
+      </app-btn>
+      <app-btn variant="social" [fullWidth]="true" [title]="'POST.share' | translate">
+        <ng-icon name="heroShare" />
+      </app-btn>
+      <app-btn
+        variant="social"
+        [fullWidth]="true"
+        [class]="isInterested() ? 'interested' : ''"
+        [title]="'POST.interested' | translate"
+        (btnClick)="setInterested()"
+      >
+        <ng-icon name="heroStar" />
+      </app-btn>
+      <app-btn
+        variant="social"
+        [fullWidth]="true"
+        [class]="isTakesPart() ? 'takes-part' : ''"
+        [title]="'POST.takes_part' | translate"
+        (btnClick)="setTakesPart()"
+      >
+        <ng-icon name="heroStarSolid" />
+      </app-btn>
     </div>
   } @else {
     <div class="post__loading">{{ 'POST.loading' | translate }}</div>

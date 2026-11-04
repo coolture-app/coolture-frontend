@@ -13,7 +13,15 @@ export interface EventLocationRequest {
   coordinates: GeoPoint;
 }
 
-export interface EventLocation extends EventLocationRequest {
+// As read from the API: fields without a value are left out of the JSON.
+export interface EventLocation {
   id: string;
-  createdAt: string;
+  countryCode?: string;
+  venueName?: string;
+  buildingNum?: string;
+  street?: string;
+  postalCode?: string;
+  city?: string;
+  coordinates: GeoPoint;
+  createdAt?: string;
 }

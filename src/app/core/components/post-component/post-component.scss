@@ -9,65 +9,42 @@
   @include card;
   width: 100%;
   max-width: var(--container-max);
-  margin: var(--space-md) auto;
+  margin: var(--space-sm) auto;
   overflow: hidden;
+  scroll-margin: calc(var(--navbar-height) + var(--space-sm)) 0 var(--space-sm);
   transition: box-shadow var(--transition-base);
 
   &:hover {
     box-shadow: var(--shadow-md);
   }
-}
 
-.left {
-  display: flex;
-  justify-content: flex-start;
-  width: 50%;
-}
-.right {
-  width: 50%;
-  display: flex;
-  justify-content: flex-end;
+  // Sizes text to the screen: lines are what's left once one and a half cards fit below the
+  // navbar, after the frame of the image and the card's other parts.
+  &--feed {
+    container-type: inline-size;
+    --card-other-parts: 170px;
+    --photo-shape: 2;
+    --card-room: calc((100dvh - var(--navbar-height)) * 2 / 3 - var(--card-other-parts));
+
+    @media (max-width: 639px) {
+      --photo-shape: calc(16 / 9);
+    }
+  }
 }
 
 .post__header {
   @include flex-between;
-  padding: var(--space-md);
-
-  .left,
-  .right {
-    display: flex;
-    gap: var(--space-xs);
-  }
-}
-
-.post__title {
-  font-size: var(--text-xl);
-  font-weight: var(--font-semibold);
-  color: var(--color-text);
-  text-align: center;
-  padding: 0 var(--space-md) var(--space-sm);
-  cursor: pointer;
-  word-wrap: break-word;
-}
-
-.post__meta {
-  display: flex;
-  justify-content: flex-start;
-  padding: 0 var(--space-md) var(--space-md);
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
 }
 
 .post__author-wrapper {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
+  min-width: 0;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  padding: var(--space-xs) var(--space-md);
-  border-radius: var(--radius-lg);
-  transition: background var(--transition-fast);
-
-  &:hover {
-    background: var(--color-surface-alt);
-  }
 }
 
 .post__avatar {
@@ -82,42 +59,124 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
 }
 
 .post__username {
   font-size: var(--text-sm);
   font-weight: var(--font-semibold);
   color: var(--color-text);
+
+  .post__author-wrapper:hover & {
+    text-decoration: underline;
+  }
 }
 
-.post__date {
+.post__info {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: var(--space-sm);
   font-size: var(--text-xs);
   color: var(--color-text-tertiary);
 }
 
+.post__date,
 .post__location {
-  font-size: var(--text-sm);
-  font-weight: var(--font-medium);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+
+  ng-icon {
+    flex-shrink: 0;
+  }
+}
+
+.post__owner-actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: var(--space-xs);
+}
+
+.post__icon-btn {
+  @include center-flex;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: none;
   color: var(--color-text-secondary);
-  text-align: center;
-  max-width: 33%;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+
+  &:hover {
+    background: var(--color-surface-alt);
+  }
+}
+
+.post__title {
+  padding: 0 var(--space-md) var(--space-xs);
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  color: var(--color-text);
+  cursor: pointer;
+  overflow-wrap: anywhere;
+
+  &:hover {
+    text-decoration: underline;
+  }
 }
 
 .post__desc {
-  padding: 0 var(--space-md) var(--space-md);
+  position: relative;
+  padding: 0 var(--space-md) var(--space-sm);
   font-size: var(--text-sm);
   line-height: 1.6;
   color: var(--color-text-secondary);
 }
 
-.post__desc-action {
-  color: var(--color-accent);
-  font-weight: var(--font-medium);
+.post__desc-text {
+  margin: 0;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+
+  // Only cut, without an ellipsis: the toggle and its fade cover the end of the last line.
+  &--clamped {
+    max-height: 5lh;
+    max-height: round(down, clamp(3lh, var(--card-room), 10lh), 1lh);
+    overflow: hidden;
+  }
+}
+
+.post--feed:has(.post__photos) .post__desc-text--clamped {
+  max-height: 3lh;
+  max-height: round(
+    down,
+    clamp(2lh, calc(var(--card-room) - 100cqw / var(--photo-shape)), 8lh),
+    1lh
+  );
+}
+
+.post__desc-toggle {
+  display: inline-block;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-weight: var(--font-semibold);
+  color: var(--color-text);
   cursor: pointer;
-  transition: color var(--transition-fast);
 
   &:hover {
-    color: var(--color-accent-hover);
+    text-decoration: underline;
+  }
+
+  // Over the end of the last line, so that showing it never changes the card's height.
+  &--over {
+    position: absolute;
+    right: var(--space-md);
+    bottom: var(--space-sm);
+    padding-left: var(--space-2xl);
+    background: linear-gradient(to right, transparent, var(--color-surface) var(--space-xl));
   }
 }
 
@@ -128,15 +187,42 @@
   aspect-ratio: 16 / 9;
 }
 
+.post--feed .post__photos {
+  aspect-ratio: var(--photo-shape);
+}
+
 .post__photo-item {
   position: relative;
   overflow: hidden;
+  background: var(--color-border-light) center / cover;
+  isolation: isolate;
 
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -24px;
+    z-index: -1;
+    background: inherit;
+    filter: blur(24px);
+  }
+
+  // Hidden until loaded: it fades in over the placeholder, and a broken one never shows its icon.
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
+    opacity: 0;
+    transition: opacity var(--transition-base);
+
+    &.is-loaded {
+      opacity: 1;
+    }
+
+    &.is-contained {
+      object-fit: contain;
+      position: relative;
+    }
   }
 }
 
@@ -173,15 +259,14 @@
 
 .post__social {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-md);
-}
+  gap: var(--space-xs);
+  margin: 0 var(--space-sm);
+  padding: var(--space-xs) 0;
+  border-top: 1px solid var(--color-border-light);
 
-.post__social-left,
-.post__social-right {
-  display: flex;
-  gap: var(--space-sm);
+  app-btn {
+    flex: 1;
+  }
 }
 
 .post__social-count {

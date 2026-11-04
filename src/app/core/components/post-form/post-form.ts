@@ -10,7 +10,7 @@ import {
   SimpleChanges,
   DestroyRef,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, formatDate } from '@angular/common';
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { lastValueFrom, Observable } from 'rxjs';
@@ -29,6 +29,14 @@ import { MediaService } from '../../services/media/media.service';
 import { DictionaryService } from '../../services/dictionary/dictionary.service';
 import { CountryCode } from '../../models/dictionary/country-code.model';
 import { MediaResource } from '../../models/media/media-resource.model';
+
+/**
+ * A `datetime-local` input holds a local time with no zone, and the API sends UTC.
+ * onSubmit reads the input back as local time, so it has to be filled with local time too.
+ */
+function toLocalInputValue(iso: string | undefined): string {
+  return iso ? formatDate(iso, "yyyy-MM-dd'T'HH:mm", 'en-US') : '';
+}
 
 interface MediaPreview {
   file: File;
@@ -220,9 +228,9 @@ export class PostForm implements OnInit, OnChanges {
     this.postForm.patchValue({
       title: post.title,
       type: post.type,
-      startsAt: post.startsAt ? post.startsAt.substring(0, 16) : '',
-      endsAt: post.endsAt ? post.endsAt.substring(0, 16) : '',
-      description: post.description,
+      startsAt: toLocalInputValue(post.startsAt),
+      endsAt: toLocalInputValue(post.endsAt),
+      description: post.description ?? '',
       eventUrl: post.eventUrl ?? '',
       tags: tagsStr,
       visibility: post.visibility ?? 'PUBLIC',
