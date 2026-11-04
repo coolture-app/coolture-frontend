@@ -31,6 +31,7 @@ import { Btn } from '../../core/components/btn/btn';
 import { PostSkeleton } from '../../core/components/post-skeleton/post-skeleton';
 import { InfiniteScroll } from '../../core/directives/infinite-scroll';
 import { PostFilterParams } from '../../core/models/posts/post-filter-params.model';
+import { GeoPoint } from '../../core/models/common/geo.model';
 import { PostService } from '../../core/services/post/post.service';
 import { AuthService } from '../../core/services/auth/auth.service';
 import { LocationService } from '../../core/services/location/location.service';
@@ -50,6 +51,12 @@ import { Switch } from '../../core/components/switch/switch/switch';
 import { Map } from '../../core/components/map/map/map';
 
 const LOCATION_WAIT_MS = 1500;
+/**
+ * How many cards before the end the next page is requested. Counted in cards, not pixels, so it means
+ * the same on any screen, and it's under the page size of 20, so a new page can't ask for the next one
+ * by itself. A page took about 1.1 s locally, and a fast flick covers about 6000 px a second.
+ */
+const CARDS_BEFORE_END = 12;
 const NO_FILTERS = {
   type: '',
   tags: '',
@@ -99,12 +106,12 @@ export class MainPage implements OnDestroy {
   list = inject(PostListStore);
 
   searchControl = new FormControl('', { nonNullable: true });
-  readonly skeletons = Array(3);
 
   showFilters = signal(false);
   showSortMenu = signal(false);
   isMapView = signal(false);
   locationFailed = signal(false);
+  locating = signal(false);
 
   sortOptions: { value: PostSortBy; labelKey: string }[] = [
     { value: 'RECOMMENDED', labelKey: 'MAIN_PAGE.sortRecommended' },
@@ -137,6 +144,11 @@ export class MainPage implements OnDestroy {
     const query = this.list.query();
     return query?.kind === 'feed' && !!query.location;
   });
+  /** A screenful for the first page. After that one is enough, and the posts stay what's on screen. */
+  readonly skeletons = computed(() => Array(this.list.items().length > 0 ? 1 : 3));
+  readonly nextPageTrigger = computed(() =>
+    Math.max(0, this.list.items().length - CARDS_BEFORE_END),
+  );
   readonly canLoadMore = computed(
     () => this.list.hasMore() && !this.list.loading() && !this.list.failed(),
   );
@@ -256,19 +268,31 @@ export class MainPage implements OnDestroy {
     this.list.refresh();
   }
 
-  /** Asks only when tapped. If the user refuses, the feed stays exactly as it is. */
-  async useMyLocation(): Promise<void> {
-    this.locationFailed.set(false);
-    const location = await this.location.request();
-    if (!location) {
-      this.locationFailed.set(true);
+  /** Turns nearby ranking on or off. It asks only when tapped, and a refusal leaves the feed as it is. */
+  async toggleNearMe(): Promise<void> {
+    if (this.locating()) {
       return;
     }
-    if (this.isFeed() && !this.isMapView()) {
-      this.loadRun++;
-      this.scroller.scrollToPosition([0, 0]);
-      this.list.start({ kind: 'feed', location });
+    this.locationFailed.set(false);
+    if (this.isNearMe()) {
+      this.location.turnOff();
+      this.startFeedAt(undefined);
+      return;
     }
+    this.locating.set(true);
+    const location = await this.location.request();
+    this.locating.set(false);
+    if (!location) {
+      this.locationFailed.set(true);
+    } else if (this.isFeed() && !this.isMapView()) {
+      this.startFeedAt(location);
+    }
+  }
+
+  private startFeedAt(location: GeoPoint | undefined): void {
+    this.loadRun++;
+    this.scroller.scrollToPosition([0, 0]);
+    this.list.start({ kind: 'feed', ...(location && { location }) });
   }
 
   /** Applies a change, and starts a new list only if it changes which list should be showing. */

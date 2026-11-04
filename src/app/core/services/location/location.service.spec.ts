@@ -19,7 +19,10 @@ describe('LocationService', () => {
   beforeEach(() => {
     service = TestBed.inject(LocationService);
     getPosition = spyOn(navigator.geolocation, 'getCurrentPosition');
+    localStorage.removeItem('coolture.location.off');
   });
+
+  afterEach(() => localStorage.removeItem('coolture.location.off'));
 
   it('rounds to 2 decimals before anything else sees the position', async () => {
     allowPosition(54.34567, -18.645);
@@ -63,6 +66,39 @@ describe('LocationService', () => {
       expect(await service.currentIfAllowed(1500)).toBeNull();
     }
     expect(getPosition).not.toHaveBeenCalled();
+  });
+
+  it('stays off once turned off, even with the permission granted', async () => {
+    permissionIs('granted');
+    allowPosition();
+
+    service.turnOff();
+
+    expect(await service.currentIfAllowed(1500)).toBeNull();
+    expect(getPosition).not.toHaveBeenCalled();
+  });
+
+  it('turns on again when the user asks for the position and gets it', async () => {
+    permissionIs('granted');
+    allowPosition();
+    service.turnOff();
+
+    await service.request();
+
+    expect(await service.currentIfAllowed(1500)).toEqual({ latitude: 54.35, longitude: 18.65 });
+  });
+
+  it('stays off when a new request is refused', async () => {
+    permissionIs('granted');
+    service.turnOff();
+    getPosition.and.callFake((_: PositionCallback, failure: PositionErrorCallback) =>
+      failure({ code: 1 } as GeolocationPositionError),
+    );
+
+    await service.request();
+
+    allowPosition();
+    expect(await service.currentIfAllowed(1500)).toBeNull();
   });
 
   it('gives up when the position is late, so the feed can load without it', async () => {

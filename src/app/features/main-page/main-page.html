@@ -56,7 +56,9 @@
             type="button"
             [class.sort-btn--active]="isNearMe()"
             [attr.aria-pressed]="isNearMe()"
-            (click)="useMyLocation()"
+            [attr.aria-busy]="locating()"
+            [disabled]="locating()"
+            (click)="toggleNearMe()"
           >
             <ng-icon name="heroMapPin" />
             <span>{{ 'MAIN_PAGE.nearMe' | translate }}</span>
@@ -152,6 +154,13 @@
   }
   @if (!isMapView()) {
     @for (item of list.items(); track item.id) {
+      @if ($index === nextPageTrigger()) {
+        <div
+          class="list-trigger"
+          [appInfiniteScroll]="canLoadMore()"
+          (reachedEnd)="list.loadMore()"
+        ></div>
+      }
       <app-post-component
         (deleteRequest)="removeChild($event)"
         [data]="item"
@@ -167,7 +176,7 @@
       </div>
     } @else if (list.loading() || !list.query()) {
       <div role="status" [attr.aria-label]="'MAIN_PAGE.loading' | translate">
-        @for (_ of skeletons; track $index) {
+        @for (_ of skeletons(); track $index) {
           <app-post-skeleton />
         }
       </div>
@@ -183,7 +192,6 @@
     } @else if (!list.hasMore()) {
       <p class="empty">{{ 'MAIN_PAGE.endOfList' | translate }}</p>
     }
-    <div class="list-end" [appInfiniteScroll]="canLoadMore()" (reachedEnd)="list.loadMore()"></div>
   }
   <!-- VIEW WITH MAP ON -->
   @else {

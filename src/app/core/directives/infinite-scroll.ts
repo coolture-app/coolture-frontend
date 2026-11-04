@@ -8,10 +8,7 @@ import {
   output,
 } from '@angular/core';
 
-/** Three screens ahead, on any screen, so that the next page normally arrives before anyone sees the end. */
-const START_EARLY = '0px 0px 300% 0px';
-
-/** Goes on an element at the end of a list, and asks for more well before it comes into view. */
+/** Goes on an element in a list, and asks for more when that gets within one screen of the view. */
 @Directive({
   selector: '[appInfiniteScroll]',
 })
@@ -32,7 +29,7 @@ export class InfiniteScroll {
             this.reachedEnd.emit();
           }
         },
-        { rootMargin: START_EARLY },
+        { rootMargin: '0px 0px 100% 0px' },
       );
       // An observer only reports changes. After a short page the element may still be in range, so
       // observing it afresh is what makes the observer report it again.

@@ -38,8 +38,8 @@ describe('InfiniteScroll', () => {
     fixture.detectChanges();
   });
 
-  it('starts three screens before the end', () => {
-    expect(options?.rootMargin).toBe('0px 0px 300% 0px');
+  it('starts one screen before the element', () => {
+    expect(options?.rootMargin).toBe('0px 0px 100% 0px');
   });
 
   it('asks for more only when the end is in range', () => {

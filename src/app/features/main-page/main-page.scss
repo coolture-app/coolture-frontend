@@ -134,6 +134,11 @@
     color: var(--color-text-secondary);
   }
 
+  &:disabled {
+    opacity: 0.6;
+    cursor: progress;
+  }
+
   &--active {
     background: var(--color-accent-light);
     color: var(--color-accent);
@@ -280,6 +285,6 @@
   margin-bottom: var(--space-md);
 }
 
-.list-end {
-  height: 1px;
+.list-trigger {
+  height: 0;
 }

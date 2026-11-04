@@ -45,6 +45,8 @@ describe('MainPage', () => {
   let allowedLocation: GeoPoint | null;
   let askedLocation: GeoPoint | null;
   let currentNavigation: jasmine.Spy;
+  let locationRequest: Promise<GeoPoint | null> | null;
+  let turnedOff: boolean;
   let scroller: ViewportScroller;
 
   async function settle(): Promise<void> {
@@ -97,6 +99,8 @@ describe('MainPage', () => {
   beforeEach(() => {
     allowedLocation = null;
     askedLocation = null;
+    locationRequest = null;
+    turnedOff = false;
     TestBed.configureTestingModule({
       imports: [MainPage],
       providers: [
@@ -105,7 +109,8 @@ describe('MainPage', () => {
           provide: LocationService,
           useValue: {
             currentIfAllowed: () => Promise.resolve(allowedLocation),
-            request: () => Promise.resolve(askedLocation),
+            request: () => locationRequest ?? Promise.resolve(askedLocation),
+            turnOff: () => (turnedOff = true),
           },
         },
       ],
@@ -417,6 +422,55 @@ describe('MainPage', () => {
       expect(text()).toContain('MAIN_PAGE.no-posts');
     });
 
+    it('shows one placeholder, not a screenful, while adding to a list', async () => {
+      await open();
+      expectFeed().flush({
+        ...page(['a']),
+        mode: 'RANKED',
+        page: { limit: 20, hasMore: true, nextCursor: 'c1' },
+      });
+      await settle();
+
+      component.list.loadMore();
+      await settle();
+
+      expect(fixture.nativeElement.querySelectorAll('app-post-skeleton').length).toBe(1);
+      expect(shownTitles()).toEqual(['Post a']);
+      expectFeed().flush({ ...page(['b']), mode: 'RANKED' });
+    });
+
+    it('asks for the next page from 12 cards before the end, on any screen', async () => {
+      const ids = Array.from({ length: 20 }, (_, i) => `c${i}`);
+      await open();
+      expectFeed().flush({
+        ...page(ids),
+        mode: 'RANKED',
+        page: { limit: 20, hasMore: true, nextCursor: 'c1' },
+      });
+      await settle();
+
+      const triggers = fixture.nativeElement.querySelectorAll('.list-trigger');
+      expect(triggers.length).toBe(1);
+      expect(triggers[0].nextElementSibling.querySelector('.post__title').textContent.trim()).toBe(
+        'Post c8',
+      );
+    });
+
+    it('asks straight away when a short page leaves fewer cards than that', async () => {
+      await open();
+      expectFeed().flush({
+        ...page(['a', 'b']),
+        mode: 'RANKED',
+        page: { limit: 20, hasMore: true, nextCursor: 'c1' },
+      });
+      await settle();
+
+      const trigger = fixture.nativeElement.querySelector('.list-trigger');
+      expect(trigger.nextElementSibling.querySelector('.post__title').textContent.trim()).toBe(
+        'Post a',
+      );
+    });
+
     it('shows the end of the list only after posts', async () => {
       await open();
       expectFeed().flush({ ...page(['a']), mode: 'RANKED' });
@@ -492,7 +546,7 @@ describe('MainPage', () => {
       await settle();
 
       askedLocation = { latitude: 54.35, longitude: 18.65 };
-      await component.useMyLocation();
+      await component.toggleNearMe();
 
       const second = expectFeed();
       expect(param(second, 'latitude')).toBe('54.35');
@@ -504,12 +558,62 @@ describe('MainPage', () => {
       expectFeed().flush({ ...page(['a']), mode: 'RANKED' });
       await settle();
 
-      await component.useMyLocation();
+      await component.toggleNearMe();
       await settle();
 
       expect(shownTitles()).toEqual(['Post a']);
       expect(text()).toContain('MAIN_PAGE.locationFailed');
       expect(component.isNearMe()).toBeFalse();
+    });
+
+    it('turns off again on a second tap, with a new session and no location', async () => {
+      allowedLocation = { latitude: 54.35, longitude: 18.65 };
+      await open();
+      expectFeed().flush({ ...page(['a']), mode: 'RANKED' });
+      await settle();
+      expect(component.isNearMe()).toBeTrue();
+
+      await component.toggleNearMe();
+
+      const off = expectFeed();
+      expect(param(off, 'latitude')).toBeNull();
+      expect(turnedOff).toBeTrue();
+      expect(component.isNearMe()).toBeFalse();
+      off.flush({ ...page(['b']), mode: 'RANKED' });
+    });
+
+    it('ignores taps while it is still waiting for the position', async () => {
+      await open();
+      expectFeed().flush({ ...page(['a']), mode: 'RANKED' });
+      await settle();
+      let answer: (location: GeoPoint) => void = () => undefined;
+      locationRequest = new Promise((resolve) => (answer = resolve));
+
+      const first = component.toggleNearMe();
+      expect(component.locating()).toBeTrue();
+      await component.toggleNearMe();
+      await component.toggleNearMe();
+      answer({ latitude: 54.35, longitude: 18.65 });
+      await first;
+
+      const request = expectFeed();
+      expect(param(request, 'latitude')).toBe('54.35');
+      expect(component.locating()).toBeFalse();
+      request.flush({ ...page(), mode: 'RANKED' });
+    });
+
+    it('clears the note about a refusal on the next tap', async () => {
+      await open();
+      expectFeed().flush({ ...page(['a']), mode: 'RANKED' });
+      await settle();
+      await component.toggleNearMe();
+      expect(component.locationFailed()).toBeTrue();
+
+      askedLocation = { latitude: 54.35, longitude: 18.65 };
+      await component.toggleNearMe();
+
+      expect(component.locationFailed()).toBeFalse();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
     });
 
     it('shows the button only on the feed', async () => {
