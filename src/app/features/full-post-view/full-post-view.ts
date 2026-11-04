@@ -20,7 +20,7 @@ import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
 import { CommentCreateRequest } from '../../core/models/comments/comment-create-request.model';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { RESTORE_LIST_STATE } from '../main-page/main-page';
+import { RESTORE_LIST_KEY } from '../../core/services/post-list/post-list.store';
 
 @Component({
   selector: 'app-full-post-view',
@@ -93,7 +93,7 @@ export class FullPostView implements OnInit, AfterViewInit {
   // comments fetched via service are available in this.comments()
 
   goBack() {
-    this.router.navigate(['/'], { state: RESTORE_LIST_STATE });
+    this.router.navigate(['/'], { state: { [RESTORE_LIST_KEY]: true } });
   }
 
   checkIfResize(): void {

@@ -25,6 +25,9 @@ export interface PostListView<Filters = unknown> {
   scrollY: number;
 }
 
+/** Navigation state that asks the home page to put the list back, as the browser's Back does. */
+export const RESTORE_LIST_KEY = 'restoreList';
+
 const PAGE_SIZE = 20;
 const RESTORE_WINDOW_MS = 30 * 60 * 1000;
 

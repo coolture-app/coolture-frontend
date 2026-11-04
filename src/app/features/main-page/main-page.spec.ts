@@ -4,7 +4,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpTestingController, TestRequest } from '@angular/common/http/testing';
 import { Navigation, provideRouter, Router } from '@angular/router';
 
-import { MainPage, RESTORE_LIST_STATE } from './main-page';
+import { MainPage } from './main-page';
+import { RESTORE_LIST_KEY } from '../../core/services/post-list/post-list.store';
 import { LocationService } from '../../core/services/location/location.service';
 import { PostService } from '../../core/services/post/post.service';
 import { GeoPoint } from '../../core/models/common/geo.model';
@@ -554,7 +555,7 @@ describe('MainPage', () => {
     it("does the same for the post page's own back button", async () => {
       await leaveAfterScrolling();
 
-      await comeBack({ trigger: 'imperative', extras: { state: RESTORE_LIST_STATE } });
+      await comeBack({ trigger: 'imperative', extras: { state: { [RESTORE_LIST_KEY]: true } } });
 
       expect(shownTitles()).toEqual(['Post a', 'Post b']);
     });

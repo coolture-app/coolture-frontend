@@ -33,7 +33,11 @@ import { PostFilterParams } from '../../core/models/posts/post-filter-params.mod
 import { PostService } from '../../core/services/post/post.service';
 import { AuthService } from '../../core/services/auth/auth.service';
 import { LocationService } from '../../core/services/location/location.service';
-import { PostListStore, PostListView } from '../../core/services/post-list/post-list.store';
+import {
+  PostListStore,
+  PostListView,
+  RESTORE_LIST_KEY,
+} from '../../core/services/post-list/post-list.store';
 import {
   PostType,
   PostStatus,
@@ -43,9 +47,6 @@ import {
 } from '../../core/models/common/enums';
 import { Switch } from '../../core/components/switch/switch/switch';
 import { Map } from '../../core/components/map/map/map';
-
-/** Navigation state that asks the home page to put the list back, as the browser's Back button does. */
-export const RESTORE_LIST_STATE = { restoreList: true };
 
 const LOCATION_WAIT_MS = 1500;
 const NO_FILTERS = {
@@ -293,7 +294,7 @@ export class MainPage implements OnDestroy {
     }
   }
 
-  /** Uses the position only if it's already allowed and arrives quickly. See the contract's README. */
+  /** Uses the position only if it's already allowed and arrives quickly, so nobody waits for it. */
   private async startFeed(run: number): Promise<void> {
     const location = await this.location.currentIfAllowed(LOCATION_WAIT_MS);
     if (run === this.loadRun) {
@@ -342,7 +343,7 @@ export class MainPage implements OnDestroy {
   private restoreView(): PostListView | null {
     const navigation = this.router.currentNavigation();
     const comingBack =
-      navigation?.trigger === 'popstate' || !!navigation?.extras.state?.['restoreList'];
+      navigation?.trigger === 'popstate' || !!navigation?.extras.state?.[RESTORE_LIST_KEY];
     const view = comingBack ? this.list.savedView() : null;
     if (!view) {
       this.list.clear();
