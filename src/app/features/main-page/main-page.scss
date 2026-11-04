@@ -16,7 +16,9 @@
   padding: var(--space-md) 0 var(--space-lg);
 
   &__inner {
-    @include flex-between;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
     width: 100%;
     max-width: var(--container-max);
     gap: var(--space-sm);
@@ -25,7 +27,7 @@
 
   &__wrapper {
     @include flex-between;
-    flex: 1;
+    flex: 1 1 180px;
     gap: var(--space-sm);
     padding: var(--space-xs) var(--space-sm);
     background: var(--color-surface);
@@ -101,6 +103,10 @@
   position: relative;
 }
 
+.map-switch {
+  margin-left: auto;
+}
+
 .sort-btn {
   display: flex;
   align-items: center;
@@ -112,6 +118,7 @@
   font-family: var(--font-sans);
   font-size: var(--text-sm);
   color: var(--color-text);
+  white-space: nowrap;
   cursor: pointer;
   transition:
     border-color var(--transition-fast),

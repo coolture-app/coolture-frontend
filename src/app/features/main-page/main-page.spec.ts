@@ -250,6 +250,20 @@ describe('MainPage', () => {
       expect(component.filtersForm.controls.includePast.value).toBeFalse();
     });
 
+    it('goes to /feed when Recommended is picked from a sort with no search', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      component.setSortBy('POPULAR');
+      await settle();
+      expectPosts().flush(page(['p']));
+
+      component.setSortBy('RECOMMENDED');
+      await settle();
+
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      expect(component.currentSortBy()).toBe('RECOMMENDED');
+    });
+
     it('never disables search or filters on the feed', async () => {
       await open();
       expectFeed().flush({ ...page(), mode: 'RANKED' });

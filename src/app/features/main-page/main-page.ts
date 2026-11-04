@@ -195,8 +195,7 @@ export class MainPage implements OnDestroy {
   }
 
   clearFilters(): void {
-    this.filtersForm.reset(NO_FILTERS, { emitEvent: false });
-    this.searchControl.setValue('', { emitEvent: false });
+    this.resetControls();
     this.applyControls();
   }
 
@@ -227,12 +226,13 @@ export class MainPage implements OnDestroy {
 
   setSortBy(sortBy: PostSortBy): void {
     this.showSortMenu.set(false);
-    if (sortBy === 'RECOMMENDED') {
-      this.pickedSort.set(null);
-      this.clearFilters();
-    } else {
-      this.changeList(() => this.pickedSort.set(sortBy));
-    }
+    this.changeList(() => {
+      if (sortBy === 'RECOMMENDED') {
+        this.resetControls();
+      }
+      this.pickedSort.set(sortBy === 'RECOMMENDED' ? null : sortBy);
+      this.activeFilters.set(this.readFilters());
+    });
   }
 
   getSortLabelKey(): string {
@@ -299,6 +299,11 @@ export class MainPage implements OnDestroy {
     if (run === this.loadRun) {
       this.list.start({ kind: 'feed', ...(location && { location }) });
     }
+  }
+
+  private resetControls(): void {
+    this.filtersForm.reset(NO_FILTERS, { emitEvent: false });
+    this.searchControl.setValue('', { emitEvent: false });
   }
 
   private readFilters(): PostFilterParams {
