@@ -3,12 +3,12 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
-  heroArrowRightOnRectangle,
-  heroCalendarDays,
-  heroHome,
-  heroUser,
-  heroUsers,
-} from '@ng-icons/heroicons/outline';
+  lucideCalendarDays,
+  lucideHouse,
+  lucideLogOut,
+  lucideUserRound,
+  lucideUsers,
+} from '@ng-icons/lucide';
 
 import { AuthService } from '../../services/auth/auth.service';
 import { Btn } from '../btn/btn';
@@ -17,7 +17,7 @@ import { Btn } from '../btn/btn';
   selector: 'app-navbar',
   imports: [TranslateModule, Btn, RouterLink, RouterLinkActive, NgIcon],
   viewProviders: [
-    provideIcons({ heroArrowRightOnRectangle, heroCalendarDays, heroHome, heroUser, heroUsers }),
+    provideIcons({ lucideCalendarDays, lucideHouse, lucideLogOut, lucideUserRound, lucideUsers }),
   ],
   templateUrl: './navbar.html',
   styleUrl: './navbar.scss',
@@ -28,10 +28,10 @@ export class Navbar {
   currentLang = signal(this.translate.currentLang);
 
   readonly links = [
-    { path: '/', icon: 'heroHome', labelKey: 'NAVBAR.main-page' },
-    { path: '/discover', icon: 'heroUsers', labelKey: 'NAVBAR.friends' },
-    { path: '/myEvents', icon: 'heroCalendarDays', labelKey: 'NAVBAR.my-events' },
-    { path: '/profile', icon: 'heroUser', labelKey: 'NAVBAR.my-profile' },
+    { path: '/', icon: 'lucideHouse', labelKey: 'NAVBAR.main-page' },
+    { path: '/discover', icon: 'lucideUsers', labelKey: 'NAVBAR.friends' },
+    { path: '/myEvents', icon: 'lucideCalendarDays', labelKey: 'NAVBAR.my-events' },
+    { path: '/profile', icon: 'lucideUserRound', labelKey: 'NAVBAR.my-profile' },
   ];
 
   constructor() {

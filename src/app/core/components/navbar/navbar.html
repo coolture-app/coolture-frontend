@@ -8,12 +8,12 @@
         class="navbar__link"
         [routerLink]="link.path"
         routerLinkActive="active"
+        ariaCurrentWhenActive="page"
         [routerLinkActiveOptions]="{ exact: link.path === '/' }"
         [title]="link.labelKey | translate"
         [attr.aria-label]="link.labelKey | translate"
       >
         <ng-icon [name]="link.icon" />
-        <span class="navbar__link-label">{{ link.labelKey | translate }}</span>
       </a>
     }
   </div>
@@ -28,7 +28,7 @@
         [title]="'NAVBAR.logout' | translate"
         (btnClick)="logout()"
       >
-        <ng-icon class="navbar__action-icon" name="heroArrowRightOnRectangle" />
+        <ng-icon class="navbar__action-icon" name="lucideLogOut" />
         <span class="navbar__action-label">{{ 'NAVBAR.logout' | translate }}</span>
       </app-btn>
     } @else {

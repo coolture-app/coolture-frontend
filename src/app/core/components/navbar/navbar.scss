@@ -7,8 +7,11 @@
   display: block;
 }
 
+// Three columns, so that the links sit in the exact middle whatever the sides hold.
 .navbar {
-  @include flex-between;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
   gap: var(--space-sm);
   height: var(--navbar-height);
   padding: 0 var(--space-md);
@@ -39,19 +42,17 @@
 
 .navbar__link {
   @include center-flex;
-  gap: var(--space-xs);
+  min-width: 64px;
   padding: 0 var(--space-sm);
-  border-bottom: 3px solid transparent;
   border-top: 3px solid transparent;
-  font-size: var(--text-sm);
-  font-weight: var(--font-medium);
+  border-bottom: 3px solid transparent;
   color: var(--color-text-secondary);
-  text-decoration: none;
-  white-space: nowrap;
-  transition: color var(--transition-fast);
+  transition:
+    color var(--transition-fast),
+    background var(--transition-fast);
 
   ng-icon {
-    font-size: 22px;
+    font-size: 24px;
   }
 
   &:hover {
@@ -66,6 +67,7 @@
 
 .navbar__actions {
   display: flex;
+  justify-self: end;
   align-items: center;
   gap: var(--space-sm);
 }
@@ -75,16 +77,14 @@
   font-size: 18px;
 }
 
-// Too narrow for the words next to the icons.
-@media (max-width: 1023px) {
-  .navbar__link-label {
-    display: none;
-  }
-}
-
 @media (max-width: 639px) {
   .navbar {
     padding: 0 var(--space-sm);
+  }
+
+  .navbar__link {
+    min-width: 44px;
+    padding: 0 var(--space-xs);
   }
 
   .navbar__title-rest,
@@ -94,9 +94,5 @@
 
   .navbar__action-icon {
     display: block;
-  }
-
-  .navbar__link {
-    padding: 0 var(--space-xs);
   }
 }
