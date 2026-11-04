@@ -1,7 +1,6 @@
 import { Component, computed, signal, inject, OnInit } from '@angular/core';
 import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
 import { Navbar } from './core/components/navbar/navbar';
-import { Footer } from './core/components/footer/footer';
 import { TranslateService } from '@ngx-translate/core';
 import translationEN from '../../public/i18n/en.json';
 import translationPL from '../../public/i18n/pl.json';
@@ -11,7 +10,7 @@ import { filter, first } from 'rxjs';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, Navbar, Footer, InterestsView],
+  imports: [RouterOutlet, Navbar, InterestsView],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })

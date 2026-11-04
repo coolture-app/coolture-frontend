@@ -5,7 +5,6 @@ import { Component } from '@angular/core';
   selector: 'app-post-skeleton',
   template: `
     <div class="skeleton" aria-hidden="true">
-      <div class="skeleton__line skeleton__line--title"></div>
       <div class="skeleton__author">
         <div class="skeleton__avatar"></div>
         <div class="skeleton__lines">
@@ -13,7 +12,7 @@ import { Component } from '@angular/core';
           <div class="skeleton__line skeleton__line--short"></div>
         </div>
       </div>
-      <div class="skeleton__line"></div>
+      <div class="skeleton__line skeleton__line--title"></div>
       <div class="skeleton__line"></div>
       <div class="skeleton__line skeleton__line--medium"></div>
     </div>

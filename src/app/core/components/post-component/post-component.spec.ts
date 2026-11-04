@@ -63,17 +63,59 @@ describe('PostComponent', () => {
     expect(() => render(card())).not.toThrow();
   });
 
-  it('shows the edit and delete row only on your own post', () => {
+  it('offers edit and delete only on your own post', () => {
     render(card());
 
-    expect(element().querySelector('.post__header')).toBeNull();
+    expect(element().querySelector('.post__owner-actions')).toBeNull();
   });
 
-  it('shows them on your own post', () => {
+  it('offers them on your own post, with names for assistive technology', () => {
     TestBed.inject(AuthService).currentUser.set({ id: 'u1' } as UserProfile);
     render(card());
 
-    expect(element().querySelector('.post__header')?.textContent).toContain('POST.edit');
+    const actions = element().querySelectorAll('.post__owner-actions button');
+    expect(Array.from(actions).map((b) => b.getAttribute('aria-label'))).toEqual([
+      'POST.edit',
+      'POST.delete',
+    ]);
+  });
+
+  describe('photo', () => {
+    function loaded(naturalWidth: number, naturalHeight: number): void {
+      const data = card({ coverMedia: { id: 'm1', url: 'http://x/p.png' } });
+      render(data);
+      component.photoLoaded('http://x/p.png', {
+        target: { naturalWidth, naturalHeight },
+      } as unknown as Event);
+      fixture.detectChanges();
+    }
+
+    function image(): HTMLImageElement {
+      return element().querySelector('.post__photo-item img')!;
+    }
+
+    it('is hidden until loaded, so a broken one shows no icon', () => {
+      render(card({ coverMedia: { id: 'm1', url: 'http://x/p.png' } }));
+
+      expect(image().classList).not.toContain('is-loaded');
+    });
+
+    it('crops one close to the shape of the frame', () => {
+      loaded(1600, 900);
+
+      expect(image().classList).toContain('is-loaded');
+      expect(image().classList).not.toContain('is-contained');
+    });
+
+    it('shows a portrait poster or a panorama whole', () => {
+      loaded(900, 1200);
+      expect(image().classList).toContain('is-contained');
+    });
+
+    it('shows a panorama whole', () => {
+      loaded(3000, 1000);
+      expect(image().classList).toContain('is-contained');
+    });
   });
 
   describe('description', () => {

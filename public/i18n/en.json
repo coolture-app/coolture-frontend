@@ -78,13 +78,11 @@
     "takes_part": "Mark as taking part",
     "online": "Online"
   },
-  "FOOTER": {
+  "NAVBAR": {
     "main-page": "Home",
     "friends": "Find friends",
     "my-events": "My Events",
-    "my-profile": "Profile"
-  },
-  "NAVBAR": {
+    "my-profile": "Profile",
     "menu": "Menu",
     "addPost": "Add post!",
     "logout": "Log out",

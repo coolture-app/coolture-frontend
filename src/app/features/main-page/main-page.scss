@@ -5,6 +5,8 @@
   flex-grow: 1;
 }
 .page {
+  // A narrower column than other pages, as a feed reads better and more of a card fits on screen.
+  --container-max: 620px;
   padding: var(--space-md);
   display: flex;
   flex-direction: column;
@@ -87,7 +89,7 @@
 
   @media (max-width: 639px) {
     position: fixed;
-    bottom: calc(var(--space-lg) + var(--footer-height));
+    bottom: var(--space-lg);
     right: var(--space-lg);
     width: 56px;
     height: 56px;

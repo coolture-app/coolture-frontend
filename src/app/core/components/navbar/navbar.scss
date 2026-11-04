@@ -1,3 +1,5 @@
+@use '_mixin' as *;
+
 :host {
   position: sticky;
   top: 0;
@@ -6,21 +8,13 @@
 }
 
 .navbar {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  @include flex-between;
+  gap: var(--space-sm);
   height: var(--navbar-height);
   padding: 0 var(--space-md);
-  background: var(--color-surface);
   border-bottom: 1px solid var(--color-border-light);
   backdrop-filter: blur(8px);
   background: rgba(255, 255, 255, 0.9);
-  position: relative;
-
-  .navbar__actions {
-    position: absolute;
-    right: var(--space-md);
-  }
 }
 
 .navbar__title {
@@ -29,10 +23,80 @@
   letter-spacing: 0.08em;
   color: var(--color-text);
   text-transform: uppercase;
+  white-space: nowrap;
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+}
+
+.navbar__links {
+  display: flex;
+  align-self: stretch;
+  gap: var(--space-xs);
+}
+
+.navbar__link {
+  @include center-flex;
+  gap: var(--space-xs);
+  padding: 0 var(--space-sm);
+  border-bottom: 3px solid transparent;
+  border-top: 3px solid transparent;
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color var(--transition-fast);
+
+  ng-icon {
+    font-size: 22px;
+  }
+
+  &:hover {
+    color: var(--color-text);
+  }
+
+  &.active {
+    border-bottom-color: var(--color-accent);
+    color: var(--color-accent);
+  }
 }
 
 .navbar__actions {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
+}
+
+.navbar__action-icon {
+  display: none;
+  font-size: 18px;
+}
+
+// Too narrow for the words next to the icons.
+@media (max-width: 1023px) {
+  .navbar__link-label {
+    display: none;
+  }
+}
+
+@media (max-width: 639px) {
+  .navbar {
+    padding: 0 var(--space-sm);
+  }
+
+  .navbar__title-rest,
+  .navbar__action-label {
+    display: none;
+  }
+
+  .navbar__action-icon {
+    display: block;
+  }
+
+  .navbar__link {
+    padding: 0 var(--space-xs);
+  }
 }

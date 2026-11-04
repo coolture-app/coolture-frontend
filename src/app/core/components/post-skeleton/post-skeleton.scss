@@ -12,8 +12,8 @@
   gap: var(--space-md);
   width: 100%;
   max-width: var(--container-max);
-  margin: var(--space-md) auto;
-  padding: var(--space-xl) var(--space-md);
+  margin: var(--space-sm) auto;
+  padding: var(--space-sm) var(--space-md) var(--space-lg);
 }
 
 .skeleton__author {
@@ -50,7 +50,6 @@
   &--title {
     width: 50%;
     height: 20px;
-    align-self: center;
   }
 
   &--short {

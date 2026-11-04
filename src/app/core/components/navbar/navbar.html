@@ -1,13 +1,36 @@
 <nav class="navbar">
-  <h1 class="navbar__title">COOLTURE</h1>
+  <h1 class="navbar__title">
+    <a routerLink="/">C<span class="navbar__title-rest">OOLTURE</span></a>
+  </h1>
+  <div class="navbar__links">
+    @for (link of links; track link.path) {
+      <a
+        class="navbar__link"
+        [routerLink]="link.path"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: link.path === '/' }"
+        [title]="link.labelKey | translate"
+        [attr.aria-label]="link.labelKey | translate"
+      >
+        <ng-icon [name]="link.icon" />
+        <span class="navbar__link-label">{{ link.labelKey | translate }}</span>
+      </a>
+    }
+  </div>
   <span class="navbar__actions">
     <app-btn variant="secondary" size="sm" (btnClick)="changeLanguage()">
       {{ currentLang() === 'pl' ? 'EN' : 'PL' }}
     </app-btn>
     @if (authService.isAuthenticated()) {
-      <app-btn variant="secondary" size="sm" (btnClick)="logout()">{{
-        'NAVBAR.logout' | translate
-      }}</app-btn>
+      <app-btn
+        variant="secondary"
+        size="sm"
+        [title]="'NAVBAR.logout' | translate"
+        (btnClick)="logout()"
+      >
+        <ng-icon class="navbar__action-icon" name="heroArrowRightOnRectangle" />
+        <span class="navbar__action-label">{{ 'NAVBAR.logout' | translate }}</span>
+      </app-btn>
     } @else {
       <app-btn variant="primary" size="sm" (btnClick)="login()">{{
         'NAVBAR.login' | translate

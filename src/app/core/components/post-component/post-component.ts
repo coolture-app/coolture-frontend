@@ -20,13 +20,14 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { TranslatePipe } from '@ngx-translate/core';
 import {
   heroHandThumbUp,
+  heroCalendar,
   heroChatBubbleLeftEllipsis,
-  heroChevronDown,
-  heroChevronUp,
   heroGlobeAlt,
   heroMapPin,
+  heroPencilSquare,
   heroStar,
   heroShare,
+  heroTrash,
 } from '@ng-icons/heroicons/outline';
 import { heroStarSolid } from '@ng-icons/heroicons/solid';
 import { DatePipe } from '@angular/common';
@@ -40,6 +41,9 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { postPlace } from '../../models/posts/post-place';
 import { ParticipationType } from '../../models/common/enums';
 
+const MIN_CROPPED_SHAPE = 1.4;
+const MAX_CROPPED_SHAPE = 2.6;
+
 /**
  * Posts whose text someone expanded, by the object the list holds. The list gives back the same
  * objects when coming back to it, so a card keeps its height and the saved scroll position still fits.
@@ -52,14 +56,15 @@ const expandedPosts = new WeakSet<PostCard | PostDetail>();
   viewProviders: [
     provideIcons({
       heroHandThumbUp,
+      heroCalendar,
       heroChatBubbleLeftEllipsis,
-      heroChevronDown,
-      heroChevronUp,
       heroGlobeAlt,
       heroMapPin,
+      heroPencilSquare,
       heroStar,
       heroStarSolid,
       heroShare,
+      heroTrash,
     }),
   ],
   templateUrl: './post-component.html',
@@ -70,6 +75,8 @@ export class PostComponent implements OnInit {
   /** Whether the clamped text has more than it shows, which only the browser's layout can tell. */
   overflows = signal(false);
   loadedPhotos = signal<ReadonlySet<string>>(new Set());
+  /** Too tall or too wide for the frame to crop well, such as posters, so they're shown whole. */
+  containedPhotos = signal<ReadonlySet<string>>(new Set());
 
   isLiked = signal(false);
   isInterested = signal(false);
@@ -137,7 +144,17 @@ export class PostComponent implements OnInit {
     }
   }
 
-  photoLoaded(photo: string): void {
+  /** The image itself, blurred by the styles, fills the sides of one that's shown whole. */
+  backdrop(photo: string): string | null {
+    return this.containedPhotos().has(photo) ? `url("${photo}")` : null;
+  }
+
+  photoLoaded(photo: string, event: Event): void {
+    const { naturalWidth, naturalHeight } = event.target as HTMLImageElement;
+    const shape = naturalWidth / naturalHeight;
+    if (this.photos.length === 1 && (shape < MIN_CROPPED_SHAPE || shape > MAX_CROPPED_SHAPE)) {
+      this.containedPhotos.update((contained) => new Set(contained).add(photo));
+    }
     this.loadedPhotos.update((loaded) => new Set(loaded).add(photo));
   }
 
