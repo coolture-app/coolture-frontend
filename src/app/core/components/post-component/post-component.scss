@@ -51,8 +51,9 @@
 }
 
 .post__meta {
-  display: flex;
-  justify-content: flex-start;
+  @include flex-between;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
   padding: 0 var(--space-md) var(--space-md);
 }
 
@@ -96,11 +97,18 @@
 }
 
 .post__location {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 0 var(--space-md);
   font-size: var(--text-sm);
   font-weight: var(--font-medium);
   color: var(--color-text-secondary);
-  text-align: center;
-  max-width: 33%;
+
+  ng-icon {
+    flex-shrink: 0;
+    color: var(--color-text-tertiary);
+  }
 }
 
 .post__desc {

@@ -17,6 +17,8 @@ import { TranslatePipe } from '@ngx-translate/core';
 import {
   heroHandThumbUp,
   heroChatBubbleLeftEllipsis,
+  heroGlobeAlt,
+  heroMapPin,
   heroStar,
   heroShare,
 } from '@ng-icons/heroicons/outline';
@@ -29,6 +31,8 @@ import { Btn } from '../btn/btn';
 import { PostService } from '../../services/post/post.service';
 import { DateFormatService } from '../../services/date-format/date-format.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { postPlace } from '../../models/posts/post-place';
+import { ParticipationType } from '../../models/common/enums';
 
 @Component({
   selector: 'app-post-component',
@@ -37,6 +41,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
     provideIcons({
       heroHandThumbUp,
       heroChatBubbleLeftEllipsis,
+      heroGlobeAlt,
+      heroMapPin,
       heroStar,
       heroStarSolid,
       heroShare,
@@ -94,6 +100,10 @@ export class PostComponent implements OnInit {
     this.isExpanded.update((v) => !v);
   }
 
+  get place(): string {
+    return postPlace(this.data, this.isFullView);
+  }
+
   get description(): string {
     return this.data.description ?? '';
   }
@@ -120,90 +130,57 @@ export class PostComponent implements OnInit {
 
   likePost(): void {
     if (!this.isLiked()) {
-      this.data.positiveReactionCount++;
-      this.isLiked.set(true);
+      this.applyReaction(true);
       this.interactions
         .setReaction(this.data.id, { type: 'LIKE' })
         .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe({
-          error: () => {
-            // Revert on error
-            this.data.positiveReactionCount--;
-            this.isLiked.set(false);
-          },
-        });
+        .subscribe({ error: () => this.applyReaction(false) });
     } else {
-      this.data.positiveReactionCount--;
-      this.isLiked.set(false);
+      this.applyReaction(false);
       this.interactions
         .removeReaction(this.data.id)
         .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe({
-          error: () => {
-            // Revert on error
-            this.data.positiveReactionCount++;
-            this.isLiked.set(true);
-          },
-        });
+        .subscribe({ error: () => this.applyReaction(true) });
     }
   }
 
   setInterested(): void {
-    if (this.isInterested()) {
-      this.data.participantCount--;
-      this.isInterested.set(false);
-      this.interactions
-        .removeParticipation(this.data.id)
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe({
-          error: () => {
-            this.data.participantCount++;
-            this.isInterested.set(true);
-          },
-        });
-    } else {
-      this.data.participantCount++;
-      this.isInterested.set(true);
-      this.isTakesPart.set(false);
-      this.interactions
-        .setParticipation(this.data.id, { type: 'INTERESTED' })
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe({
-          error: () => {
-            this.data.participantCount--;
-            this.isInterested.set(false);
-          },
-        });
-    }
+    this.toggleParticipation('INTERESTED');
   }
 
   setTakesPart(): void {
-    if (this.isTakesPart()) {
-      this.data.participantCount--;
-      this.isTakesPart.set(false);
+    this.toggleParticipation('TAKES_PART');
+  }
+
+  // `data` is what a card shows again after coming back to the list, so it has to stay in step.
+  private applyReaction(liked: boolean): void {
+    this.data.positiveReactionCount += liked ? 1 : -1;
+    this.data.myReaction = liked ? 'LIKE' : undefined;
+    this.isLiked.set(liked);
+  }
+
+  private toggleParticipation(type: ParticipationType): void {
+    const previous = this.data.myParticipation;
+    if (previous === type) {
+      this.applyParticipation(undefined);
       this.interactions
         .removeParticipation(this.data.id)
         .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe({
-          error: () => {
-            this.data.participantCount++;
-            this.isTakesPart.set(true);
-          },
-        });
+        .subscribe({ error: () => this.applyParticipation(previous) });
     } else {
-      this.data.participantCount++;
-      this.isTakesPart.set(true);
-      this.isInterested.set(false);
+      this.applyParticipation(type);
       this.interactions
-        .setParticipation(this.data.id, { type: 'TAKES_PART' })
+        .setParticipation(this.data.id, { type })
         .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe({
-          error: () => {
-            this.data.participantCount--;
-            this.isTakesPart.set(false);
-          },
-        });
+        .subscribe({ error: () => this.applyParticipation(previous) });
     }
+  }
+
+  private applyParticipation(type: ParticipationType | undefined): void {
+    this.data.participantCount += (type ? 1 : 0) - (this.data.myParticipation ? 1 : 0);
+    this.data.myParticipation = type;
+    this.isInterested.set(type === 'INTERESTED');
+    this.isTakesPart.set(type === 'TAKES_PART');
   }
 
   editPost(): void {

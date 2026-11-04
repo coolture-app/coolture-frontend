@@ -41,7 +41,12 @@
         tabindex="0"
       >
         @if (data.author.avatar; as avatar) {
-          <img [src]="avatar.url" [alt]="data.author.username" class="post__avatar" />
+          <img
+            [src]="avatar.url"
+            [alt]="data.author.username"
+            class="post__avatar"
+            loading="lazy"
+          />
         } @else {
           <div class="post__avatar post__avatar--placeholder">
             {{ data.author.firstName?.charAt(0) }}{{ data.author.lastName?.charAt(0) }}
@@ -60,6 +65,17 @@
           }
         </div>
       </div>
+      @if (data.type === 'ONLINE') {
+        <span class="post__location">
+          <ng-icon name="heroGlobeAlt" />
+          {{ 'POST.online' | translate }}
+        </span>
+      } @else if (place) {
+        <span class="post__location">
+          <ng-icon name="heroMapPin" />
+          {{ place }}
+        </span>
+      }
     </div>
     <div class="post__desc">
       @if (this.isFullView || description.length <= maxLengthOfShortDesc) {
@@ -94,7 +110,7 @@
       <div class="post__photos" [class]="'count-' + (photos.length > 3 ? 'more' : photos.length)">
         @for (photo of photos.slice(0, 3); track $index) {
           <div class="post__photo-item">
-            <img [src]="photo" [alt]="'POST.photo-alt' | translate" />
+            <img [src]="photo" [alt]="'POST.photo-alt' | translate" loading="lazy" />
 
             @if ($index === 2 && photos.length > 3) {
               <button
