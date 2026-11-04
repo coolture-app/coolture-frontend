@@ -38,7 +38,17 @@
     "public": "Publiczne",
     "private": "Prywatne",
     "friends": "Znajomi",
-    "recommended": "Rekomendowane"
+    "recommended": "Rekomendowane",
+    "loading": "Ładowanie...",
+    "endOfList": "To już wszystko",
+    "loadError": "Nie udało się wczytać postów.",
+    "retry": "Spróbuj ponownie",
+    "refresh": "Odśwież",
+    "nearMe": "Blisko mnie",
+    "locationFailed": "Nie udało się pobrać lokalizacji. Sprawdź uprawnienia przeglądarki.",
+    "includePast": "Pokaż minione wydarzenia",
+    "searchPast": "Szukaj też w minionych",
+    "mapView": "Widok mapy"
   },
   "FULL_POST": {
     "title": "Fajny post",
@@ -65,7 +75,8 @@
     "thousand": "tyś",
     "million": "mil",
     "interested": "Oznacz jako zainteresowany",
-    "takes_part": "Oznacz jako uczestniczę"
+    "takes_part": "Oznacz jako uczestniczę",
+    "online": "Online"
   },
   "FOOTER": {
     "main-page": "Strona główna",

@@ -9,9 +9,12 @@
           type="text"
           [formControl]="searchControl"
           placeholder="{{ 'MAIN_PAGE.searchbar' | translate }}"
+          (keydown.enter)="applyControls()"
         />
       </span>
-      <app-btn variant="primary">{{ 'MAIN_PAGE.search' | translate }}</app-btn>
+      <app-btn variant="primary" (btnClick)="applyControls()">{{
+        'MAIN_PAGE.search' | translate
+      }}</app-btn>
       @if (authService.isAuthenticated()) {
         <app-btn variant="primary" (btnClick)="goToAddPost()">
           <ng-icon name="heroPlus" />
@@ -26,10 +29,10 @@
           </button>
           @if (showSortMenu()) {
             <div class="sort-menu">
-              @for (option of visibleSortOptions; track option.value) {
+              @for (option of sortOptions; track option.value) {
                 <button
                   class="sort-menu__item"
-                  [class.active]="currentSortBy === option.value"
+                  [class.active]="currentSortBy() === option.value"
                   (click)="setSortBy(option.value)"
                 >
                   {{ option.labelKey | translate }}
@@ -38,15 +41,43 @@
             </div>
           }
         </div>
+        <button
+          class="sort-btn"
+          type="button"
+          [attr.aria-label]="'MAIN_PAGE.refresh' | translate"
+          [title]="'MAIN_PAGE.refresh' | translate"
+          (click)="refresh()"
+        >
+          <ng-icon name="heroArrowPath" />
+        </button>
+        @if (isFeed()) {
+          <button
+            class="sort-btn"
+            type="button"
+            [class.sort-btn--active]="isNearMe()"
+            [attr.aria-pressed]="isNearMe()"
+            (click)="useMyLocation()"
+          >
+            <ng-icon name="heroMapPin" />
+            <span>{{ 'MAIN_PAGE.nearMe' | translate }}</span>
+          </button>
+        }
       }
       <app-btn variant="icon" (btnClick)="toggleFilters()" [class.active]="showFilters()">
         <ng-icon name="heroFunnel" />
       </app-btn>
-      @if (currentSortBy !== 'RECOMMENDED') {
-        <app-switch class="map-switch" (switchState)="toggleMapView($event)"></app-switch>
-      }
+      <app-switch
+        class="map-switch"
+        [checked]="isMapView()"
+        [label]="'MAIN_PAGE.mapView' | translate"
+        (switchState)="toggleMapView($event)"
+      ></app-switch>
     </div>
   </div>
+
+  @if (locationFailed()) {
+    <p class="list-note" role="status">{{ 'MAIN_PAGE.locationFailed' | translate }}</p>
+  }
 
   @if (showFilters()) {
     <div class="filter-wrapper">
@@ -108,22 +139,50 @@
             />
           </div>
         </div>
+
+        <div class="filters__past">
+          <app-switch
+            [formControl]="filtersForm.controls.includePast"
+            [label]="'MAIN_PAGE.includePast' | translate"
+          ></app-switch>
+          <span>{{ 'MAIN_PAGE.includePast' | translate }}</span>
+        </div>
       </div>
     </div>
   }
   @if (!isMapView()) {
-    @for (item of posts().items; track item.id) {
+    @for (item of list.items(); track item.id) {
       <app-post-component
         (deleteRequest)="removeChild($event)"
         [data]="item"
         [isFullView]="false"
       />
-    } @empty {
-      <p class="empty">{{ 'MAIN_PAGE.no-posts' | translate }}</p>
     }
+    @if (list.failed()) {
+      <div class="empty empty--action" role="alert">
+        <span>{{ 'MAIN_PAGE.loadError' | translate }}</span>
+        <app-btn variant="secondary" size="sm" (btnClick)="list.retry()">{{
+          'MAIN_PAGE.retry' | translate
+        }}</app-btn>
+      </div>
+    } @else if (list.loading() || !list.query()) {
+      <p class="empty" role="status">{{ 'MAIN_PAGE.loading' | translate }}</p>
+    } @else if (list.items().length === 0) {
+      <div class="empty empty--action">
+        <span>{{ 'MAIN_PAGE.no-posts' | translate }}</span>
+        @if (canOfferPast()) {
+          <app-btn variant="secondary" size="sm" (btnClick)="searchPastToo()">{{
+            'MAIN_PAGE.searchPast' | translate
+          }}</app-btn>
+        }
+      </div>
+    } @else if (!list.hasMore()) {
+      <p class="empty">{{ 'MAIN_PAGE.endOfList' | translate }}</p>
+    }
+    <div class="list-end" [appInfiniteScroll]="canLoadMore()" (reachedEnd)="list.loadMore()"></div>
   }
   <!-- VIEW WITH MAP ON -->
   @else {
-    <app-map [filters]="currentFiltersForMap()"></app-map>
+    <app-map [filters]="activeFilters()"></app-map>
   }
 </div>

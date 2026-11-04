@@ -1,6 +1,13 @@
 <div class="container">
-  <input type="checkbox" class="checkbox" id="checkbox" (change)="toogleState($event)" />
-  <label class="switch" for="checkbox">
+  <input
+    type="checkbox"
+    class="checkbox"
+    [id]="inputId"
+    [checked]="isChecked()"
+    [attr.aria-label]="label || null"
+    (change)="toogleState($event)"
+  />
+  <label class="switch" [attr.for]="inputId">
     <span class="slider"></span>
   </label>
 </div>

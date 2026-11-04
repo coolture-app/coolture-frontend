@@ -4,7 +4,7 @@ import {
   PostVisibility,
   ParticipationType,
   ReactionType,
-  PostSortBy,
+  PostsSort,
 } from '../common/enums';
 
 export interface PostFilterParams {
@@ -23,6 +23,6 @@ export interface PostFilterParams {
   radiusKm?: number;
   participationTypes?: ParticipationType[];
   reactionType?: ReactionType;
-  sortBy?: PostSortBy;
-  recommended?: boolean;
+  sortBy?: PostsSort;
+  includePast?: boolean;
 }
