@@ -119,7 +119,7 @@ export class Map implements OnDestroy {
         properties: {
           id: mark.id,
           title: mark.title,
-          desc: mark.desc,
+          description: mark.description,
           coverMediaUrl: mark.coverMediaUrl,
           positiveReactionCount: mark.positiveReactionCount,
         },

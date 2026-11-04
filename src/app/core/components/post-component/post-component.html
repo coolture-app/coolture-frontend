@@ -44,7 +44,7 @@
           <img [src]="avatar.url" [alt]="data.author.username" class="post__avatar" />
         } @else {
           <div class="post__avatar post__avatar--placeholder">
-            {{ data.author.firstName.charAt(0) }}{{ data.author.lastName.charAt(0) }}
+            {{ data.author.firstName?.charAt(0) }}{{ data.author.lastName?.charAt(0) }}
           </div>
         }
         <div class="post__author">
@@ -62,11 +62,11 @@
       </div>
     </div>
     <div class="post__desc">
-      @if (this.isFullView) {
-        {{ data.description }}
+      @if (this.isFullView || description.length <= maxLengthOfShortDesc) {
+        {{ description }}
       } @else {
         @if (!isExpanded()) {
-          {{ data.description.slice(0, maxLengthOfShortDesc) + '...' }}
+          {{ description.slice(0, maxLengthOfShortDesc) + '...' }}
           <span
             class="post__desc-action"
             (click)="toggleExpanded()"
@@ -77,7 +77,7 @@
             {{ 'POST.show-more' | translate }}
           </span>
         } @else {
-          {{ data.description }}
+          {{ description }}
           <span
             class="post__desc-action"
             (click)="toggleExpanded()"

@@ -1,0 +1,9 @@
+/* Used by `npm run api-types`: fails if the hand-written models disagree with the API contract. */
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": []
+  },
+  "files": ["src/app/core/models/generated/contract-check.ts"]
+}

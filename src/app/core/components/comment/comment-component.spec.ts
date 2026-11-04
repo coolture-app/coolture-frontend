@@ -41,4 +41,13 @@ describe('CommentComponent', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('renders an author with no first or last name', () => {
+    fixture.componentRef.setInput('comment', {
+      ...component.comment,
+      author: { id: 'u2', username: 'anon', followersCount: 0, followingCount: 0 },
+    });
+
+    expect(() => fixture.detectChanges()).not.toThrow();
+  });
 });

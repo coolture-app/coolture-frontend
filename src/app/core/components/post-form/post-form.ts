@@ -222,7 +222,7 @@ export class PostForm implements OnInit, OnChanges {
       type: post.type,
       startsAt: post.startsAt ? post.startsAt.substring(0, 16) : '',
       endsAt: post.endsAt ? post.endsAt.substring(0, 16) : '',
-      description: post.description,
+      description: post.description ?? '',
       eventUrl: post.eventUrl ?? '',
       tags: tagsStr,
       visibility: post.visibility ?? 'PUBLIC',

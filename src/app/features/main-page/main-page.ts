@@ -83,7 +83,7 @@ export class MainPage implements OnInit {
 
   posts = signal<PaginatedResponse<PostCard>>({
     items: [],
-    page: { limit: 20, hasMore: false, nextCursor: null },
+    page: { limit: 20, hasMore: false },
   });
 
   ngOnInit() {

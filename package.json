@@ -10,7 +10,8 @@
     "serve:ssr:frontend": "node dist/frontend/server/server.mjs",
     "lint": "eslint \"src/**/*.{ts,html}\" --ext .ts,.html",
     "format": "prettier --write \"src/**/*.{ts,html,scss,css,json,md}\"",
-    "prepare": "husky"
+    "prepare": "husky",
+    "api-types": "openapi-typescript ../coolture-aws/aws/lambdas/post-read/contracts/feed-api.yaml -o src/app/core/models/generated/feed-api.d.ts && prettier --write src/app/core/models/generated/feed-api.d.ts && tsc -p tsconfig.api-types.json"
   },
   "prettier": {
     "printWidth": 100,
@@ -70,6 +71,7 @@
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
     "lint-staged": "^16.2.6",
+    "openapi-typescript": "^7.13.0",
     "prettier": "^3.6.2",
     "typescript": "~5.9.2",
     "typescript-eslint": "8.46.1"

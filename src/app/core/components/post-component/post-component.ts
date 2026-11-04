@@ -94,6 +94,10 @@ export class PostComponent implements OnInit {
     this.isExpanded.update((v) => !v);
   }
 
+  get description(): string {
+    return this.data.description ?? '';
+  }
+
   get photos() {
     if (this.isFullView && this.data && 'media' in this.data && Array.isArray(this.data.media)) {
       return this.data.media.map((m) => m.media.url);

@@ -25,7 +25,7 @@ export class MyEventsView implements OnInit {
   selectedFilter = signal<ParticipationType | 'all'>('all');
   posts = signal<PaginatedResponse<PostCard>>({
     items: [],
-    page: { limit: 20, hasMore: false, nextCursor: null },
+    page: { limit: 20, hasMore: false },
   });
 
   ngOnInit() {

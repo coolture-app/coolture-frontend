@@ -3,8 +3,8 @@ import { GeoPoint } from '../common/geo.model';
 export interface PostMark {
   id: string;
   title: string;
-  desc: string;
-  coverMediaUrl: string | null;
+  description?: string;
+  coverMediaUrl?: string;
   positiveReactionCount: number;
   coordinates: GeoPoint;
 }
