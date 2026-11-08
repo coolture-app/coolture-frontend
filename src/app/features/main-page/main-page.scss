@@ -21,15 +21,21 @@
   z-index: var(--z-dropdown);
   margin: calc(-1 * var(--space-md)) calc(-1 * var(--space-md)) var(--space-sm);
   padding: var(--space-md);
-  background: var(--color-background);
+  // The blur is always on, and only the background's opacity changes: see-through at once when
+  // scrolling starts, back to solid with a slow fade.
+  background: rgba(250, 250, 250, 1);
+  backdrop-filter: blur(12px);
   transition:
-    background var(--transition-base),
+    background 600ms ease,
     transform var(--transition-slow),
     visibility var(--transition-slow);
 
   &--scrolling {
-    background: rgba(250, 250, 250, 0.75);
-    backdrop-filter: blur(12px);
+    background: rgba(250, 250, 250, 0.72);
+    transition:
+      background 100ms ease,
+      transform var(--transition-slow),
+      visibility var(--transition-slow);
   }
 
   // Phones: "quick return". Away while reading down the list, back on any scroll up.

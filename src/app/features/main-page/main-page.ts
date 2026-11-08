@@ -50,7 +50,11 @@ import { HomeView, HomeViewMemory, NO_FILTERS, RESTORE_LIST_KEY } from './home-v
 const LOCATION_WAIT_MS = 1500;
 /** Near the top the bar stays, so it never hides with nothing under it. */
 const BAR_ALWAYS_SHOWN_PX = 120;
-const SCROLL_STOP_MS = 200;
+/**
+ * How long after the last scroll event the bar turns solid again. A mouse wheel sends separate
+ * ticks with gaps of a few hundred ms, which shouldn't count as stopping.
+ */
+const SCROLL_STOP_MS = 1000;
 /**
  * How many cards before the end the next page is requested. Counted in cards, not pixels, so it means
  * the same on any screen, and it's under the page size of 20, so a new page can't ask for the next one

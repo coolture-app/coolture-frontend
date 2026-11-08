@@ -372,7 +372,9 @@ describe('MainPage', () => {
       scrollTo(395);
       expect(component.barHidden()).toBeFalse();
       expect(component.scrolling()).toBeTrue();
-      await new Promise((resolve) => setTimeout(resolve, 250));
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      expect(component.scrolling()).toBeTrue();
+      await new Promise((resolve) => setTimeout(resolve, 600));
       expect(component.scrolling()).toBeFalse();
     });
   });
