@@ -41,8 +41,7 @@
     "endOfList": "That's everything",
     "loadError": "Could not load posts.",
     "retry": "Try again",
-    "nearMe": "Near me",
-    "locationFailed": "Could not get your location. Check the browser permissions.",
+    "locationFailed": "Could not get your location. Allow it in your browser settings.",
     "includePast": "Show past events",
     "searchPast": "Search past events too",
     "clearSearch": "Clear search",
@@ -50,7 +49,13 @@
     "map": "Map",
     "view": "View",
     "filtersActive": "Filters, {{count}} on",
-    "sortLabel": "Sort: {{sort}}"
+    "sortLabel": "Sort: {{sort}}",
+    "location": "Location",
+    "anywhere": "Anywhere",
+    "myLocation": "My location",
+    "radius": "Radius",
+    "km": "{{km}} km",
+    "done": "Done"
   },
   "FULL_POST": {
     "title": "Cool post",

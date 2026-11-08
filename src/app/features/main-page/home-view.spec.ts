@@ -8,9 +8,9 @@ const VIEW: HomeView = {
   search: 'jazz',
   filters: NO_FILTERS,
   pickedSort: null,
-  showFilters: false,
   isMapView: false,
   scrollY: 1200,
+  nearPosition: null,
 };
 
 describe('HomeViewMemory', () => {

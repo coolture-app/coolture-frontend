@@ -1,4 +1,6 @@
 import { inject, Injectable } from '@angular/core';
+import { FormControl, FormGroup } from '@angular/forms';
+import { GeoPoint } from '../../core/models/common/geo.model';
 import { PostsSort } from '../../core/models/common/enums';
 import { PostListQuery, PostListStore } from '../../core/services/post-list/post-list.store';
 
@@ -16,17 +18,40 @@ export const NO_FILTERS = {
   visibility: '',
   status: '',
   includePast: false,
+  /** "Moja lokalizacja" instead of "Wszędzie", within `radiusKm` of the user's position. */
+  near: false,
+  radiusKm: 5,
 };
 export type FilterValues = typeof NO_FILTERS;
+
+/** The radius choices of the location filter, in km. */
+export const RADII_KM = [1, 5, 10, 25, 50, 100];
+
+/** The filter panel's form, one control per value in NO_FILTERS. */
+export function createFiltersForm() {
+  return new FormGroup({
+    type: new FormControl(NO_FILTERS.type, { nonNullable: true }),
+    tags: new FormControl(NO_FILTERS.tags, { nonNullable: true }),
+    startsFrom: new FormControl(NO_FILTERS.startsFrom, { nonNullable: true }),
+    startsTo: new FormControl(NO_FILTERS.startsTo, { nonNullable: true }),
+    visibility: new FormControl(NO_FILTERS.visibility, { nonNullable: true }),
+    status: new FormControl(NO_FILTERS.status, { nonNullable: true }),
+    includePast: new FormControl(NO_FILTERS.includePast, { nonNullable: true }),
+    near: new FormControl(NO_FILTERS.near, { nonNullable: true }),
+    radiusKm: new FormControl(NO_FILTERS.radiusKm, { nonNullable: true }),
+  });
+}
+export type FiltersForm = ReturnType<typeof createFiltersForm>;
 
 /** What the home page needs to look the same when the user comes back to it. */
 export interface HomeView {
   search: string;
   filters: FilterValues;
   pickedSort: PostsSort | null;
-  showFilters: boolean;
   isMapView: boolean;
   scrollY: number;
+  /** The position the location filter used. Kept in memory for this visit only, never stored. */
+  nearPosition: GeoPoint | null;
 }
 
 /**

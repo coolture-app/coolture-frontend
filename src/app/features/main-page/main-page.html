@@ -59,20 +59,6 @@
               </div>
             }
           </div>
-          @if (isFeed()) {
-            <button
-              class="sort-btn"
-              type="button"
-              [class.sort-btn--active]="isNearMe()"
-              [attr.aria-pressed]="isNearMe()"
-              [attr.aria-busy]="locating()"
-              [disabled]="locating()"
-              (click)="toggleNearMe()"
-            >
-              <ng-icon name="heroMapPin" />
-              <span>{{ 'MAIN_PAGE.nearMe' | translate }}</span>
-            </button>
-          }
         }
         <button
           type="button"
@@ -113,84 +99,21 @@
           </button>
         </div>
       </div>
+      <!-- Opens under the bar, wherever the list is scrolled to, over a dimmed page. -->
+      @if (showFilters()) {
+        <div class="filters-scrim" aria-hidden="true" (click)="showFilters.set(false)"></div>
+        <app-feed-filters
+          class="filters-popover"
+          [form]="filtersForm"
+          [locating]="locating()"
+          [locationFailed]="locationFailed()"
+          (clear)="clearFilters()"
+          (done)="showFilters.set(false)"
+        />
+      }
     </div>
   </div>
 
-  @if (locationFailed()) {
-    <p class="list-note" role="status">{{ 'MAIN_PAGE.locationFailed' | translate }}</p>
-  }
-
-  @if (showFilters()) {
-    <div class="filter-wrapper">
-      <div class="filters">
-        <div class="filters__header">
-          <span class="filters__title">{{ 'MAIN_PAGE.filters' | translate }}</span>
-          <app-btn variant="plain" size="sm" (btnClick)="clearFilters()">
-            <ng-icon name="heroXMark" /> {{ 'MAIN_PAGE.clear' | translate }}
-          </app-btn>
-        </div>
-
-        <div class="filters__row">
-          <div class="filters__field">
-            <label for="type">{{ 'MAIN_PAGE.type' | translate }}</label>
-            <select id="type" [formControl]="filtersForm.controls.type">
-              <option value="">{{ 'MAIN_PAGE.allTypes' | translate }}</option>
-              <option value="OFFLINE">{{ 'MAIN_PAGE.offline' | translate }}</option>
-              <option value="ONLINE">{{ 'MAIN_PAGE.online' | translate }}</option>
-            </select>
-          </div>
-
-          <div class="filters__field">
-            <label for="tags">{{ 'MAIN_PAGE.tags' | translate }}</label>
-            <input
-              id="tags"
-              type="text"
-              [formControl]="filtersForm.controls.tags"
-              placeholder="{{ 'MAIN_PAGE.tagsPlaceholder' | translate }}"
-            />
-          </div>
-
-          <div class="filters__field">
-            <label for="visibility">{{ 'MAIN_PAGE.visibility' | translate }}</label>
-            <select id="visibility" [formControl]="filtersForm.controls.visibility">
-              <option value="">{{ 'MAIN_PAGE.allVisibility' | translate }}</option>
-              <option value="PUBLIC">{{ 'MAIN_PAGE.public' | translate }}</option>
-              <option value="PRIVATE">{{ 'MAIN_PAGE.private' | translate }}</option>
-              <option value="FRIENDS">{{ 'MAIN_PAGE.friends' | translate }}</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="filters__row">
-          <div class="filters__field">
-            <label for="startsFrom">{{ 'MAIN_PAGE.startsFrom' | translate }}</label>
-            <input
-              id="startsFrom"
-              type="datetime-local"
-              [formControl]="filtersForm.controls.startsFrom"
-            />
-          </div>
-
-          <div class="filters__field">
-            <label for="startsTo">{{ 'MAIN_PAGE.startsTo' | translate }}</label>
-            <input
-              id="startsTo"
-              type="datetime-local"
-              [formControl]="filtersForm.controls.startsTo"
-            />
-          </div>
-        </div>
-
-        <div class="filters__past">
-          <app-switch
-            [formControl]="filtersForm.controls.includePast"
-            [label]="'MAIN_PAGE.includePast' | translate"
-          ></app-switch>
-          <span>{{ 'MAIN_PAGE.includePast' | translate }}</span>
-        </div>
-      </div>
-    </div>
-  }
   @if (!isMapView()) {
     @for (item of list.items(); track item.id) {
       @if ($index === nextPageTrigger()) {

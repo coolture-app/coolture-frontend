@@ -19,10 +19,7 @@ describe('LocationService', () => {
   beforeEach(() => {
     service = TestBed.inject(LocationService);
     getPosition = spyOn(navigator.geolocation, 'getCurrentPosition');
-    localStorage.removeItem('coolture.location.off');
   });
-
-  afterEach(() => localStorage.removeItem('coolture.location.off'));
 
   it('rounds to 2 decimals before anything else sees the position', async () => {
     allowPosition(54.34567, -18.645);
@@ -68,37 +65,42 @@ describe('LocationService', () => {
     expect(getPosition).not.toHaveBeenCalled();
   });
 
-  it('stays off once turned off, even with the permission granted', async () => {
-    permissionIs('granted');
-    allowPosition();
+  describe('on the first open', () => {
+    it('asks when the browser has not decided yet', async () => {
+      permissionIs('prompt');
+      allowPosition();
 
-    service.turnOff();
+      expect(await service.currentOrAsk(1500, 1000)).toEqual({ latitude: 54.35, longitude: 18.65 });
+    });
 
-    expect(await service.currentIfAllowed(1500)).toBeNull();
-    expect(getPosition).not.toHaveBeenCalled();
-  });
+    it('asks only once per visit', async () => {
+      permissionIs('prompt');
+      allowPosition();
 
-  it('turns on again when the user asks for the position and gets it', async () => {
-    permissionIs('granted');
-    allowPosition();
-    service.turnOff();
+      await service.currentOrAsk(1500, 1000);
+      expect(await service.currentOrAsk(1500, 1000)).toBeNull();
+      expect(getPosition).toHaveBeenCalledTimes(1);
+    });
 
-    await service.request();
+    it('stops waiting for an answer that does not come', async () => {
+      permissionIs('prompt');
 
-    expect(await service.currentIfAllowed(1500)).toEqual({ latitude: 54.35, longitude: 18.65 });
-  });
+      expect(await service.currentOrAsk(1500, 1)).toBeNull();
+    });
 
-  it('stays off when a new request is refused', async () => {
-    permissionIs('granted');
-    service.turnOff();
-    getPosition.and.callFake((_: PositionCallback, failure: PositionErrorCallback) =>
-      failure({ code: 1 } as GeolocationPositionError),
-    );
+    it('never asks once the user has refused in the browser', async () => {
+      permissionIs('denied');
 
-    await service.request();
+      expect(await service.currentOrAsk(1500, 1000)).toBeNull();
+      expect(getPosition).not.toHaveBeenCalled();
+    });
 
-    allowPosition();
-    expect(await service.currentIfAllowed(1500)).toBeNull();
+    it('uses a position already allowed without asking', async () => {
+      permissionIs('granted');
+      allowPosition();
+
+      expect(await service.currentOrAsk(1500, 1000)).toEqual({ latitude: 54.35, longitude: 18.65 });
+    });
   });
 
   it('gives up when the position is late, so the feed can load without it', async () => {

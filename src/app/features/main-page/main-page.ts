@@ -10,7 +10,7 @@ import {
   untracked,
 } from '@angular/core';
 import { ViewportScroller } from '@angular/common';
-import { FormControl, ReactiveFormsModule, FormGroup } from '@angular/forms';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { NavigationStart, Router } from '@angular/router';
 import { debounceTime, filter, merge } from 'rxjs';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -18,7 +18,6 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   heroAdjustmentsHorizontal,
   heroMagnifyingGlass,
-  heroMapPin,
   heroXMark,
   heroChevronDown,
 } from '@ng-icons/heroicons/outline';
@@ -43,11 +42,19 @@ import {
   PostSortBy,
   PostsSort,
 } from '../../core/models/common/enums';
-import { Switch } from '../../core/components/switch/switch/switch';
 import { Map } from '../../core/components/map/map/map';
-import { HomeView, HomeViewMemory, NO_FILTERS, RESTORE_LIST_KEY } from './home-view';
+import {
+  createFiltersForm,
+  HomeView,
+  HomeViewMemory,
+  NO_FILTERS,
+  RESTORE_LIST_KEY,
+} from './home-view';
+import { FeedFilters } from './feed-filters/feed-filters';
 
 const LOCATION_WAIT_MS = 1500;
+/** How long the first page waits for an answer to the browser's location prompt. */
+const LOCATION_ANSWER_MS = 8000;
 /** Near the top the bar stays, so it never hides with nothing under it. */
 const BAR_ALWAYS_SHOWN_PX = 120;
 /**
@@ -70,8 +77,8 @@ const CARDS_BEFORE_END = 15;
     PostComponent,
     ReactiveFormsModule,
     Btn,
-    Switch,
     Map,
+    FeedFilters,
     InfiniteScroll,
     PostSkeleton,
     Tooltip,
@@ -80,14 +87,17 @@ const CARDS_BEFORE_END = 15;
     provideIcons({
       heroAdjustmentsHorizontal,
       heroMagnifyingGlass,
-      heroMapPin,
       heroXMark,
       heroChevronDown,
     }),
   ],
   templateUrl: './main-page.html',
   styleUrl: './main-page.scss',
-  host: { '(document:click)': 'closeSortMenu($event)', '(window:scroll)': 'onScroll()' },
+  host: {
+    '(document:click)': 'closeSortMenu($event)',
+    '(document:keydown.escape)': 'closePopups()',
+    '(window:scroll)': 'onScroll()',
+  },
 })
 export class MainPage implements OnDestroy {
   private postService = inject(PostService);
@@ -121,15 +131,9 @@ export class MainPage implements OnDestroy {
     { value: 'UPCOMING', labelKey: 'MAIN_PAGE.sortUpcoming' },
   ];
 
-  filtersForm = new FormGroup({
-    type: new FormControl(NO_FILTERS.type, { nonNullable: true }),
-    tags: new FormControl(NO_FILTERS.tags, { nonNullable: true }),
-    startsFrom: new FormControl(NO_FILTERS.startsFrom, { nonNullable: true }),
-    startsTo: new FormControl(NO_FILTERS.startsTo, { nonNullable: true }),
-    visibility: new FormControl(NO_FILTERS.visibility, { nonNullable: true }),
-    status: new FormControl(NO_FILTERS.status, { nonNullable: true }),
-    includePast: new FormControl(NO_FILTERS.includePast, { nonNullable: true }),
-  });
+  filtersForm = createFiltersForm();
+  /** The position "Moja lokalizacja" filters by, once the browser gave it. Never stored. */
+  private nearPosition = signal<GeoPoint | null>(null);
 
   /** The applied search and filters, also what the map shows. */
   readonly activeFilters = signal<PostFilterParams>({});
@@ -141,16 +145,12 @@ export class MainPage implements OnDestroy {
     return this.pickedSort() ?? (noCriteria ? 'RECOMMENDED' : 'RECENT');
   });
   readonly isFeed = computed(() => this.currentSortBy() === 'RECOMMENDED');
-  readonly isNearMe = computed(() => {
-    const query = this.list.query();
-    return query?.kind === 'feed' && !!query.location;
-  });
-  /** How many filters the panel has on, counting a date range as one. The search isn't a filter. */
+  /** How many filters the panel has on, counting a date range and a place as one each. Not the search. */
   readonly activeFilterCount = computed(() => {
-    const { type, tags, startsFrom, startsTo, visibility, status, includePast } =
+    const { type, tags, startsFrom, startsTo, visibility, status, includePast, latitude } =
       this.activeFilters();
-    return [type, tags, startsFrom || startsTo, visibility, status, includePast].filter(Boolean)
-      .length;
+    const on = [type, tags, startsFrom || startsTo, visibility, status, includePast, latitude];
+    return on.filter((value) => value !== undefined && value !== false).length;
   });
   /** A screenful for the first page. After that one is enough, and the posts stay what's on screen. */
   readonly skeletons = computed(() => Array(this.list.items().length > 0 ? 1 : 3));
@@ -192,6 +192,15 @@ export class MainPage implements OnDestroy {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.startFresh());
 
+    this.filtersForm.controls.near.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((near) => {
+        this.locationFailed.set(false);
+        if (near && !this.nearPosition()) {
+          void this.locateForFilter();
+        }
+      });
+
     merge(this.searchControl.valueChanges, this.filtersForm.valueChanges)
       .pipe(debounceTime(400), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.applyControls());
@@ -216,6 +225,11 @@ export class MainPage implements OnDestroy {
     this.changeList(() => this.activeFilters.set(this.readFilters()));
   }
 
+  closePopups(): void {
+    this.showFilters.set(false);
+    this.showSortMenu.set(false);
+  }
+
   clearSearch(): void {
     this.searchControl.setValue('', { emitEvent: false });
     this.applyControls();
@@ -225,7 +239,7 @@ export class MainPage implements OnDestroy {
     const y = window.scrollY;
     const delta = y - this.lastScrollY;
     this.lastScrollY = y;
-    if (y < BAR_ALWAYS_SHOWN_PX || delta < 0) {
+    if (y < BAR_ALWAYS_SHOWN_PX || delta < 0 || this.showFilters()) {
       this.barHidden.set(false);
     } else if (delta > 0) {
       this.barHidden.set(true);
@@ -301,33 +315,6 @@ export class MainPage implements OnDestroy {
     this.load();
   }
 
-  /** Turns nearby ranking on or off. It asks only when tapped, and a refusal leaves the feed as it is. */
-  async toggleNearMe(): Promise<void> {
-    if (this.locating()) {
-      return;
-    }
-    this.locationFailed.set(false);
-    if (this.isNearMe()) {
-      this.location.turnOff();
-      this.startFeedAt(undefined);
-      return;
-    }
-    this.locating.set(true);
-    const location = await this.location.request();
-    this.locating.set(false);
-    if (!location) {
-      this.locationFailed.set(true);
-    } else if (this.isFeed() && !this.isMapView()) {
-      this.startFeedAt(location);
-    }
-  }
-
-  private startFeedAt(location: GeoPoint | undefined): void {
-    this.loadRun++;
-    this.scroller.scrollToPosition([0, 0]);
-    this.list.start({ kind: 'feed', ...(location && { location }) });
-  }
-
   /** Applies a change, and starts a new list only if it changes which list should be showing. */
   private changeList(change: () => void): void {
     const listKey = () => JSON.stringify([this.currentSortBy(), this.activeFilters()]);
@@ -356,11 +343,28 @@ export class MainPage implements OnDestroy {
     }
   }
 
-  /** Uses the position only if it's already allowed and arrives quickly, so nobody waits for it. */
+  /**
+   * Uses the position when it's allowed and arrives quickly. On the first open, if the browser hasn't
+   * decided yet, it asks, and the first page waits a little for the answer.
+   */
   private async startFeed(run: number): Promise<void> {
-    const location = await this.location.currentIfAllowed(LOCATION_WAIT_MS);
+    const location = await this.location.currentOrAsk(LOCATION_WAIT_MS, LOCATION_ANSWER_MS);
     if (run === this.loadRun) {
       this.list.start({ kind: 'feed', ...(location && { location }) });
+    }
+  }
+
+  /** "Moja lokalizacja" needs the position first. Without it, the filter goes back to "Wszędzie". */
+  private async locateForFilter(): Promise<void> {
+    this.locating.set(true);
+    const position = await this.location.request();
+    this.locating.set(false);
+    if (position) {
+      this.nearPosition.set(position);
+      this.applyControls();
+    } else {
+      this.filtersForm.controls.near.setValue(false, { emitEvent: false });
+      this.locationFailed.set(true);
     }
   }
 
@@ -371,8 +375,9 @@ export class MainPage implements OnDestroy {
 
   private readFilters(): PostFilterParams {
     const search = this.searchControl.value.trim();
-    const { type, tags, startsFrom, startsTo, visibility, status, includePast } =
+    const { type, tags, startsFrom, startsTo, visibility, status, includePast, near, radiusKm } =
       this.filtersForm.getRawValue();
+    const position = near ? this.nearPosition() : null;
     const tagList = tags
       .split(',')
       .map((tag) => tag.trim())
@@ -387,6 +392,7 @@ export class MainPage implements OnDestroy {
       ...(visibility && { visibility: visibility as PostVisibility }),
       ...(status && { status: status as PostStatus }),
       ...(includePast && { includePast }),
+      ...(position && { ...position, radiusKm }),
     };
   }
 
@@ -395,9 +401,9 @@ export class MainPage implements OnDestroy {
       search: this.searchControl.value,
       filters: this.filtersForm.getRawValue(),
       pickedSort: this.pickedSort(),
-      showFilters: this.showFilters(),
       isMapView: this.isMapView(),
       scrollY: this.scroller.getScrollPosition()[1],
+      nearPosition: this.nearPosition(),
     });
   }
 
@@ -415,7 +421,7 @@ export class MainPage implements OnDestroy {
     this.searchControl.setValue(view.search, { emitEvent: false });
     this.filtersForm.setValue(view.filters, { emitEvent: false });
     this.pickedSort.set(view.pickedSort);
-    this.showFilters.set(view.showFilters);
+    this.nearPosition.set(view.nearPosition);
     this.isMapView.set(view.isMapView);
     this.activeFilters.set(this.readFilters());
 

@@ -48,7 +48,6 @@ describe('MainPage', () => {
   let askedLocation: GeoPoint | null;
   let currentNavigation: jasmine.Spy;
   let locationRequest: Promise<GeoPoint | null> | null;
-  let turnedOff: boolean;
   let scroller: ViewportScroller;
 
   async function settle(): Promise<void> {
@@ -102,7 +101,6 @@ describe('MainPage', () => {
     allowedLocation = null;
     askedLocation = null;
     locationRequest = null;
-    turnedOff = false;
     TestBed.configureTestingModule({
       imports: [MainPage],
       providers: [
@@ -111,8 +109,8 @@ describe('MainPage', () => {
           provide: LocationService,
           useValue: {
             currentIfAllowed: () => Promise.resolve(allowedLocation),
+            currentOrAsk: () => Promise.resolve(allowedLocation),
             request: () => locationRequest ?? Promise.resolve(askedLocation),
-            turnOff: () => (turnedOff = true),
           },
         },
       ],
@@ -646,7 +644,7 @@ describe('MainPage', () => {
   });
 
   describe('location', () => {
-    it('uses the position when already allowed', async () => {
+    it('uses the position on the first page when it is allowed, or once asked', async () => {
       allowedLocation = { latitude: 54.35, longitude: 18.65 };
       await open();
 
@@ -654,100 +652,111 @@ describe('MainPage', () => {
       expect(param(request, 'latitude')).toBe('54.35');
       expect(param(request, 'longitude')).toBe('18.65');
       request.flush({ ...page(), mode: 'RANKED' });
-      await settle();
-
-      expect(component.isNearMe()).toBeTrue();
     });
 
-    it('starts a new session with the position when the button is tapped and allowed', async () => {
-      await open();
-      const first = expectFeed();
-      expect(param(first, 'latitude')).toBeNull();
-      first.flush({ ...page(['a']), mode: 'RANKED' });
-      await settle();
-
-      askedLocation = { latitude: 54.35, longitude: 18.65 };
-      await component.toggleNearMe();
-
-      const second = expectFeed();
-      expect(param(second, 'latitude')).toBe('54.35');
-      second.flush({ ...page(), mode: 'RANKED' });
-    });
-
-    it('leaves the feed as it is when refused, and says so', async () => {
-      await open();
-      expectFeed().flush({ ...page(['a']), mode: 'RANKED' });
-      await settle();
-
-      await component.toggleNearMe();
-      await settle();
-
-      expect(shownTitles()).toEqual(['Post a']);
-      expect(text()).toContain('MAIN_PAGE.locationFailed');
-      expect(component.isNearMe()).toBeFalse();
-    });
-
-    it('turns off again on a second tap, with a new session and no location', async () => {
-      allowedLocation = { latitude: 54.35, longitude: 18.65 };
-      await open();
-      expectFeed().flush({ ...page(['a']), mode: 'RANKED' });
-      await settle();
-      expect(component.isNearMe()).toBeTrue();
-
-      await component.toggleNearMe();
-
-      const off = expectFeed();
-      expect(param(off, 'latitude')).toBeNull();
-      expect(turnedOff).toBeTrue();
-      expect(component.isNearMe()).toBeFalse();
-      off.flush({ ...page(['b']), mode: 'RANKED' });
-    });
-
-    it('ignores taps while it is still waiting for the position', async () => {
-      await open();
-      expectFeed().flush({ ...page(['a']), mode: 'RANKED' });
-      await settle();
-      let answer: (location: GeoPoint) => void = () => undefined;
-      locationRequest = new Promise((resolve) => (answer = resolve));
-
-      const first = component.toggleNearMe();
-      expect(component.locating()).toBeTrue();
-      await component.toggleNearMe();
-      await component.toggleNearMe();
-      answer({ latitude: 54.35, longitude: 18.65 });
-      await first;
-
-      const request = expectFeed();
-      expect(param(request, 'latitude')).toBe('54.35');
-      expect(component.locating()).toBeFalse();
-      request.flush({ ...page(), mode: 'RANKED' });
-    });
-
-    it('clears the note about a refusal on the next tap', async () => {
-      await open();
-      expectFeed().flush({ ...page(['a']), mode: 'RANKED' });
-      await settle();
-      await component.toggleNearMe();
-      expect(component.locationFailed()).toBeTrue();
-
-      askedLocation = { latitude: 54.35, longitude: 18.65 };
-      await component.toggleNearMe();
-
-      expect(component.locationFailed()).toBeFalse();
-      expectFeed().flush({ ...page(), mode: 'RANKED' });
-    });
-
-    it('shows the button only on the feed', async () => {
+    it('offers no Near me button any more', async () => {
       await open();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
       await settle();
-      expect(button('MAIN_PAGE.nearMe')).toBeDefined();
 
-      component.setSortBy('POPULAR');
+      expect(text()).not.toContain('MAIN_PAGE.nearMe');
+    });
+
+    describe('the filter', () => {
+      async function openFilters(): Promise<void> {
+        await open();
+        expectFeed().flush({ ...page(), mode: 'RANKED' });
+        component.toggleFilters();
+        await settle();
+      }
+
+      function chip(label: string): HTMLButtonElement {
+        const chips = fixture.nativeElement.querySelectorAll('.chip') as NodeListOf<HTMLElement>;
+        return Array.from(chips).find((c) => c.textContent!.trim() === label) as HTMLButtonElement;
+      }
+
+      it('starts at Anywhere, with no radius to pick', async () => {
+        await openFilters();
+
+        expect(chip('MAIN_PAGE.anywhere').getAttribute('aria-pressed')).toBe('true');
+        expect(fixture.nativeElement.querySelectorAll('.chip--small').length).toBe(0);
+      });
+
+      it('lists posts within 5 km of the position by default', async () => {
+        askedLocation = { latitude: 54.35, longitude: 18.65 };
+        await openFilters();
+
+        chip('MAIN_PAGE.myLocation').click();
+        await debounce();
+
+        const posts = expectPosts();
+        expect(param(posts, 'latitude')).toBe('54.35');
+        expect(param(posts, 'longitude')).toBe('18.65');
+        expect(param(posts, 'radiusKm')).toBe('5');
+        posts.flush(page());
+        await settle();
+        expect(component.activeFilterCount()).toBe(1);
+        const radii = fixture.nativeElement.querySelectorAll('.chip--small');
+        expect(Array.from(radii as NodeListOf<Element>).map((c) => c.textContent!.trim())).toEqual(
+          Array(6).fill('MAIN_PAGE.km'),
+        );
+      });
+
+      it('changes the radius', async () => {
+        askedLocation = { latitude: 54.35, longitude: 18.65 };
+        await openFilters();
+        chip('MAIN_PAGE.myLocation').click();
+        await debounce();
+        expectPosts().flush(page());
+        await settle();
+
+        (fixture.nativeElement.querySelectorAll('.chip--small')[4] as HTMLButtonElement).click();
+        await debounce();
+
+        expect(param(expectPosts(), 'radiusKm')).toBe('50');
+      });
+
+      it('goes back to Anywhere and says why when the position is refused', async () => {
+        await openFilters();
+
+        chip('MAIN_PAGE.myLocation').click();
+        await debounce();
+
+        expect(component.filtersForm.controls.near.value).toBeFalse();
+        expect(text()).toContain('MAIN_PAGE.locationFailed');
+      });
+
+      it('shows that it is waiting for the position', async () => {
+        let answer: (location: GeoPoint) => void = () => undefined;
+        locationRequest = new Promise((resolve) => (answer = resolve));
+        await openFilters();
+
+        chip('MAIN_PAGE.myLocation').click();
+        await settle();
+        expect(component.locating()).toBeTrue();
+
+        answer({ latitude: 54.35, longitude: 18.65 });
+        await debounce();
+        expect(component.locating()).toBeFalse();
+        expect(param(expectPosts(), 'radiusKm')).toBe('5');
+      });
+    });
+
+    it('closes the panel on Escape, and on Done', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      component.toggleFilters();
       await settle();
-      expectPosts().flush(page());
+
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
       await settle();
-      expect(button('MAIN_PAGE.nearMe')).toBeUndefined();
+      expect(component.showFilters()).toBeFalse();
+
+      component.toggleFilters();
+      await settle();
+      button('MAIN_PAGE.done').click();
+      await settle();
+      expect(component.showFilters()).toBeFalse();
     });
   });
 
@@ -804,7 +813,7 @@ describe('MainPage', () => {
 
       expect(component.searchControl.value).toBe('jazz');
       expect(component.filtersForm.controls.includePast.value).toBeTrue();
-      expect(component.showFilters()).toBeTrue();
+      expect(component.showFilters()).toBeFalse();
       expect(component.currentSortBy()).toBe('POPULAR');
       expect(shownTitles()).toEqual(['Post c']);
       await debounce();

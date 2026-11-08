@@ -48,6 +48,37 @@
     }
   }
 
+  // Under the bar, so it opens where the reader is, and scrolls inside itself when long.
+  .filters-popover {
+    position: absolute;
+    top: calc(100% - var(--space-xs));
+    left: 50%;
+    z-index: 1;
+    width: min(var(--container-max), calc(100% - 2 * var(--space-md)));
+    max-height: calc(100dvh - var(--navbar-height) - var(--bottom-bar-height) - 140px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xl);
+    transform: translateX(-50%);
+    animation: popover-in var(--transition-base);
+
+    @media (max-width: 639px) {
+      width: calc(100% - 2 * var(--space-sm));
+    }
+  }
+
+  // Dims the list below while the panel is open; a tap on it closes the panel.
+  .filters-scrim {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    left: 0;
+    height: 100dvh;
+    background: rgba(17, 17, 17, 0.25);
+    animation: scrim-in var(--transition-base);
+  }
+
   &__inner {
     display: flex;
     flex-direction: column;
@@ -134,6 +165,19 @@
     &:focus-visible {
       outline: 2px solid var(--color-accent);
     }
+  }
+}
+
+@keyframes popover-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -6px);
+  }
+}
+
+@keyframes scrim-in {
+  from {
+    opacity: 0;
   }
 }
 
@@ -271,84 +315,6 @@
       color: var(--color-accent);
       font-weight: 500;
     }
-  }
-}
-
-.filter-wrapper {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-}
-
-.filters {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-md);
-  margin-bottom: var(--space-md);
-  max-width: var(--container-max);
-  display: flex;
-  width: 100%;
-  flex-direction: column;
-
-  &__header {
-    @include flex-between;
-    margin-bottom: var(--space-md);
-  }
-
-  &__title {
-    font-weight: 600;
-    font-size: var(--text-base);
-  }
-
-  &__row {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: var(--space-md);
-    margin-bottom: var(--space-md);
-
-    &:last-child {
-      margin-bottom: 0;
-    }
-  }
-
-  &__field {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xs);
-
-    label {
-      font-size: var(--text-sm);
-      color: var(--color-text-secondary);
-      font-weight: 500;
-    }
-
-    input,
-    select {
-      padding: var(--space-sm);
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-md);
-      font-family: var(--font-sans);
-      font-size: var(--text-sm);
-      background: var(--color-background);
-      color: var(--color-text);
-
-      &:focus {
-        outline: none;
-        border-color: var(--color-accent);
-        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-      }
-    }
-  }
-
-  &__past {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    font-size: var(--text-sm);
-    color: var(--color-text-secondary);
-    font-weight: 500;
   }
 }
 
