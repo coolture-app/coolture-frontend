@@ -167,6 +167,12 @@
         [isFullView]="false"
       />
     }
+    <!-- A jump to the bottom, such as End, passes the trigger above without it ever being in view. -->
+    <div
+      class="list-end"
+      [appInfiniteScroll]="list.canLoadMore()"
+      (reachedEnd)="list.loadMore()"
+    ></div>
     @if (list.failed()) {
       <div class="empty empty--action" role="alert">
         <span>{{ 'MAIN_PAGE.loadError' | translate }}</span>

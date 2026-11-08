@@ -11,6 +11,7 @@ import { PostService } from '../../core/services/post/post.service';
 import { GeoPoint } from '../../core/models/common/geo.model';
 import { PostCard } from '../../core/models/posts/post-card.model';
 import { PostDetail } from '../../core/models/posts/post-detail.model';
+import { InfiniteScroll } from '../../core/directives/infinite-scroll';
 
 @Component({ template: '' })
 class OtherPage {}
@@ -454,6 +455,29 @@ describe('MainPage', () => {
       expect(triggers[0].nextElementSibling.querySelector('.post__title').textContent.trim()).toBe(
         'Post c5',
       );
+    });
+
+    it('also asks from after the last card, for a jump straight to the bottom', async () => {
+      const ids = Array.from({ length: 20 }, (_, i) => `c${i}`);
+      await open();
+      expectFeed().flush({
+        ...page(ids),
+        mode: 'RANKED',
+        page: { limit: 20, hasMore: true, nextCursor: 'c1' },
+      });
+      await settle();
+
+      const end = fixture.nativeElement.querySelector('.list-end');
+      expect(end.previousElementSibling.querySelector('.post__title').textContent.trim()).toBe(
+        'Post c19',
+      );
+      spyOn(component.list, 'loadMore');
+      const directive = fixture.debugElement
+        .queryAll((el) => el.nativeElement === end)[0]
+        .injector.get(InfiniteScroll);
+      expect(directive.enabled()).toBeTrue();
+      directive.reachedEnd.emit();
+      expect(component.list.loadMore).toHaveBeenCalled();
     });
 
     it('asks straight away when a short page leaves fewer cards than that', async () => {
