@@ -126,4 +126,21 @@ describe('LocationService', () => {
     expect(await service.currentIfAllowed(1500)).toBeNull();
     expect(getPosition).not.toHaveBeenCalled();
   });
+
+  describe('distances', () => {
+    it('measures from the radius centre of the list centre while one is set, and knows no position before', () => {
+      expect(service.metersTo({ latitude: 54.35, longitude: 18.65 })).toBeNull();
+
+      service.measureFrom({ latitude: 54.35, longitude: 18.65 });
+
+      expect(service.known()).toBeTrue();
+      expect(service.metersTo({ latitude: 54.35, longitude: 18.65 })).toBe(0);
+      const gdynia = service.metersTo({ latitude: 54.52, longitude: 18.53 })!;
+      expect(gdynia).toBeGreaterThan(20_000);
+      expect(gdynia).toBeLessThan(21_000);
+
+      service.measureFrom(null);
+      expect(service.metersTo({ latitude: 54.35, longitude: 18.65 })).toBeNull();
+    });
+  });
 });

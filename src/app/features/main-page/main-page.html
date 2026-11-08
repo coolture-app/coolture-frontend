@@ -6,6 +6,30 @@
     [class.searchbar--hidden]="barHidden()"
   >
     <div class="searchbar__inner">
+      <div class="tabs" role="tablist" [attr.aria-label]="'MAIN_PAGE.tabs' | translate">
+        <button
+          type="button"
+          role="tab"
+          class="tabs__tab"
+          [class.tabs__tab--on]="isFeed()"
+          [attr.aria-selected]="isFeed()"
+          [appTooltip]="'MAIN_PAGE.forYouHint' | translate"
+          (click)="setTab('forYou')"
+        >
+          {{ 'MAIN_PAGE.forYou' | translate }}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          class="tabs__tab"
+          [class.tabs__tab--on]="!isFeed()"
+          [attr.aria-selected]="!isFeed()"
+          [appTooltip]="'MAIN_PAGE.allHint' | translate"
+          (click)="setTab('all')"
+        >
+          {{ 'MAIN_PAGE.all' | translate }}
+        </button>
+      </div>
       <span class="searchbar__wrapper">
         <ng-icon class="searchbar__icon" name="heroMagnifyingGlass" />
         <input
@@ -29,7 +53,7 @@
         }
       </span>
       <div class="searchbar__row">
-        @if (!isMapView()) {
+        @if (!isMapView() && !isFeed()) {
           <div class="sort-wrapper">
             <button
               type="button"
@@ -50,7 +74,7 @@
                   <button
                     type="button"
                     class="sort-menu__item"
-                    [class.active]="currentSortBy() === option.value"
+                    [class.active]="sort() === option.value"
                     (click)="setSortBy(option.value)"
                   >
                     {{ option.labelKey | translate }}
@@ -151,18 +175,37 @@
     } @else if (list.items().length === 0) {
       <div class="empty empty--action">
         <span>{{ 'MAIN_PAGE.no-posts' | translate }}</span>
+        @if (widerRadius(); as km) {
+          <app-btn variant="secondary" size="sm" (btnClick)="widenRadius()">{{
+            'MAIN_PAGE.widenRadius' | translate: { km: km }
+          }}</app-btn>
+        }
         @if (canOfferPast()) {
           <app-btn variant="secondary" size="sm" (btnClick)="searchPastToo()">{{
             'MAIN_PAGE.searchPast' | translate
           }}</app-btn>
         }
+        @if (canOfferAll()) {
+          <span class="empty__hint">{{ 'MAIN_PAGE.seenBefore' | translate }}</span>
+          <app-btn variant="secondary" size="sm" (btnClick)="setTab('all')">{{
+            'MAIN_PAGE.showInAll' | translate
+          }}</app-btn>
+        }
       </div>
     } @else if (!list.hasMore()) {
-      <p class="empty">{{ 'MAIN_PAGE.endOfList' | translate }}</p>
+      <div class="empty empty--action">
+        <span>{{ 'MAIN_PAGE.endOfList' | translate }}</span>
+        @if (canOfferAll()) {
+          <span class="empty__hint">{{ 'MAIN_PAGE.seenBefore' | translate }}</span>
+          <app-btn variant="secondary" size="sm" (btnClick)="setTab('all')">{{
+            'MAIN_PAGE.showInAll' | translate
+          }}</app-btn>
+        }
+      </div>
     }
   }
   <!-- VIEW WITH MAP ON -->
   @else {
-    <app-map [filters]="activeFilters()"></app-map>
+    <app-map [filters]="activeFilters()" [excludeMine]="isFeed()"></app-map>
   }
 </div>

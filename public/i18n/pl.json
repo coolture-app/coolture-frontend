@@ -55,7 +55,17 @@
     "myLocation": "Moja lokalizacja",
     "radius": "Promień",
     "km": "{{km}} km",
-    "done": "Gotowe"
+    "done": "Gotowe",
+    "tabs": "Listy",
+    "forYou": "Dla Ciebie",
+    "all": "Wszystkie",
+    "forYouHint": "Nowe dla Ciebie, w kolejności dopasowania",
+    "allHint": "Wszystkie wydarzenia, w wybranej kolejności",
+    "sortNearest": "Najbliższe",
+    "nearestNeedsLocation": "Najbliższe potrzebują Twojej lokalizacji. Zezwól na nią w ustawieniach przeglądarki.",
+    "widenRadius": "Poszerz do {{km}} km",
+    "seenBefore": "Dla Ciebie pomija Twoje posty oraz polubione i zapisane.",
+    "showInAll": "Pokaż we Wszystkich"
   },
   "FULL_POST": {
     "title": "Fajny post",
@@ -85,7 +95,8 @@
     "photos": "Zdjęcia",
     "close-photos": "Zamknij",
     "previous-photo": "Poprzednie zdjęcie",
-    "next-photo": "Następne zdjęcie"
+    "next-photo": "Następne zdjęcie",
+    "distance": "Odległość od Ciebie"
   },
   "NAVBAR": {
     "main-page": "Strona główna",
@@ -197,7 +208,7 @@
     "location-latitude-error": "Szerokość jest wymagana (-90 do 90).",
     "location-longitude": "Długość geograficzna",
     "location-longitude-error": "Długość jest wymagana (-180 do 180).",
-    "media-label": "Zdjęcia",
+    "media-label": "Zdjęcia ({{count}}/{{max}})",
     "media-click": "Kliknij lub przeciągnij, aby dodać zdjęcia",
     "media-drag-hint": "lub przeciągnij pliki tutaj",
     "remove-photo": "Usuń zdjęcie",
@@ -207,7 +218,8 @@
     "newly-added": "Nowo dodane zdjęcia",
     "submit-saving": "Zapisywanie...",
     "submit-create": "Opublikuj wydarzenie",
-    "submit-edit": "Zapisz zmiany"
+    "submit-edit": "Zapisz zmiany",
+    "too-many-photos": "Post może mieć najwyżej {{max}} zdjęć."
   },
   "COMMENT": {
     "reply": "Odpowiedz",

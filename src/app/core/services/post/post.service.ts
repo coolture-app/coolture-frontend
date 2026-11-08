@@ -12,11 +12,15 @@ import { FeedPage } from '../../models/posts/feed-page.model';
 import { GeoPoint } from '../../models/common/geo.model';
 import { PostMark } from '../../models/posts/post-mark.model';
 
-/** The first page may send a location. Every later page sends only the cursor, which holds it. */
+/**
+ * The first page may send a location for proximity, which the cursor then holds. The filters go with
+ * every page, as on `/posts`, and a radius sends its own centre every time.
+ */
 export interface FeedParams {
   cursor?: string;
   limit?: number;
   location?: GeoPoint;
+  filters?: PostFilterParams;
 }
 
 /** The search and filters that `/posts` and `/posts/map` both take. */
@@ -35,6 +39,12 @@ function filterParams(filters: PostFilterParams): HttpParams {
     (type) => (params = params.append('participationTypes', type)),
   );
   filters.tags?.forEach((tag) => (params = params.append('tags', tag)));
+  if (filters.radiusKm && filters.latitude !== undefined && filters.longitude !== undefined) {
+    params = params
+      .set('latitude', filters.latitude)
+      .set('longitude', filters.longitude)
+      .set('radiusKm', filters.radiusKm);
+  }
   return params;
 }
 
@@ -60,33 +70,37 @@ export class PostService {
     let params = filterParams(filters);
     if (filters.cursor) params = params.set('cursor', filters.cursor);
     if (filters.limit) params = params.set('limit', filters.limit);
-    if (filters.latitude) params = params.set('latitude', filters.latitude);
-    if (filters.longitude) params = params.set('longitude', filters.longitude);
-    if (filters.radiusKm) params = params.set('radiusKm', filters.radiusKm);
+    // NEAREST needs the position even without a radius.
+    if (filters.latitude !== undefined && filters.longitude !== undefined) {
+      params = params.set('latitude', filters.latitude).set('longitude', filters.longitude);
+    }
     if (filters.sortBy) params = params.set('sortBy', filters.sortBy);
 
     return this.http.get<PaginatedResponse<PostCard>>(this.apiUrl.path('/posts'), { params });
   }
 
-  getFeed({ cursor, limit, location }: FeedParams = {}): Observable<FeedPage> {
-    let params = new HttpParams();
+  getFeed({ cursor, limit, location, filters = {} }: FeedParams = {}): Observable<FeedPage> {
+    let params = filterParams(filters);
     if (limit) params = params.set('limit', limit);
     if (cursor) {
       params = params.set('cursor', cursor);
-    } else if (location) {
+    } else if (location && !params.has('latitude')) {
       params = params.set('latitude', location.latitude).set('longitude', location.longitude);
     }
     return this.http.get<FeedPage>(this.apiUrl.path('/feed'), { params });
   }
 
+  /** With excludeMine, the map leaves out what the feed leaves out: the viewer's own and reacted posts. */
   getMapMarks(
     filters: PostFilterParams = {},
     bounds: {
       leftUpper: { latitude: number; longitude: number };
       rightBottom: { latitude: number; longitude: number };
     },
+    excludeMine = false,
   ): Observable<PostMark[]> {
     let params = filterParams(filters);
+    if (excludeMine) params = params.set('excludeMine', true);
     params = params.set('leftUpper.latitude', bounds.leftUpper.latitude.toString());
     params = params.set('leftUpper.longitude', bounds.leftUpper.longitude.toString());
     params = params.set('rightBottom.latitude', bounds.rightBottom.latitude.toString());

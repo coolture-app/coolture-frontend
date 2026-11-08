@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   effect,
   inject,
   input,
@@ -20,8 +21,9 @@ import {
   MarkersForClustersComponent,
   PointDirective,
   ClusterPointDirective,
+  LayerComponent,
 } from '@maplibre/ngx-maplibre-gl';
-import { FeatureCollection, Point, Feature } from 'geojson';
+import { FeatureCollection, Point, Feature, Polygon } from 'geojson';
 import { MapMarker } from '../map-marker/map-marker';
 import { MapPopup } from '../map-popup/map-popup';
 
@@ -35,6 +37,7 @@ import { MapPopup } from '../map-popup/map-popup';
     MarkersForClustersComponent,
     PointDirective,
     ClusterPointDirective,
+    LayerComponent,
     MapMarker,
     MapPopup,
   ],
@@ -46,6 +49,16 @@ export class Map implements OnDestroy {
   private postService = inject(PostService);
 
   filters = input<PostFilterParams>({});
+  /** The feed's tab: leave out what the feed leaves out, so the map shows the same posts as the list. */
+  excludeMine = input(false);
+
+  /** The location filter's area, drawn over the map. */
+  readonly radiusArea = computed(() => {
+    const { latitude, longitude, radiusKm } = this.filters();
+    return latitude !== undefined && longitude !== undefined && radiusKm
+      ? circle(latitude, longitude, radiusKm)
+      : null;
+  });
 
   @ViewChild('map') mapComponent!: MglMapComponent;
 
@@ -60,9 +73,14 @@ export class Map implements OnDestroy {
     effect(() => {
       // Explicitly read filters to ensure they are tracked by the effect
       this.filters();
-      // Re-fetch when filters change, if we have bounds
-      if (this.mapComponent?.mapInstance) {
-        this.fetchMarks(this.mapComponent.mapInstance.getBounds());
+      this.excludeMine();
+      const area = this.radiusArea();
+      // Re-fetch when filters change, if we have bounds. A new radius brings its whole area into view first.
+      const map = this.mapComponent?.mapInstance;
+      if (map && area && this.fittedArea !== area) {
+        this.fitTo(map, area);
+      } else if (map) {
+        this.fetchMarks(map.getBounds());
       }
     });
 
@@ -77,7 +95,29 @@ export class Map implements OnDestroy {
   }
 
   onMapLoad(map: maplibregl.Map): void {
-    this.fetchMarks(map.getBounds());
+    const area = this.radiusArea();
+    if (area) {
+      this.fitTo(map, area);
+    } else {
+      this.fetchMarks(map.getBounds());
+    }
+  }
+
+  private fittedArea: Feature<Polygon> | null = null;
+
+  /** The move's end fetches the markers for the new view. */
+  private fitTo(map: maplibregl.Map, area: Feature<Polygon>): void {
+    this.fittedArea = area;
+    const ring = area.geometry.coordinates[0];
+    const lngs = ring.map(([lng]) => lng);
+    const lats = ring.map(([, lat]) => lat);
+    map.fitBounds(
+      [
+        [Math.min(...lngs), Math.min(...lats)],
+        [Math.max(...lngs), Math.max(...lats)],
+      ],
+      { padding: 32, duration: 0 },
+    );
   }
 
   onMoveEnd(event: unknown): void {
@@ -109,23 +149,25 @@ export class Map implements OnDestroy {
       rightBottom: { latitude: south, longitude: east },
     };
 
-    this.postService.getMapMarks(this.filters(), mapBounds).subscribe((marks: PostMark[]) => {
-      const features = marks.map((mark) => ({
-        type: 'Feature' as const,
-        geometry: {
-          type: 'Point' as const,
-          coordinates: [mark.coordinates.longitude, mark.coordinates.latitude],
-        },
-        properties: {
-          id: mark.id,
-          title: mark.title,
-          description: mark.description,
-          coverMediaUrl: mark.coverMediaUrl,
-          positiveReactionCount: mark.positiveReactionCount,
-        },
-      }));
-      this.postsGeoJson.set({ type: 'FeatureCollection', features });
-    });
+    this.postService
+      .getMapMarks(this.filters(), mapBounds, this.excludeMine())
+      .subscribe((marks: PostMark[]) => {
+        const features = marks.map((mark) => ({
+          type: 'Feature' as const,
+          geometry: {
+            type: 'Point' as const,
+            coordinates: [mark.coordinates.longitude, mark.coordinates.latitude],
+          },
+          properties: {
+            id: mark.id,
+            title: mark.title,
+            description: mark.description,
+            coverMediaUrl: mark.coverMediaUrl,
+            positiveReactionCount: mark.positiveReactionCount,
+          },
+        }));
+        this.postsGeoJson.set({ type: 'FeatureCollection', features });
+      });
   }
 
   onClusterClick(event: Event, feature: Feature<Point>): void {
@@ -154,4 +196,27 @@ export class Map implements OnDestroy {
     this.mapComponent.mapInstance.panTo(feature.geometry.coordinates as [number, number]);
     this.selectedFeature.set(feature);
   }
+}
+
+const EARTH_RADIUS_KM = 6371;
+
+/** A circle on the map as a 64-sided polygon, close enough at city scale. */
+function circle(latitude: number, longitude: number, radiusKm: number): Feature<Polygon> {
+  const angular = radiusKm / EARTH_RADIUS_KM;
+  const lat = (latitude * Math.PI) / 180;
+  const lng = (longitude * Math.PI) / 180;
+  const ring = Array.from({ length: 65 }, (_, i) => {
+    const bearing = (i / 64) * 2 * Math.PI;
+    const pointLat = Math.asin(
+      Math.sin(lat) * Math.cos(angular) + Math.cos(lat) * Math.sin(angular) * Math.cos(bearing),
+    );
+    const pointLng =
+      lng +
+      Math.atan2(
+        Math.sin(bearing) * Math.sin(angular) * Math.cos(lat),
+        Math.cos(angular) - Math.sin(lat) * Math.sin(pointLat),
+      );
+    return [(pointLng * 180) / Math.PI, (pointLat * 180) / Math.PI];
+  });
+  return { type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [ring] } };
 }

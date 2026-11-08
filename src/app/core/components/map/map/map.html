@@ -7,6 +7,21 @@
     (mapLoad)="onMapLoad($event)"
     (moveEnd)="onMoveEnd($event)"
   >
+    @if (radiusArea(); as area) {
+      <mgl-geojson-source id="radius" [data]="area"></mgl-geojson-source>
+      <mgl-layer
+        id="radius-fill"
+        type="fill"
+        source="radius"
+        [paint]="{ 'fill-color': '#2563eb', 'fill-opacity': 0.08 }"
+      ></mgl-layer>
+      <mgl-layer
+        id="radius-line"
+        type="line"
+        source="radius"
+        [paint]="{ 'line-color': '#2563eb', 'line-width': 2, 'line-dasharray': [2, 2] }"
+      ></mgl-layer>
+    }
     <mgl-geojson-source
       id="posts"
       [data]="postsGeoJson()"

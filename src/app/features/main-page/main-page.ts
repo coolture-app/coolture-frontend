@@ -36,15 +36,18 @@ import { LocationService } from '../../core/services/location/location.service';
 import { PostListStore } from '../../core/services/post-list/post-list.store';
 import { HomeTapService } from '../../core/services/home-tap/home-tap.service';
 import { Tooltip } from '../../core/directives/tooltip';
-import {
-  PostType,
-  PostStatus,
-  PostVisibility,
-  PostSortBy,
-  PostsSort,
-} from '../../core/models/common/enums';
+import { PostType, PostStatus, PostVisibility, PostsSort } from '../../core/models/common/enums';
 import { Map } from '../../core/components/map/map/map';
-import { createFiltersForm, HomeViewMemory, NO_FILTERS } from './home-view';
+import { ToastService } from '../../core/services/toast/toast.service';
+import { TranslateService } from '@ngx-translate/core';
+import {
+  createFiltersForm,
+  HomeTab,
+  HomeViewMemory,
+  NO_FILTERS,
+  RADII_KM,
+  START_SORT,
+} from './home-view';
 import { FeedFilters } from './feed-filters/feed-filters';
 
 const LOCATION_WAIT_MS = 1500;
@@ -103,6 +106,8 @@ export class MainPage implements OnDestroy {
   private memory = inject(HomeViewMemory);
   private homeTap = inject(HomeTapService);
   private injector = inject(Injector);
+  private toast = inject(ToastService);
+  private translate = inject(TranslateService);
   authService = inject(AuthService);
   list = inject(PostListStore);
 
@@ -122,27 +127,25 @@ export class MainPage implements OnDestroy {
   private listScrollY = 0;
   private scrollStop: ReturnType<typeof setTimeout> | undefined;
 
-  sortOptions: { value: PostSortBy; labelKey: string }[] = [
-    { value: 'RECOMMENDED', labelKey: 'MAIN_PAGE.sortRecommended' },
-    { value: 'RECENT', labelKey: 'MAIN_PAGE.sortRecent' },
-    { value: 'POPULAR', labelKey: 'MAIN_PAGE.sortPopular' },
+  /** Wszystkie's orders. Dla Ciebie has no menu: its order is the ranking. */
+  sortOptions: { value: PostsSort; labelKey: string }[] = [
     { value: 'UPCOMING', labelKey: 'MAIN_PAGE.sortUpcoming' },
+    { value: 'NEAREST', labelKey: 'MAIN_PAGE.sortNearest' },
+    { value: 'POPULAR', labelKey: 'MAIN_PAGE.sortPopular' },
+    { value: 'RECENT', labelKey: 'MAIN_PAGE.sortRecent' },
   ];
 
   filtersForm = createFiltersForm();
-  /** The position "Moja lokalizacja" filters by, once the browser gave it. Never stored. */
+  /** The user's position, for "Moja lokalizacja" and Najbliższe, once the browser gave it. Never stored. */
   private nearPosition = signal<GeoPoint | null>(null);
 
-  /** The applied search and filters, also what the map shows. */
+  /** The applied search and filters, also what the map shows. Both tabs share them. */
   readonly activeFilters = signal<PostFilterParams>({});
-  /** A sort the user chose. Without one, the list follows the search and filters. */
-  private pickedSort = signal<PostsSort | null>(null);
-
-  readonly currentSortBy = computed<PostSortBy>(() => {
-    const noCriteria = Object.keys(this.activeFilters()).length === 0;
-    return this.pickedSort() ?? (noCriteria ? 'RECOMMENDED' : 'RECENT');
-  });
-  readonly isFeed = computed(() => this.currentSortBy() === 'RECOMMENDED');
+  /** Dla Ciebie is the ranked feed of posts new to the user; Wszystkie is every post, in a chosen order. */
+  readonly tab = signal<HomeTab>('forYou');
+  /** Wszystkie's order. Kept while on Dla Ciebie, so going back finds it as it was. */
+  readonly sort = signal<PostsSort>(START_SORT);
+  readonly isFeed = computed(() => this.tab() === 'forYou');
   /** How many filters the panel has on, counting a date range and a place as one each. Not the search. */
   readonly activeFilterCount = computed(() => {
     const { type, tags, startsFrom, startsTo, visibility, status, includePast, latitude } =
@@ -160,7 +163,14 @@ export class MainPage implements OnDestroy {
   readonly canOfferPast = computed(() => {
     const { includePast, startsFrom, startsTo } = this.activeFilters();
     const windowApplies = !includePast && !startsFrom && !startsTo;
-    return !this.isFeed() && windowApplies && this.currentSortBy() !== 'UPCOMING';
+    return windowApplies && (this.isFeed() || this.sort() !== 'UPCOMING');
+  });
+  /** Dla Ciebie hides what the user saw or saved, so a search there points to Wszystkie too. */
+  readonly canOfferAll = computed(() => this.isFeed() && !!this.activeFilters().q);
+  /** The next radius chip, offered when nothing is inside the current one. */
+  readonly widerRadius = computed(() => {
+    const radius = this.activeFilters().radiusKm;
+    return radius === undefined ? null : (RADII_KM.find((km) => km > radius) ?? null);
   });
 
   /** False until the first render in the browser, so a prerendered page never holds a response. */
@@ -173,6 +183,15 @@ export class MainPage implements OnDestroy {
     this.postService.clearActivePost();
 
     afterNextRender(() => this.ready.set(true));
+
+    // Cards measure distances from the point the list was filtered or sorted by, so they agree with
+    // it: the radius's centre, or Najbliższe's position. See LocationService.
+    effect(() => {
+      const { latitude, longitude, radiusKm } = this.activeFilters();
+      const nearest = !this.isFeed() && this.sort() === 'NEAREST' ? this.nearPosition() : null;
+      const centre = radiusKm && latitude !== undefined && longitude !== undefined;
+      this.location.measureFrom(centre ? { latitude, longitude } : nearest);
+    });
 
     // First open, and again if the store was cleared because the user changed.
     effect(() => {
@@ -208,6 +227,7 @@ export class MainPage implements OnDestroy {
 
   ngOnDestroy(): void {
     clearTimeout(this.scrollStop);
+    this.location.measureFrom(null);
   }
 
   applyControls(): void {
@@ -269,20 +289,37 @@ export class MainPage implements OnDestroy {
     }
   }
 
-  setSortBy(sortBy: PostSortBy): void {
+  /** Najbliższe needs the position. If the browser won't give it, the order stays and a note says why. */
+  async setSortBy(sortBy: PostsSort): Promise<void> {
     this.showSortMenu.set(false);
-    this.changeList(() => {
-      if (sortBy === 'RECOMMENDED') {
-        this.resetControls();
+    if (sortBy === 'NEAREST' && !this.nearPosition()) {
+      const position = await this.location.request();
+      if (!position) {
+        this.toast.show(this.translate.instant('MAIN_PAGE.nearestNeedsLocation'));
+        return;
       }
-      this.pickedSort.set(sortBy === 'RECOMMENDED' ? null : sortBy);
-      this.activeFilters.set(this.readFilters());
-    });
+      this.nearPosition.set(position);
+    }
+    this.changeList(() => this.sort.set(sortBy));
+  }
+
+  /** Search and filters stay, so the same question gets the other tab's answer. */
+  setTab(tab: HomeTab): void {
+    this.changeList(() => this.tab.set(tab));
+  }
+
+  /** The empty list's shortcut: the next radius chip. The panel shows the new value. */
+  widenRadius(): void {
+    const radius = this.widerRadius();
+    if (radius !== null) {
+      this.filtersForm.controls.radiusKm.setValue(radius, { emitEvent: false });
+      this.applyControls();
+    }
   }
 
   getSortLabelKey(): string {
-    const sort = this.sortOptions.find((o) => o.value === this.currentSortBy());
-    return sort ? sort.labelKey : 'MAIN_PAGE.sortRecent';
+    const sort = this.sortOptions.find((o) => o.value === this.sort());
+    return sort ? sort.labelKey : 'MAIN_PAGE.sortUpcoming';
   }
 
   toggleMapView(isToggled: boolean): void {
@@ -308,7 +345,8 @@ export class MainPage implements OnDestroy {
   /** Home tapped at the top: the default feed again, as a new session with a new first page. */
   startFresh(): void {
     this.resetControls();
-    this.pickedSort.set(null);
+    this.tab.set('forYou');
+    this.sort.set(START_SORT);
     this.activeFilters.set(this.readFilters());
     this.isMapView.set(false);
     this.load();
@@ -316,7 +354,8 @@ export class MainPage implements OnDestroy {
 
   /** Applies a change, and starts a new list only if it changes which list should be showing. */
   private changeList(change: () => void): void {
-    const listKey = () => JSON.stringify([this.currentSortBy(), this.activeFilters()]);
+    const listKey = () =>
+      JSON.stringify([this.tab(), this.isFeed() ? null : this.sort(), this.activeFilters()]);
     const before = listKey();
     change();
     if (listKey() !== before) {
@@ -335,9 +374,11 @@ export class MainPage implements OnDestroy {
     if (this.isFeed()) {
       void this.startFeed(run);
     } else {
+      const sortBy = this.sort();
+      const position = sortBy === 'NEAREST' ? this.nearPosition() : null;
       this.list.start({
         kind: 'posts',
-        filters: { ...this.activeFilters(), sortBy: this.currentSortBy() as PostsSort },
+        filters: { ...this.activeFilters(), ...position, sortBy },
       });
     }
   }
@@ -349,7 +390,11 @@ export class MainPage implements OnDestroy {
   private async startFeed(run: number): Promise<void> {
     const location = await this.location.currentOrAsk(LOCATION_WAIT_MS, LOCATION_ANSWER_MS);
     if (run === this.loadRun) {
-      this.list.start({ kind: 'feed', ...(location && { location }) });
+      this.list.start({
+        kind: 'feed',
+        ...(location && { location }),
+        filters: this.activeFilters(),
+      });
     }
   }
 
@@ -399,7 +444,8 @@ export class MainPage implements OnDestroy {
     this.memory.save({
       search: this.searchControl.value,
       filters: this.filtersForm.getRawValue(),
-      pickedSort: this.pickedSort(),
+      tab: this.tab(),
+      sort: this.sort(),
       isMapView: this.isMapView(),
       listScrollY: this.listScrollY,
       nearPosition: this.nearPosition(),
@@ -420,7 +466,8 @@ export class MainPage implements OnDestroy {
 
     this.searchControl.setValue(view.search, { emitEvent: false });
     this.filtersForm.setValue(view.filters, { emitEvent: false });
-    this.pickedSort.set(view.pickedSort);
+    this.tab.set(view.tab);
+    this.sort.set(view.sort);
     this.nearPosition.set(view.nearPosition);
     this.isMapView.set(view.isMapView);
     this.listScrollY = view.listScrollY;

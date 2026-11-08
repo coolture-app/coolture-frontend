@@ -12,6 +12,7 @@ import { PostCard } from '../../core/models/posts/post-card.model';
 import { PostDetail } from '../../core/models/posts/post-detail.model';
 import { InfiniteScroll } from '../../core/directives/infinite-scroll';
 import { HomeTapService } from '../../core/services/home-tap/home-tap.service';
+import { ToastService } from '../../core/services/toast/toast.service';
 
 @Component({ template: '' })
 class OtherPage {}
@@ -110,6 +111,8 @@ describe('MainPage', () => {
             currentIfAllowed: () => Promise.resolve(allowedLocation),
             currentOrAsk: () => Promise.resolve(allowedLocation),
             request: () => locationRequest ?? Promise.resolve(askedLocation),
+            measureFrom: () => undefined,
+            metersTo: () => null,
           },
         },
       ],
@@ -123,150 +126,130 @@ describe('MainPage', () => {
 
   afterEach(() => http.verify());
 
-  describe('the flow between the feed and browsing', () => {
-    it('opens on the feed, under Recommended', async () => {
+  describe('the two tabs', () => {
+    it('opens on Dla Ciebie, the feed', async () => {
       await open();
 
       expectFeed().flush({ ...page(['a']), mode: 'RANKED' });
       await settle();
 
-      expect(component.currentSortBy()).toBe('RECOMMENDED');
+      expect(component.tab()).toBe('forYou');
       expect(shownTitles()).toEqual(['Post a']);
     });
 
-    it('offers Recommended to everyone, signed in or not', async () => {
-      await open();
-      expectFeed().flush({ ...page(), mode: 'RANKED' });
-
-      expect(component.authService.isAuthenticated()).toBeFalse();
-      expect(component.sortOptions.map((o) => o.value)).toContain('RECOMMENDED');
-    });
-
-    it('moves to /posts, under Recent, when a search is typed', async () => {
+    it('narrows Dla Ciebie with a search, and stays on the feed', async () => {
       await open();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
 
       component.searchControl.setValue('  jazz ');
       await debounce();
 
-      const posts = expectPosts();
-      expect(param(posts, 'q')).toBe('jazz');
-      expect(param(posts, 'sortBy')).toBe('RECENT');
-      expect(component.currentSortBy()).toBe('RECENT');
-      posts.flush(page());
+      const feed = expectFeed();
+      expect(param(feed, 'q')).toBe('jazz');
+      expect(component.tab()).toBe('forYou');
+      feed.flush({ ...page(), mode: 'RANKED' });
     });
 
-    it('moves to /posts, under Recent, when a filter is set', async () => {
+    it('narrows Dla Ciebie with filters, sent again with every page', async () => {
       await open();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
 
       component.filtersForm.controls.type.setValue('OFFLINE');
-      await debounce();
-
-      const posts = expectPosts();
-      expect(param(posts, 'type')).toBe('OFFLINE');
-      expect(param(posts, 'sortBy')).toBe('RECENT');
-      posts.flush(page());
-    });
-
-    it('goes back to /feed when the search and filters are cleared', async () => {
-      await open();
-      expectFeed().flush({ ...page(), mode: 'RANKED' });
-      component.searchControl.setValue('jazz');
       component.filtersForm.controls.tags.setValue('a, b');
       await debounce();
-      const posts = expectPosts();
-      expect(posts.request.params.getAll('tags')).toEqual(['a', 'b']);
-      posts.flush(page());
 
-      component.clearFilters();
+      const first = expectFeed();
+      expect(param(first, 'type')).toBe('OFFLINE');
+      expect(first.request.params.getAll('tags')).toEqual(['a', 'b']);
+      first.flush({
+        items: [card('a')],
+        page: { limit: 20, hasMore: true, nextCursor: 'c1' },
+        mode: 'RANKED',
+      });
       await settle();
 
-      expectFeed().flush({ ...page(), mode: 'RANKED' });
-      expect(component.currentSortBy()).toBe('RECOMMENDED');
+      component.list.loadMore();
+      const next = expectFeed();
+      expect(param(next, 'cursor')).toBe('c1');
+      expect(param(next, 'type')).toBe('OFFLINE');
+      next.flush({ ...page(), mode: 'RANKED' });
     });
 
-    it('goes back to /feed when a typed search is deleted', async () => {
+    it('shows Wszystkie as every post, coming up next first, with the same search', async () => {
       await open();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
       component.searchControl.setValue('jazz');
       await debounce();
-      expectPosts().flush(page());
-
-      component.searchControl.setValue('');
-      await debounce();
-
       expectFeed().flush({ ...page(), mode: 'RANKED' });
+
+      component.setTab('all');
+      await settle();
+
+      const posts = expectPosts();
+      expect(param(posts, 'q')).toBe('jazz');
+      expect(param(posts, 'sortBy')).toBe('UPCOMING');
+      posts.flush(page());
     });
 
-    it('uses /posts with a sort picked by hand, and stays on it when the search is cleared', async () => {
+    it('keeps the sort when filters change on Wszystkie, and keeps the filters when the sort changes', async () => {
       await open();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
+      component.setTab('all');
+      await settle();
+      expectPosts().flush(page());
 
-      component.setSortBy('POPULAR');
+      await component.setSortBy('POPULAR');
       await settle();
       expect(param(expectPosts(), 'sortBy')).toBe('POPULAR');
 
-      component.searchControl.setValue('jazz');
+      component.filtersForm.controls.type.setValue('ONLINE');
       await debounce();
-      const searched = expectPosts();
-      expect(param(searched, 'q')).toBe('jazz');
-      expect(param(searched, 'sortBy')).toBe('POPULAR');
-      searched.flush(page());
+      const filtered = expectPosts();
+      expect(param(filtered, 'sortBy')).toBe('POPULAR');
+      expect(param(filtered, 'type')).toBe('ONLINE');
+      filtered.flush(page());
 
-      component.clearFilters();
+      await component.setSortBy('RECENT');
       await settle();
-      const cleared = expectPosts();
-      expect(param(cleared, 'q')).toBeNull();
-      expect(param(cleared, 'sortBy')).toBe('POPULAR');
-      expect(component.currentSortBy()).toBe('POPULAR');
-      cleared.flush(page());
+      const resorted = expectPosts();
+      expect(param(resorted, 'type')).toBe('ONLINE');
+      resorted.flush(page());
     });
 
-    it('keeps a by-hand Recent even though Recent is also what a search shows', async () => {
+    it('shows the sort menu only on Wszystkie', async () => {
       await open();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
-      component.setSortBy('RECENT');
+      await settle();
+      expect(fixture.nativeElement.querySelector('.sort-wrapper')).toBeNull();
+
+      component.setTab('all');
       await settle();
       expectPosts().flush(page());
-
-      component.clearFilters();
       await settle();
 
-      expect(component.currentSortBy()).toBe('RECENT');
+      expect(fixture.nativeElement.querySelector('.sort-wrapper')).not.toBeNull();
+      expect(component.sortOptions.map((o) => o.value)).toEqual([
+        'UPCOMING',
+        'NEAREST',
+        'POPULAR',
+        'RECENT',
+      ]);
     });
 
-    it('clears everything and goes to /feed when Recommended is picked', async () => {
+    it('goes back to the feed, with its filters, on Dla Ciebie', async () => {
       await open();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
-      component.setSortBy('UPCOMING');
+      component.setTab('all');
       await settle();
       expectPosts().flush(page());
-      component.searchControl.setValue('jazz');
       component.filtersForm.controls.includePast.setValue(true);
       await debounce();
       expectPosts().flush(page());
 
-      component.setSortBy('RECOMMENDED');
+      component.setTab('forYou');
       await settle();
 
-      expectFeed().flush({ ...page(), mode: 'RANKED' });
-      expect(component.searchControl.value).toBe('');
-      expect(component.filtersForm.controls.includePast.value).toBeFalse();
-    });
-
-    it('goes to /feed when Recommended is picked from a sort with no search', async () => {
-      await open();
-      expectFeed().flush({ ...page(), mode: 'RANKED' });
-      component.setSortBy('POPULAR');
-      await settle();
-      expectPosts().flush(page(['p']));
-
-      component.setSortBy('RECOMMENDED');
-      await settle();
-
-      expectFeed().flush({ ...page(), mode: 'RANKED' });
-      expect(component.currentSortBy()).toBe('RECOMMENDED');
+      expect(param(expectFeed(), 'includePast')).toBe('true');
     });
 
     it('never disables search or filters on the feed', async () => {
@@ -284,7 +267,7 @@ describe('MainPage', () => {
 
       component.clearFilters();
       component.applyControls();
-      component.setSortBy('RECOMMENDED');
+      component.setTab('forYou');
       await settle();
 
       expect(shownTitles()).toEqual(['Post a']);
@@ -298,8 +281,68 @@ describe('MainPage', () => {
       component.applyControls();
       await settle();
 
-      expectPosts().flush(page());
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
       await debounce();
+    });
+
+    it('points a search on Dla Ciebie to Wszystkie, at the end of its results', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      component.searchControl.setValue('jazz');
+      await debounce();
+      expectFeed().flush({ ...page(['a']), mode: 'RANKED' });
+      await settle();
+
+      expect(text()).toContain('MAIN_PAGE.seenBefore');
+      button('MAIN_PAGE.showInAll').click();
+      await settle();
+
+      expect(component.tab()).toBe('all');
+      expect(param(expectPosts(), 'q')).toBe('jazz');
+    });
+
+    it('does not point to Wszystkie without a search', async () => {
+      await open();
+      expectFeed().flush({ ...page(['a']), mode: 'RANKED' });
+      await settle();
+
+      expect(text()).not.toContain('MAIN_PAGE.seenBefore');
+    });
+  });
+
+  describe('Najbliższe', () => {
+    it('sends the position with the sort', async () => {
+      askedLocation = { latitude: 54.35, longitude: 18.65 };
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      component.setTab('all');
+      await settle();
+      expectPosts().flush(page());
+
+      await component.setSortBy('NEAREST');
+      await settle();
+
+      const posts = expectPosts();
+      expect(param(posts, 'sortBy')).toBe('NEAREST');
+      expect(param(posts, 'latitude')).toBe('54.35');
+      expect(param(posts, 'longitude')).toBe('18.65');
+      expect(param(posts, 'radiusKm')).toBeNull();
+      posts.flush(page());
+    });
+
+    it('keeps the order and says why when the position is refused', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      component.setTab('all');
+      await settle();
+      expectPosts().flush(page());
+
+      await component.setSortBy('NEAREST');
+      await settle();
+
+      http.expectNone((r) => r.url.endsWith('/posts'));
+      expect(component.sort()).toBe('UPCOMING');
+      expect(TestBed.inject(ToastService).message()).toBe('MAIN_PAGE.nearestNeedsLocation');
     });
   });
 
@@ -310,7 +353,7 @@ describe('MainPage', () => {
       component.searchControl.setValue('jazz');
       component.applyControls();
       await settle();
-      expectPosts().flush(page(['j']));
+      expectFeed().flush({ ...page(['j']), mode: 'RANKED' });
       await settle();
 
       (fixture.nativeElement.querySelector('.searchbar__clear') as HTMLButtonElement).click();
@@ -332,7 +375,7 @@ describe('MainPage', () => {
       );
       component.applyControls();
       await settle();
-      expectPosts().flush(page());
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
       await settle();
 
       expect(component.activeFilterCount()).toBe(2);
@@ -345,7 +388,7 @@ describe('MainPage', () => {
       expectFeed().flush({ ...page(), mode: 'RANKED' });
       (scroller.scrollToPosition as jasmine.Spy).calls.reset();
 
-      component.setSortBy('POPULAR');
+      component.setTab('all');
       await settle();
 
       expect(scroller.scrollToPosition).toHaveBeenCalledWith([0, 0]);
@@ -407,7 +450,7 @@ describe('MainPage', () => {
       component.toggleMapView(false);
       await settle();
 
-      expect(param(expectPosts(), 'q')).toBe('jazz');
+      expect(param(expectFeed(), 'q')).toBe('jazz');
     });
 
     it('does not reload the list when nothing changed meanwhile', async () => {
@@ -454,7 +497,7 @@ describe('MainPage', () => {
       await settle();
 
       http.match((r) => r.url.endsWith('/posts/map'));
-      expectPosts();
+      expectFeed();
       expect(scroller.scrollToPosition).not.toHaveBeenCalledWith([0, 1234]);
     });
   });
@@ -467,26 +510,26 @@ describe('MainPage', () => {
       component.filtersForm.controls.includePast.setValue(true);
       await debounce();
 
-      expect(param(expectPosts(), 'includePast')).toBe('true');
+      expect(param(expectFeed(), 'includePast')).toBe('true');
       expect(component.activeFilters()).toEqual({ includePast: true });
     });
 
-    it('offers past events on an empty result in browse, and opens the filters', async () => {
+    it('offers past events on an empty result, and opens the filters', async () => {
       await open();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
       component.searchControl.setValue('jazz');
       await debounce();
-      expectPosts().flush(page());
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
       await settle();
 
       button('MAIN_PAGE.searchPast').click();
       await settle();
 
-      const posts = expectPosts();
-      expect(param(posts, 'q')).toBe('jazz');
-      expect(param(posts, 'includePast')).toBe('true');
+      const feed = expectFeed();
+      expect(param(feed, 'q')).toBe('jazz');
+      expect(param(feed, 'includePast')).toBe('true');
       expect(component.showFilters()).toBeTrue();
-      posts.flush(page());
+      feed.flush({ ...page(), mode: 'RANKED' });
       await settle();
       expect(button('MAIN_PAGE.searchPast')).toBeUndefined();
     });
@@ -495,15 +538,15 @@ describe('MainPage', () => {
       await open();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
       await settle();
-      expect(button('MAIN_PAGE.searchPast')).toBeUndefined();
 
-      component.setSortBy('UPCOMING');
+      // Wszystkie starts on Nadchodzące, which never shows ended events.
+      component.setTab('all');
       await settle();
       expectPosts().flush(page());
       await settle();
       expect(button('MAIN_PAGE.searchPast')).toBeUndefined();
 
-      component.setSortBy('RECENT');
+      void component.setSortBy('RECENT');
       component.filtersForm.controls.startsFrom.setValue('2026-01-01T10:00');
       await settle();
       http.match((r) => r.url.endsWith('/posts'));
@@ -657,9 +700,12 @@ describe('MainPage', () => {
       expect(shownTitles()).toEqual(['Post b']);
     });
 
-    it('leaves a search for the default feed', async () => {
+    it('leaves a search, and Wszystkie, for the default feed', async () => {
       await open();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
+      component.setTab('all');
+      await settle();
+      expectPosts().flush(page());
       component.searchControl.setValue('jazz');
       component.applyControls();
       await settle();
@@ -668,10 +714,12 @@ describe('MainPage', () => {
       TestBed.inject(HomeTapService).freshFeed.next();
       await settle();
 
-      expectFeed().flush({ ...page(['f']), mode: 'RANKED' });
+      const feed = expectFeed();
+      expect(param(feed, 'q')).toBeNull();
+      feed.flush({ ...page(['f']), mode: 'RANKED' });
       await settle();
       expect(component.searchControl.value).toBe('');
-      expect(component.currentSortBy()).toBe('RECOMMENDED');
+      expect(component.tab()).toBe('forYou');
       expect(shownTitles()).toEqual(['Post f']);
     });
   });
@@ -722,11 +770,21 @@ describe('MainPage', () => {
         chip('MAIN_PAGE.myLocation').click();
         await debounce();
 
-        const posts = expectPosts();
-        expect(param(posts, 'latitude')).toBe('54.35');
-        expect(param(posts, 'longitude')).toBe('18.65');
-        expect(param(posts, 'radiusKm')).toBe('5');
-        posts.flush(page());
+        const feed = expectFeed();
+        expect(param(feed, 'latitude')).toBe('54.35');
+        expect(param(feed, 'longitude')).toBe('18.65');
+        expect(param(feed, 'radiusKm')).toBe('5');
+        feed.flush({
+          items: [card('a')],
+          page: { limit: 20, hasMore: true, nextCursor: 'c1' },
+          mode: 'RANKED',
+        });
+        await settle();
+        component.list.loadMore();
+        const next = expectFeed();
+        expect(param(next, 'radiusKm')).toBe('5');
+        expect(param(next, 'latitude')).toBe('54.35');
+        next.flush({ ...page(), mode: 'RANKED' });
         await settle();
         expect(component.activeFilterCount()).toBe(1);
         const radii = fixture.nativeElement.querySelectorAll('.chip--small');
@@ -740,13 +798,34 @@ describe('MainPage', () => {
         await openFilters();
         chip('MAIN_PAGE.myLocation').click();
         await debounce();
-        expectPosts().flush(page());
+        expectFeed().flush({ ...page(), mode: 'RANKED' });
         await settle();
 
         (fixture.nativeElement.querySelectorAll('.chip--small')[4] as HTMLButtonElement).click();
         await debounce();
 
-        expect(param(expectPosts(), 'radiusKm')).toBe('50');
+        expect(param(expectFeed(), 'radiusKm')).toBe('50');
+      });
+
+      it('offers the next radius when nothing is inside, and none past the largest', async () => {
+        askedLocation = { latitude: 54.35, longitude: 18.65 };
+        await openFilters();
+        chip('MAIN_PAGE.myLocation').click();
+        await debounce();
+        expectFeed().flush({ ...page(), mode: 'RANKED' });
+        await settle();
+
+        button('MAIN_PAGE.widenRadius').click();
+        await settle();
+
+        expect(param(expectFeed(), 'radiusKm')).toBe('10');
+        expect(component.filtersForm.controls.radiusKm.value).toBe(10);
+
+        component.filtersForm.controls.radiusKm.setValue(100);
+        await debounce();
+        expectFeed().flush({ ...page(), mode: 'RANKED' });
+        await settle();
+        expect(button('MAIN_PAGE.widenRadius')).toBeUndefined();
       });
 
       it('goes back to Anywhere and says why when the position is refused', async () => {
@@ -771,7 +850,7 @@ describe('MainPage', () => {
         answer({ latitude: 54.35, longitude: 18.65 });
         await debounce();
         expect(component.locating()).toBeFalse();
-        expect(param(expectPosts(), 'radiusKm')).toBe('5');
+        expect(param(expectFeed(), 'radiusKm')).toBe('5');
       });
     });
 
@@ -822,8 +901,11 @@ describe('MainPage', () => {
       expect(scroller.scrollToPosition).not.toHaveBeenCalled();
     });
 
-    it('restores the search, the filters and the chosen sort', async () => {
-      component.setSortBy('POPULAR');
+    it('restores the tab, the search, the filters and the chosen sort', async () => {
+      component.setTab('all');
+      await settle();
+      expectPosts().flush(page());
+      await component.setSortBy('POPULAR');
       await settle();
       expectPosts().flush(page());
       component.searchControl.setValue('jazz');
@@ -839,7 +921,8 @@ describe('MainPage', () => {
       expect(component.searchControl.value).toBe('jazz');
       expect(component.filtersForm.controls.includePast.value).toBeTrue();
       expect(component.showFilters()).toBeFalse();
-      expect(component.currentSortBy()).toBe('POPULAR');
+      expect(component.tab()).toBe('all');
+      expect(component.sort()).toBe('POPULAR');
       expect(shownTitles()).toEqual(['Post c']);
       await debounce();
     });

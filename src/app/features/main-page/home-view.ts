@@ -24,6 +24,11 @@ export type FilterValues = typeof NO_FILTERS;
 /** The radius choices of the location filter, in km. */
 export const RADII_KM = [1, 5, 10, 25, 50, 100];
 
+/** The home page's two lists: the ranked feed of posts new to the user, and every post. */
+export type HomeTab = 'forYou' | 'all';
+/** Wszystkie's order until the user picks another: what's on next, as a calendar shows it. */
+export const START_SORT: PostsSort = 'UPCOMING';
+
 /** The filter panel's form, one control per value in NO_FILTERS. */
 export function createFiltersForm() {
   return new FormGroup({
@@ -44,7 +49,8 @@ export type FiltersForm = ReturnType<typeof createFiltersForm>;
 export interface HomeView {
   search: string;
   filters: FilterValues;
-  pickedSort: PostsSort | null;
+  tab: HomeTab;
+  sort: PostsSort;
   isMapView: boolean;
   /** Where the list under the map was scrolled to. The router restores only the page's own scroll. */
   listScrollY: number;

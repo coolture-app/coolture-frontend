@@ -55,7 +55,17 @@
     "myLocation": "My location",
     "radius": "Radius",
     "km": "{{km}} km",
-    "done": "Done"
+    "done": "Done",
+    "tabs": "Lists",
+    "forYou": "For you",
+    "all": "All",
+    "forYouHint": "New to you, best match first",
+    "allHint": "Every event, in the order you choose",
+    "sortNearest": "Nearest",
+    "nearestNeedsLocation": "Nearest needs your location. Allow it in your browser settings.",
+    "widenRadius": "Widen to {{km}} km",
+    "seenBefore": "For you leaves out your own, liked and saved posts.",
+    "showInAll": "Show in All"
   },
   "FULL_POST": {
     "title": "Cool post",
@@ -85,7 +95,8 @@
     "photos": "Photos",
     "close-photos": "Close",
     "previous-photo": "Previous photo",
-    "next-photo": "Next photo"
+    "next-photo": "Next photo",
+    "distance": "Distance from you"
   },
   "NAVBAR": {
     "main-page": "Home",
@@ -197,7 +208,7 @@
     "location-latitude-error": "Latitude is required (-90 to 90).",
     "location-longitude": "Longitude",
     "location-longitude-error": "Longitude is required (-180 to 180).",
-    "media-label": "Photos",
+    "media-label": "Photos ({{count}}/{{max}})",
     "media-click": "Click or drag to add photos",
     "media-drag-hint": "or drag files here",
     "remove-photo": "Remove photo",
@@ -207,7 +218,8 @@
     "newly-added": "Newly added photos",
     "submit-saving": "Saving...",
     "submit-create": "Publish event",
-    "submit-edit": "Save changes"
+    "submit-edit": "Save changes",
+    "too-many-photos": "A post can have at most {{max}} photos."
   },
   "COMMENT": {
     "reply": "Reply",

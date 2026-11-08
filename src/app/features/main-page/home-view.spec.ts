@@ -7,7 +7,8 @@ import { PostListStore } from '../../core/services/post-list/post-list.store';
 const VIEW: HomeView = {
   search: 'jazz',
   filters: NO_FILTERS,
-  pickedSort: null,
+  tab: 'forYou',
+  sort: 'UPCOMING',
   isMapView: false,
   listScrollY: 0,
   nearPosition: null,

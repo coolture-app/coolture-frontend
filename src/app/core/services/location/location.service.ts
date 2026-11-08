@@ -1,4 +1,4 @@
-import { inject, Injectable, PLATFORM_ID } from '@angular/core';
+import { computed, inject, Injectable, PLATFORM_ID, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { GeoPoint } from '../../models/common/geo.model';
 
@@ -11,6 +11,19 @@ const POSITION_OPTIONS: PositionOptions = {
 /** About 1.1 km. A precise position never leaves this service, so it can't reach URLs or logs. */
 function rounded(coordinate: number): number {
   return Math.round(coordinate * 100) / 100;
+}
+
+const EARTH_RADIUS_METERS = 6_371_000;
+
+/** Great-circle distance. Within a fraction of a percent of PostGIS's at city distances. */
+export function haversineMeters(a: GeoPoint, b: GeoPoint): number {
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const dLat = toRad(b.latitude - a.latitude);
+  const dLon = toRad(b.longitude - a.longitude);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(a.latitude)) * Math.cos(toRad(b.latitude)) * Math.sin(dLon / 2) ** 2;
+  return 2 * EARTH_RADIUS_METERS * Math.asin(Math.sqrt(h));
 }
 
 function within<T>(promise: Promise<T | null>, ms: number): Promise<T | null> {
@@ -31,6 +44,26 @@ function within<T>(promise: Promise<T | null>, ms: number): Promise<T | null> {
 export class LocationService {
   private platformId = inject(PLATFORM_ID);
   private asked = false;
+  /** The last precise position, for distances shown on this device only. Never sent or stored. */
+  private readonly precise = signal<GeoPoint | null>(null);
+  /**
+   * The centre of the list's radius filter, when one is on. Cards then measure from it, so a card
+   * inside the radius never shows more than the radius, even if the browser's later readings moved.
+   */
+  private readonly listCentre = signal<GeoPoint | null>(null);
+  /** Whether a position is known, so cards can show distances. */
+  readonly known = computed(() => (this.listCentre() ?? this.precise()) !== null);
+
+  /** Metres from the user to a point. Null when no position is known. */
+  metersTo(point: GeoPoint): number | null {
+    const from = this.listCentre() ?? this.precise();
+    return from ? haversineMeters(from, point) : null;
+  }
+
+  /** The home list sets the centre of its radius filter here, and null when the filter is off. */
+  measureFrom(centre: GeoPoint | null): void {
+    this.listCentre.set(centre);
+  }
 
   /** The position if the user has already allowed it, never prompting. Null if not, or if late. */
   async currentIfAllowed(maxWaitMs: number): Promise<GeoPoint | null> {
@@ -64,8 +97,10 @@ export class LocationService {
         return;
       }
       navigator.geolocation.getCurrentPosition(
-        ({ coords }) =>
-          resolve({ latitude: rounded(coords.latitude), longitude: rounded(coords.longitude) }),
+        ({ coords }) => {
+          this.precise.set({ latitude: coords.latitude, longitude: coords.longitude });
+          resolve({ latitude: rounded(coords.latitude), longitude: rounded(coords.longitude) });
+        },
         () => resolve(null),
         POSITION_OPTIONS,
       );
