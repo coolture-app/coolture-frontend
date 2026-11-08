@@ -1,7 +1,7 @@
 import { HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
-import { PostListStore, PostListView } from './post-list.store';
+import { PostListStore } from './post-list.store';
 import { AuthService } from '../auth/auth.service';
 import { PostCard } from '../../models/posts/post-card.model';
 import { PostDetail } from '../../models/posts/post-detail.model';
@@ -33,15 +33,6 @@ function page(ids: string[], nextCursor?: string) {
   };
 }
 
-const VIEW: PostListView = {
-  search: '',
-  filters: {},
-  pickedSort: null,
-  showFilters: false,
-  isMapView: false,
-  scrollY: 1200,
-};
-
 describe('PostListStore', () => {
   let store: PostListStore;
   let http: HttpTestingController;
@@ -69,19 +60,17 @@ describe('PostListStore', () => {
   afterEach(() => http.verify());
 
   describe('paging', () => {
-    it('appends pages, using the cursor and keeping the mode', () => {
+    it('appends pages, using the cursor, whatever the mode', () => {
       store.start({ kind: 'feed' });
       expect(store.loading()).toBeTrue();
       expectFeedRequest().flush(page(['a', 'b'], 'c1'));
 
       expect(store.loading()).toBeFalse();
-      expect(store.mode()).toBe('RANKED');
 
       store.loadMore();
       expectFeedRequest({ cursor: 'c1' }).flush({ ...page(['c']), mode: 'UPCOMING' });
 
       expect(ids()).toEqual(['a', 'b', 'c']);
-      expect(store.mode()).toBe('UPCOMING');
     });
 
     it('sends the location on the first page only', () => {
@@ -107,7 +96,6 @@ describe('PostListStore', () => {
       expect(second.request.params.get('sortBy')).toBe('POPULAR');
       expect(second.request.params.get('cursor')).toBe('c1');
       second.flush({ items: [card('b')], page: { limit: 20, hasMore: false } });
-      expect(store.mode()).toBeNull();
     });
 
     it('drops posts it already holds', () => {
@@ -244,34 +232,6 @@ describe('PostListStore', () => {
     });
   });
 
-  describe('going back to the list', () => {
-    beforeEach(() => jasmine.clock().install().mockDate(new Date('2026-11-04T12:00:00Z')));
-    afterEach(() => jasmine.clock().uninstall());
-
-    it('returns the saved view within 30 minutes', () => {
-      store.saveView(VIEW);
-      jasmine.clock().tick(29 * 60 * 1000);
-
-      expect(store.savedView()).toEqual(VIEW);
-    });
-
-    it('expires after 30 minutes', () => {
-      store.saveView(VIEW);
-      jasmine.clock().tick(30 * 60 * 1000);
-
-      expect(store.savedView()).toBeNull();
-    });
-
-    it('has nothing to return once a new list starts', () => {
-      store.saveView(VIEW);
-
-      store.start({ kind: 'feed' });
-
-      expect(store.savedView()).toBeNull();
-      expectFeedRequest().flush(page([]));
-    });
-  });
-
   describe('changes made elsewhere', () => {
     beforeEach(() => {
       store.start({ kind: 'feed' });
@@ -308,13 +268,11 @@ describe('PostListStore', () => {
         signIn('me');
         store.start({ kind: 'feed' });
         expectFeedRequest().flush(page(['a']));
-        store.saveView(VIEW);
 
         signIn(next);
 
         expect(store.query()).toBeNull();
         expect(ids()).toEqual([]);
-        expect(store.savedView()).toBeNull();
       }
     });
 

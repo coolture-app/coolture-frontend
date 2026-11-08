@@ -1,35 +1,19 @@
-import { effect, inject, Injectable, signal, untracked } from '@angular/core';
+import { computed, effect, inject, Injectable, signal, untracked } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, Subscription } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
 import { PostService } from '../post/post.service';
-import { FeedMode, PostsSort } from '../../models/common/enums';
 import { GeoPoint } from '../../models/common/geo.model';
 import { PaginatedResponse } from '../../models/common/paginated-response.model';
 import { PostCard } from '../../models/posts/post-card.model';
 import { PostDetail } from '../../models/posts/post-detail.model';
-import { FeedPage } from '../../models/posts/feed-page.model';
 import { PostFilterParams } from '../../models/posts/post-filter-params.model';
 
 export type PostListQuery =
   | { kind: 'feed'; location?: GeoPoint }
   | { kind: 'posts'; filters: PostFilterParams };
 
-/** What the home page needs to look the same when the user comes back to it. */
-export interface PostListView<Filters = unknown> {
-  search: string;
-  filters: Filters;
-  pickedSort: PostsSort | null;
-  showFilters: boolean;
-  isMapView: boolean;
-  scrollY: number;
-}
-
-/** Navigation state that asks the home page to put the list back, as the browser's Back does. */
-export const RESTORE_LIST_KEY = 'restoreList';
-
 const PAGE_SIZE = 20;
-const RESTORE_WINDOW_MS = 30 * 60 * 1000;
 
 /**
  * The home page's list, kept here so that it survives going to a post and back.
@@ -45,17 +29,15 @@ export class PostListStore {
 
   readonly query = signal<PostListQuery | null>(null);
   readonly items = signal<PostCard[]>([]);
-  readonly mode = signal<FeedMode | null>(null);
   readonly hasMore = signal(false);
   readonly loading = signal(false);
   readonly failed = signal(false);
+  readonly canLoadMore = computed(() => this.hasMore() && !this.loading() && !this.failed());
 
   private cursor: string | undefined;
   private seenIds = new Set<string>();
   private request: Subscription | undefined;
   private restarted = false;
-  private view: PostListView | null = null;
-  private viewSavedAt = 0;
   private user = '';
 
   constructor() {
@@ -87,7 +69,7 @@ export class PostListStore {
   }
 
   loadMore(): void {
-    if (this.hasMore() && !this.loading() && !this.failed()) {
+    if (this.canLoadMore()) {
       this.fetch();
     }
   }
@@ -111,27 +93,15 @@ export class PostListStore {
     this.items.update((items) => items.map((item) => (item.id === card.id ? card : item)));
   }
 
-  saveView(view: PostListView): void {
-    this.view = view;
-    this.viewSavedAt = Date.now();
-  }
-
-  /** The view to go back to, unless it was left too long ago to still feel like the same visit. */
-  savedView(): PostListView | null {
-    return Date.now() - this.viewSavedAt < RESTORE_WINDOW_MS ? this.view : null;
-  }
-
   private reset(): void {
     this.request?.unsubscribe();
     this.items.set([]);
-    this.mode.set(null);
     this.hasMore.set(false);
     this.loading.set(false);
     this.failed.set(false);
     this.cursor = undefined;
     this.seenIds = new Set();
     this.restarted = false;
-    this.view = null;
   }
 
   private fetch(): void {
@@ -152,17 +122,17 @@ export class PostListStore {
   private page(
     query: PostListQuery,
     cursor: string | undefined,
-  ): Observable<FeedPage | PaginatedResponse<PostCard>> {
+  ): Observable<PaginatedResponse<PostCard>> {
     return query.kind === 'feed'
       ? this.postService.getFeed({ cursor, limit: PAGE_SIZE, location: query.location })
       : this.postService.getPosts({ ...query.filters, cursor, limit: PAGE_SIZE });
   }
 
-  private accept(page: FeedPage | PaginatedResponse<PostCard>, usedCursor?: string): void {
+  /** A feed page's `mode` is for logs and evaluation only. The list treats every page the same. */
+  private accept(page: PaginatedResponse<PostCard>, usedCursor?: string): void {
     const fresh = page.items.filter((item) => !this.seenIds.has(item.id));
     fresh.forEach((item) => this.seenIds.add(item.id));
     this.items.update((items) => [...items, ...fresh]);
-    this.mode.set('mode' in page ? page.mode : null);
     this.hasMore.set(page.page.hasMore);
     this.cursor = page.page.nextCursor;
 

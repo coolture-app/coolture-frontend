@@ -20,7 +20,7 @@ import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
 import { CommentCreateRequest } from '../../core/models/comments/comment-create-request.model';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { RESTORE_LIST_KEY } from '../../core/services/post-list/post-list.store';
+import { RESTORE_LIST_KEY } from '../main-page/home-view';
 
 @Component({
   selector: 'app-full-post-view',

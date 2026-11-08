@@ -35,11 +35,7 @@ import { GeoPoint } from '../../core/models/common/geo.model';
 import { PostService } from '../../core/services/post/post.service';
 import { AuthService } from '../../core/services/auth/auth.service';
 import { LocationService } from '../../core/services/location/location.service';
-import {
-  PostListStore,
-  PostListView,
-  RESTORE_LIST_KEY,
-} from '../../core/services/post-list/post-list.store';
+import { PostListStore } from '../../core/services/post-list/post-list.store';
 import {
   PostType,
   PostStatus,
@@ -49,6 +45,7 @@ import {
 } from '../../core/models/common/enums';
 import { Switch } from '../../core/components/switch/switch/switch';
 import { Map } from '../../core/components/map/map/map';
+import { HomeView, HomeViewMemory, NO_FILTERS, RESTORE_LIST_KEY } from './home-view';
 
 const LOCATION_WAIT_MS = 1500;
 /**
@@ -57,16 +54,6 @@ const LOCATION_WAIT_MS = 1500;
  * by itself. A page took about 1.1 s locally, and a fast flick covers about 6000 px a second.
  */
 const CARDS_BEFORE_END = 15;
-const NO_FILTERS = {
-  type: '',
-  tags: '',
-  startsFrom: '',
-  startsTo: '',
-  visibility: '',
-  status: '',
-  includePast: false,
-};
-type FilterValues = typeof NO_FILTERS;
 
 @Component({
   selector: 'app-main-page',
@@ -102,6 +89,7 @@ export class MainPage implements OnDestroy {
   private destroyRef = inject(DestroyRef);
   private location = inject(LocationService);
   private scroller = inject(ViewportScroller);
+  private memory = inject(HomeViewMemory);
   authService = inject(AuthService);
   list = inject(PostListStore);
 
@@ -148,9 +136,6 @@ export class MainPage implements OnDestroy {
   readonly skeletons = computed(() => Array(this.list.items().length > 0 ? 1 : 3));
   readonly nextPageTrigger = computed(() =>
     Math.max(0, this.list.items().length - CARDS_BEFORE_END),
-  );
-  readonly canLoadMore = computed(
-    () => this.list.hasMore() && !this.list.loading() && !this.list.failed(),
   );
 
   /** When an empty result could change by looking at past events too. See the contract's table. */
@@ -356,7 +341,7 @@ export class MainPage implements OnDestroy {
   }
 
   private saveView(): void {
-    this.list.saveView({
+    this.memory.save({
       search: this.searchControl.value,
       filters: this.filtersForm.getRawValue(),
       pickedSort: this.pickedSort(),
@@ -367,18 +352,18 @@ export class MainPage implements OnDestroy {
   }
 
   /** Puts the page back as it was left, and returns the view. Otherwise a new list will start. */
-  private restoreView(): PostListView | null {
+  private restoreView(): HomeView | null {
     const navigation = this.router.currentNavigation();
     const comingBack =
       navigation?.trigger === 'popstate' || !!navigation?.extras.state?.[RESTORE_LIST_KEY];
-    const view = comingBack ? this.list.savedView() : null;
+    const view = comingBack ? this.memory.restore() : null;
     if (!view) {
       this.list.clear();
       return null;
     }
 
     this.searchControl.setValue(view.search, { emitEvent: false });
-    this.filtersForm.setValue(view.filters as FilterValues, { emitEvent: false });
+    this.filtersForm.setValue(view.filters, { emitEvent: false });
     this.pickedSort.set(view.pickedSort);
     this.showFilters.set(view.showFilters);
     this.isMapView.set(view.isMapView);

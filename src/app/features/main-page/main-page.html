@@ -157,7 +157,7 @@
       @if ($index === nextPageTrigger()) {
         <div
           class="list-trigger"
-          [appInfiniteScroll]="canLoadMore()"
+          [appInfiniteScroll]="list.canLoadMore()"
           (reachedEnd)="list.loadMore()"
         ></div>
       }

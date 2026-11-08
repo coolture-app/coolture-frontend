@@ -5,7 +5,7 @@ import { HttpTestingController, TestRequest } from '@angular/common/http/testing
 import { Navigation, provideRouter, Router } from '@angular/router';
 
 import { MainPage } from './main-page';
-import { RESTORE_LIST_KEY } from '../../core/services/post-list/post-list.store';
+import { RESTORE_LIST_KEY } from './home-view';
 import { LocationService } from '../../core/services/location/location.service';
 import { PostService } from '../../core/services/post/post.service';
 import { GeoPoint } from '../../core/models/common/geo.model';
