@@ -29,6 +29,8 @@ import { imageSize, MediaService } from '../../services/media/media.service';
 import { DictionaryService } from '../../services/dictionary/dictionary.service';
 import { CountryCode } from '../../models/dictionary/country-code.model';
 import { MediaResource } from '../../models/media/media-resource.model';
+import { MAX_POST_PHOTOS } from '../../models/posts/post-limits';
+import { ToastService } from '../../services/toast/toast.service';
 
 /**
  * A `datetime-local` input holds a local time with no zone, and the API sends UTC.
@@ -75,6 +77,7 @@ export class PostForm implements OnInit, OnChanges {
   private cdr = inject(ChangeDetectorRef);
   private destroyRef = inject(DestroyRef);
   private translate = inject(TranslateService);
+  private toast = inject(ToastService);
 
   countryCodes$: Observable<CountryCode[]> = this.dictionaryService.getCountryCodes();
 
@@ -175,6 +178,17 @@ export class PostForm implements OnInit, OnChanges {
 
   get hasUploading(): boolean {
     return this.mediaPreviews.some((p) => p.isUploading);
+  }
+
+  readonly maxPhotos = MAX_POST_PHOTOS;
+
+  /** Photos the post holds now: kept, being uploaded and uploaded. */
+  get photoCount(): number {
+    return this.existingMedia.length + this.mediaPreviews.length + this.newlyUploadedMedia.length;
+  }
+
+  get photosFull(): boolean {
+    return this.photoCount >= MAX_POST_PHOTOS;
   }
 
   ngOnInit(): void {
@@ -279,7 +293,14 @@ export class PostForm implements OnInit, OnChanges {
     controls.forEach((c) => c.updateValueAndValidity({ emitEvent: false }));
   }
 
-  async onFilesSelected(files: File[]): Promise<void> {
+  async onFilesSelected(selected: File[]): Promise<void> {
+    const room = Math.max(0, MAX_POST_PHOTOS - this.photoCount);
+    const files = selected.slice(0, room);
+    if (files.length < selected.length) {
+      this.toast.show(
+        this.translate.instant('POST_FORM.too-many-photos', { max: MAX_POST_PHOTOS }),
+      );
+    }
     for (const file of files) {
       const preview: MediaPreview = {
         file,

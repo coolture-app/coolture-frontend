@@ -5,12 +5,12 @@ import { AuthService } from '../auth/auth.service';
 import { PostService } from '../post/post.service';
 import { GeoPoint } from '../../models/common/geo.model';
 import { PaginatedResponse } from '../../models/common/paginated-response.model';
-import { PostCard } from '../../models/posts/post-card.model';
+import { cardPhotos, PostCard } from '../../models/posts/post-card.model';
 import { PostDetail } from '../../models/posts/post-detail.model';
 import { PostFilterParams } from '../../models/posts/post-filter-params.model';
 
 export type PostListQuery =
-  | { kind: 'feed'; location?: GeoPoint }
+  | { kind: 'feed'; location?: GeoPoint; filters?: PostFilterParams }
   | { kind: 'posts'; filters: PostFilterParams };
 
 const PAGE_SIZE = 20;
@@ -89,7 +89,8 @@ export class PostListStore {
   }
 
   /** Brings a card up to date with what the post's own page last knew about it. */
-  updateItem({ media: _media, ...card }: PostDetail): void {
+  updateItem({ media, ...post }: PostDetail): void {
+    const card: PostCard = { ...post, photos: cardPhotos(media) };
     this.items.update((items) => items.map((item) => (item.id === card.id ? card : item)));
   }
 
@@ -124,7 +125,12 @@ export class PostListStore {
     cursor: string | undefined,
   ): Observable<PaginatedResponse<PostCard>> {
     return query.kind === 'feed'
-      ? this.postService.getFeed({ cursor, limit: PAGE_SIZE, location: query.location })
+      ? this.postService.getFeed({
+          cursor,
+          limit: PAGE_SIZE,
+          location: query.location,
+          filters: query.filters,
+        })
       : this.postService.getPosts({ ...query.filters, cursor, limit: PAGE_SIZE });
   }
 

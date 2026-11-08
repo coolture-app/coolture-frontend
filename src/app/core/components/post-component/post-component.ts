@@ -44,6 +44,8 @@ import { PostService } from '../../services/post/post.service';
 import { DateFormatService } from '../../services/date-format/date-format.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { postPlace } from '../../models/posts/post-place';
+import { formatDistance } from '../../models/common/distance';
+import { LocationService } from '../../services/location/location.service';
 import { ParticipationType } from '../../models/common/enums';
 import { Tooltip } from '../../directives/tooltip';
 import { ToastService } from '../../services/toast/toast.service';
@@ -100,6 +102,7 @@ export class PostComponent implements OnInit {
   private dateFormatService = inject(DateFormatService);
   private toast = inject(ToastService);
   private translate = inject(TranslateService);
+  private location = inject(LocationService);
 
   isMyPost = signal<boolean>(false);
   readonly dateFormats = this.dateFormatService.formats;
@@ -191,6 +194,13 @@ export class PostComponent implements OnInit {
     return postPlace(this.data, this.isFullView);
   }
 
+  /** How far the event is from the user, when their position is known and the post has a place. */
+  get distance(): string | null {
+    const point = this.data.type === 'OFFLINE' ? this.data.location?.coordinates : undefined;
+    const meters = point ? this.location.metersTo(point) : null;
+    return meters === null ? null : formatDistance(meters, this.translate.currentLang || 'pl');
+  }
+
   /** Paragraphs stay, and a run of blank lines between them becomes one. */
   get description(): string {
     return (this.data.description ?? '')
@@ -200,10 +210,12 @@ export class PostComponent implements OnInit {
       .trim();
   }
 
-  /** The cover on a card; every photo on the post page, where they form a carousel. */
+  /** Every photo, cover first, in a carousel: the post page's own list, or the card's. */
   get photos(): Photo[] {
     const media =
-      this.isFullView && 'media' in this.data ? this.data.media.map((m) => m.media) : [];
+      this.isFullView && 'media' in this.data
+        ? this.data.media.map((m) => m.media)
+        : ('photos' in this.data && this.data.photos) || [];
     const all = media.length > 0 ? media : [this.data.coverMedia];
     return all.map(toPhoto).filter((photo): photo is Photo => !!photo);
   }

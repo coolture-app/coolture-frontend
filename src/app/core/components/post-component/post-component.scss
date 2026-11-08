@@ -67,6 +67,11 @@
   color: var(--color-text-tertiary);
 }
 
+.post__distance::before {
+  content: '·';
+  margin-right: var(--space-sm);
+}
+
 .post__date,
 .post__location {
   display: inline-flex;

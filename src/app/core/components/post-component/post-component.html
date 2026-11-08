@@ -38,6 +38,9 @@
                 {{ place }}
               </span>
             }
+            @if (distance; as away) {
+              <span class="post__distance" [title]="'POST.distance' | translate">{{ away }}</span>
+            }
           </div>
         </div>
       </div>
