@@ -6,11 +6,9 @@
   },
   "MAIN_PAGE": {
     "searchbar": "Szukaj wydarzeń",
-    "search": "Szukaj",
     "sort": "Filtry i sortowanie",
     "title": "Strona główna",
     "no-posts": "Nie ma postów do wyświetlenia... Smutno.",
-    "addPost": "Dodaj post",
     "filters": "Filtry",
     "sortBy": "Sortuj według",
     "order": "Kolejność",
@@ -43,12 +41,16 @@
     "endOfList": "To już wszystko",
     "loadError": "Nie udało się wczytać postów.",
     "retry": "Spróbuj ponownie",
-    "refresh": "Odśwież",
     "nearMe": "Blisko mnie",
     "locationFailed": "Nie udało się pobrać lokalizacji. Sprawdź uprawnienia przeglądarki.",
     "includePast": "Pokaż minione wydarzenia",
     "searchPast": "Szukaj też w minionych",
-    "mapView": "Widok mapy"
+    "clearSearch": "Wyczyść wyszukiwanie",
+    "list": "Lista",
+    "map": "Mapa",
+    "view": "Widok",
+    "filtersActive": "Filtry, włączone: {{count}}",
+    "sortLabel": "Sortowanie: {{sort}}"
   },
   "FULL_POST": {
     "title": "Fajny post",

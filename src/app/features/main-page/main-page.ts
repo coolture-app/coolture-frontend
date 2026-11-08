@@ -16,9 +16,9 @@ import { debounceTime, filter, merge } from 'rxjs';
 import { TranslatePipe } from '@ngx-translate/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
+  heroAdjustmentsHorizontal,
   heroMagnifyingGlass,
   heroMapPin,
-  heroFunnel,
   heroXMark,
   heroChevronDown,
 } from '@ng-icons/heroicons/outline';
@@ -35,6 +35,7 @@ import { AuthService } from '../../core/services/auth/auth.service';
 import { LocationService } from '../../core/services/location/location.service';
 import { PostListStore } from '../../core/services/post-list/post-list.store';
 import { HomeTapService } from '../../core/services/home-tap/home-tap.service';
+import { Tooltip } from '../../core/directives/tooltip';
 import {
   PostType,
   PostStatus,
@@ -47,6 +48,9 @@ import { Map } from '../../core/components/map/map/map';
 import { HomeView, HomeViewMemory, NO_FILTERS, RESTORE_LIST_KEY } from './home-view';
 
 const LOCATION_WAIT_MS = 1500;
+/** Near the top the bar stays, so it never hides with nothing under it. */
+const BAR_ALWAYS_SHOWN_PX = 120;
+const SCROLL_STOP_MS = 200;
 /**
  * How many cards before the end the next page is requested. Counted in cards, not pixels, so it means
  * the same on any screen, and it's under the page size of 20, so a new page can't ask for the next one
@@ -66,19 +70,20 @@ const CARDS_BEFORE_END = 15;
     Map,
     InfiniteScroll,
     PostSkeleton,
+    Tooltip,
   ],
   viewProviders: [
     provideIcons({
+      heroAdjustmentsHorizontal,
       heroMagnifyingGlass,
       heroMapPin,
-      heroFunnel,
       heroXMark,
       heroChevronDown,
     }),
   ],
   templateUrl: './main-page.html',
   styleUrl: './main-page.scss',
-  host: { '(document:click)': 'closeSortMenu($event)' },
+  host: { '(document:click)': 'closeSortMenu($event)', '(window:scroll)': 'onScroll()' },
 })
 export class MainPage implements OnDestroy {
   private postService = inject(PostService);
@@ -98,6 +103,12 @@ export class MainPage implements OnDestroy {
   isMapView = signal(false);
   locationFailed = signal(false);
   locating = signal(false);
+  /** While the page moves the bar is see-through, and it turns solid once scrolling stops. */
+  scrolling = signal(false);
+  /** Phones only, in the styles: the bar slides away while scrolling down, back on scrolling up. */
+  barHidden = signal(false);
+  private lastScrollY = 0;
+  private scrollStop: ReturnType<typeof setTimeout> | undefined;
 
   sortOptions: { value: PostSortBy; labelKey: string }[] = [
     { value: 'RECOMMENDED', labelKey: 'MAIN_PAGE.sortRecommended' },
@@ -129,6 +140,13 @@ export class MainPage implements OnDestroy {
   readonly isNearMe = computed(() => {
     const query = this.list.query();
     return query?.kind === 'feed' && !!query.location;
+  });
+  /** How many filters the panel has on, counting a date range as one. The search isn't a filter. */
+  readonly activeFilterCount = computed(() => {
+    const { type, tags, startsFrom, startsTo, visibility, status, includePast } =
+      this.activeFilters();
+    return [type, tags, startsFrom || startsTo, visibility, status, includePast].filter(Boolean)
+      .length;
   });
   /** A screenful for the first page. After that one is enough, and the posts stay what's on screen. */
   readonly skeletons = computed(() => Array(this.list.items().length > 0 ? 1 : 3));
@@ -183,6 +201,7 @@ export class MainPage implements OnDestroy {
   }
 
   ngOnDestroy(): void {
+    clearTimeout(this.scrollStop);
     // The next page isn't scrolled by itself, and would otherwise open at the end of a long list.
     if (this.router.currentNavigation()?.trigger !== 'popstate') {
       this.scroller.scrollToPosition([0, 0]);
@@ -191,6 +210,26 @@ export class MainPage implements OnDestroy {
 
   applyControls(): void {
     this.changeList(() => this.activeFilters.set(this.readFilters()));
+  }
+
+  clearSearch(): void {
+    this.searchControl.setValue('', { emitEvent: false });
+    this.applyControls();
+  }
+
+  onScroll(): void {
+    const y = window.scrollY;
+    const delta = y - this.lastScrollY;
+    this.lastScrollY = y;
+    if (y < BAR_ALWAYS_SHOWN_PX || delta < 0) {
+      this.barHidden.set(false);
+    } else if (delta > 0) {
+      this.barHidden.set(true);
+      this.showSortMenu.set(false);
+    }
+    this.scrolling.set(true);
+    clearTimeout(this.scrollStop);
+    this.scrollStop = setTimeout(() => this.scrolling.set(false), SCROLL_STOP_MS);
   }
 
   toggleFilters(): void {
@@ -240,6 +279,9 @@ export class MainPage implements OnDestroy {
   }
 
   toggleMapView(isToggled: boolean): void {
+    if (isToggled === this.isMapView()) {
+      return;
+    }
     this.isMapView.set(isToggled);
     if (!isToggled && (this.listOutdated || this.list.query() === null)) {
       this.load();
@@ -288,6 +330,8 @@ export class MainPage implements OnDestroy {
     const before = listKey();
     change();
     if (listKey() !== before) {
+      // A different list starts at its beginning, not where the last one was scrolled to.
+      this.scroller.scrollToPosition([0, 0]);
       this.load();
     }
   }

@@ -306,13 +306,89 @@ describe('MainPage', () => {
     });
   });
 
+  describe('the bar above the feed', () => {
+    it('clears the search with its own button, at once', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      component.searchControl.setValue('jazz');
+      component.applyControls();
+      await settle();
+      expectPosts().flush(page(['j']));
+      await settle();
+
+      (fixture.nativeElement.querySelector('.searchbar__clear') as HTMLButtonElement).click();
+      await settle();
+
+      expectFeed().flush({ ...page(['f']), mode: 'RANKED' });
+      await settle();
+      expect(component.searchControl.value).toBe('');
+      expect(fixture.nativeElement.querySelector('.searchbar__clear')).toBeNull();
+    });
+
+    it('counts the filters that are on, a date range as one, and not the search', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      component.searchControl.setValue('jazz', { emitEvent: false });
+      component.filtersForm.patchValue(
+        { type: 'OFFLINE', startsFrom: '2026-12-01T10:00', startsTo: '2026-12-02T10:00' },
+        { emitEvent: false },
+      );
+      component.applyControls();
+      await settle();
+      expectPosts().flush(page());
+      await settle();
+
+      expect(component.activeFilterCount()).toBe(2);
+      const count = fixture.nativeElement.querySelector('.filters-btn__count');
+      expect(count.textContent.trim()).toBe('2');
+    });
+
+    it('starts a changed list at the top', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      (scroller.scrollToPosition as jasmine.Spy).calls.reset();
+
+      component.setSortBy('POPULAR');
+      await settle();
+
+      expect(scroller.scrollToPosition).toHaveBeenCalledWith([0, 0]);
+      expectPosts().flush(page());
+    });
+
+    it('hides while scrolling down past the top and comes back on any scroll up', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      let y = 0;
+      spyOnProperty(window, 'scrollY').and.callFake(() => y);
+      const scrollTo = (to: number) => {
+        y = to;
+        component.onScroll();
+      };
+
+      scrollTo(60);
+      expect(component.barHidden()).toBeFalse();
+      scrollTo(400);
+      expect(component.barHidden()).toBeTrue();
+      scrollTo(395);
+      expect(component.barHidden()).toBeFalse();
+      expect(component.scrolling()).toBeTrue();
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      expect(component.scrolling()).toBeFalse();
+    });
+  });
+
   describe('the map switch', () => {
     it('is there on the feed too', async () => {
       await open();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
       await settle();
 
-      expect(fixture.nativeElement.querySelector('app-switch.map-switch')).not.toBeNull();
+      const options = fixture.nativeElement.querySelectorAll('.view-switch__option');
+      expect(Array.from(options as NodeListOf<Element>).map((o) => o.textContent!.trim())).toEqual([
+        'MAIN_PAGE.list',
+        'MAIN_PAGE.map',
+      ]);
+      expect(options[0].getAttribute('aria-pressed')).toBe('true');
     });
 
     it('passes the active filters on, and catches the list up when switched off', async () => {
