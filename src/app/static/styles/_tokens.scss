@@ -56,6 +56,10 @@ $font-sizes: (
   '2xl': 1.5rem,
   '3xl': 1.875rem,
   '4xl': 2.25rem,
+  // The feed's type scale, as on social platforms: metadata, post and comment text, a post's title.
+  meta: 0.8125rem,
+  body: 0.9375rem,
+  title: 1.0625rem,
 );
 
 $font-weights: (

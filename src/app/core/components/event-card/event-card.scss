@@ -20,7 +20,7 @@
   }
 
   &__title {
-    font-size: var(--text-base);
+    font-size: var(--text-body);
     font-weight: 600;
     margin: 0 0 var(--space-xs);
     white-space: nowrap;
@@ -35,7 +35,7 @@
   }
 
   &__author {
-    font-size: var(--text-sm);
+    font-size: var(--text-meta);
     color: var(--color-text-secondary);
     white-space: nowrap;
     overflow: hidden;
@@ -43,7 +43,7 @@
   }
 
   &__date {
-    font-size: var(--text-sm);
+    font-size: var(--text-meta);
     color: var(--color-text-tertiary);
   }
 
