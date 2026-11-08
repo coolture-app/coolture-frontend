@@ -6,11 +6,12 @@ import translationEN from '../../public/i18n/en.json';
 import translationPL from '../../public/i18n/pl.json';
 import { AuthService } from './core/services/auth/auth.service';
 import { InterestsView } from './features/interests-view/interests-view';
+import { Toast } from './core/components/toast/toast';
 import { filter, first } from 'rxjs';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, Navbar, InterestsView],
+  imports: [RouterOutlet, Navbar, InterestsView, Toast],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })

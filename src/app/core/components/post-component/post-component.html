@@ -46,8 +46,7 @@
           <button
             type="button"
             class="post__icon-btn"
-            [title]="'POST.edit' | translate"
-            [attr.aria-label]="'POST.edit' | translate"
+            [appTooltip]="'POST.edit' | translate"
             (click)="editPost()"
           >
             <ng-icon name="heroPencilSquare" />
@@ -55,8 +54,7 @@
           <button
             type="button"
             class="post__icon-btn"
-            [title]="'POST.delete' | translate"
-            [attr.aria-label]="'POST.delete' | translate"
+            [appTooltip]="'POST.delete' | translate"
             (click)="openModal()"
           >
             <ng-icon name="heroTrash" />
@@ -143,53 +141,39 @@
         variant="social"
         [fullWidth]="true"
         [class]="isLiked() ? 'liked' : ''"
-        [title]="'POST.likes' | translate"
+        [pressed]="isLiked()"
+        [label]="'POST.like' | translate"
         (btnClick)="likePost()"
       >
-        <ng-icon name="heroHandThumbUp" />
-        <span class="post__social-count">{{
-          formatNumber(
-            data.positiveReactionCount,
-            'POST.thousand' | translate,
-            'POST.million' | translate
-          )
-        }}</span>
+        <ng-icon name="lucideThumbsUp" [class.icon--filled]="isLiked()" />
       </app-btn>
       <app-btn
         variant="social"
         [fullWidth]="true"
-        [title]="'POST.comments' | translate"
+        [label]="'POST.comments' | translate"
         (btnClick)="viewPostPage(true)"
       >
-        <ng-icon name="heroChatBubbleLeftEllipsis" />
-        <span class="post__social-count">{{
-          formatNumber(
-            counter !== undefined ? counter : data.commentsCount || 0,
-            'POST.thousand' | translate,
-            'POST.million' | translate
-          )
-        }}</span>
-      </app-btn>
-      <app-btn variant="social" [fullWidth]="true" [title]="'POST.share' | translate">
-        <ng-icon name="heroShare" />
+        <ng-icon name="lucideMessageCircle" />
       </app-btn>
       <app-btn
         variant="social"
         [fullWidth]="true"
         [class]="isInterested() ? 'interested' : ''"
-        [title]="'POST.interested' | translate"
+        [pressed]="isInterested()"
+        [label]="'POST.interested' | translate"
         (btnClick)="setInterested()"
       >
-        <ng-icon name="heroStar" />
+        <ng-icon name="lucideBookmark" [class.icon--filled]="isInterested()" />
       </app-btn>
       <app-btn
         variant="social"
         [fullWidth]="true"
         [class]="isTakesPart() ? 'takes-part' : ''"
-        [title]="'POST.takes_part' | translate"
+        [pressed]="isTakesPart()"
+        [label]="'POST.takes_part' | translate"
         (btnClick)="setTakesPart()"
       >
-        <ng-icon name="heroStarSolid" />
+        <ng-icon name="appTicket" [class.icon--filled]="isTakesPart()" />
       </app-btn>
     </div>
   } @else {

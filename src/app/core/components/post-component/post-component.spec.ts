@@ -5,6 +5,7 @@ import { PostComponent } from './post-component';
 import { PostCard } from '../../models/posts/post-card.model';
 import { AuthService } from '../../services/auth/auth.service';
 import { UserProfile } from '../../models/users/user-profile.model';
+import { ToastService } from '../../services/toast/toast.service';
 
 function card(overrides: Partial<PostCard> = {}): PostCard {
   return {
@@ -78,6 +79,25 @@ describe('PostComponent', () => {
       'POST.edit',
       'POST.delete',
     ]);
+  });
+
+  it('has four icon actions, each named and pressed when on, and no Share', () => {
+    render(card({ myParticipation: 'TAKES_PART' }));
+
+    const actions = Array.from(element().querySelectorAll('.post__social button'));
+    expect(actions.map((b) => b.getAttribute('aria-label'))).toEqual([
+      'POST.like',
+      'POST.comments',
+      'POST.interested',
+      'POST.takes_part',
+    ]);
+    expect(actions.map((b) => b.getAttribute('aria-pressed'))).toEqual([
+      'false',
+      null,
+      'false',
+      'true',
+    ]);
+    expect(actions.every((b) => b.textContent!.trim() === '')).toBeTrue();
   });
 
   describe('photo', () => {
@@ -215,6 +235,31 @@ describe('PostComponent', () => {
       expect(again.componentInstance.isExpanded()).toBeTrue();
     });
 
+    it('collapses runs of blank lines into one, and keeps the paragraphs', () => {
+      const lf = String.fromCharCode(10);
+      render(card({ description: `Jeden.  ${lf}${lf}${lf}${lf}Dwa.${lf}Trzy.` }));
+
+      expect(component.description).toBe(`Jeden.${lf}${lf}Dwa.${lf}Trzy.`);
+    });
+
+    it('cuts at 6 lines without a photo, and at 3 with one', async () => {
+      render(card({ description: LONG }));
+      await measured();
+      const lineHeight = parseFloat(getComputedStyle(text()).lineHeight);
+      expect(Math.round(text().clientHeight / lineHeight)).toBe(6);
+
+      const withPhoto = TestBed.createComponent(PostComponent);
+      const photo = { id: 'm', url: 'http://x/p.png' };
+      withPhoto.componentRef.setInput(
+        'data',
+        card({ id: 'p2', description: LONG, coverMedia: photo }),
+      );
+      withPhoto.componentRef.setInput('isFullView', false);
+      withPhoto.detectChanges();
+      const clamped = withPhoto.nativeElement.querySelector('.post__desc-text') as HTMLElement;
+      expect(Math.round(clamped.clientHeight / lineHeight)).toBe(3);
+    });
+
     it('shows the whole text with no toggle on the post page', async () => {
       render(card({ description: LONG }), true);
       await measured();
@@ -326,6 +371,21 @@ describe('PostComponent', () => {
       expect(data.myParticipation).toBe('INTERESTED');
       expect(data.participantCount).toBe(2);
       expect(component.isInterested()).toBeTrue();
+    });
+
+    it('says the post is saved in Plans when it is marked, and not when it is unmarked', () => {
+      const toast = TestBed.inject(ToastService);
+      const data = card();
+      render(data);
+
+      component.setInterested();
+      http.expectOne((r) => r.method === 'PUT' || r.method === 'POST').flush({});
+      expect(toast.message()).toBe('POST.saved-to-plans');
+
+      toast.message.set(null);
+      component.setInterested();
+      http.expectOne((r) => r.method === 'DELETE').flush(null);
+      expect(toast.message()).toBeNull();
     });
 
     it('does not fail on a post with no location', () => {

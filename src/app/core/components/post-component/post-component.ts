@@ -17,19 +17,16 @@ import { PostCard } from '../../models/posts/post-card.model';
 import { PostDetail } from '../../models/posts/post-detail.model';
 import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
-  heroHandThumbUp,
   heroCalendar,
-  heroChatBubbleLeftEllipsis,
   heroGlobeAlt,
   heroMapPin,
   heroPencilSquare,
-  heroStar,
-  heroShare,
   heroTrash,
 } from '@ng-icons/heroicons/outline';
-import { heroStarSolid } from '@ng-icons/heroicons/solid';
+import { lucideBookmark, lucideMessageCircle, lucideThumbsUp } from '@ng-icons/lucide';
+import { appTicket } from '../../icons/ticket';
 import { DatePipe } from '@angular/common';
 import { InteractionsService } from '../../services/interactions/interactions.service';
 import { AuthService } from '../../services/auth/auth.service';
@@ -40,6 +37,8 @@ import { DateFormatService } from '../../services/date-format/date-format.servic
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { postPlace } from '../../models/posts/post-place';
 import { ParticipationType } from '../../models/common/enums';
+import { Tooltip } from '../../directives/tooltip';
+import { ToastService } from '../../services/toast/toast.service';
 
 const MIN_CROPPED_SHAPE = 1.4;
 const MAX_CROPPED_SHAPE = 2.6;
@@ -52,19 +51,18 @@ const expandedPosts = new Set<string>();
 
 @Component({
   selector: 'app-post-component',
-  imports: [NgIcon, TranslatePipe, DatePipe, ModalWindow, Btn],
+  imports: [NgIcon, TranslatePipe, DatePipe, ModalWindow, Btn, Tooltip],
   viewProviders: [
     provideIcons({
-      heroHandThumbUp,
+      appTicket,
       heroCalendar,
-      heroChatBubbleLeftEllipsis,
       heroGlobeAlt,
       heroMapPin,
       heroPencilSquare,
-      heroStar,
-      heroStarSolid,
-      heroShare,
       heroTrash,
+      lucideBookmark,
+      lucideMessageCircle,
+      lucideThumbsUp,
     }),
   ],
   templateUrl: './post-component.html',
@@ -91,13 +89,14 @@ export class PostComponent implements OnInit {
   private host: HTMLElement = inject(ElementRef).nativeElement;
   private descText = viewChild<ElementRef<HTMLElement>>('descText');
   private dateFormatService = inject(DateFormatService);
+  private toast = inject(ToastService);
+  private translate = inject(TranslateService);
 
   isMyPost = signal<boolean>(false);
   readonly dateFormats = this.dateFormatService.formats;
 
   @Input() data!: PostCard | PostDetail;
   @Input() isFullView!: boolean;
-  @Input() counter?: number;
 
   @Output() deleteRequest = new EventEmitter<string>();
 
@@ -177,8 +176,13 @@ export class PostComponent implements OnInit {
     return postPlace(this.data, this.isFullView);
   }
 
+  /** Paragraphs stay, and a run of blank lines between them becomes one. */
   get description(): string {
-    return this.data.description?.trim() ?? '';
+    return (this.data.description ?? '')
+      .replace(/\r\n?/g, '\n')
+      .replace(/[ \t]+\n/g, '\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
   }
 
   get photos(): string[] {
@@ -186,16 +190,6 @@ export class PostComponent implements OnInit {
       this.isFullView && 'media' in this.data ? this.data.media.map((m) => m.media) : [];
     const urls = media.length > 0 ? media.map((m) => m.url) : [this.data.coverMedia?.url];
     return urls.filter((url): url is string => !!url);
-  }
-
-  formatNumber(value: number, suffixK: string, suffixM: string): string {
-    if (value >= 1000000) {
-      return (value / 1000000).toFixed(1) + suffixM;
-    }
-    if (value >= 1000) {
-      return (value / 1000).toFixed(1) + suffixK;
-    }
-    return value.toString();
   }
 
   likePost(): void {
@@ -242,7 +236,11 @@ export class PostComponent implements OnInit {
       this.interactions
         .setParticipation(this.data.id, { type })
         .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe({ error: () => this.applyParticipation(previous) });
+        .subscribe({
+          // The post leaves the feed on its next refresh, and this says where it went.
+          next: () => this.toast.show(this.translate.instant('POST.saved-to-plans')),
+          error: () => this.applyParticipation(previous),
+        });
     }
   }
 
