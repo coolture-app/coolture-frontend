@@ -68,7 +68,6 @@
     "starts": "Event start",
     "show-more": "Show more",
     "show-less": "Show less",
-    "show-all-photos": "See the rest",
     "loading": "Loading post...",
     "participating": "going",
     "comments": "Show comments",
@@ -81,7 +80,12 @@
     "takes_part": "Going",
     "online": "Online",
     "like": "Like",
-    "saved-to-plans": "Saved in Plans"
+    "saved-to-plans": "Saved in Plans",
+    "open-photo": "Show the photo full screen",
+    "photos": "Photos",
+    "close-photos": "Close",
+    "previous-photo": "Previous photo",
+    "next-photo": "Next photo"
   },
   "NAVBAR": {
     "main-page": "Home",

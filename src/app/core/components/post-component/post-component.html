@@ -110,27 +110,50 @@
       </div>
     }
     @if (photos.length > 0) {
-      <div class="post__photos" [class]="'count-' + (photos.length > 3 ? 'more' : photos.length)">
-        @for (photo of photos.slice(0, 3); track $index) {
-          <div class="post__photo-item" [style.background-image]="backdrop(photo)">
-            <img
-              [src]="photo"
-              [alt]="'POST.photo-alt' | translate"
-              loading="lazy"
-              decoding="async"
-              [class.is-loaded]="loadedPhotos().has(photo)"
-              [class.is-contained]="containedPhotos().has(photo)"
-              (load)="photoLoaded(photo, $event)"
-            />
-
-            @if ($index === 2 && photos.length > 3) {
-              <button
-                class="post__overlay"
-                (click)="viewPostPage(true)"
-                (keydown.enter)="viewPostPage(true)"
-              >
-                <span>{{ 'POST.show-all-photos' | translate }} (+{{ photos.length - 3 }})</span>
-              </button>
+      <!-- The first photo's shape, from the data, so the frame never changes as photos load. -->
+      <div class="post__frame" [style.aspect-ratio]="frameShape">
+        <div class="post__slides" #slides (scroll)="onSlidesScroll()">
+          @for (photo of photos; track $index) {
+            <button
+              type="button"
+              class="post__slide"
+              [style.background-image]="'url(&quot;' + photo.url + '&quot;)'"
+              [attr.aria-label]="'POST.open-photo' | translate"
+              (click)="openPhoto($index)"
+            >
+              <img
+                [src]="photo.url"
+                [alt]="'POST.photo-alt' | translate"
+                loading="lazy"
+                decoding="async"
+                [class.is-loaded]="loadedPhotos().has(photo.url)"
+                (load)="photoLoaded(photo.url)"
+              />
+            </button>
+          }
+        </div>
+        @if (photos.length > 1) {
+          <button
+            type="button"
+            class="post__arrow post__arrow--prev"
+            [disabled]="slide() === 0"
+            [appTooltip]="'POST.previous-photo' | translate"
+            (click)="goToSlide(slide() - 1)"
+          >
+            <ng-icon name="lucideChevronLeft" />
+          </button>
+          <button
+            type="button"
+            class="post__arrow post__arrow--next"
+            [disabled]="slide() === photos.length - 1"
+            [appTooltip]="'POST.next-photo' | translate"
+            (click)="goToSlide(slide() + 1)"
+          >
+            <ng-icon name="lucideChevronRight" />
+          </button>
+          <div class="post__dots" aria-hidden="true">
+            @for (photo of photos; track $index) {
+              <span class="post__dot" [class.post__dot--on]="$index === slide()"></span>
             }
           </div>
         }

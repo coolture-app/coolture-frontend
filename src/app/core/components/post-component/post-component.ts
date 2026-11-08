@@ -25,7 +25,15 @@ import {
   heroPencilSquare,
   heroTrash,
 } from '@ng-icons/heroicons/outline';
-import { lucideBookmark, lucideMessageCircle, lucideThumbsUp } from '@ng-icons/lucide';
+import {
+  lucideBookmark,
+  lucideChevronLeft,
+  lucideChevronRight,
+  lucideMessageCircle,
+  lucideThumbsUp,
+} from '@ng-icons/lucide';
+import { frameShape, Photo, toPhoto } from '../../models/media/photo';
+import { PhotoViewerService } from '../../services/photo-viewer/photo-viewer.service';
 import { appTicket } from '../../icons/ticket';
 import { DatePipe } from '@angular/common';
 import { InteractionsService } from '../../services/interactions/interactions.service';
@@ -39,9 +47,6 @@ import { postPlace } from '../../models/posts/post-place';
 import { ParticipationType } from '../../models/common/enums';
 import { Tooltip } from '../../directives/tooltip';
 import { ToastService } from '../../services/toast/toast.service';
-
-const MIN_CROPPED_SHAPE = 1.4;
-const MAX_CROPPED_SHAPE = 2.6;
 
 /**
  * Ids of posts whose text someone expanded, so a card keeps its height when the list comes back,
@@ -61,6 +66,8 @@ const expandedPosts = new Set<string>();
       heroPencilSquare,
       heroTrash,
       lucideBookmark,
+      lucideChevronLeft,
+      lucideChevronRight,
       lucideMessageCircle,
       lucideThumbsUp,
     }),
@@ -73,8 +80,8 @@ export class PostComponent implements OnInit {
   /** Whether the clamped text has more than it shows, which only the browser's layout can tell. */
   overflows = signal(false);
   loadedPhotos = signal<ReadonlySet<string>>(new Set());
-  /** Too tall or too wide for the frame to crop well, such as posters, so they're shown whole. */
-  containedPhotos = signal<ReadonlySet<string>>(new Set());
+  /** The photo the carousel shows. */
+  slide = signal(0);
 
   isLiked = signal(false);
   isInterested = signal(false);
@@ -88,6 +95,8 @@ export class PostComponent implements OnInit {
   private injector = inject(Injector);
   private host: HTMLElement = inject(ElementRef).nativeElement;
   private descText = viewChild<ElementRef<HTMLElement>>('descText');
+  private slides = viewChild<ElementRef<HTMLElement>>('slides');
+  private photoViewer = inject(PhotoViewerService);
   private dateFormatService = inject(DateFormatService);
   private toast = inject(ToastService);
   private translate = inject(TranslateService);
@@ -143,18 +152,24 @@ export class PostComponent implements OnInit {
     }
   }
 
-  /** The image itself, blurred by the styles, fills the sides of one that's shown whole. */
-  backdrop(photo: string): string | null {
-    return this.containedPhotos().has(photo) ? `url("${photo}")` : null;
+  photoLoaded(url: string): void {
+    this.loadedPhotos.update((loaded) => new Set(loaded).add(url));
   }
 
-  photoLoaded(photo: string, event: Event): void {
-    const { naturalWidth, naturalHeight } = event.target as HTMLImageElement;
-    const shape = naturalWidth / naturalHeight;
-    if (this.photos.length === 1 && (shape < MIN_CROPPED_SHAPE || shape > MAX_CROPPED_SHAPE)) {
-      this.containedPhotos.update((contained) => new Set(contained).add(photo));
+  openPhoto(index: number): void {
+    this.photoViewer.show(this.photos, index);
+  }
+
+  onSlidesScroll(): void {
+    const slides = this.slides()?.nativeElement;
+    if (slides && slides.clientWidth > 0) {
+      this.slide.set(Math.round(slides.scrollLeft / slides.clientWidth));
     }
-    this.loadedPhotos.update((loaded) => new Set(loaded).add(photo));
+  }
+
+  goToSlide(index: number): void {
+    const slides = this.slides()?.nativeElement;
+    slides?.scrollTo({ left: index * slides.clientWidth, behavior: 'smooth' });
   }
 
   /** Measures again whenever the width changes, as a text that fits on a desktop may not on a phone. */
@@ -185,11 +200,16 @@ export class PostComponent implements OnInit {
       .trim();
   }
 
-  get photos(): string[] {
+  /** The cover on a card; every photo on the post page, where they form a carousel. */
+  get photos(): Photo[] {
     const media =
       this.isFullView && 'media' in this.data ? this.data.media.map((m) => m.media) : [];
-    const urls = media.length > 0 ? media.map((m) => m.url) : [this.data.coverMedia?.url];
-    return urls.filter((url): url is string => !!url);
+    const all = media.length > 0 ? media : [this.data.coverMedia];
+    return all.map(toPhoto).filter((photo): photo is Photo => !!photo);
+  }
+
+  get frameShape(): number {
+    return frameShape(this.photos[0]);
   }
 
   likePost(): void {

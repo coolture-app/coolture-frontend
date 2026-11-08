@@ -17,14 +17,6 @@
   &:hover {
     box-shadow: var(--shadow-md);
   }
-
-  &--feed {
-    --photo-shape: 2;
-
-    @media (max-width: 639px) {
-      --photo-shape: calc(16 / 9);
-    }
-  }
 }
 
 .post__header {
@@ -143,7 +135,7 @@
   }
 }
 
-.post--feed:has(.post__photos) .post__desc-text--clamped {
+.post--feed:has(.post__frame) .post__desc-text--clamped {
   max-height: 3lh;
 }
 
@@ -171,22 +163,47 @@
   }
 }
 
-.post__photos {
-  display: grid;
-  gap: 2px;
-  width: 100%;
-  aspect-ratio: 16 / 9;
-}
-
-.post--feed .post__photos {
-  aspect-ratio: var(--photo-shape);
-}
-
-.post__photo-item {
+// As wide as the card, as tall as the first photo's shape makes it, but never so tall that the rest of
+// the card can't fit on the screen with it.
+.post__frame {
   position: relative;
+  width: 100%;
+  max-height: max(
+    240px,
+    calc(100dvh - var(--navbar-height) - var(--bottom-bar-height) - var(--card-other-parts, 200px))
+  );
   overflow: hidden;
-  background: var(--color-border-light) center / cover;
+  background: var(--color-border-light);
+}
+
+// Several photos sit side by side and snap one at a time, for swiping.
+.post__slides {
+  display: flex;
+  height: 100%;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+// Each photo is whole, over a blurred copy of itself. Where the frame has the photo's shape the copy
+// stays hidden; it shows only beside a photo beyond the frame's limits or a frame that was capped.
+.post__slide {
+  position: relative;
+  flex: 0 0 100%;
+  height: 100%;
+  padding: 0;
+  border: none;
+  overflow: hidden;
+  background: center / cover no-repeat;
   isolation: isolate;
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+  cursor: pointer;
 
   &::before {
     content: '';
@@ -197,55 +214,89 @@
     filter: blur(24px);
   }
 
-  // Hidden until loaded: it fades in over the placeholder, and a broken one never shows its icon.
+  &:focus-visible {
+    outline: 3px solid var(--color-accent);
+    outline-offset: -3px;
+  }
+
+  // Hidden until loaded: it fades in, and a broken one never shows its icon.
   img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
-    display: block;
+    object-fit: contain;
     opacity: 0;
     transition: opacity var(--transition-base);
 
     &.is-loaded {
       opacity: 1;
     }
-
-    &.is-contained {
-      object-fit: contain;
-      position: relative;
-    }
   }
 }
 
-.post__photos.count-1 {
-  grid-template-columns: 1fr;
-}
-
-.post__photos.count-2 {
-  grid-template-columns: 1fr 1fr;
-}
-
-.post__photos.count-3,
-.post__photos.count-more {
-  grid-template-columns: 2fr 1fr;
-  grid-template-rows: 1fr 1fr;
-
-  .post__photo-item:first-child {
-    grid-row: span 2;
-  }
-}
-
-.post__overlay {
-  position: absolute;
-  inset: 0;
-  background: var(--color-overlay);
-  color: var(--color-text-inverse);
+.post__arrow {
   @include center-flex;
-  font-weight: var(--font-semibold);
-  font-size: var(--text-sm);
-  padding: var(--space-md);
+  position: absolute;
+  top: 50%;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: var(--shadow-md);
+  color: var(--color-text);
   cursor: pointer;
-  text-align: center;
+  opacity: 0;
+  transform: translateY(-50%);
+  transition: opacity var(--transition-fast);
+
+  ng-icon {
+    --ng-icon__size: 18px;
+  }
+
+  &--prev {
+    left: var(--space-sm);
+  }
+
+  &--next {
+    right: var(--space-sm);
+  }
+
+  &:disabled {
+    visibility: hidden;
+  }
+
+  .post__frame:hover &,
+  &:focus-visible {
+    opacity: 1;
+  }
+
+  // Phones swipe instead.
+  @media (hover: none) {
+    display: none;
+  }
+}
+
+.post__dots {
+  position: absolute;
+  bottom: var(--space-sm);
+  left: 50%;
+  display: flex;
+  gap: 5px;
+  padding: 4px 6px;
+  border-radius: var(--radius-full);
+  background: rgba(0, 0, 0, 0.3);
+  transform: translateX(-50%);
+}
+
+.post__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.55);
+
+  &--on {
+    background: #fff;
+  }
 }
 
 .post__social {

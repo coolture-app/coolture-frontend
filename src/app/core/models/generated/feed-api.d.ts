@@ -169,6 +169,10 @@ export interface components {
       createdAt?: string;
       /** Format: date-time */
       deletedAt?: string;
+      /** @description Pixels. Missing for media uploaded before sizes were stored. */
+      width?: number;
+      /** @description Pixels. Sent together with width. */
+      height?: number;
     };
     /** @enum {string} */
     PostType: 'ONLINE' | 'OFFLINE';

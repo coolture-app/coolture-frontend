@@ -25,7 +25,7 @@ import { Btn } from '../btn/btn';
 import { PostFormData } from '../../models/posts/post-form-data.model';
 import { PostDetail, PostMedia } from '../../models/posts/post-detail.model';
 import { PostType, PostVisibility } from '../../models/common/enums';
-import { MediaService } from '../../services/media/media.service';
+import { imageSize, MediaService } from '../../services/media/media.service';
 import { DictionaryService } from '../../services/dictionary/dictionary.service';
 import { CountryCode } from '../../models/dictionary/country-code.model';
 import { MediaResource } from '../../models/media/media-resource.model';
@@ -289,12 +289,14 @@ export class PostForm implements OnInit, OnChanges {
       this.mediaPreviews.push(preview);
 
       try {
+        const size = await imageSize(file);
         const initRes = await lastValueFrom(
           this.mediaService.initUpload({
             purpose: 'EVENT_MEDIA',
             mimeType: file.type,
             sizeBytes: file.size,
             fileName: file.name,
+            ...size,
           }),
         );
 

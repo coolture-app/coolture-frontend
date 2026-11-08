@@ -68,7 +68,6 @@
     "starts": "Początek wydarzenia",
     "show-more": "Wyświetl więcej",
     "show-less": "Wyświetl mniej",
-    "show-all-photos": "Zobacz resztę",
     "loading": "Ładowanie posta...",
     "participating": "uczestników",
     "comments": "Pokaż komentarze",
@@ -81,7 +80,12 @@
     "takes_part": "Biorę udział",
     "online": "Online",
     "like": "Lubię to",
-    "saved-to-plans": "Zapisano w Planach"
+    "saved-to-plans": "Zapisano w Planach",
+    "open-photo": "Pokaż zdjęcie na całym ekranie",
+    "photos": "Zdjęcia",
+    "close-photos": "Zamknij",
+    "previous-photo": "Poprzednie zdjęcie",
+    "next-photo": "Następne zdjęcie"
   },
   "NAVBAR": {
     "main-page": "Strona główna",

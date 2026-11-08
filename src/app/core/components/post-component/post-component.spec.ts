@@ -6,6 +6,8 @@ import { PostCard } from '../../models/posts/post-card.model';
 import { AuthService } from '../../services/auth/auth.service';
 import { UserProfile } from '../../models/users/user-profile.model';
 import { ToastService } from '../../services/toast/toast.service';
+import { PhotoViewerService } from '../../services/photo-viewer/photo-viewer.service';
+import { PostDetail } from '../../models/posts/post-detail.model';
 
 function card(overrides: Partial<PostCard> = {}): PostCard {
   return {
@@ -31,7 +33,7 @@ describe('PostComponent', () => {
   let fixture: ComponentFixture<PostComponent>;
   let http: HttpTestingController;
 
-  function render(data: PostCard, isFullView = false): void {
+  function render(data: PostCard | PostDetail, isFullView = false): void {
     fixture.componentRef.setInput('data', data);
     fixture.componentRef.setInput('isFullView', isFullView);
     fixture.detectChanges();
@@ -101,40 +103,68 @@ describe('PostComponent', () => {
   });
 
   describe('photo', () => {
-    function loaded(naturalWidth: number, naturalHeight: number): void {
-      const data = card({ coverMedia: { id: 'm1', url: 'http://x/p.png' } });
-      render(data);
-      component.photoLoaded('http://x/p.png', {
-        target: { naturalWidth, naturalHeight },
-      } as unknown as Event);
-      fixture.detectChanges();
+    const cover = { id: 'm1', url: 'http://x/p.png', width: 1080, height: 1350 };
+
+    function frame(): HTMLElement {
+      return element().querySelector('.post__frame')!;
     }
 
     function image(): HTMLImageElement {
-      return element().querySelector('.post__photo-item img')!;
+      return element().querySelector('.post__slide img')!;
     }
 
-    it('is hidden until loaded, so a broken one shows no icon', () => {
+    it('takes the shape of the photo before it loads, and is hidden until loaded', () => {
+      render(card({ coverMedia: cover }));
+
+      expect(frame().style.aspectRatio).toBe('0.8 / 1');
+      expect(image().classList).not.toContain('is-loaded');
+
+      image().dispatchEvent(new Event('load'));
+      fixture.detectChanges();
+      expect(image().classList).toContain('is-loaded');
+    });
+
+    it('is square for a photo with no size, and stays so after it loads', () => {
       render(card({ coverMedia: { id: 'm1', url: 'http://x/p.png' } }));
 
-      expect(image().classList).not.toContain('is-loaded');
+      image().dispatchEvent(new Event('load'));
+      fixture.detectChanges();
+
+      expect(frame().style.aspectRatio).toBe('1 / 1');
     });
 
-    it('crops one close to the shape of the frame', () => {
-      loaded(1600, 900);
+    it('opens the photo full screen when tapped', () => {
+      render(card({ coverMedia: cover }));
 
-      expect(image().classList).toContain('is-loaded');
-      expect(image().classList).not.toContain('is-contained');
+      (element().querySelector('.post__slide') as HTMLButtonElement).click();
+
+      expect(TestBed.inject(PhotoViewerService).open()).toEqual({
+        photos: [{ url: cover.url, width: 1080, height: 1350 }],
+        index: 0,
+      });
     });
 
-    it('shows a portrait poster or a panorama whole', () => {
-      loaded(900, 1200);
-      expect(image().classList).toContain('is-contained');
+    it('shows every photo on the post page as a carousel, framed by the first', () => {
+      const media = [
+        { media: cover, position: 0, isCover: true },
+        {
+          media: { id: 'm2', url: 'http://x/q.png', width: 2000, height: 1000 },
+          position: 1,
+          isCover: false,
+        },
+      ];
+      render({ ...card({ coverMedia: cover }), media } as PostDetail, true);
+
+      expect(element().querySelectorAll('.post__slide').length).toBe(2);
+      expect(element().querySelectorAll('.post__dot').length).toBe(2);
+      expect(frame().style.aspectRatio).toBe('0.8 / 1');
     });
 
-    it('shows a panorama whole', () => {
-      loaded(3000, 1000);
-      expect(image().classList).toContain('is-contained');
+    it('has no carousel controls for one photo', () => {
+      render(card({ coverMedia: cover }));
+
+      expect(element().querySelector('.post__dots')).toBeNull();
+      expect(element().querySelector('.post__arrow')).toBeNull();
     });
   });
 

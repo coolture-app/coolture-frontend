@@ -7,11 +7,12 @@ import translationPL from '../../public/i18n/pl.json';
 import { AuthService } from './core/services/auth/auth.service';
 import { InterestsView } from './features/interests-view/interests-view';
 import { Toast } from './core/components/toast/toast';
+import { PhotoViewer } from './core/components/photo-viewer/photo-viewer';
 import { filter, first } from 'rxjs';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, Navbar, InterestsView, Toast],
+  imports: [RouterOutlet, Navbar, InterestsView, Toast, PhotoViewer],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
