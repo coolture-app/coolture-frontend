@@ -5,7 +5,6 @@ import { HttpTestingController, TestRequest } from '@angular/common/http/testing
 import { Navigation, provideRouter, Router } from '@angular/router';
 
 import { MainPage } from './main-page';
-import { RESTORE_LIST_KEY } from './home-view';
 import { LocationService } from '../../core/services/location/location.service';
 import { PostService } from '../../core/services/post/post.service';
 import { GeoPoint } from '../../core/models/common/geo.model';
@@ -762,7 +761,6 @@ describe('MainPage', () => {
 
   describe('coming back to the list', () => {
     async function leaveAfterScrolling(): Promise<void> {
-      spyOn(scroller, 'getScrollPosition').and.returnValue([0, 1234]);
       await router.navigateByUrl('/other');
       fixture.destroy();
     }
@@ -780,21 +778,14 @@ describe('MainPage', () => {
       await settle();
     });
 
-    it('restores list and position with no request, on the browser Back', async () => {
+    it('restores the list at once with no request on Back, and leaves the scroll to the router', async () => {
       await leaveAfterScrolling();
+      (scroller.scrollToPosition as jasmine.Spy).calls.reset();
 
       await comeBack({ trigger: 'popstate', extras: {} });
 
       expect(shownTitles()).toEqual(['Post a', 'Post b']);
-      expect(scroller.scrollToPosition).toHaveBeenCalledWith([0, 1234]);
-    });
-
-    it("does the same for the post page's own back button", async () => {
-      await leaveAfterScrolling();
-
-      await comeBack({ trigger: 'imperative', extras: { state: { [RESTORE_LIST_KEY]: true } } });
-
-      expect(shownTitles()).toEqual(['Post a', 'Post b']);
+      expect(scroller.scrollToPosition).not.toHaveBeenCalled();
     });
 
     it('restores the search, the filters and the chosen sort', async () => {
@@ -856,14 +847,6 @@ describe('MainPage', () => {
       expectFeed().flush({ ...page(['z']), mode: 'RANKED' });
       await settle();
       expect(shownTitles()).toEqual(['Post z']);
-    });
-
-    it('opens the next page at the top, unless going back', async () => {
-      (scroller.scrollToPosition as jasmine.Spy).calls.reset();
-
-      await leaveAfterScrolling();
-
-      expect(scroller.scrollToPosition).toHaveBeenCalledWith([0, 0]);
     });
   });
 });

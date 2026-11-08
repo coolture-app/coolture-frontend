@@ -4,9 +4,6 @@ import { GeoPoint } from '../../core/models/common/geo.model';
 import { PostsSort } from '../../core/models/common/enums';
 import { PostListQuery, PostListStore } from '../../core/services/post-list/post-list.store';
 
-/** Navigation state that asks the home page to put the list back, as the browser's Back does. */
-export const RESTORE_LIST_KEY = 'restoreList';
-
 const RESTORE_WINDOW_MS = 30 * 60 * 1000;
 
 /** The filter panel's values, as its form holds them. */
@@ -49,7 +46,6 @@ export interface HomeView {
   filters: FilterValues;
   pickedSort: PostsSort | null;
   isMapView: boolean;
-  scrollY: number;
   /** The position the location filter used. Kept in memory for this visit only, never stored. */
   nearPosition: GeoPoint | null;
 }

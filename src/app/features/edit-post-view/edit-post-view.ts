@@ -11,6 +11,7 @@ import { PostForm } from '../../core/components/post-form/post-form';
 import { PostFormData } from '../../core/models/posts/post-form-data.model';
 import { PostDetail, PostMedia } from '../../core/models/posts/post-detail.model';
 import { PostUpdateRequest } from '../../core/models/posts/post-update-request.model';
+import { BackService } from '../../core/services/back/back.service';
 
 @Component({
   selector: 'app-edit-post-view',
@@ -25,6 +26,7 @@ export class EditPostView implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private destroyRef = inject(DestroyRef);
+  private backService = inject(BackService);
   public authService = inject(AuthService);
 
   @ViewChild(PostForm) postFormComponent!: PostForm;
@@ -86,8 +88,9 @@ export class EditPostView implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
+          // Back to where the edit was opened from, so "Wróć" there never lands on this form.
           this.postService.clearActivePost();
-          this.router.navigate(['/post', post.id]);
+          this.backService.back(`/post/${post.id}`);
         },
         error: (err) => {
           console.error('Error while updating post', err);

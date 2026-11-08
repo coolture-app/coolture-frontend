@@ -1,5 +1,5 @@
 import {
-  AfterViewInit,
+  afterRenderEffect,
   Component,
   ElementRef,
   inject,
@@ -20,7 +20,8 @@ import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
 import { CommentCreateRequest } from '../../core/models/comments/comment-create-request.model';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { RESTORE_LIST_KEY } from '../main-page/home-view';
+import { BackService } from '../../core/services/back/back.service';
+import { PostListStore } from '../../core/services/post-list/post-list.store';
 
 @Component({
   selector: 'app-full-post-view',
@@ -28,13 +29,15 @@ import { RESTORE_LIST_KEY } from '../main-page/home-view';
   templateUrl: './full-post-view.html',
   styleUrl: './full-post-view.scss',
 })
-export class FullPostView implements OnInit, AfterViewInit {
-  private router = inject(Router);
+export class FullPostView implements OnInit {
   private route = inject(ActivatedRoute);
   private postService = inject(PostService);
   private commentsService = inject(CommentsService);
   private destroyRef = inject(DestroyRef);
   private title = inject(Title);
+  private backService = inject(BackService);
+  private list = inject(PostListStore);
+  private router = inject(Router);
 
   private isScrolling = false;
   parentCommentId: string | null = null;
@@ -47,9 +50,26 @@ export class FullPostView implements OnInit, AfterViewInit {
   post = this.postService.activePost;
   comments = signal<CommentSummary[]>([]);
 
+  constructor() {
+    // Once the comments are on the page, which can wait for the post to load. A frame and a task
+    // later, so it comes after the router's own scroll to the top.
+    afterRenderEffect(() => {
+      const section = this.commentSection()?.nativeElement as HTMLElement | undefined;
+      if (section && this.isScrolling) {
+        this.isScrolling = false;
+        requestAnimationFrame(() =>
+          setTimeout(() => section.scrollIntoView({ behavior: 'smooth', block: 'start' })),
+        );
+      }
+    });
+  }
+
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
-    this.isScrolling = this.route.snapshot.queryParamMap.get('scrollToComments') === 'true';
+    // Not on Back or Forward, where the router puts back the scroll the reader left.
+    this.isScrolling =
+      this.route.snapshot.queryParamMap.get('scrollToComments') === 'true' &&
+      this.router.currentNavigation()?.trigger !== 'popstate';
     if (id) {
       if (!this.post() || this.post()?.id !== id) {
         this.postService
@@ -78,22 +98,11 @@ export class FullPostView implements OnInit, AfterViewInit {
     }
   }
 
-  ngAfterViewInit(): void {
-    if (this.isScrolling) {
-      //the timeout is to ensure that the scrolling is turned on after page renders
-      setTimeout(() => {
-        this.commentSection()?.nativeElement.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start',
-        });
-      }, 0);
-    }
-  }
-
   // comments fetched via service are available in this.comments()
 
+  /** As the browser's Back, so the list comes back where it was left. */
   goBack() {
-    this.router.navigate(['/'], { state: { [RESTORE_LIST_KEY]: true } });
+    this.backService.back('/');
   }
 
   checkIfResize(): void {
@@ -161,7 +170,9 @@ export class FullPostView implements OnInit, AfterViewInit {
     }
   }
 
-  removeChild(_id?: string) {
-    this.router.navigate(['/']);
+  /** The post is gone, so it leaves the list it's going back to as well. */
+  removeChild(id: string) {
+    this.list.removeItem(id);
+    this.backService.back('/');
   }
 }

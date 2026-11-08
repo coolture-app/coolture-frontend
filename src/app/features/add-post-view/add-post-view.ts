@@ -41,7 +41,8 @@ export class AddPostView {
 
       const createdPost = await lastValueFrom(this.postService.addPost(payload));
       this.postFormComponent.resetForm();
-      this.router.navigate(['/post', createdPost.id]);
+      // In place of the form, so going back from the new post never lands on the form again.
+      this.router.navigate(['/post', createdPost.id], { replaceUrl: true });
     } catch (err) {
       console.error(err);
       this.postFormComponent.resetSubmitting();

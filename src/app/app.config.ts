@@ -3,7 +3,7 @@ import {
   provideBrowserGlobalErrorListeners,
   provideZonelessChangeDetection,
 } from '@angular/core';
-import { provideRouter, withRouterConfig } from '@angular/router';
+import { provideRouter, withInMemoryScrolling, withRouterConfig } from '@angular/router';
 import { routes } from './app.routes';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
 
@@ -19,7 +19,12 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideZonelessChangeDetection(),
-    provideRouter(routes, withRouterConfig({ canceledNavigationResolution: 'computed' })),
+    // Forward navigations open at the top, and Back and Forward put the scroll back, after rendering.
+    provideRouter(
+      routes,
+      withRouterConfig({ canceledNavigationResolution: 'computed' }),
+      withInMemoryScrolling({ scrollPositionRestoration: 'enabled' }),
+    ),
     provideClientHydration(withEventReplay()),
     provideHttpClient(
       withInterceptors([errorInterceptor, authTokenInterceptor, originVerifyInterceptor]),

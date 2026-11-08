@@ -43,13 +43,7 @@ import {
   PostsSort,
 } from '../../core/models/common/enums';
 import { Map } from '../../core/components/map/map/map';
-import {
-  createFiltersForm,
-  HomeView,
-  HomeViewMemory,
-  NO_FILTERS,
-  RESTORE_LIST_KEY,
-} from './home-view';
+import { createFiltersForm, HomeViewMemory, NO_FILTERS } from './home-view';
 import { FeedFilters } from './feed-filters/feed-filters';
 
 const LOCATION_WAIT_MS = 1500;
@@ -171,15 +165,10 @@ export class MainPage implements OnDestroy {
   private listOutdated = false;
 
   constructor() {
-    const restored = this.restoreView();
+    this.restoreView();
     this.postService.clearActivePost();
 
-    afterNextRender(() => {
-      if (restored) {
-        this.scroller.scrollToPosition([0, restored.scrollY]);
-      }
-      this.ready.set(true);
-    });
+    afterNextRender(() => this.ready.set(true));
 
     // First open, and again if the store was cleared because the user changed.
     effect(() => {
@@ -215,10 +204,6 @@ export class MainPage implements OnDestroy {
 
   ngOnDestroy(): void {
     clearTimeout(this.scrollStop);
-    // The next page isn't scrolled by itself, and would otherwise open at the end of a long list.
-    if (this.router.currentNavigation()?.trigger !== 'popstate') {
-      this.scroller.scrollToPosition([0, 0]);
-    }
   }
 
   applyControls(): void {
@@ -402,20 +387,20 @@ export class MainPage implements OnDestroy {
       filters: this.filtersForm.getRawValue(),
       pickedSort: this.pickedSort(),
       isMapView: this.isMapView(),
-      scrollY: this.scroller.getScrollPosition()[1],
       nearPosition: this.nearPosition(),
     });
   }
 
-  /** Puts the page back as it was left, and returns the view. Otherwise a new list will start. */
-  private restoreView(): HomeView | null {
-    const navigation = this.router.currentNavigation();
-    const comingBack =
-      navigation?.trigger === 'popstate' || !!navigation?.extras.state?.[RESTORE_LIST_KEY];
+  /**
+   * On Back or Forward, puts the page back as it was left, from memory and with no request, so the
+   * router's scroll restoration lands on the same card. Otherwise a new list will start.
+   */
+  private restoreView(): void {
+    const comingBack = this.router.currentNavigation()?.trigger === 'popstate';
     const view = comingBack ? this.memory.restore() : null;
     if (!view) {
       this.list.clear();
-      return null;
+      return;
     }
 
     this.searchControl.setValue(view.search, { emitEvent: false });
@@ -429,6 +414,5 @@ export class MainPage implements OnDestroy {
     if (post) {
       this.list.updateItem(post);
     }
-    return view;
   }
 }
