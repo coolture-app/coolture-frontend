@@ -16,14 +16,23 @@ describe('PhotoViewer', () => {
     await fixture.whenStable();
   }
 
+  /** Back, then the frames the viewer waits for the router's scroll. */
+  async function closing(): Promise<void> {
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    await fixture.whenStable();
+  }
+
   beforeEach(() => {
     fixture = TestBed.createComponent(PhotoViewer);
     service = TestBed.inject(PhotoViewerService);
     fixture.detectChanges();
   });
 
-  afterEach(() => {
-    service.close();
+  afterEach(async () => {
+    if (service.open()) {
+      fixture.componentInstance.close();
+      await closing();
+    }
     document.documentElement.style.overflow = '';
   });
 
@@ -39,8 +48,8 @@ describe('PhotoViewer', () => {
     await openAt(0);
 
     expect(history.state.photoViewer).toBeTrue();
-    window.dispatchEvent(new PopStateEvent('popstate'));
-    await fixture.whenStable();
+    history.back();
+    await closing();
 
     expect(service.open()).toBeNull();
     expect(document.documentElement.style.overflow).toBe('');
@@ -50,7 +59,7 @@ describe('PhotoViewer', () => {
     await openAt(0);
 
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
-    await fixture.whenStable();
+    await closing();
 
     expect(service.open()).toBeNull();
   });
@@ -62,13 +71,29 @@ describe('PhotoViewer', () => {
     expect(service.open()).not.toBeNull();
 
     (element().querySelector('.viewer__slide') as HTMLElement).click();
+    await closing();
     expect(service.open()).toBeNull();
+  });
+
+  it('puts the page back where it was', async () => {
+    document.body.style.height = '5000px';
+    window.scrollTo(0, 900);
+    await openAt(0);
+
+    window.scrollTo(0, 0);
+    fixture.componentInstance.close();
+    await closing();
+
+    expect(window.scrollY).toBe(900);
+    document.body.style.height = '';
+    window.scrollTo(0, 0);
   });
 
   it('closes with its button', async () => {
     await openAt(0);
 
     (element().querySelector('.viewer__close') as HTMLButtonElement).click();
+    await closing();
 
     expect(service.open()).toBeNull();
   });

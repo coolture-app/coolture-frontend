@@ -1,6 +1,7 @@
 import {
   afterRenderEffect,
   Component,
+  DestroyRef,
   DOCUMENT,
   ElementRef,
   inject,
@@ -52,7 +53,6 @@ function onDrawnPhoto(image: HTMLImageElement, event: MouseEvent): boolean {
   styleUrl: './photo-viewer.scss',
   host: {
     '(document:keydown)': 'onKey($event)',
-    '(window:popstate)': 'onPopState()',
     '(click)': 'onClick($event)',
   },
 })
@@ -65,17 +65,33 @@ export class PhotoViewer {
   readonly index = signal(0);
   private returnFocus: HTMLElement | null = null;
   private wasOpen = false;
+  /** The page's scroll when the viewer opened, put back after it closes. */
+  private pageY = 0;
+  private leaving = false;
 
   constructor() {
-    // Runs when it opens or closes: the history entry, the page's scroll, focus, and the first photo.
+    const view = this.document.defaultView;
+    const onPop = () => this.onPopState();
+    view?.addEventListener('popstate', onPop);
+    inject(DestroyRef).onDestroy(() => view?.removeEventListener('popstate', onPop));
+
     afterRenderEffect(() => {
       const open = this.viewer.open();
-      untracked(() => (open ? this.opened(open.index) : this.closed()));
+      untracked(() => open && this.opened(open.index));
     });
   }
 
+  /**
+   * Goes back past the viewer's own history entry, and the pop then finishes closing. A button, a key
+   * and a click beside the photo all come here, so they act as the browser's Back does.
+   */
   close(): void {
-    this.viewer.close();
+    const view = this.document.defaultView;
+    if (view?.history.state?.[HISTORY_KEY]) {
+      view.history.back();
+    } else {
+      this.finish();
+    }
   }
 
   go(step: number): void {
@@ -118,13 +134,24 @@ export class PhotoViewer {
     }
   }
 
-  /** The browser's Back took the viewer's history entry away. */
+  /**
+   * The viewer's history entry is gone, by Back or by `close()`. The router takes the return to the
+   * same URL for a skipped navigation and scrolls to the top on its next frame, so the viewer stays
+   * over the page until that has happened, puts the page's scroll back, and only then goes.
+   */
   onPopState(): void {
-    if (this.viewer.open()) {
-      this.wasOpen = false;
-      this.viewer.close();
-      this.restorePage();
+    if (!this.wasOpen || this.leaving) {
+      return;
     }
+    this.leaving = true;
+    setTimeout(() =>
+      requestAnimationFrame(() =>
+        setTimeout(() => {
+          this.document.defaultView?.scrollTo({ top: this.pageY, behavior: 'instant' });
+          this.finish();
+        }),
+      ),
+    );
   }
 
   private opened(index: number): void {
@@ -132,9 +159,11 @@ export class PhotoViewer {
       return;
     }
     this.wasOpen = true;
-    this.returnFocus = this.document.activeElement as HTMLElement | null;
+    this.leaving = false;
     const view = this.document.defaultView;
-    // The same URL and router state, so the router ignores this entry; Back then only closes.
+    this.pageY = view?.scrollY ?? 0;
+    this.returnFocus = this.document.activeElement as HTMLElement | null;
+    // The same URL and router state, so Back only leaves this entry and stays on the page.
     view?.history.pushState({ ...view.history.state, [HISTORY_KEY]: true }, '');
     this.document.documentElement.style.overflow = 'hidden';
     this.index.set(index);
@@ -142,15 +171,10 @@ export class PhotoViewer {
     this.closeButton()?.nativeElement.focus();
   }
 
-  private closed(): void {
-    if (!this.wasOpen) {
-      return;
-    }
+  private finish(): void {
     this.wasOpen = false;
-    const view = this.document.defaultView;
-    if (view?.history.state?.[HISTORY_KEY]) {
-      view.history.back();
-    }
+    this.leaving = false;
+    this.viewer.close();
     this.restorePage();
   }
 
