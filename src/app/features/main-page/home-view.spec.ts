@@ -9,6 +9,7 @@ const VIEW: HomeView = {
   filters: NO_FILTERS,
   pickedSort: null,
   isMapView: false,
+  listScrollY: 0,
   nearPosition: null,
 };
 

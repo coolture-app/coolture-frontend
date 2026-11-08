@@ -423,6 +423,40 @@ describe('MainPage', () => {
       http.match((r) => r.url.endsWith('/posts/map'));
       expect(shownTitles()).toEqual(['Post a']);
     });
+
+    it('puts the list back where it was scrolled to', async () => {
+      await open();
+      expectFeed().flush({ ...page(['a']), mode: 'RANKED' });
+      await settle();
+      spyOn(scroller, 'getScrollPosition').and.returnValue([0, 1234]);
+
+      component.toggleMapView(true);
+      await settle();
+      (scroller.getScrollPosition as jasmine.Spy).and.returnValue([0, 0]);
+      component.toggleMapView(false);
+      await settle();
+
+      http.match((r) => r.url.endsWith('/posts/map'));
+      expect(scroller.scrollToPosition).toHaveBeenCalledWith([0, 1234]);
+    });
+
+    it('starts a list that changed on the map at the top', async () => {
+      await open();
+      expectFeed().flush({ ...page(['a']), mode: 'RANKED' });
+      await settle();
+      spyOn(scroller, 'getScrollPosition').and.returnValue([0, 1234]);
+
+      component.toggleMapView(true);
+      await settle();
+      component.searchControl.setValue('jazz');
+      await debounce();
+      component.toggleMapView(false);
+      await settle();
+
+      http.match((r) => r.url.endsWith('/posts/map'));
+      expectPosts();
+      expect(scroller.scrollToPosition).not.toHaveBeenCalledWith([0, 1234]);
+    });
   });
 
   describe('past events', () => {

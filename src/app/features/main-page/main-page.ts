@@ -5,6 +5,7 @@ import {
   DestroyRef,
   effect,
   inject,
+  Injector,
   OnDestroy,
   signal,
   untracked,
@@ -101,6 +102,7 @@ export class MainPage implements OnDestroy {
   private scroller = inject(ViewportScroller);
   private memory = inject(HomeViewMemory);
   private homeTap = inject(HomeTapService);
+  private injector = inject(Injector);
   authService = inject(AuthService);
   list = inject(PostListStore);
 
@@ -116,6 +118,8 @@ export class MainPage implements OnDestroy {
   /** Phones only, in the styles: the bar slides away while scrolling down, back on scrolling up. */
   barHidden = signal(false);
   private lastScrollY = 0;
+  /** Where the list was scrolled to when the map replaced it, to land there again on the way back. */
+  private listScrollY = 0;
   private scrollStop: ReturnType<typeof setTimeout> | undefined;
 
   sortOptions: { value: PostSortBy; labelKey: string }[] = [
@@ -285,9 +289,19 @@ export class MainPage implements OnDestroy {
     if (isToggled === this.isMapView()) {
       return;
     }
+    if (isToggled) {
+      this.listScrollY = this.scroller.getScrollPosition()[1];
+    }
     this.isMapView.set(isToggled);
-    if (!isToggled && (this.listOutdated || this.list.query() === null)) {
+    if (isToggled) {
+      return;
+    }
+    if (this.listOutdated || this.list.query() === null) {
       this.load();
+    } else {
+      // The same list renders again from the store, so the same card is at the same place.
+      const y = this.listScrollY;
+      afterNextRender(() => this.scroller.scrollToPosition([0, y]), { injector: this.injector });
     }
   }
 
@@ -387,6 +401,7 @@ export class MainPage implements OnDestroy {
       filters: this.filtersForm.getRawValue(),
       pickedSort: this.pickedSort(),
       isMapView: this.isMapView(),
+      listScrollY: this.listScrollY,
       nearPosition: this.nearPosition(),
     });
   }
@@ -408,6 +423,7 @@ export class MainPage implements OnDestroy {
     this.pickedSort.set(view.pickedSort);
     this.nearPosition.set(view.nearPosition);
     this.isMapView.set(view.isMapView);
+    this.listScrollY = view.listScrollY;
     this.activeFilters.set(this.readFilters());
 
     const post = this.postService.activePost();

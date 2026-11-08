@@ -46,6 +46,8 @@ export interface HomeView {
   filters: FilterValues;
   pickedSort: PostsSort | null;
   isMapView: boolean;
+  /** Where the list under the map was scrolled to. The router restores only the page's own scroll. */
+  listScrollY: number;
   /** The position the location filter used. Kept in memory for this visit only, never stored. */
   nearPosition: GeoPoint | null;
 }
