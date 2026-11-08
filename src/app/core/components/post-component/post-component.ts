@@ -45,10 +45,10 @@ const MIN_CROPPED_SHAPE = 1.4;
 const MAX_CROPPED_SHAPE = 2.6;
 
 /**
- * Posts whose text someone expanded, by the object the list holds. The list gives back the same
- * objects when coming back to it, so a card keeps its height and the saved scroll position still fits.
+ * Ids of posts whose text someone expanded, so a card keeps its height when the list comes back,
+ * including the card replaced by the post page's copy, and the saved scroll position still fits.
  */
-const expandedPosts = new WeakSet<PostCard | PostDetail>();
+const expandedPosts = new Set<string>();
 
 @Component({
   selector: 'app-post-component',
@@ -109,7 +109,7 @@ export class PostComponent implements OnInit {
 
   ngOnInit(): void {
     if (this.data) {
-      this.isExpanded.set(expandedPosts.has(this.data));
+      this.isExpanded.set(expandedPosts.has(this.data.id));
       this.isLiked.set(this.data.myReaction === 'LIKE');
       this.isInterested.set(this.data.myParticipation === 'INTERESTED');
       this.isTakesPart.set(this.data.myParticipation === 'TAKES_PART');
@@ -131,9 +131,9 @@ export class PostComponent implements OnInit {
     const expanded = !this.isExpanded();
     this.isExpanded.set(expanded);
     if (expanded) {
-      expandedPosts.add(this.data);
+      expandedPosts.add(this.data.id);
     } else {
-      expandedPosts.delete(this.data);
+      expandedPosts.delete(this.data.id);
       // Collapsing a long text can leave the card above the view, with the reader lost in the list.
       afterNextRender(
         () => this.host.querySelector('.post')?.scrollIntoView({ block: 'nearest' }),

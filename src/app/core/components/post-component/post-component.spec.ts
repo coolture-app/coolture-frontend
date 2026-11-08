@@ -185,7 +185,7 @@ describe('PostComponent', () => {
     });
 
     it('stays expanded when the same post is shown again, as on coming back to the list', async () => {
-      const data = card({ description: LONG });
+      const data = card({ id: 'shown-again', description: LONG });
       render(data);
       await measured();
       toggle()!.click();
@@ -198,6 +198,21 @@ describe('PostComponent', () => {
 
       expect(again.componentInstance.isExpanded()).toBeTrue();
       expect(again.nativeElement.querySelector('.post__desc-text--clamped')).toBeNull();
+    });
+
+    it('stays expanded when the card is replaced by the copy from the post page', async () => {
+      const data = card({ id: 'replaced', description: LONG });
+      render(data);
+      await measured();
+      toggle()!.click();
+      await measured();
+
+      const again = TestBed.createComponent(PostComponent);
+      again.componentRef.setInput('data', { ...data });
+      again.componentRef.setInput('isFullView', false);
+      again.detectChanges();
+
+      expect(again.componentInstance.isExpanded()).toBeTrue();
     });
 
     it('shows the whole text with no toggle on the post page', async () => {
