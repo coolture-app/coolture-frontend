@@ -4,67 +4,12 @@
 @use 'app/static/styles/flex';
 @import 'maplibre-gl/dist/maplibre-gl.css';
 
+// The wordmark's typeface only. Text uses the system font stack in --font-sans.
 @font-face {
-  font-family: 'Helvetica';
-  src: url('assets/fonts/NeueHaasDisplayBlack.ttf') format('truetype');
+  font-family: 'Coolture Display';
+  src: url('assets/fonts/NeueHaasDisplayBold.ttf') format('truetype');
   font-weight: 700;
   font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Helvetica';
-  src: url('assets/fonts/NeueHaasDisplayBlackItalic.ttf') format('truetype');
-  font-weight: 700;
-  font-style: italic;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Helvetica';
-  src: url('assets/fonts/NeueHaasDisplayMediu.ttf') format('truetype');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Helvetica';
-  src: url('assets/fonts/NeueHaasDisplayMediumItalic.ttf') format('truetype');
-  font-weight: 500;
-  font-style: italic;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Helvetica';
-  src: url('assets/fonts/NeueHaasDisplayRoman.ttf') format('truetype');
-  font-weight: 300;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Helvetica';
-  src: url('assets/fonts/NeueHaasDisplayRomanItalic.ttf') format('truetype');
-  font-weight: 300;
-  font-style: italic;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Helvetica';
-  src: url('assets/fonts/NeueHaasDisplayThin.ttf') format('truetype');
-  font-weight: 200;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Helvetica';
-  src: url('assets/fonts/NeueHaasDisplayThinItalic.ttf') format('truetype');
-  font-weight: 200;
-  font-style: italic;
   font-display: swap;
 }
 
