@@ -19,6 +19,25 @@ export interface FeedParams {
   location?: GeoPoint;
 }
 
+/** The search and filters that `/posts` and `/posts/map` both take. */
+function filterParams(filters: PostFilterParams): HttpParams {
+  let params = new HttpParams();
+  if (filters.q) params = params.set('q', filters.q);
+  if (filters.authorId) params = params.set('authorId', filters.authorId);
+  if (filters.status) params = params.set('status', filters.status);
+  if (filters.visibility) params = params.set('visibility', filters.visibility);
+  if (filters.type) params = params.set('type', filters.type);
+  if (filters.startsFrom) params = params.set('startsFrom', filters.startsFrom);
+  if (filters.startsTo) params = params.set('startsTo', filters.startsTo);
+  if (filters.includePast) params = params.set('includePast', true);
+  if (filters.reactionType) params = params.set('reactionType', filters.reactionType);
+  filters.participationTypes?.forEach(
+    (type) => (params = params.append('participationTypes', type)),
+  );
+  filters.tags?.forEach((tag) => (params = params.append('tags', tag)));
+  return params;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -38,35 +57,13 @@ export class PostService {
 
   // ===== API CALLS =====
   getPosts(filters: PostFilterParams = {}): Observable<PaginatedResponse<PostCard>> {
-    let params = new HttpParams();
-
+    let params = filterParams(filters);
     if (filters.cursor) params = params.set('cursor', filters.cursor);
     if (filters.limit) params = params.set('limit', filters.limit);
-    if (filters.q) params = params.set('q', filters.q);
-    if (filters.authorId) params = params.set('authorId', filters.authorId);
-    if (filters.status) params = params.set('status', filters.status);
-    if (filters.visibility) params = params.set('visibility', filters.visibility);
-    if (filters.type) params = params.set('type', filters.type);
-    if (filters.startsFrom) params = params.set('startsFrom', filters.startsFrom);
-    if (filters.startsTo) params = params.set('startsTo', filters.startsTo);
     if (filters.latitude) params = params.set('latitude', filters.latitude);
     if (filters.longitude) params = params.set('longitude', filters.longitude);
     if (filters.radiusKm) params = params.set('radiusKm', filters.radiusKm);
     if (filters.sortBy) params = params.set('sortBy', filters.sortBy);
-    if (filters.includePast) params = params.set('includePast', true);
-
-    if (filters.participationTypes) {
-      filters.participationTypes.forEach((type) => {
-        params = params.append('participationTypes', type);
-      });
-    }
-    if (filters.reactionType) params = params.set('reactionType', filters.reactionType);
-
-    if (filters.tags) {
-      filters.tags.forEach((tag) => {
-        params = params.append('tags', tag);
-      });
-    }
 
     return this.http.get<PaginatedResponse<PostCard>>(this.apiUrl.path('/posts'), { params });
   }
@@ -89,30 +86,7 @@ export class PostService {
       rightBottom: { latitude: number; longitude: number };
     },
   ): Observable<PostMark[]> {
-    let params = new HttpParams();
-
-    if (filters.q) params = params.set('q', filters.q);
-    if (filters.authorId) params = params.set('authorId', filters.authorId);
-    if (filters.status) params = params.set('status', filters.status);
-    if (filters.visibility) params = params.set('visibility', filters.visibility);
-    if (filters.type) params = params.set('type', filters.type);
-    if (filters.startsFrom) params = params.set('startsFrom', filters.startsFrom);
-    if (filters.startsTo) params = params.set('startsTo', filters.startsTo);
-    if (filters.includePast) params = params.set('includePast', true);
-
-    if (filters.participationTypes) {
-      filters.participationTypes.forEach((type) => {
-        params = params.append('participationTypes', type);
-      });
-    }
-    if (filters.reactionType) params = params.set('reactionType', filters.reactionType);
-
-    if (filters.tags) {
-      filters.tags.forEach((tag) => {
-        params = params.append('tags', tag);
-      });
-    }
-
+    let params = filterParams(filters);
     params = params.set('leftUpper.latitude', bounds.leftUpper.latitude.toString());
     params = params.set('leftUpper.longitude', bounds.leftUpper.longitude.toString());
     params = params.set('rightBottom.latitude', bounds.rightBottom.latitude.toString());
