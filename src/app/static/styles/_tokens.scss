@@ -126,4 +126,10 @@ $z-index: (
   --font-brand: 'Coolture Display', var(--font-sans);
   --container-max: 680px;
   --navbar-height: 56px;
+  --bottom-bar-height: 0px;
+
+  // Phones have the navbar's places in a bar at the bottom.
+  @media (max-width: 639px) {
+    --bottom-bar-height: calc(56px + env(safe-area-inset-bottom));
+  }
 }

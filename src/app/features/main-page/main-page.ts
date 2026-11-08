@@ -16,10 +16,8 @@ import { debounceTime, filter, merge } from 'rxjs';
 import { TranslatePipe } from '@ngx-translate/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
-  heroArrowPath,
   heroMagnifyingGlass,
   heroMapPin,
-  heroPlus,
   heroFunnel,
   heroXMark,
   heroChevronDown,
@@ -36,6 +34,7 @@ import { PostService } from '../../core/services/post/post.service';
 import { AuthService } from '../../core/services/auth/auth.service';
 import { LocationService } from '../../core/services/location/location.service';
 import { PostListStore } from '../../core/services/post-list/post-list.store';
+import { HomeTapService } from '../../core/services/home-tap/home-tap.service';
 import {
   PostType,
   PostStatus,
@@ -70,10 +69,8 @@ const CARDS_BEFORE_END = 15;
   ],
   viewProviders: [
     provideIcons({
-      heroArrowPath,
       heroMagnifyingGlass,
       heroMapPin,
-      heroPlus,
       heroFunnel,
       heroXMark,
       heroChevronDown,
@@ -90,6 +87,7 @@ export class MainPage implements OnDestroy {
   private location = inject(LocationService);
   private scroller = inject(ViewportScroller);
   private memory = inject(HomeViewMemory);
+  private homeTap = inject(HomeTapService);
   authService = inject(AuthService);
   list = inject(PostListStore);
 
@@ -168,6 +166,10 @@ export class MainPage implements OnDestroy {
       }
     });
 
+    this.homeTap.freshFeed
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.startFresh());
+
     merge(this.searchControl.valueChanges, this.filtersForm.valueChanges)
       .pipe(debounceTime(400), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.applyControls());
@@ -207,10 +209,6 @@ export class MainPage implements OnDestroy {
     this.applyControls();
   }
 
-  goToAddPost(): void {
-    this.router.navigate(['/addPost']);
-  }
-
   removeChild(idToRemove: string): void {
     this.list.removeItem(idToRemove);
   }
@@ -248,9 +246,13 @@ export class MainPage implements OnDestroy {
     }
   }
 
-  refresh(): void {
-    this.scroller.scrollToPosition([0, 0]);
-    this.list.refresh();
+  /** Home tapped at the top: the default feed again, as a new session with a new first page. */
+  startFresh(): void {
+    this.resetControls();
+    this.pickedSort.set(null);
+    this.activeFilters.set(this.readFilters());
+    this.isMapView.set(false);
+    this.load();
   }
 
   /** Turns nearby ranking on or off. It asks only when tapped, and a refusal leaves the feed as it is. */

@@ -42,6 +42,8 @@ app-root {
   display: flex;
   flex-direction: column;
   flex-grow: 1;
+  // Room for the phone's bottom bar, so the end of a page isn't under it.
+  padding-bottom: var(--bottom-bar-height);
 }
 
 a {

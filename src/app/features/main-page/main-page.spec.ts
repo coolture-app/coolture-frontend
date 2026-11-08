@@ -12,6 +12,7 @@ import { GeoPoint } from '../../core/models/common/geo.model';
 import { PostCard } from '../../core/models/posts/post-card.model';
 import { PostDetail } from '../../core/models/posts/post-detail.model';
 import { InfiniteScroll } from '../../core/directives/infinite-scroll';
+import { HomeTapService } from '../../core/services/home-tap/home-tap.service';
 
 @Component({ template: '' })
 class OtherPage {}
@@ -529,22 +530,40 @@ describe('MainPage', () => {
     });
   });
 
-  describe('refresh', () => {
-    it('starts a new session from the top, keeping the location', async () => {
+  describe('Home tapped at the top', () => {
+    it('starts a new feed session, keeping the location', async () => {
       allowedLocation = { latitude: 54.35, longitude: 18.65 };
       await open();
       expectFeed().flush({ ...page(['a']), mode: 'RANKED' });
       await settle();
 
-      component.refresh();
+      TestBed.inject(HomeTapService).freshFeed.next();
+      await settle();
 
       const again = expectFeed();
       expect(param(again, 'latitude')).toBe('54.35');
       expect(param(again, 'cursor')).toBeNull();
-      expect(scroller.scrollToPosition).toHaveBeenCalledWith([0, 0]);
       again.flush({ ...page(['b']), mode: 'RANKED' });
       await settle();
       expect(shownTitles()).toEqual(['Post b']);
+    });
+
+    it('leaves a search for the default feed', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      component.searchControl.setValue('jazz');
+      component.applyControls();
+      await settle();
+      expectPosts().flush(page(['j']));
+
+      TestBed.inject(HomeTapService).freshFeed.next();
+      await settle();
+
+      expectFeed().flush({ ...page(['f']), mode: 'RANKED' });
+      await settle();
+      expect(component.searchControl.value).toBe('');
+      expect(component.currentSortBy()).toBe('RECOMMENDED');
+      expect(shownTitles()).toEqual(['Post f']);
     });
   });
 

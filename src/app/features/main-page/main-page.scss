@@ -70,37 +70,6 @@
   }
 }
 
-.addPost-btn {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  flex-shrink: 0;
-
-  ng-icon {
-    width: 16px;
-    height: 16px;
-  }
-
-  &__text {
-    @media (max-width: 639px) {
-      display: none;
-    }
-  }
-
-  @media (max-width: 639px) {
-    position: fixed;
-    bottom: var(--space-lg);
-    right: var(--space-lg);
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    padding: 0;
-    justify-content: center;
-    box-shadow: var(--shadow-lg);
-    z-index: var(--z-sticky);
-  }
-}
-
 .sort-wrapper {
   position: relative;
 }

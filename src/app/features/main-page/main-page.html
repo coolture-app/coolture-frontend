@@ -15,12 +15,6 @@
       <app-btn variant="primary" (btnClick)="applyControls()">{{
         'MAIN_PAGE.search' | translate
       }}</app-btn>
-      @if (authService.isAuthenticated()) {
-        <app-btn variant="primary" (btnClick)="goToAddPost()">
-          <ng-icon name="heroPlus" />
-          <span class="addPost-btn__text">{{ 'MAIN_PAGE.addPost' | translate }}</span>
-        </app-btn>
-      }
       @if (!isMapView()) {
         <div class="sort-wrapper">
           <button class="sort-btn" (click)="toggleSortMenu()">
@@ -41,15 +35,6 @@
             </div>
           }
         </div>
-        <button
-          class="sort-btn"
-          type="button"
-          [attr.aria-label]="'MAIN_PAGE.refresh' | translate"
-          [title]="'MAIN_PAGE.refresh' | translate"
-          (click)="refresh()"
-        >
-          <ng-icon name="heroArrowPath" />
-        </button>
         @if (isFeed()) {
           <button
             class="sort-btn"

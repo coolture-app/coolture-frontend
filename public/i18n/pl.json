@@ -84,7 +84,8 @@
     "menu": "Menu",
     "addPost": "Dodaj post",
     "logout": "Wyloguj się",
-    "login": "Zaloguj się"
+    "login": "Zaloguj się",
+    "switch-language": "Zmień język na angielski (EN)"
   },
   "LANG": {
     "pl": "PL",

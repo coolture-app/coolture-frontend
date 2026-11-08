@@ -84,7 +84,8 @@
     "menu": "Menu",
     "addPost": "Add post",
     "logout": "Log out",
-    "login": "Log in"
+    "login": "Log in",
+    "switch-language": "Switch to Polish (PL)"
   },
   "LANG": {
     "pl": "PL",
