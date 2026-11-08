@@ -58,33 +58,31 @@
     "replying-to": "Replying to comment"
   },
   "POST": {
-    "starts": "Starts",
-    "share": "Share",
+    "starts": "Event start",
     "show-more": "Show more",
     "show-less": "Show less",
     "show-all-photos": "See the rest",
     "loading": "Loading post...",
-    "likes": "likes",
     "participating": "going",
-    "comments": "comments",
+    "comments": "Show comments",
     "photo-alt": "Event photo",
     "edit": "Edit post",
     "delete": "Delete post",
     "modal-delete-title": "Do you really want to delete your post?",
     "modal-delete-body": "This action cannot be undone.",
-    "thousand": "k",
-    "million": "mil",
-    "interested": "Mark as interested",
-    "takes_part": "Mark as taking part",
-    "online": "Online"
+    "interested": "Interested",
+    "takes_part": "Going",
+    "online": "Online",
+    "like": "Like",
+    "saved-to-plans": "Saved in Plans"
   },
   "NAVBAR": {
     "main-page": "Home",
-    "friends": "Find friends",
-    "my-events": "My Events",
+    "friends": "People",
+    "my-events": "Plans",
     "my-profile": "Profile",
     "menu": "Menu",
-    "addPost": "Add post!",
+    "addPost": "Add post",
     "logout": "Log out",
     "login": "Log in"
   },
@@ -218,11 +216,11 @@
     "ok": "Okay"
   },
   "MY_EVENTS": {
-    "title": "My Events",
+    "title": "Plans",
     "no-events": "You don't have any events yet... Sad face.",
     "all": "All",
     "interested": "Interested",
-    "takes_part": "Participating"
+    "takes_part": "Going"
   },
   "INTERESTS": {
     "title": "Your interests",

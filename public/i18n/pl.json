@@ -58,33 +58,31 @@
     "replying-to": "Odpowiadasz na komentarz"
   },
   "POST": {
-    "starts": "Rozpoczyna się",
-    "share": "Udostępnij",
+    "starts": "Początek wydarzenia",
     "show-more": "Wyświetl więcej",
     "show-less": "Wyświetl mniej",
     "show-all-photos": "Zobacz resztę",
     "loading": "Ładowanie posta...",
-    "likes": "polubień",
     "participating": "uczestników",
-    "comments": "komentarzy",
+    "comments": "Pokaż komentarze",
     "photo-alt": "Zdjęcie z wydarzenia",
     "edit": "Edytuj post",
     "delete": "Usuń post",
     "modal-delete-title": "Czy na pewno chcesz usunąć swój post?",
     "modal-delete-body": "Tej akcji nie da się cofnąć.",
-    "thousand": "tyś",
-    "million": "mil",
-    "interested": "Oznacz jako zainteresowany",
-    "takes_part": "Oznacz jako uczestniczę",
-    "online": "Online"
+    "interested": "Interesuje mnie",
+    "takes_part": "Biorę udział",
+    "online": "Online",
+    "like": "Lubię to",
+    "saved-to-plans": "Zapisano w Planach"
   },
   "NAVBAR": {
     "main-page": "Strona główna",
-    "friends": "Znajdź znajomych",
-    "my-events": "Moje Wydarzenia",
-    "my-profile": "Mój Profil",
+    "friends": "Ludzie",
+    "my-events": "Plany",
+    "my-profile": "Profil",
     "menu": "Menu",
-    "addPost": "Dodaj post!",
+    "addPost": "Dodaj post",
     "logout": "Wyloguj się",
     "login": "Zaloguj się"
   },
@@ -99,14 +97,14 @@
     "title": "Zaloguj się!"
   },
   "404": {
-    "header": "Szukana przez ciebie strona nie istnieje.",
-    "go-back-btn": "Wróc na stronę główną",
-    "title": "Ups, zabładziliśmy..."
+    "header": "Strona, której szukasz, nie istnieje.",
+    "go-back-btn": "Wróć na stronę główną",
+    "title": "Ups, zabłądziliśmy..."
   },
   "PROFILE": {
-    "title": "Mój Profil",
-    "edit": "Edytuj Profil",
-    "editDescription": "Edytuj Opis",
+    "title": "Mój profil",
+    "edit": "Edytuj profil",
+    "editDescription": "Edytuj opis",
     "interests": "Zainteresowania",
     "cancel": "Anuluj",
     "save": "Zapisz Zmiany",
@@ -218,11 +216,11 @@
     "ok": "Okej"
   },
   "MY_EVENTS": {
-    "title": "Moje Wydarzenia",
+    "title": "Plany",
     "no-events": "Nie masz jeszcze żadnych wydarzeń... Smutno.",
     "all": "Wszystkie",
-    "interested": "Zainteresowany",
-    "takes_part": "Uczestniczę"
+    "interested": "Interesuje mnie",
+    "takes_part": "Biorę udział"
   },
   "INTERESTS": {
     "title": "Twoje zainteresowania",
