@@ -13,7 +13,7 @@ export interface paths {
     };
     /**
      * Home feed for guests and signed-in users
-     * @description The first request starts a session and may send a location. Every later request sends only cursor and limit.
+     * @description The first request starts a session and may send a location. Every later request sends the cursor, the limit and the same filters again. The filters narrow which posts are ranked, with the same meaning as on /posts.
      */
     get: operations['getFeed'];
     put?: never;
@@ -48,7 +48,7 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** Map markers. Takes the same filters as /posts, plus the map bounds. Only includePast is listed here because it is new. */
+    /** Map markers. Takes the same filters as /posts, plus the map bounds. Only the newer parameters are listed here. */
     get: operations['getPostMarks'];
     put?: never;
     post?: never;
@@ -113,6 +113,8 @@ export interface components {
       coverMedia?: components['schemas']['MediaResource'];
       myReaction?: components['schemas']['ReactionType'];
       myParticipation?: components['schemas']['ParticipationType'];
+      /** @description Every photo of the post, cover first, then in the post's order. At most 8, the limit a post can have (PostLimits.MAX_PHOTOS). Left out when the post has none. */
+      photos?: components['schemas']['MediaResource'][];
     };
     PostMark: {
       /** Format: uuid */
@@ -213,10 +215,24 @@ export interface components {
     Cursor: string;
     /** @description Page size. Values above 100 are capped. Non-numeric values return 400. */
     Limit: number;
-    /** @description Send together with longitude, rounded to 2 decimals. On /feed, only on the first page. */
+    /** @description Send together with longitude, rounded to 2 decimals. The centre of radiusKm and of NEAREST. On /feed, the first page's position is also used for proximity, and later pages send it again only with radiusKm. */
     Latitude: number;
-    /** @description Send together with latitude, rounded to 2 decimals. On /feed, only on the first page. */
+    /** @description Send together with latitude. See latitude. */
     Longitude: number;
+    /** @description Only posts with a place within this many km of latitude and longitude. Ignored without them. */
+    RadiusKm: number;
+    /** @description Matches a part of the title or the description, ignoring case. */
+    Q: string;
+    /** @description Comma-separated or repeated. A post matches if it has any of them. */
+    Tags: string[];
+    AuthorId: string;
+    Status: components['schemas']['PostStatus'];
+    Visibility: components['schemas']['PostVisibility'];
+    Type: components['schemas']['PostType'];
+    /** @description Setting this turns the past-events window off. */
+    StartsFrom: string;
+    /** @description Setting this turns the past-events window off. */
+    StartsTo: string;
     /** @description When false, events that ended over 12 hours ago are hidden. UPCOMING always hides ended events. */
     IncludePast: boolean;
   };
@@ -233,10 +249,26 @@ export interface operations {
         cursor?: components['parameters']['Cursor'];
         /** @description Page size. Values above 100 are capped. Non-numeric values return 400. */
         limit?: components['parameters']['Limit'];
-        /** @description Send together with longitude, rounded to 2 decimals. On /feed, only on the first page. */
+        /** @description Send together with longitude, rounded to 2 decimals. The centre of radiusKm and of NEAREST. On /feed, the first page's position is also used for proximity, and later pages send it again only with radiusKm. */
         latitude?: components['parameters']['Latitude'];
-        /** @description Send together with latitude, rounded to 2 decimals. On /feed, only on the first page. */
+        /** @description Send together with latitude. See latitude. */
         longitude?: components['parameters']['Longitude'];
+        /** @description When false, events that ended over 12 hours ago are hidden. UPCOMING always hides ended events. */
+        includePast?: components['parameters']['IncludePast'];
+        /** @description Matches a part of the title or the description, ignoring case. */
+        q?: components['parameters']['Q'];
+        /** @description Comma-separated or repeated. A post matches if it has any of them. */
+        tags?: components['parameters']['Tags'];
+        authorId?: components['parameters']['AuthorId'];
+        status?: components['parameters']['Status'];
+        visibility?: components['parameters']['Visibility'];
+        type?: components['parameters']['Type'];
+        /** @description Setting this turns the past-events window off. */
+        startsFrom?: components['parameters']['StartsFrom'];
+        /** @description Setting this turns the past-events window off. */
+        startsTo?: components['parameters']['StartsTo'];
+        /** @description Only posts with a place within this many km of latitude and longitude. Ignored without them. */
+        radiusKm?: components['parameters']['RadiusKm'];
       };
       header?: never;
       path?: never;
@@ -264,25 +296,28 @@ export interface operations {
         cursor?: components['parameters']['Cursor'];
         /** @description Page size. Values above 100 are capped. Non-numeric values return 400. */
         limit?: components['parameters']['Limit'];
-        sortBy?: 'RECENT' | 'POPULAR' | 'UPCOMING';
+        /** @description NEAREST needs latitude and longitude, and shows only posts with a place. */
+        sortBy?: 'RECENT' | 'POPULAR' | 'UPCOMING' | 'NEAREST';
         /** @description When false, events that ended over 12 hours ago are hidden. UPCOMING always hides ended events. */
         includePast?: components['parameters']['IncludePast'];
-        q?: string;
-        /** @description Comma-separated or repeated. */
-        tags?: string[];
-        authorId?: string;
-        status?: components['schemas']['PostStatus'];
-        visibility?: components['schemas']['PostVisibility'];
-        type?: components['schemas']['PostType'];
+        /** @description Matches a part of the title or the description, ignoring case. */
+        q?: components['parameters']['Q'];
+        /** @description Comma-separated or repeated. A post matches if it has any of them. */
+        tags?: components['parameters']['Tags'];
+        authorId?: components['parameters']['AuthorId'];
+        status?: components['parameters']['Status'];
+        visibility?: components['parameters']['Visibility'];
+        type?: components['parameters']['Type'];
         /** @description Setting this turns the past-events window off. */
-        startsFrom?: string;
+        startsFrom?: components['parameters']['StartsFrom'];
         /** @description Setting this turns the past-events window off. */
-        startsTo?: string;
-        /** @description Send together with longitude, rounded to 2 decimals. On /feed, only on the first page. */
+        startsTo?: components['parameters']['StartsTo'];
+        /** @description Send together with longitude, rounded to 2 decimals. The centre of radiusKm and of NEAREST. On /feed, the first page's position is also used for proximity, and later pages send it again only with radiusKm. */
         latitude?: components['parameters']['Latitude'];
-        /** @description Send together with latitude, rounded to 2 decimals. On /feed, only on the first page. */
+        /** @description Send together with latitude. See latitude. */
         longitude?: components['parameters']['Longitude'];
-        radiusKm?: number;
+        /** @description Only posts with a place within this many km of latitude and longitude. Ignored without them. */
+        radiusKm?: components['parameters']['RadiusKm'];
         /** @description Signed-in only. */
         participationTypes?: components['schemas']['ParticipationType'][];
         /** @description Signed-in only. */
@@ -312,6 +347,10 @@ export interface operations {
       query?: {
         /** @description When false, events that ended over 12 hours ago are hidden. UPCOMING always hides ended events. */
         includePast?: components['parameters']['IncludePast'];
+        /** @description Only posts with a place within this many km of latitude and longitude. Ignored without them. */
+        radiusKm?: components['parameters']['RadiusKm'];
+        /** @description Signed-in only. Leaves out what the feed leaves out for this viewer: their own posts, and posts they reacted to or take part in, so the map of the feed's tab matches its list. */
+        excludeMine?: boolean;
       };
       header?: never;
       path?: never;
