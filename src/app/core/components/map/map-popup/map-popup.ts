@@ -14,6 +14,6 @@ export class MapPopup {
   popupBody = input.required<string>();
 
   onTitleClick(): void {
-    this.router.navigate(['/post', this.postId()]);
+    this.router.navigate(['/posts', this.postId()]);
   }
 }

@@ -17,7 +17,7 @@ describe('BackService', () => {
       providers: [
         provideRouter([
           { path: '', component: Page },
-          { path: 'post/:id', component: Page },
+          { path: 'posts/:id', component: Page },
         ]),
       ],
     });
@@ -28,7 +28,7 @@ describe('BackService', () => {
 
   it('goes back in history when the page before is in this app', async () => {
     await router.navigateByUrl('/');
-    await router.navigateByUrl('/post/1');
+    await router.navigateByUrl('/posts/1');
     const historyBack = spyOn(location, 'back');
 
     back.back('/');
@@ -37,7 +37,7 @@ describe('BackService', () => {
   });
 
   it('goes to the fallback, in place of this page, when the app was opened here', async () => {
-    await router.navigateByUrl('/post/1');
+    await router.navigateByUrl('/posts/1');
     const historyBack = spyOn(location, 'back');
     const navigate = spyOn(router, 'navigateByUrl').and.resolveTo(true);
 

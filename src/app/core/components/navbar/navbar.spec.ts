@@ -27,7 +27,7 @@ describe('Navbar', () => {
       providers: [
         provideRouter([
           { path: '', component: Page },
-          { path: 'discover', component: Page },
+          { path: 'people', component: Page },
         ]),
       ],
     });
@@ -43,9 +43,9 @@ describe('Navbar', () => {
   it('links to every main page and new post, each named for when only the icons show', () => {
     expect(links().map((l) => l.getAttribute('href'))).toEqual([
       '/',
-      '/discover',
-      '/addPost',
-      '/myEvents',
+      '/people',
+      '/posts/new',
+      '/plans',
       '/profile',
     ]);
     links().forEach((link) => expect(link.getAttribute('aria-label')).toBeTruthy());
@@ -81,7 +81,7 @@ describe('Navbar', () => {
   });
 
   it('is an ordinary link on other pages', async () => {
-    await router.navigateByUrl('/discover');
+    await router.navigateByUrl('/people');
 
     home().click();
     await fixture.whenStable();

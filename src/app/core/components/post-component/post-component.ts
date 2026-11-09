@@ -133,8 +133,8 @@ export class PostComponent implements OnInit {
   }
 
   viewPostPage(isScrolling: boolean): void {
-    this.router.navigate(['/post', this.data.id], {
-      queryParams: { scrollToComments: isScrolling },
+    this.router.navigate(['/posts', this.data.id], {
+      fragment: isScrolling ? 'comments' : undefined,
     });
   }
 
@@ -284,7 +284,7 @@ export class PostComponent implements OnInit {
   }
 
   editPost(): void {
-    this.router.navigate(['/editPost', this.data.id]);
+    this.router.navigate(['/posts', this.data.id, 'edit']);
   }
 
   deletePost(): void {
@@ -312,14 +312,12 @@ export class PostComponent implements OnInit {
   }
 
   goToFullPost(): void {
-    const currentUrl = this.router.url;
-    const regex = /^\/post\/[a-zA-Z0-9_-]+$/;
-    if (!regex.test(currentUrl)) {
-      this.router.navigate([`/post/${this.data.id}`]);
+    if (!this.isFullView) {
+      this.router.navigate(['/posts', this.data.id]);
     }
   }
 
   goToUserProfile(): void {
-    this.router.navigate([`/u/${this.data.author.username}`]);
+    this.router.navigate(['/users', this.data.author.username]);
   }
 }

@@ -58,7 +58,7 @@ export class MyEventsView implements OnInit {
   }
 
   goToPost(id: string): void {
-    this.router.navigate(['/post', id]);
+    this.router.navigate(['/posts', id]);
   }
 
   private params(filter: ParticipationType | 'all'): PostFilterParams {

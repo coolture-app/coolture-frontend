@@ -42,9 +42,9 @@ export class Navbar {
 
   readonly links = [
     { path: '/', icon: 'lucideHouse', labelKey: 'NAVBAR.main-page' },
-    { path: '/discover', icon: 'lucideUsers', labelKey: 'NAVBAR.friends' },
-    { path: '/addPost', icon: 'lucidePlus', labelKey: 'NAVBAR.addPost' },
-    { path: '/myEvents', icon: 'lucideCalendarDays', labelKey: 'NAVBAR.my-events' },
+    { path: '/people', icon: 'lucideUsers', labelKey: 'NAVBAR.friends' },
+    { path: '/posts/new', icon: 'lucidePlus', labelKey: 'NAVBAR.addPost' },
+    { path: '/plans', icon: 'lucideCalendarDays', labelKey: 'NAVBAR.my-events' },
     { path: '/profile', icon: 'lucideUserRound', labelKey: 'NAVBAR.my-profile' },
   ];
 

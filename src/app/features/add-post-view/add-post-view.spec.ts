@@ -40,6 +40,6 @@ describe('AddPostView, after saving', () => {
       mediaIds: [],
     } as unknown as PostFormData);
 
-    expect(navigate).toHaveBeenCalledWith(['/post', 'p9'], { replaceUrl: true });
+    expect(navigate).toHaveBeenCalledWith(['/posts', 'p9'], { replaceUrl: true });
   });
 });

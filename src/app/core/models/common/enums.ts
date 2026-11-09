@@ -8,9 +8,6 @@ export type ParticipationType = 'INTERESTED' | 'TAKES_PART';
 export type PostsSort = 'RECENT' | 'POPULAR' | 'UPCOMING' | 'NEAREST';
 /** How a feed page was ordered. New values may be added, and the UI treats them all alike. */
 export type FeedMode = 'RANKED' | 'UPCOMING';
-export type MediaPurpose =
-  | 'PROFILE_IMAGE'
-  | 'PROFILE_IMAGE_THUMBNAIL'
-  | 'EVENT_MEDIA';
+export type MediaPurpose = 'PROFILE_IMAGE' | 'PROFILE_IMAGE_THUMBNAIL' | 'EVENT_MEDIA';
 export type MediaStatus = 'PENDING' | 'UPLOADED' | 'ATTACHED' | 'DELETED';
 export type CommentStatus = 'ACTIVE' | 'DELETED';

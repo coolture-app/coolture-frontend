@@ -68,7 +68,7 @@ export class FullPostView implements OnInit {
     const id = this.route.snapshot.paramMap.get('id');
     // Not on Back or Forward, where the router puts back the scroll the reader left.
     this.isScrolling =
-      this.route.snapshot.queryParamMap.get('scrollToComments') === 'true' &&
+      this.route.snapshot.fragment === 'comments' &&
       this.router.currentNavigation()?.trigger !== 'popstate';
     if (id) {
       if (!this.post() || this.post()?.id !== id) {

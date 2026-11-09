@@ -1,12 +1,17 @@
 import { RenderMode, ServerRoute } from '@angular/ssr';
+import { MOVED_ROUTES } from './app.routes';
 
 export const serverRoutes: ServerRoute[] = [
   {
-    path: 'u/:username',
+    path: 'users/:username',
     renderMode: RenderMode.Server,
   },
   {
-    path: 'editPost/:id',
+    path: 'posts/new',
+    renderMode: RenderMode.Prerender,
+  },
+  {
+    path: 'posts/:id/edit',
     renderMode: RenderMode.Client,
   },
   {
@@ -14,13 +19,15 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Client,
   },
   {
-    path: 'interests',
+    path: 'profile/interests',
     renderMode: RenderMode.Client,
   },
   {
-    path: 'post/:id',
+    path: 'posts/:id',
     renderMode: RenderMode.Server,
   },
+  // A redirect function runs on request, so a moved path can't be prerendered.
+  ...MOVED_ROUTES.map(({ path }) => ({ path: path!, renderMode: RenderMode.Server as const })),
   {
     path: '**',
     renderMode: RenderMode.Prerender,
