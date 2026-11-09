@@ -317,6 +317,32 @@
   }
 }
 
+// A count on the corner of an action's icon. Neutral, because blue or red would read as something
+// unread.
+.post__counted {
+  position: relative;
+  display: inline-flex;
+}
+
+.post__count {
+  position: absolute;
+  top: -7px;
+  left: 12px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: var(--radius-full);
+  background: var(--color-text-secondary);
+  box-shadow: 0 0 0 2px var(--color-surface);
+  color: var(--color-surface);
+  font-size: 10px;
+  font-weight: var(--font-semibold);
+  font-variant-numeric: tabular-nums;
+  line-height: 16px;
+  text-align: center;
+  white-space: nowrap;
+}
+
 .post__loading {
   @include center-flex;
   padding: var(--space-xl);

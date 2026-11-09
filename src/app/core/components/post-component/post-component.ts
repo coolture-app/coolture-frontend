@@ -134,6 +134,17 @@ export class PostComponent implements OnInit {
     return this.isInterested() || this.isTakesPart();
   }
 
+  /** A badge stays small. The exact number is in the button's name and tooltip. */
+  shownCount(count: number): string {
+    return count > 99 ? '99+' : String(count);
+  }
+
+  /** Live while this post's comments are open, since the card can stay in view beside them. */
+  commentCount(): number {
+    const open = this.commentsSheet.post();
+    return open?.id === this.data.id ? this.commentsSheet.count() : (this.data.commentsCount ?? 0);
+  }
+
   /** The sheet over the list. On the post page, the comments are already there, under the post. */
   openComments(): void {
     if (this.isFullView) {

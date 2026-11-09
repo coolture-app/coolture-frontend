@@ -104,10 +104,91 @@ describe('PostComponent', () => {
     expect(actions.every((b) => b.textContent!.trim() === '')).toBeTrue();
   });
 
+  describe('the like count', () => {
+    function badge(): string | undefined {
+      return element().querySelector('[aria-label^="POST.like"] .post__count')?.textContent?.trim();
+    }
+
+    it('shows on the like icon, and says it in the button’s name, with none at 0', () => {
+      render(card({ positiveReactionCount: 0 }));
+      expect(badge()).toBeUndefined();
+
+      render(card({ positiveReactionCount: 7 }));
+      expect(badge()).toBe('7');
+      expect(element().querySelector('[aria-label="POST.like (7)"]')).not.toBeNull();
+    });
+
+    it('caps a long count', () => {
+      render(card({ positiveReactionCount: 100 }));
+
+      expect(badge()).toBe('99+');
+    });
+
+    it('has no count on the bookmark or the ticket, as the API sends only their sum', () => {
+      render(card({ participantCount: 5 }));
+
+      expect(element().querySelector('[aria-label="POST.interested"] .post__count')).toBeNull();
+      expect(element().querySelector('[aria-label="POST.takes_part"] .post__count')).toBeNull();
+    });
+  });
+
   describe('the comment button', () => {
     function commentButton(): HTMLButtonElement {
       return element().querySelector('[aria-label="POST.comments"]') as HTMLButtonElement;
     }
+
+    function badge(): string | undefined {
+      return element()
+        .querySelector('[aria-label^="POST.comments"] .post__count')
+        ?.textContent?.trim();
+    }
+
+    it('shows no count with no comments', () => {
+      render(card({ commentsCount: 0 }));
+
+      expect(badge()).toBeUndefined();
+      expect(commentButton()).not.toBeNull();
+    });
+
+    it('shows the count on the icon, and says it in the button’s name', () => {
+      render(card({ commentsCount: 12 }));
+
+      expect(badge()).toBe('12');
+      expect(element().querySelector('[aria-label="POST.comments (12)"]')).not.toBeNull();
+    });
+
+    it('caps a long count, and still says the exact number', () => {
+      render(card({ commentsCount: 1234 }));
+
+      expect(badge()).toBe('99+');
+      expect(element().querySelector('[aria-label="POST.comments (1234)"]')).not.toBeNull();
+    });
+
+    it('follows the count while this post’s comments are open', async () => {
+      const data = card({ commentsCount: 2 });
+      render(data);
+      const sheet = TestBed.inject(CommentsSheetService);
+
+      sheet.show(data);
+      sheet.changeCount(1);
+      await fixture.whenStable();
+      expect(badge()).toBe('3');
+
+      sheet.close();
+      await fixture.whenStable();
+      expect(badge()).toBe('3');
+    });
+
+    it('isn’t changed by another post’s comments being open', async () => {
+      render(card({ commentsCount: 2 }));
+      const sheet = TestBed.inject(CommentsSheetService);
+
+      sheet.show(card({ id: 'other', commentsCount: 9 }));
+      await fixture.whenStable();
+
+      expect(badge()).toBe('2');
+      sheet.close();
+    });
 
     it('opens the sheet over the list, and stays on the page', () => {
       const data = card();
