@@ -93,10 +93,32 @@
     gap: var(--space-sm);
   }
 
-  &__wrapper {
+  // The tabs on the left, and search taking the rest of the row.
+  &__top {
     display: flex;
     align-items: center;
+    gap: var(--space-md);
+
+    @media (max-width: 639px) {
+      gap: var(--space-sm);
+
+      .tabs {
+        gap: var(--space-md);
+      }
+
+      .searchbar__wrapper {
+        gap: var(--space-xs);
+        padding-left: var(--space-sm);
+      }
+    }
+  }
+
+  &__wrapper {
+    display: flex;
+    flex: 1;
+    align-items: center;
     gap: var(--space-sm);
+    min-width: 0;
     height: 44px;
     padding: 0 var(--space-xs) 0 var(--space-md);
     background: var(--color-surface);
@@ -121,6 +143,7 @@
   &__input {
     flex: 1;
     min-width: 0;
+    text-overflow: ellipsis;
     border: none;
     background: transparent;
     font-family: var(--font-sans);
@@ -321,8 +344,8 @@
 /* Dla Ciebie | Wszystkie: two words with an underline under the open one, as social apps' feed tabs. */
 .tabs {
   display: flex;
+  flex-shrink: 0;
   gap: var(--space-lg);
-  margin-bottom: var(--space-sm);
   border-bottom: 1px solid var(--color-border-light);
 
   &__tab {

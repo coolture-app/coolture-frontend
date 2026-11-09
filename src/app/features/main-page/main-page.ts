@@ -423,6 +423,8 @@ export class MainPage implements OnDestroy {
    * needs the reader's position, and without it they fall back as they do when picked by hand.
    */
   private async openFromUrl(): Promise<void> {
+    // After this render's own check has finished, which the form's values would otherwise change under.
+    await Promise.resolve();
     const { search, filters, tab, sort, point } = fromHomeParams(this.route.snapshot.queryParams);
     this.searchControl.setValue(search, { emitEvent: false });
     this.filtersForm.setValue(filters, { emitEvent: false });
