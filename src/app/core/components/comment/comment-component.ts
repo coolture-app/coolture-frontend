@@ -36,6 +36,12 @@ export interface ReplyTarget {
   mention: boolean;
 }
 
+/** A deleted comment, and whether replies keep it on the list as a note. */
+export interface DeletedComment {
+  id: string;
+  hasReplies: boolean;
+}
+
 const REPLIES_PAGE = 20;
 
 /**
@@ -56,7 +62,7 @@ export class CommentComponent implements OnInit {
   /** In the sheet, a profile link replaces the sheet's history entry, so Back returns to the feed. */
   readonly inSheet = input(false);
   readonly replyClicked = output<ReplyTarget>();
-  readonly commentDeleted = output<string>();
+  readonly commentDeleted = output<DeletedComment>();
 
   private authService = inject(AuthService);
   private commentsService = inject(CommentsService);
@@ -220,16 +226,15 @@ export class CommentComponent implements OnInit {
     }
   }
 
-  onReplyDeleted(deletedId: string): void {
-    this.replies.update((replies) => {
-      const reply = replies.find((c) => c.id === deletedId);
-      if (reply && reply.repliesCount > 0) {
-        return replies.map((c) => (c.id === deletedId ? { ...c, status: 'DELETED' as const } : c));
-      }
-      return replies.filter((c) => c.id !== deletedId);
-    });
+  onReplyDeleted(deleted: DeletedComment): void {
+    const { id, hasReplies } = deleted;
+    this.replies.update((replies) =>
+      hasReplies
+        ? replies.map((c) => (c.id === id ? { ...c, status: 'DELETED' as const } : c))
+        : replies.filter((c) => c.id !== id),
+    );
     this.repliesCount.update((count) => Math.max(0, count - 1));
-    this.commentDeleted.emit(deletedId);
+    this.commentDeleted.emit({ id, hasReplies: true });
   }
 
   private deleteComment(): void {
@@ -237,7 +242,8 @@ export class CommentComponent implements OnInit {
       .deleteComment(this.comment().id)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: () => this.commentDeleted.emit(this.comment().id),
+        next: () =>
+          this.commentDeleted.emit({ id: this.comment().id, hasReplies: this.repliesCount() > 0 }),
         error: () => this.toast.show(this.translate.instant('COMMENT.delete-error')),
       });
   }

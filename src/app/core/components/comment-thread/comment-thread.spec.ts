@@ -184,8 +184,10 @@ describe('CommentThread', () => {
 
       component.send();
       component.send();
+      await fixture.whenStable();
 
       expect(create).toHaveBeenCalledTimes(1);
+      expect(element().querySelector('textarea')!.readOnly).toBeTrue();
       answer.next(comment('new'));
     });
 
@@ -300,8 +302,8 @@ describe('CommentThread', () => {
       page: { limit: 20, hasMore: false },
     });
 
-    component.onDeleted('a');
-    component.onDeleted('b');
+    component.onDeleted({ id: 'a', hasReplies: true });
+    component.onDeleted({ id: 'b', hasReplies: false });
     await fixture.whenStable();
 
     expect(component.comments().map((c) => [c.id, c.status])).toEqual([['a', 'DELETED']]);

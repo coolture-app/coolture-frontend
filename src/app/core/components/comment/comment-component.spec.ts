@@ -2,7 +2,7 @@ import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 
-import { CommentComponent, ReplyTarget } from './comment-component';
+import { CommentComponent, DeletedComment, ReplyTarget } from './comment-component';
 import { CommentSummary } from '../../models/comments/comment-summary.model';
 import { AuthService } from '../../services/auth/auth.service';
 import { CommentsService } from '../../services/comments/comments.service';
@@ -312,8 +312,8 @@ describe('CommentComponent', () => {
         throwError(() => new Error('down')),
         of(undefined),
       );
-      const deleted: string[] = [];
-      component.commentDeleted.subscribe((id) => deleted.push(id));
+      const deleted: DeletedComment[] = [];
+      component.commentDeleted.subscribe((d) => deleted.push(d));
       await render(mine());
 
       component.handleModalResponse('NO');
@@ -324,7 +324,30 @@ describe('CommentComponent', () => {
       expect(deleted).toEqual([]);
 
       component.handleModalResponse('YES');
-      expect(deleted).toEqual(['c1']);
+      expect(deleted).toEqual([{ id: 'c1', hasReplies: false }]);
+    });
+
+    it('goes from the list once its replies are gone, by what it has now', async () => {
+      spyOn(service, 'deleteComment').and.returnValue(of(undefined));
+      const deleted: DeletedComment[] = [];
+      component.commentDeleted.subscribe((d) => deleted.push(d));
+      await render({ ...mine(), repliesCount: 1 });
+
+      component.onReplyDeleted({ id: 'r1', hasReplies: false });
+      component.handleModalResponse('YES');
+
+      expect(deleted.at(-1)).toEqual({ id: 'c1', hasReplies: false });
+    });
+
+    it('stays as a note while replies remain, and hides with the last one', async () => {
+      await render({ ...comment({ status: 'DELETED' }), repliesCount: 1 });
+      const row = () => element().querySelector('.comment') as HTMLElement;
+      expect(row().hidden).toBeFalse();
+
+      component.onReplyDeleted({ id: 'r1', hasReplies: false });
+      await fixture.whenStable();
+
+      expect(row().hidden).toBeTrue();
     });
   });
 });

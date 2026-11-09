@@ -19,7 +19,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideSendHorizontal, lucideX } from '@ng-icons/lucide';
 
-import { CommentComponent, ReplyTarget } from '../comment/comment-component';
+import { CommentComponent, DeletedComment, ReplyTarget } from '../comment/comment-component';
 import { CommentSummary } from '../../models/comments/comment-summary.model';
 import { CommentsService } from '../../services/comments/comments.service';
 import { AuthService } from '../../services/auth/auth.service';
@@ -189,14 +189,13 @@ export class CommentThread implements OnInit {
       });
   }
 
-  onDeleted(deletedId: string): void {
-    this.comments.update((comments) => {
-      const comment = comments.find((c) => c.id === deletedId);
-      if (comment && comment.repliesCount > 0) {
-        return comments.map((c) => (c.id === deletedId ? { ...c, status: 'DELETED' as const } : c));
-      }
-      return comments.filter((c) => c.id !== deletedId);
-    });
+  /** A reply's deletion comes through here too. Its id matches nothing on this list. */
+  onDeleted({ id, hasReplies }: DeletedComment): void {
+    this.comments.update((comments) =>
+      hasReplies
+        ? comments.map((c) => (c.id === id ? { ...c, status: 'DELETED' as const } : c))
+        : comments.filter((c) => c.id !== id),
+    );
     this.countChange.emit(-1);
   }
 

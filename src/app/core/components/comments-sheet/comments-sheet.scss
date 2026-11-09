@@ -20,6 +20,7 @@
   width: min(420px, 100%);
   background: var(--color-surface);
   box-shadow: var(--shadow-lg);
+  outline: none;
   animation: sheet-from-right var(--transition-base);
 }
 

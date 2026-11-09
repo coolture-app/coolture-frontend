@@ -1,5 +1,10 @@
 @let c = comment();
-<div class="comment" [class.comment--reply]="c.depth > 0" [attr.data-comment-id]="c.id">
+<div
+  class="comment"
+  [class.comment--reply]="c.depth > 0"
+  [attr.data-comment-id]="c.id"
+  [hidden]="isDeleted() && repliesCount() === 0"
+>
   @if (isDeleted()) {
     <p class="comment__deleted">{{ 'COMMENT.deleted-comment' | translate }}</p>
   } @else {

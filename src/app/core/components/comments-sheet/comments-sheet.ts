@@ -67,7 +67,6 @@ export class CommentsSheet {
   readonly sheet = inject(CommentsSheetService);
   private document = inject(DOCUMENT);
   private location = inject(Location);
-  private closeButton = viewChild<ElementRef<HTMLButtonElement>>('closeButton');
   private panel = viewChild<ElementRef<HTMLElement>>('panel');
   private overlay = backClosable('commentsSheet', () => this.sheet.close());
 
@@ -161,8 +160,9 @@ export class CommentsSheet {
     }
     this.size.set('half');
     this.overlay.opened(this.location.prepareExternalUrl(`/posts/${postId}#comments`));
-    // Not the text box, which on a phone would bring up the keyboard for someone who came to read.
-    this.closeButton()?.nativeElement.focus();
+    // The panel itself. The text box would bring up a phone's keyboard for someone who came to read,
+    // and the close button would show its tooltip each time.
+    this.panel()?.nativeElement.focus();
   }
 
   private halfHeight(): number {

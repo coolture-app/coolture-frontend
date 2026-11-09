@@ -3,6 +3,7 @@
   <div
     #panel
     class="sheet"
+    tabindex="-1"
     role="dialog"
     aria-modal="true"
     aria-labelledby="comments-sheet-title"
@@ -23,7 +24,6 @@
         {{ 'COMMENT.title' | translate }} ({{ sheet.count() }})
       </h2>
       <button
-        #closeButton
         type="button"
         class="sheet__close"
         [appTooltip]="'COMMENT.close' | translate"

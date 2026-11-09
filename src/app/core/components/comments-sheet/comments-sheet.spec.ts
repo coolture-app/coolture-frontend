@@ -109,10 +109,10 @@ describe('CommentsSheet', () => {
     expect(location.hash).toBe('#comments');
   });
 
-  it('focuses the close button, not the box, so no keyboard comes up for a reader', async () => {
+  it('focuses the panel, not the box, so no keyboard comes up for a reader', async () => {
     await opened();
 
-    expect(document.activeElement).toBe(element().querySelector('.sheet__close'));
+    expect(document.activeElement).toBe(element().querySelector('.sheet'));
   });
 
   it('closes on the browser’s Back, and restores the address', async () => {
