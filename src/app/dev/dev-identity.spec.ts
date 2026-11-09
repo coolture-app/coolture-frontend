@@ -2,13 +2,16 @@ import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { DOCUMENT, PLATFORM_ID, provideZonelessChangeDetection, REQUEST } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { authTokenInterceptor } from '../core/auth/auth-token.interceptor';
 import { DEV_IDENTITY } from '../core/auth/dev-identity';
 import { ApiUrlService } from '../core/services/api-url.service';
 import { AuthService } from '../core/services/auth/auth.service';
 import { devTools } from './dev-tools';
 import { DEV_USER_COOKIE, DevIdentityService } from './dev-identity.service';
+import { DevSwitcher } from './dev-switcher';
 
 const ANNA = '00000000-0000-0000-0000-000000000002';
+const JAN = '00000000-0000-0000-0000-000000000003';
 const LOCAL_DEV = '00000000-0000-0000-0000-000000000001';
 
 describe('Dev identity', () => {
@@ -30,7 +33,7 @@ describe('Dev identity', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
-        provideHttpClient(withInterceptors([devTools.interceptor])),
+        provideHttpClient(withInterceptors([authTokenInterceptor])),
         provideHttpClientTesting(),
         ...devTools.providers,
         { provide: DOCUMENT, useFactory: fakeDocument },
@@ -82,7 +85,7 @@ describe('Dev identity', () => {
 
     const identity = setUp('server', request);
 
-    expect(identity.current()?.username).toBe('anna_demo');
+    expect(identity.current.id).toBe(ANNA);
   });
 
   it('treats an unknown id as a guest', () => {
@@ -94,9 +97,9 @@ describe('Dev identity', () => {
   it('saves a switch in the cookie and reloads the page', () => {
     const identity = setUp();
 
-    identity.switchTo(identity.users[1]);
+    identity.switchTo(identity.users.find((user) => user.id === JAN)!);
 
-    expect(cookie).toBe(`${DEV_USER_COOKIE}=00000000-0000-0000-0000-000000000003`);
+    expect(cookie).toBe(`${DEV_USER_COOKIE}=${JAN}`);
     expect(reloads).toBe(1);
   });
 
@@ -107,7 +110,7 @@ describe('Dev identity', () => {
     TestBed.inject(DEV_IDENTITY).signOut();
 
     expect(cookie).toBe(`${DEV_USER_COOKIE}=guest`);
-    expect(identity.current()?.id).toBe(ANNA);
+    expect(identity.current.id).toBe(ANNA);
     expect(reloads).toBe(1);
   });
 
@@ -121,5 +124,42 @@ describe('Dev identity', () => {
 
     expect(results).toEqual([false]);
     expect(identity.menuOpen()).toBeTrue();
+  });
+});
+
+describe('Dev switcher', () => {
+  let identity: DevIdentityService;
+  let opener: HTMLButtonElement;
+
+  const press = (target: EventTarget) =>
+    target.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [provideZonelessChangeDetection(), ...devTools.providers],
+    });
+    TestBed.createComponent(DevSwitcher);
+    identity = TestBed.inject(DevIdentityService);
+    // Stands in for Zaloguj się in the comments, which opens the menu from outside it.
+    opener = document.createElement('button');
+    opener.addEventListener('click', () => identity.openMenu());
+    document.body.append(opener);
+  });
+
+  afterEach(() => opener.remove());
+
+  it('stays open when a click outside it is what opened it', () => {
+    press(opener);
+    opener.click();
+
+    expect(identity.menuOpen()).toBeTrue();
+  });
+
+  it('closes on a press outside it', () => {
+    identity.openMenu();
+
+    press(document.body);
+
+    expect(identity.menuOpen()).toBeFalse();
   });
 });

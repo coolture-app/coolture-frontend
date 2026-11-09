@@ -14,10 +14,7 @@ import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
 import { errorInterceptor } from './core/auth/auth.interceptor';
 import { authTokenInterceptor } from './core/auth/auth-token.interceptor';
 import { originVerifyInterceptor } from './core/auth/origin-verify.interceptor';
-import { environment } from '../environments/environment';
-
-// Development builds only: the DEV pill's identity on the local stack.
-const devTools = environment.devTools;
+import { devTools } from '../environments/dev-tools';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -31,12 +28,7 @@ export const appConfig: ApplicationConfig = {
     ),
     provideClientHydration(withEventReplay()),
     provideHttpClient(
-      withInterceptors([
-        errorInterceptor,
-        authTokenInterceptor,
-        originVerifyInterceptor,
-        ...(devTools ? [devTools.interceptor] : []),
-      ]),
+      withInterceptors([errorInterceptor, authTokenInterceptor, originVerifyInterceptor]),
     ),
     ...(devTools?.providers ?? []),
     provideTranslateService({

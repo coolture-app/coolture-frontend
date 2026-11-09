@@ -32,7 +32,7 @@ It talks to the local API on `http://localhost:3000`. To run that, with realisti
 
 The development build has a **DEV** pill at the bottom left. It picks who the app acts as: a guest (the default), the demo users Anna, Jan and Ola, the bot that imported the events, or `local_dev`, the admin. The choice is the `coolture_dev_user` cookie, so server-rendered pages see the same user. Zaloguj opens the menu, Wyloguj goes back to the guest. It sends `X-User-Id` (or `X-Anonymous` for the guest), which only the local API reads.
 
-All of it lives in `src/app/dev/`, which only `environment.development.ts` imports, so production builds don't contain it.
+All of it lives in `src/app/dev/`, which only `src/environments/dev-tools.development.ts` imports. That file replaces `dev-tools.ts` in development builds only, so production builds don't contain it.
 
 ## Code scaffolding
 

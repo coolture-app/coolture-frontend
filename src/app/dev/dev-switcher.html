@@ -6,7 +6,7 @@
           type="button"
           role="menuitemradio"
           class="dev-switcher__item"
-          [attr.aria-checked]="identity.current()?.id === user.id"
+          [attr.aria-checked]="identity.current === user"
           (click)="choose(user)"
         >
           <span class="dev-switcher__name">{{ user.label }}</span>
@@ -14,18 +14,6 @@
         </button>
       </li>
     }
-    <li role="none">
-      <button
-        type="button"
-        role="menuitemradio"
-        class="dev-switcher__item"
-        [attr.aria-checked]="identity.isGuest()"
-        (click)="choose(null)"
-      >
-        <span class="dev-switcher__name">Gość</span>
-        <span class="dev-switcher__note">niezalogowany</span>
-      </button>
-    </li>
   </ul>
 }
 <button
@@ -36,5 +24,5 @@
   (click)="toggle()"
 >
   <span class="dev-switcher__badge">DEV</span>
-  {{ identity.current()?.label ?? 'Gość' }}
+  {{ identity.current.label }}
 </button>

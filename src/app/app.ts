@@ -11,7 +11,7 @@ import { Toast } from './core/components/toast/toast';
 import { PhotoViewer } from './core/components/photo-viewer/photo-viewer';
 import { CommentsSheet } from './core/components/comments-sheet/comments-sheet';
 import { distinctUntilChanged, filter, first, map } from 'rxjs';
-import { environment } from '../environments/environment';
+import { devTools } from '../environments/dev-tools';
 
 @Component({
   selector: 'app-root',
@@ -32,8 +32,7 @@ export class App implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
   protected readonly title = signal('frontend');
-  /** The DEV pill, in development builds only. */
-  protected readonly devSwitcher = environment.devTools?.component ?? null;
+  protected readonly devSwitcher = devTools?.component ?? null;
   protected readonly interestsDismissed = signal(false);
   protected readonly interestsRequired = computed(
     () => this.authService.interestsSelected() === false && !this.interestsDismissed(),

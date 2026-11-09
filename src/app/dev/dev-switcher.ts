@@ -16,9 +16,9 @@ export class DevSwitcher {
     this.identity.menuOpen.update((open) => !open);
   }
 
-  protected choose(user: DevUser | null): void {
+  protected choose(user: DevUser): void {
     this.identity.menuOpen.set(false);
-    if (user?.id !== this.identity.current()?.id) {
+    if (user !== this.identity.current) {
       this.identity.switchTo(user);
     }
   }
@@ -28,11 +28,10 @@ export class DevSwitcher {
     this.identity.menuOpen.set(false);
   }
 
-  // The navbar's login button opens the menu too, so a click there must not close it straight away.
-  @HostListener('document:click', ['$event'])
-  protected closeOutside(event: MouseEvent): void {
-    const target = event.target as Element | null;
-    if (!this.host.nativeElement.contains(target) && !target?.closest('.navbar__actions')) {
+  // Pointerdown comes before the click, so a button that opens the menu, such as Zaloguj, isn't undone by it.
+  @HostListener('document:pointerdown', ['$event'])
+  protected closeOutside(event: PointerEvent): void {
+    if (!this.host.nativeElement.contains(event.target as Node | null)) {
       this.close();
     }
   }
