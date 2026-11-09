@@ -1,84 +1,151 @@
-<div class="comment">
-  <div class="comment__main">
-    @if (comment.status !== 'DELETED') {
-      @if (comment.author.avatar; as avatar) {
-        <img [src]="avatar.url" [alt]="comment.author.username" class="comment__avatar" />
-      } @else {
-        <div class="comment__avatar comment__avatar--placeholder">
-          {{ comment.author.firstName?.charAt(0) }}{{ comment.author.lastName?.charAt(0) }}
-        </div>
-      }
-    }
-    <div class="comment__content">
-      <div class="row">
-        <div class="comment__username">
-          @if (comment.status === 'DELETED') {
-            {{ 'COMMENT.deleted-comment' | translate }}
-          } @else {
-            {{ comment.author.username }}
-          }
-        </div>
-        @if (comment.status !== 'DELETED') {
-          @if (comment.depth < 2) {
-            <app-btn variant="plain" size="sm" (btnClick)="onReply()">
-              {{ 'COMMENT.reply' | translate }}
-            </app-btn>
-          }
+@let c = comment();
+<div class="comment" [class.comment--reply]="c.depth > 0" [attr.data-comment-id]="c.id">
+  @if (isDeleted()) {
+    <p class="comment__deleted">{{ 'COMMENT.deleted-comment' | translate }}</p>
+  } @else {
+    <div class="comment__main">
+      <a
+        class="comment__avatar-link"
+        tabindex="-1"
+        aria-hidden="true"
+        [routerLink]="['/users', c.author.username]"
+        [replaceUrl]="inSheet()"
+      >
+        @if (c.author.avatar; as avatar) {
+          <img [src]="avatar.url" alt="" class="comment__avatar" loading="lazy" />
+        } @else {
+          <span class="comment__avatar comment__avatar--placeholder">
+            {{ c.author.firstName?.charAt(0) }}{{ c.author.lastName?.charAt(0) }}
+          </span>
         }
-        @if (comment.repliesCount > 0) {
-          <app-btn variant="plain" size="sm" (btnClick)="showReplies()">
-            {{
-              isShowingReplies()
-                ? ('COMMENT.hide-replies' | translate)
-                : ('COMMENT.show-replies' | translate) + ' (' + comment.repliesCount + ')'
-            }}
-          </app-btn>
-        }
-        @if (comment.status !== 'DELETED' && isMyComment) {
-          <app-btn variant="plain" size="sm" (btnClick)="startEditingComment()">
-            {{ 'COMMENT.edit-comment' | translate }}
-          </app-btn>
-          <app-btn variant="plain" size="sm" (btnClick)="openModal()">
-            {{ 'COMMENT.delete-comment' | translate }}
-          </app-btn>
-          <app-modal-window
-            #myModal
-            modalType="YESNO"
-            [title]="'COMMENT.modal-delete-title' | translate"
-            [text]="'COMMENT.modal-delete-body' | translate"
-            (modalAction)="handleModalResponse($event)"
-          >
-          </app-modal-window>
-        }
-      </div>
-      <div class="comment__text">
-        @if (comment.status !== 'DELETED') {
-          @if (isEditing) {
-            <textarea
-              #editInput
-              class="body-edit"
-              [value]="comment.content"
-              (blur)="saveEdit(editInput.value)"
-              (keydown.enter)="saveEdit(editInput.value)"
+      </a>
+      <div class="comment__content">
+        @if (isEditing()) {
+          <textarea
+            #editInput
+            class="comment__edit"
+            maxlength="512"
+            [attr.aria-label]="'COMMENT.edit-comment' | translate"
+            [value]="content()"
+            (blur)="saveEdit(editInput.value)"
+            (keydown.enter)="saveEdit(editInput.value, $event)"
+            (keydown.escape)="cancelEdit($event)"
+          ></textarea>
+        } @else {
+          <p class="comment__text">
+            <a
+              class="comment__username"
+              [routerLink]="['/users', c.author.username]"
+              [replaceUrl]="inSheet()"
+              >{{ c.author.username }}</a
             >
-            </textarea>
-          } @else {
-            <span class="body">
-              {{ comment.content }}
-            </span>
-          }
+            @if (mention(); as m) {
+              <a
+                class="comment__mention"
+                [routerLink]="['/users', m.username]"
+                [replaceUrl]="inSheet()"
+                >{{ '@' + m.username }}</a
+              >
+              {{ m.text }}
+            } @else {
+              {{ content() }}
+            }
+          </p>
         }
+        <div class="comment__meta">
+          <time [attr.datetime]="c.createdAt">{{ time() }}</time>
+          @if (edited()) {
+            <span>{{ 'COMMENT.edited' | translate }}</span>
+          }
+          @if (canReply()) {
+            <button type="button" class="comment__action" (click)="onReply()">
+              {{ 'COMMENT.reply' | translate }}
+            </button>
+          }
+        </div>
       </div>
+      @if (isMine()) {
+        <div class="comment__menu-wrapper">
+          <button
+            type="button"
+            class="comment__menu-btn"
+            aria-haspopup="true"
+            [attr.aria-expanded]="menuOpen()"
+            [appTooltip]="'COMMENT.more' | translate"
+            (click)="toggleMenu()"
+            (keydown.escape)="closeMenu($event)"
+          >
+            <ng-icon name="lucideEllipsis" />
+          </button>
+          @if (menuOpen()) {
+            <div class="comment__menu">
+              <button
+                type="button"
+                class="comment__menu-item"
+                (click)="startEditing()"
+                (keydown.escape)="closeMenu($event)"
+              >
+                {{ 'COMMENT.edit-comment' | translate }}
+              </button>
+              <button
+                type="button"
+                class="comment__menu-item comment__menu-item--danger"
+                (click)="openDeleteModal()"
+                (keydown.escape)="closeMenu($event)"
+              >
+                {{ 'COMMENT.delete-comment' | translate }}
+              </button>
+            </div>
+          }
+        </div>
+        <app-modal-window
+          #myModal
+          modalType="YESNO"
+          [title]="'COMMENT.modal-delete-title' | translate"
+          [text]="'COMMENT.modal-delete-body' | translate"
+          (modalAction)="handleModalResponse($event)"
+        />
+      }
     </div>
-  </div>
+  }
+
+  @if (repliesCount() > 0) {
+    <button
+      type="button"
+      class="comment__replies-toggle"
+      [attr.aria-expanded]="isShowingReplies()"
+      (click)="toggleReplies()"
+    >
+      {{
+        isShowingReplies()
+          ? ('COMMENT.hide-replies' | translate)
+          : ('COMMENT.show-replies' | translate) + ' (' + repliesCount() + ')'
+      }}
+    </button>
+  }
 
   @if (isShowingReplies()) {
     <div class="comment__replies">
+      @if (hasEarlierReplies()) {
+        <button type="button" class="comment__replies-toggle" (click)="loadReplies()">
+          {{ 'COMMENT.earlier-replies' | translate }}
+        </button>
+      }
+      @if (repliesFailed()) {
+        <p class="comment__note" role="alert">
+          {{ 'COMMENT.load-error' | translate }}
+          <button type="button" class="comment__action" (click)="loadReplies()">
+            {{ 'COMMENT.retry' | translate }}
+          </button>
+        </p>
+      }
       @for (reply of replies(); track reply.id) {
         <app-comment-component
           [comment]="reply"
+          [rootActive]="c.depth === 0 ? !isDeleted() : rootActive()"
+          [inSheet]="inSheet()"
           (replyClicked)="replyClicked.emit($event)"
-          (commentDeleted)="onCommentDeleted($event)"
+          (commentDeleted)="onReplyDeleted($event)"
         />
       }
     </div>

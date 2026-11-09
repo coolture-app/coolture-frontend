@@ -8,11 +8,12 @@ import { AuthService } from './core/services/auth/auth.service';
 import { InterestsView } from './features/interests-view/interests-view';
 import { Toast } from './core/components/toast/toast';
 import { PhotoViewer } from './core/components/photo-viewer/photo-viewer';
+import { CommentsSheet } from './core/components/comments-sheet/comments-sheet';
 import { distinctUntilChanged, filter, first, map } from 'rxjs';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, Navbar, InterestsView, Toast, PhotoViewer],
+  imports: [RouterOutlet, Navbar, InterestsView, Toast, PhotoViewer, CommentsSheet],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })

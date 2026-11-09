@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
+import { CommentsSheetService } from '../../services/comments-sheet/comments-sheet.service';
 import { HttpTestingController } from '@angular/common/http/testing';
 
 import { PostComponent } from './post-component';
@@ -100,6 +102,37 @@ describe('PostComponent', () => {
       'true',
     ]);
     expect(actions.every((b) => b.textContent!.trim() === '')).toBeTrue();
+  });
+
+  describe('the comment button', () => {
+    function commentButton(): HTMLButtonElement {
+      return element().querySelector('[aria-label="POST.comments"]') as HTMLButtonElement;
+    }
+
+    it('opens the sheet over the list, and stays on the page', () => {
+      const data = card();
+      render(data);
+      const navigate = spyOn(TestBed.inject(Router), 'navigate');
+
+      commentButton().click();
+
+      expect(TestBed.inject(CommentsSheetService).post()).toBe(data);
+      expect(navigate).not.toHaveBeenCalled();
+    });
+
+    it('scrolls to the comments on the post page, where they already are', () => {
+      render(card(), true);
+      const section = document.createElement('div');
+      section.id = 'comments';
+      document.body.appendChild(section);
+      const scroll = spyOn(section, 'scrollIntoView');
+
+      commentButton().click();
+
+      expect(scroll).toHaveBeenCalled();
+      expect(TestBed.inject(CommentsSheetService).post()).toBeNull();
+      section.remove();
+    });
   });
 
   describe('photo', () => {

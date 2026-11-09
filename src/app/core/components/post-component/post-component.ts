@@ -41,6 +41,7 @@ import { AuthService } from '../../services/auth/auth.service';
 import { ModalWindow } from '../modal/modal-window/modal-window';
 import { Btn } from '../btn/btn';
 import { PostService } from '../../services/post/post.service';
+import { CommentsSheetService } from '../../services/comments-sheet/comments-sheet.service';
 import { DateFormatService } from '../../services/date-format/date-format.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { postPlace } from '../../models/posts/post-place';
@@ -99,6 +100,7 @@ export class PostComponent implements OnInit {
   private descText = viewChild<ElementRef<HTMLElement>>('descText');
   private slides = viewChild<ElementRef<HTMLElement>>('slides');
   private photoViewer = inject(PhotoViewerService);
+  private commentsSheet = inject(CommentsSheetService);
   private dateFormatService = inject(DateFormatService);
   private toast = inject(ToastService);
   private translate = inject(TranslateService);
@@ -132,10 +134,15 @@ export class PostComponent implements OnInit {
     return this.isInterested() || this.isTakesPart();
   }
 
-  viewPostPage(isScrolling: boolean): void {
-    this.router.navigate(['/posts', this.data.id], {
-      fragment: isScrolling ? 'comments' : undefined,
-    });
+  /** The sheet over the list. On the post page, the comments are already there, under the post. */
+  openComments(): void {
+    if (this.isFullView) {
+      this.host.ownerDocument
+        .getElementById('comments')
+        ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      this.commentsSheet.show(this.data);
+    }
   }
 
   toggleExpanded(): void {

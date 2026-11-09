@@ -1,8 +1,6 @@
 import {
   afterRenderEffect,
   Component,
-  DestroyRef,
-  DOCUMENT,
   ElementRef,
   inject,
   signal,
@@ -14,10 +12,8 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideChevronLeft, lucideChevronRight, lucideX } from '@ng-icons/lucide';
 
 import { PhotoViewerService } from '../../services/photo-viewer/photo-viewer.service';
+import { backClosable } from '../../services/back-closable/back-closable';
 import { Tooltip } from '../../directives/tooltip';
-
-/** Marks the history entry the viewer adds, so the browser's Back closes it. */
-const HISTORY_KEY = 'photoViewer';
 
 /**
  * Whether a click fell on the photo itself. The image element fills the screen, and `object-fit:
@@ -58,40 +54,22 @@ function onDrawnPhoto(image: HTMLImageElement, event: MouseEvent): boolean {
 })
 export class PhotoViewer {
   readonly viewer = inject(PhotoViewerService);
-  private document = inject(DOCUMENT);
   private track = viewChild<ElementRef<HTMLElement>>('track');
   private closeButton = viewChild<ElementRef<HTMLButtonElement>>('closeButton');
+  private overlay = backClosable('photoViewer', () => this.viewer.close());
 
   readonly index = signal(0);
-  private returnFocus: HTMLElement | null = null;
-  private wasOpen = false;
-  /** The page's scroll when the viewer opened, put back after it closes. */
-  private pageY = 0;
-  private leaving = false;
 
   constructor() {
-    const view = this.document.defaultView;
-    const onPop = () => this.onPopState();
-    view?.addEventListener('popstate', onPop);
-    inject(DestroyRef).onDestroy(() => view?.removeEventListener('popstate', onPop));
-
     afterRenderEffect(() => {
       const open = this.viewer.open();
       untracked(() => open && this.opened(open.index));
     });
   }
 
-  /**
-   * Goes back past the viewer's own history entry, and the pop then finishes closing. A button, a key
-   * and a click beside the photo all come here, so they act as the browser's Back does.
-   */
+  /** A button, a key and a click beside the photo all act as the browser's Back does. */
   close(): void {
-    const view = this.document.defaultView;
-    if (view?.history.state?.[HISTORY_KEY]) {
-      view.history.back();
-    } else {
-      this.finish();
-    }
+    this.overlay.close();
   }
 
   go(step: number): void {
@@ -134,54 +112,14 @@ export class PhotoViewer {
     }
   }
 
-  /**
-   * The viewer's history entry is gone, by Back or by `close()`. The router takes the return to the
-   * same URL for a skipped navigation and scrolls to the top on its next frame, so the viewer stays
-   * over the page until that has happened, puts the page's scroll back, and only then goes.
-   */
-  onPopState(): void {
-    if (!this.wasOpen || this.leaving) {
-      return;
-    }
-    this.leaving = true;
-    setTimeout(() =>
-      requestAnimationFrame(() =>
-        setTimeout(() => {
-          this.document.defaultView?.scrollTo({ top: this.pageY, behavior: 'instant' });
-          this.finish();
-        }),
-      ),
-    );
-  }
-
   private opened(index: number): void {
-    if (this.wasOpen) {
+    if (this.overlay.isOpen()) {
       return;
     }
-    this.wasOpen = true;
-    this.leaving = false;
-    const view = this.document.defaultView;
-    this.pageY = view?.scrollY ?? 0;
-    this.returnFocus = this.document.activeElement as HTMLElement | null;
-    // The same URL and router state, so Back only leaves this entry and stays on the page.
-    view?.history.pushState({ ...view.history.state, [HISTORY_KEY]: true }, '');
-    this.document.documentElement.style.overflow = 'hidden';
+    this.overlay.opened();
     this.index.set(index);
     this.scrollTo(index, 'instant');
     this.closeButton()?.nativeElement.focus();
-  }
-
-  private finish(): void {
-    this.wasOpen = false;
-    this.leaving = false;
-    this.viewer.close();
-    this.restorePage();
-  }
-
-  private restorePage(): void {
-    this.document.documentElement.style.overflow = '';
-    this.returnFocus?.focus({ preventScroll: true });
-    this.returnFocus = null;
   }
 
   private scrollTo(index: number, behavior: ScrollBehavior): void {
