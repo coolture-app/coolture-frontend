@@ -1,12 +1,15 @@
 import { Injectable, signal } from '@angular/core';
+import { UserSummary } from '../../models/users/user-summary.model';
 
 /** What the sheet needs of a post. The card's own object, so its count stays right. */
 export interface SheetPost {
   id: string;
   commentsCount: number;
+  title: string;
+  author: UserSummary;
 }
 
-/** The comments over the feed: a card asks for them, and the app shell shows them over everything. */
+/** The comments beside or over the feed: a card asks for them, and the app shell shows them. */
 @Injectable({
   providedIn: 'root',
 })

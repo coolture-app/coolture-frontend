@@ -41,6 +41,7 @@ describe('CommentsSheet', () => {
   let service: CommentsSheetService;
   let post: SheetPost;
   let startUrl: string;
+  let wide: boolean;
 
   function element(): HTMLElement {
     return fixture.nativeElement;
@@ -59,7 +60,14 @@ describe('CommentsSheet', () => {
 
   beforeEach(() => {
     startUrl = location.pathname + location.search;
-    post = { id: 'p1', commentsCount: 2 };
+    post = {
+      id: 'p1',
+      commentsCount: 2,
+      title: 'Koncert',
+      author: { id: 'u1', username: 'ola', followersCount: 0, followingCount: 0 },
+    };
+    wide = false;
+    spyOn(window, 'matchMedia').and.callFake(() => ({ matches: wide }) as MediaQueryList);
     TestBed.configureTestingModule({
       imports: [CommentsSheet],
       providers: [
@@ -85,6 +93,97 @@ describe('CommentsSheet', () => {
     }
     document.documentElement.style.overflow = '';
     history.replaceState(history.state, '', startUrl);
+  });
+
+  describe('on a wide screen', () => {
+    beforeEach(() => (wide = true));
+
+    it('docks beside the feed, with no dimming or scroll lock, and no modal claim', async () => {
+      await opened();
+
+      const sheet = element().querySelector('.sheet')!;
+      expect(sheet.classList).toContain('sheet--docked');
+      expect(sheet.getAttribute('aria-modal')).toBeNull();
+      expect(element().querySelector('.sheet__scrim')).toBeNull();
+      expect(document.documentElement.style.overflow).toBe('');
+      expect(document.documentElement.classList).toContain('comments-docked');
+    });
+
+    it('heads the panel with the author and the title, linking to each', async () => {
+      await opened();
+
+      const author = element().querySelector('.sheet__author');
+      const title = element().querySelector('.sheet__post-title');
+      expect(author?.textContent).toContain('ola');
+      expect(author?.getAttribute('href')).toBe('/users/ola');
+      expect(title?.textContent).toContain('Koncert');
+      expect(title?.getAttribute('href')).toBe('/posts/p1');
+    });
+
+    it('switches to another card’s comments, in the same history entry', async () => {
+      await opened();
+      const entries = history.length;
+      const load = TestBed.inject(CommentsService).getCommentsOfPost as jasmine.Spy;
+
+      service.show({ ...post, id: 'p2', title: 'Teatr' });
+      await fixture.whenStable();
+
+      expect(history.length).toBe(entries);
+      expect(location.pathname).toBe('/posts/p2');
+      expect(element().querySelector('.sheet__post-title')?.textContent).toContain('Teatr');
+      expect(load.calls.mostRecent().args[0]).toBe('p2');
+
+      history.back();
+      await closing();
+      expect(service.post()).toBeNull();
+      expect(location.pathname).toBe(startUrl);
+    });
+
+    it('leaves the feed where it was scrolled to while open, on Back', async () => {
+      document.body.style.height = '5000px';
+      window.scrollTo(0, 300);
+      await opened();
+      window.scrollTo(0, 1200);
+
+      history.back();
+      await closing();
+
+      expect(window.scrollY).toBe(1200);
+      expect(document.documentElement.classList).not.toContain('comments-docked');
+      document.body.style.height = '';
+      window.scrollTo(0, 0);
+    });
+
+    it('doesn’t close on a click in the feed', async () => {
+      await opened();
+
+      document.body.click();
+      await closing();
+
+      expect(service.post()).not.toBeNull();
+    });
+
+    it('can’t be dragged', async () => {
+      await opened();
+      const header = element().querySelector('.sheet__header') as HTMLElement;
+
+      fixture.componentInstance.onDragStart({
+        clientY: 300,
+        pointerId: 1,
+        currentTarget: header,
+        timeStamp: 0,
+      } as unknown as PointerEvent);
+      fixture.componentInstance.onDragMove({ clientY: 100, timeStamp: 10 } as PointerEvent);
+
+      expect(fixture.componentInstance.dragHeight()).toBeNull();
+    });
+  });
+
+  it('shows no author or title on the narrow sheet, where the room is for comments', async () => {
+    await opened();
+
+    expect(element().querySelector('.sheet__post')).toBeNull();
+    expect(element().querySelector('.sheet--docked')).toBeNull();
   });
 
   it('shows nothing until a post is opened', () => {

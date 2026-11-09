@@ -61,6 +61,12 @@ img {
   display: block;
 }
 
+// Keeps the feed's 560 px column clear of the docked comments panel (420 px and a 16 px gap), moving it
+// only as far as a screen needs: 2 x (280 + 436) - screen width.
+html.comments-docked app-main-page {
+  padding-right: max(0px, calc(1432px - 100vw));
+}
+
 // The one tooltip style, from the appTooltip directive.
 .app-tooltip {
   position: fixed;

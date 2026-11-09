@@ -11,7 +11,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NavigationStart, Router } from '@angular/router';
+import { NavigationStart, Router, RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideX } from '@ng-icons/lucide';
@@ -23,6 +23,15 @@ import { Tooltip } from '../../directives/tooltip';
 import { CommentThread } from '../comment-thread/comment-thread';
 
 export type SheetSize = 'half' | 'full';
+
+/** On the root while docked, so the app's content can make room. See styles.scss. */
+const DOCKED_CLASS = 'comments-docked';
+
+/**
+ * From this width the panel sits beside the feed. The feed's column and the panel fit side by side here
+ * (560 + 420 px and some margin), so below it there's no room to use both at once.
+ */
+const DOCKED_FROM_PX = 1024;
 
 /** A fast flick decides by its direction alone, in pixels per millisecond. */
 const FLICK_SPEED = 0.5;
@@ -51,13 +60,15 @@ export function settleDrag(
 }
 
 /**
- * The comments over the feed: a sheet from the bottom on phones, which opens at half the screen and
- * drags up to full, and a panel on the right on wider screens. The address bar shows the post's
- * comments link while it's open, and X, a tap outside, Esc and the browser's Back all close it.
+ * The comments of a post in the feed. On a wide screen, a panel docked beside the feed, which stays
+ * bright and scrolls by itself, so another card's comment button just switches the panel to that post.
+ * On anything narrower, a sheet over the feed, which opens at half the screen and drags up to full. The
+ * address bar shows the post's comments link while it's open, and X, Esc and the browser's Back close
+ * either one, as does a tap outside the sheet.
  */
 @Component({
   selector: 'app-comments-sheet',
-  imports: [A11yModule, TranslatePipe, NgIcon, Tooltip, CommentThread],
+  imports: [A11yModule, RouterLink, TranslatePipe, NgIcon, Tooltip, CommentThread],
   viewProviders: [provideIcons({ lucideX })],
   templateUrl: './comments-sheet.html',
   styleUrl: './comments-sheet.scss',
@@ -68,8 +79,11 @@ export class CommentsSheet {
   private document = inject(DOCUMENT);
   private location = inject(Location);
   private panel = viewChild<ElementRef<HTMLElement>>('panel');
-  private overlay = backClosable('commentsSheet', () => this.sheet.close());
+  private overlay = backClosable('commentsSheet', () => this.closed());
+  private shownPostId: string | null = null;
 
+  /** Beside the feed, rather than over it. Decided on opening, for as long as it stays open. */
+  readonly docked = signal(false);
   readonly size = signal<SheetSize>('half');
   /** The panel's height in pixels while it's being dragged. */
   readonly dragHeight = signal<number | null>(null);
@@ -112,7 +126,7 @@ export class CommentsSheet {
 
   onDragStart(event: PointerEvent): void {
     const panel = this.panel()?.nativeElement;
-    if (!panel) {
+    if (!panel || this.docked()) {
       return;
     }
     (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
@@ -155,14 +169,32 @@ export class CommentsSheet {
   }
 
   private opened(postId: string): void {
+    const url = this.location.prepareExternalUrl(`/posts/${postId}#comments`);
     if (this.overlay.isOpen()) {
+      // Another card's button, with the panel docked beside the feed. Still one Back to close.
+      if (postId !== this.shownPostId) {
+        this.shownPostId = postId;
+        this.overlay.showUrl(url);
+      }
       return;
     }
+    const view = this.document.defaultView;
+    const docked = !!view?.matchMedia(`(min-width: ${DOCKED_FROM_PX}px)`).matches;
+    this.docked.set(docked);
+    this.document.documentElement.classList.toggle(DOCKED_CLASS, docked);
     this.size.set('half');
-    this.overlay.opened(this.location.prepareExternalUrl(`/posts/${postId}#comments`));
+    this.shownPostId = postId;
+    this.overlay.opened({ url, pageStaysLive: docked });
     // The panel itself. The text box would bring up a phone's keyboard for someone who came to read,
     // and the close button would show its tooltip each time.
     this.panel()?.nativeElement.focus();
+  }
+
+  private closed(): void {
+    this.sheet.close();
+    this.shownPostId = null;
+    this.docked.set(false);
+    this.document.documentElement.classList.remove(DOCKED_CLASS);
   }
 
   private halfHeight(): number {
