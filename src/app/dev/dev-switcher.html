@@ -1,0 +1,28 @@
+@if (identity.menuOpen()) {
+  <ul class="dev-switcher__menu" role="menu" aria-label="Działaj jako">
+    @for (user of identity.users; track user.id) {
+      <li role="none">
+        <button
+          type="button"
+          role="menuitemradio"
+          class="dev-switcher__item"
+          [attr.aria-checked]="identity.current === user"
+          (click)="choose(user)"
+        >
+          <span class="dev-switcher__name">{{ user.label }}</span>
+          <span class="dev-switcher__note">{{ user.note }}</span>
+        </button>
+      </li>
+    }
+  </ul>
+}
+<button
+  type="button"
+  class="dev-switcher__pill"
+  aria-haspopup="menu"
+  [attr.aria-expanded]="identity.menuOpen()"
+  (click)="toggle()"
+>
+  <span class="dev-switcher__badge">DEV</span>
+  {{ identity.current.label }}
+</button>

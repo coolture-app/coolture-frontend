@@ -1,8 +1,8 @@
 # Frontend
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.3.8.
-Node.js version required: v22.x
-npm: 10.x
+Node.js version required: v24.x (`mise install` in this folder gets it)
+npm: 11.x
 
 ## IMPORTANT
 
@@ -25,6 +25,14 @@ npx ng serve
 ```
 
 Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+
+It talks to the local API on `http://localhost:3000`. To run that, with realistic events and demo users, see "Run locally" in `coolture-aws`'s README (`make dev`, then `make seed`).
+
+### Acting as someone locally
+
+The development build has a **DEV** pill at the bottom left. It picks who the app acts as: a guest (the default), the demo users Anna, Jan and Ola, the bot that imported the events, or `local_dev`, the admin. The choice is the `coolture_dev_user` cookie, so server-rendered pages see the same user. Zaloguj opens the menu, Wyloguj goes back to the guest. It sends `X-User-Id` (or `X-Anonymous` for the guest), which only the local API reads.
+
+All of it lives in `src/app/dev/`, which only `src/environments/dev-tools.development.ts` imports. That file replaces `dev-tools.ts` in development builds only, so production builds don't contain it.
 
 ## Code scaffolding
 
