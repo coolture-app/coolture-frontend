@@ -96,7 +96,8 @@ export class AuthService {
     const pending: PendingLogin = {
       state,
       verifier,
-      returnUrl: returnUrl ?? window.location.pathname + window.location.search,
+      returnUrl:
+        returnUrl ?? window.location.pathname + window.location.search + window.location.hash,
     };
     sessionStorage.setItem(PENDING_LOGIN_KEY, JSON.stringify(pending));
 

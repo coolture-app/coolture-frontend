@@ -42,7 +42,7 @@ describe('EditPostView, after saving', () => {
 
     fixture.componentInstance.onFormSubmit(formData());
 
-    expect(back).toHaveBeenCalledWith('/post/p1');
+    expect(back).toHaveBeenCalledWith('/posts/p1');
   });
 
   it('deletes the removed photos only once the post no longer holds them', () => {
@@ -75,7 +75,7 @@ describe('EditPostView, after saving', () => {
 
     fixture.componentInstance.onFormSubmit(formData(['m1']));
 
-    expect(back).toHaveBeenCalledWith('/post/p1');
+    expect(back).toHaveBeenCalledWith('/posts/p1');
   });
 
   it('keeps the photos when the save fails', () => {

@@ -168,18 +168,38 @@
         [fullWidth]="true"
         [class]="isLiked() ? 'liked' : ''"
         [pressed]="isLiked()"
-        [label]="'POST.like' | translate"
+        [label]="
+          data.positiveReactionCount
+            ? ('POST.like' | translate) + ' (' + data.positiveReactionCount + ')'
+            : ('POST.like' | translate)
+        "
         (btnClick)="likePost()"
       >
-        <ng-icon name="lucideThumbsUp" [class.icon--filled]="isLiked()" />
+        <span class="post__counted">
+          <ng-icon name="lucideThumbsUp" [class.icon--filled]="isLiked()" />
+          @if (data.positiveReactionCount) {
+            <span class="post__count" aria-hidden="true">{{
+              shownCount(data.positiveReactionCount)
+            }}</span>
+          }
+        </span>
       </app-btn>
       <app-btn
         variant="social"
         [fullWidth]="true"
-        [label]="'POST.comments' | translate"
-        (btnClick)="viewPostPage(true)"
+        [label]="
+          commentCount()
+            ? ('POST.comments' | translate) + ' (' + commentCount() + ')'
+            : ('POST.comments' | translate)
+        "
+        (btnClick)="openComments()"
       >
-        <ng-icon name="lucideMessageCircle" />
+        <span class="post__counted">
+          <ng-icon name="lucideMessageCircle" />
+          @if (commentCount(); as count) {
+            <span class="post__count" aria-hidden="true">{{ shownCount(count) }}</span>
+          }
+        </span>
       </app-btn>
       <app-btn
         variant="social"

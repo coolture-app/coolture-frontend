@@ -4,6 +4,7 @@
 </div>
 <app-toast />
 <app-photo-viewer />
+<app-comments-sheet />
 @if (interestsRequired()) {
   <div class="app__interests" role="dialog" aria-modal="true">
     <app-interests-view onboarding (dismissed)="interestsDismissed.set(true)" />

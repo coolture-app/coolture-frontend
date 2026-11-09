@@ -7,11 +7,11 @@
     @for (link of links; track link.path) {
       <a
         class="navbar__link"
-        [class.navbar__link--add]="link.path === '/addPost'"
+        [class.navbar__link--add]="link.path === '/posts/new'"
         [routerLink]="link.path"
         routerLinkActive="active"
         ariaCurrentWhenActive="page"
-        [routerLinkActiveOptions]="{ exact: link.path === '/' }"
+        [routerLinkActiveOptions]="activeOptions(link.path)"
         [appTooltip]="link.labelKey | translate"
         (click)="link.path === '/' && homeTapped($event)"
       >

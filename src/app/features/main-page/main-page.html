@@ -6,52 +6,54 @@
     [class.searchbar--hidden]="barHidden()"
   >
     <div class="searchbar__inner">
-      <div class="tabs" role="tablist" [attr.aria-label]="'MAIN_PAGE.tabs' | translate">
-        <button
-          type="button"
-          role="tab"
-          class="tabs__tab"
-          [class.tabs__tab--on]="isFeed()"
-          [attr.aria-selected]="isFeed()"
-          [appTooltip]="'MAIN_PAGE.forYouHint' | translate"
-          (click)="setTab('forYou')"
-        >
-          {{ 'MAIN_PAGE.forYou' | translate }}
-        </button>
-        <button
-          type="button"
-          role="tab"
-          class="tabs__tab"
-          [class.tabs__tab--on]="!isFeed()"
-          [attr.aria-selected]="!isFeed()"
-          [appTooltip]="'MAIN_PAGE.allHint' | translate"
-          (click)="setTab('all')"
-        >
-          {{ 'MAIN_PAGE.all' | translate }}
-        </button>
-      </div>
-      <span class="searchbar__wrapper">
-        <ng-icon class="searchbar__icon" name="heroMagnifyingGlass" />
-        <input
-          class="searchbar__input"
-          type="search"
-          enterkeyhint="search"
-          [formControl]="searchControl"
-          [attr.aria-label]="'MAIN_PAGE.searchbar' | translate"
-          placeholder="{{ 'MAIN_PAGE.searchbar' | translate }}"
-          (keydown.enter)="applyControls()"
-        />
-        @if (searchControl.value) {
+      <div class="searchbar__top">
+        <div class="tabs" role="tablist" [attr.aria-label]="'MAIN_PAGE.tabs' | translate">
           <button
             type="button"
-            class="searchbar__clear"
-            [appTooltip]="'MAIN_PAGE.clearSearch' | translate"
-            (click)="clearSearch()"
+            role="tab"
+            class="tabs__tab"
+            [class.tabs__tab--on]="isFeed()"
+            [attr.aria-selected]="isFeed()"
+            [appTooltip]="'MAIN_PAGE.forYouHint' | translate"
+            (click)="setTab('forYou')"
           >
-            <ng-icon name="heroXMark" />
+            {{ 'MAIN_PAGE.forYou' | translate }}
           </button>
-        }
-      </span>
+          <button
+            type="button"
+            role="tab"
+            class="tabs__tab"
+            [class.tabs__tab--on]="!isFeed()"
+            [attr.aria-selected]="!isFeed()"
+            [appTooltip]="'MAIN_PAGE.allHint' | translate"
+            (click)="setTab('all')"
+          >
+            {{ 'MAIN_PAGE.all' | translate }}
+          </button>
+        </div>
+        <span class="searchbar__wrapper">
+          <ng-icon class="searchbar__icon" name="heroMagnifyingGlass" />
+          <input
+            class="searchbar__input"
+            type="search"
+            enterkeyhint="search"
+            [formControl]="searchControl"
+            [attr.aria-label]="'MAIN_PAGE.searchbar' | translate"
+            placeholder="{{ 'MAIN_PAGE.searchbar' | translate }}"
+            (keydown.enter)="applyControls()"
+          />
+          @if (searchControl.value) {
+            <button
+              type="button"
+              class="searchbar__clear"
+              [appTooltip]="'MAIN_PAGE.clearSearch' | translate"
+              (click)="clearSearch()"
+            >
+              <ng-icon name="heroXMark" />
+            </button>
+          }
+        </span>
+      </div>
       <div class="searchbar__row">
         @if (!isMapView() && !isFeed()) {
           <div class="sort-wrapper">
@@ -131,6 +133,7 @@
           [form]="filtersForm"
           [locating]="locating()"
           [locationFailed]="locationFailed()"
+          [hasPickedPlace]="pickedPlace() !== null"
           (clear)="clearFilters()"
           (done)="showFilters.set(false)"
         />

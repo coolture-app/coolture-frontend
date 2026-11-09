@@ -6,7 +6,7 @@ import { heroXMark } from '@ng-icons/heroicons/outline';
 
 import { Btn } from '../../../core/components/btn/btn';
 import { Switch } from '../../../core/components/switch/switch/switch';
-import { FiltersForm, RADII_KM } from '../home-view';
+import { FiltersForm, PlaceFilter, RADII_KM } from '../home-view';
 
 /** The home page's filter panel. The home page owns the form and applies it. */
 @Component({
@@ -22,14 +22,16 @@ export class FeedFilters {
   readonly locating = input(false);
   /** The position couldn't be had, so the filter went back to "Wszędzie". */
   readonly locationFailed = input(false);
+  /** Whether a place was picked, so that it can be chosen alongside the user's own position. */
+  readonly hasPickedPlace = input(false);
   readonly clear = output<void>();
   /** Filters apply as they change; this only closes the panel. */
   readonly done = output<void>();
 
   readonly radii = RADII_KM;
 
-  setNear(near: boolean): void {
-    this.form().controls.near.setValue(near);
+  setPlace(place: PlaceFilter): void {
+    this.form().controls.place.setValue(place);
   }
 
   setRadius(km: number): void {

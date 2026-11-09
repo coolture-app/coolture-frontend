@@ -41,6 +41,7 @@ import { AuthService } from '../../services/auth/auth.service';
 import { ModalWindow } from '../modal/modal-window/modal-window';
 import { Btn } from '../btn/btn';
 import { PostService } from '../../services/post/post.service';
+import { CommentsSheetService } from '../../services/comments-sheet/comments-sheet.service';
 import { DateFormatService } from '../../services/date-format/date-format.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { postPlace } from '../../models/posts/post-place';
@@ -99,6 +100,7 @@ export class PostComponent implements OnInit {
   private descText = viewChild<ElementRef<HTMLElement>>('descText');
   private slides = viewChild<ElementRef<HTMLElement>>('slides');
   private photoViewer = inject(PhotoViewerService);
+  private commentsSheet = inject(CommentsSheetService);
   private dateFormatService = inject(DateFormatService);
   private toast = inject(ToastService);
   private translate = inject(TranslateService);
@@ -132,10 +134,26 @@ export class PostComponent implements OnInit {
     return this.isInterested() || this.isTakesPart();
   }
 
-  viewPostPage(isScrolling: boolean): void {
-    this.router.navigate(['/post', this.data.id], {
-      queryParams: { scrollToComments: isScrolling },
-    });
+  /** A badge stays small. The exact number is in the button's name and tooltip. */
+  shownCount(count: number): string {
+    return count > 99 ? '99+' : String(count);
+  }
+
+  /** Live while this post's comments are open, since the card can stay in view beside them. */
+  commentCount(): number {
+    const open = this.commentsSheet.post();
+    return open?.id === this.data.id ? this.commentsSheet.count() : (this.data.commentsCount ?? 0);
+  }
+
+  /** The sheet over the list. On the post page, the comments are already there, under the post. */
+  openComments(): void {
+    if (this.isFullView) {
+      this.host.ownerDocument
+        .getElementById('comments')
+        ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      this.commentsSheet.show(this.data);
+    }
   }
 
   toggleExpanded(): void {
@@ -284,7 +302,7 @@ export class PostComponent implements OnInit {
   }
 
   editPost(): void {
-    this.router.navigate(['/editPost', this.data.id]);
+    this.router.navigate(['/posts', this.data.id, 'edit']);
   }
 
   deletePost(): void {
@@ -312,14 +330,12 @@ export class PostComponent implements OnInit {
   }
 
   goToFullPost(): void {
-    const currentUrl = this.router.url;
-    const regex = /^\/post\/[a-zA-Z0-9_-]+$/;
-    if (!regex.test(currentUrl)) {
-      this.router.navigate([`/post/${this.data.id}`]);
+    if (!this.isFullView) {
+      this.router.navigate(['/posts', this.data.id]);
     }
   }
 
   goToUserProfile(): void {
-    this.router.navigate([`/u/${this.data.author.username}`]);
+    this.router.navigate(['/users', this.data.author.username]);
   }
 }

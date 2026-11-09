@@ -95,7 +95,7 @@ export class EditPostView implements OnInit {
         next: () => {
           // Back to where the edit was opened from, so "Wróć" there never lands on this form.
           this.postService.clearActivePost();
-          this.backService.back(`/post/${post.id}`);
+          this.backService.back(`/posts/${post.id}`);
         },
         error: (err) => {
           console.error('Error while updating post', err);

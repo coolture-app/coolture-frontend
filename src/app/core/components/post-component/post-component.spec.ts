@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
+import { CommentsSheetService } from '../../services/comments-sheet/comments-sheet.service';
 import { HttpTestingController } from '@angular/common/http/testing';
 
 import { PostComponent } from './post-component';
@@ -84,7 +86,7 @@ describe('PostComponent', () => {
   });
 
   it('has four icon actions, each named and pressed when on, and no Share', () => {
-    render(card({ myParticipation: 'TAKES_PART' }));
+    render(card({ myParticipation: 'TAKES_PART', positiveReactionCount: 0, commentsCount: 0 }));
 
     const actions = Array.from(element().querySelectorAll('.post__social button'));
     expect(actions.map((b) => b.getAttribute('aria-label'))).toEqual([
@@ -100,6 +102,118 @@ describe('PostComponent', () => {
       'true',
     ]);
     expect(actions.every((b) => b.textContent!.trim() === '')).toBeTrue();
+  });
+
+  describe('the like count', () => {
+    function badge(): string | undefined {
+      return element().querySelector('[aria-label^="POST.like"] .post__count')?.textContent?.trim();
+    }
+
+    it('shows on the like icon, and says it in the button’s name, with none at 0', () => {
+      render(card({ positiveReactionCount: 0 }));
+      expect(badge()).toBeUndefined();
+
+      render(card({ positiveReactionCount: 7 }));
+      expect(badge()).toBe('7');
+      expect(element().querySelector('[aria-label="POST.like (7)"]')).not.toBeNull();
+    });
+
+    it('caps a long count', () => {
+      render(card({ positiveReactionCount: 100 }));
+
+      expect(badge()).toBe('99+');
+    });
+
+    it('has no count on the bookmark or the ticket, as the API sends only their sum', () => {
+      render(card({ participantCount: 5 }));
+
+      expect(element().querySelector('[aria-label="POST.interested"] .post__count')).toBeNull();
+      expect(element().querySelector('[aria-label="POST.takes_part"] .post__count')).toBeNull();
+    });
+  });
+
+  describe('the comment button', () => {
+    function commentButton(): HTMLButtonElement {
+      return element().querySelector('[aria-label="POST.comments"]') as HTMLButtonElement;
+    }
+
+    function badge(): string | undefined {
+      return element()
+        .querySelector('[aria-label^="POST.comments"] .post__count')
+        ?.textContent?.trim();
+    }
+
+    it('shows no count with no comments', () => {
+      render(card({ commentsCount: 0 }));
+
+      expect(badge()).toBeUndefined();
+      expect(commentButton()).not.toBeNull();
+    });
+
+    it('shows the count on the icon, and says it in the button’s name', () => {
+      render(card({ commentsCount: 12 }));
+
+      expect(badge()).toBe('12');
+      expect(element().querySelector('[aria-label="POST.comments (12)"]')).not.toBeNull();
+    });
+
+    it('caps a long count, and still says the exact number', () => {
+      render(card({ commentsCount: 1234 }));
+
+      expect(badge()).toBe('99+');
+      expect(element().querySelector('[aria-label="POST.comments (1234)"]')).not.toBeNull();
+    });
+
+    it('follows the count while this post’s comments are open', async () => {
+      const data = card({ commentsCount: 2 });
+      render(data);
+      const sheet = TestBed.inject(CommentsSheetService);
+
+      sheet.show(data);
+      sheet.changeCount(1);
+      await fixture.whenStable();
+      expect(badge()).toBe('3');
+
+      sheet.close();
+      await fixture.whenStable();
+      expect(badge()).toBe('3');
+    });
+
+    it('isn’t changed by another post’s comments being open', async () => {
+      render(card({ commentsCount: 2 }));
+      const sheet = TestBed.inject(CommentsSheetService);
+
+      sheet.show(card({ id: 'other', commentsCount: 9 }));
+      await fixture.whenStable();
+
+      expect(badge()).toBe('2');
+      sheet.close();
+    });
+
+    it('opens the sheet over the list, and stays on the page', () => {
+      const data = card();
+      render(data);
+      const navigate = spyOn(TestBed.inject(Router), 'navigate');
+
+      commentButton().click();
+
+      expect(TestBed.inject(CommentsSheetService).post()).toBe(data);
+      expect(navigate).not.toHaveBeenCalled();
+    });
+
+    it('scrolls to the comments on the post page, where they already are', () => {
+      render(card(), true);
+      const section = document.createElement('div');
+      section.id = 'comments';
+      document.body.appendChild(section);
+      const scroll = spyOn(section, 'scrollIntoView');
+
+      commentButton().click();
+
+      expect(scroll).toHaveBeenCalled();
+      expect(TestBed.inject(CommentsSheetService).post()).toBeNull();
+      section.remove();
+    });
   });
 
   describe('photo', () => {

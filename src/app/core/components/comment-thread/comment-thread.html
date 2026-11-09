@@ -1,0 +1,90 @@
+<div class="thread__list">
+  @for (item of comments(); track item.id) {
+    <app-comment-component
+      [comment]="item"
+      [inSheet]="inSheet()"
+      (replyClicked)="setReplyTo($event)"
+      (commentDeleted)="onDeleted($event)"
+    />
+  }
+  <div
+    class="thread__end"
+    [appInfiniteScroll]="hasMore() && !loading() && !failed()"
+    (reachedEnd)="load()"
+  ></div>
+  @if (failed()) {
+    <p class="thread__note" role="alert">
+      {{ 'COMMENT.load-error' | translate }}
+      <button type="button" class="thread__retry" (click)="load()">
+        {{ 'COMMENT.retry' | translate }}
+      </button>
+    </p>
+  } @else if (loading()) {
+    <p class="thread__note" role="status">{{ 'COMMENT.loading' | translate }}</p>
+  } @else if (comments().length === 0) {
+    <p class="thread__note">{{ 'COMMENT.empty' | translate }}</p>
+  }
+</div>
+
+<div class="composer">
+  <div class="composer__inner">
+    @if (user(); as me) {
+      @if (replyTo(); as target) {
+        <div class="composer__reply">
+          <span>{{ 'COMMENT.replying-to' | translate: { name: target.username } }}</span>
+          <button
+            type="button"
+            class="composer__cancel"
+            [appTooltip]="'COMMENT.cancel-reply' | translate"
+            (click)="cancelReply()"
+          >
+            <ng-icon name="lucideX" />
+          </button>
+        </div>
+      }
+      <div class="composer__row">
+        @if (me.avatar; as avatar) {
+          <img [src]="avatar.url" alt="" class="composer__avatar" />
+        } @else {
+          <span class="composer__avatar composer__avatar--placeholder" aria-hidden="true">
+            {{ me.firstName?.charAt(0) }}{{ me.lastName?.charAt(0) }}
+          </span>
+        }
+        <textarea
+          #commentInput
+          class="composer__input"
+          rows="1"
+          name="comment"
+          [maxLength]="maxLength"
+          [readOnly]="sending()"
+          [attr.aria-label]="'COMMENT.placeholder' | translate"
+          placeholder="{{ 'COMMENT.placeholder' | translate }}"
+          [ngModel]="content()"
+          (ngModelChange)="content.set($event)"
+          (input)="resize()"
+          (focus)="composerFocused.emit()"
+          (keydown.control.enter)="onKeydown($event)"
+          (keydown.meta.enter)="onKeydown($event)"
+        ></textarea>
+        <button
+          type="button"
+          class="composer__send"
+          [disabled]="!canSend()"
+          [appTooltip]="'COMMENT.send' | translate"
+          (click)="send()"
+        >
+          <ng-icon name="lucideSendHorizontal" />
+        </button>
+      </div>
+      @if (remaining() !== null) {
+        <p class="composer__counter" aria-live="polite">
+          {{ 'COMMENT.remaining' | translate: { count: remaining() } }}
+        </p>
+      }
+    } @else {
+      <button type="button" class="composer__sign-in" (click)="signIn()">
+        {{ 'COMMENT.sign-in' | translate }}
+      </button>
+    }
+  </div>
+</div>

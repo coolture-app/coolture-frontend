@@ -13,24 +13,35 @@
       <button
         type="button"
         class="chip"
-        [class.chip--on]="!f.controls.near.value"
-        [attr.aria-pressed]="!f.controls.near.value"
-        (click)="setNear(false)"
+        [class.chip--on]="!f.controls.place.value"
+        [attr.aria-pressed]="!f.controls.place.value"
+        (click)="setPlace('')"
       >
         {{ 'MAIN_PAGE.anywhere' | translate }}
       </button>
       <button
         type="button"
         class="chip"
-        [class.chip--on]="f.controls.near.value"
-        [attr.aria-pressed]="f.controls.near.value"
+        [class.chip--on]="f.controls.place.value === 'mine'"
+        [attr.aria-pressed]="f.controls.place.value === 'mine'"
         [attr.aria-busy]="locating()"
-        (click)="setNear(true)"
+        (click)="setPlace('mine')"
       >
         {{ 'MAIN_PAGE.myLocation' | translate }}
       </button>
+      @if (hasPickedPlace()) {
+        <button
+          type="button"
+          class="chip"
+          [class.chip--on]="f.controls.place.value === 'picked'"
+          [attr.aria-pressed]="f.controls.place.value === 'picked'"
+          (click)="setPlace('picked')"
+        >
+          {{ 'MAIN_PAGE.pickedPlace' | translate }}
+        </button>
+      }
     </div>
-    @if (f.controls.near.value) {
+    @if (f.controls.place.value) {
       <div class="chips" role="group" [attr.aria-label]="'MAIN_PAGE.radius' | translate">
         @for (km of radii; track km) {
           <button

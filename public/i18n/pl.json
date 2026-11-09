@@ -53,6 +53,7 @@
     "location": "Lokalizacja",
     "anywhere": "Wszędzie",
     "myLocation": "Moja lokalizacja",
+    "pickedPlace": "Wskazane miejsce",
     "radius": "Promień",
     "km": "{{km}} km",
     "done": "Gotowe",
@@ -69,10 +70,7 @@
   },
   "FULL_POST": {
     "title": "Fajny post",
-    "back": "Wróć",
-    "comment-placeholder": "Zostaw swój komentarz!",
-    "comment-btn": "Skomentuj",
-    "replying-to": "Odpowiadasz na komentarz"
+    "back": "Wróć"
   },
   "POST": {
     "starts": "Początek wydarzenia",
@@ -236,14 +234,32 @@
     "too-many-photos": "Post może mieć najwyżej {{max}} zdjęć."
   },
   "COMMENT": {
+    "title": "Komentarze",
+    "close": "Zamknij komentarze",
+    "loading": "Wczytywanie komentarzy…",
+    "empty": "Nikt jeszcze nie skomentował. Napisz pierwszy komentarz.",
+    "load-error": "Nie udało się wczytać komentarzy.",
+    "retry": "Spróbuj ponownie",
+    "placeholder": "Napisz komentarz…",
+    "send": "Wyślij",
+    "send-error": "Nie udało się wysłać komentarza. Spróbuj ponownie.",
+    "edit-error": "Nie udało się zapisać zmiany.",
+    "delete-error": "Nie udało się usunąć komentarza.",
+    "sign-in": "Zaloguj się, aby skomentować",
+    "remaining": "Pozostało znaków: {{count}}",
+    "replying-to": "Odpowiadasz: {{name}}",
+    "cancel-reply": "Anuluj odpowiedź",
     "reply": "Odpowiedz",
+    "edited": "edytowano",
+    "more": "Więcej opcji",
     "hide-replies": "Schowaj odpowiedzi",
     "show-replies": "Pokaż odpowiedzi",
-    "edit-comment": "Edytuj komentarz",
-    "delete-comment": "Usuń komentarz",
+    "earlier-replies": "Wcześniejsze odpowiedzi",
+    "edit-comment": "Edytuj",
+    "delete-comment": "Usuń",
     "modal-delete-title": "Czy na pewno chcesz usunąć swój komentarz?",
     "modal-delete-body": "Tej akcji nie da się cofnąć.",
-    "deleted-comment": "Usunięty."
+    "deleted-comment": "Komentarz usunięty"
   },
   "EVENT_CARD": {
     "by": "przez"

@@ -37,7 +37,7 @@
       } @else {
         @for (user of users(); track user.id) {
           <div class="follow-list__user">
-            <div class="follow-list__info" [routerLink]="['/u', user.username]">
+            <div class="follow-list__info" [routerLink]="['/users', user.username]">
               @if (user.avatar; as avatar) {
                 <img [src]="avatar.url" [alt]="user.username" class="follow-list__avatar" />
               } @else {

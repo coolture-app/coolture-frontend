@@ -53,6 +53,7 @@
     "location": "Location",
     "anywhere": "Anywhere",
     "myLocation": "My location",
+    "pickedPlace": "Chosen place",
     "radius": "Radius",
     "km": "{{km}} km",
     "done": "Done",
@@ -69,10 +70,7 @@
   },
   "FULL_POST": {
     "title": "Cool post",
-    "back": "Back",
-    "comment-placeholder": "Leave your comment!",
-    "comment-btn": "Comment",
-    "replying-to": "Replying to comment"
+    "back": "Back"
   },
   "POST": {
     "starts": "Event start",
@@ -236,14 +234,32 @@
     "too-many-photos": "A post can have at most {{max}} photos."
   },
   "COMMENT": {
+    "title": "Comments",
+    "close": "Close comments",
+    "loading": "Loading comments…",
+    "empty": "No comments yet. Write the first one.",
+    "load-error": "Couldn't load the comments.",
+    "retry": "Try again",
+    "placeholder": "Write a comment…",
+    "send": "Send",
+    "send-error": "Couldn't send the comment. Try again.",
+    "edit-error": "Couldn't save the change.",
+    "delete-error": "Couldn't delete the comment.",
+    "sign-in": "Sign in to comment",
+    "remaining": "Characters left: {{count}}",
+    "replying-to": "Replying to {{name}}",
+    "cancel-reply": "Cancel reply",
     "reply": "Reply",
+    "edited": "edited",
+    "more": "More options",
     "hide-replies": "Hide replies",
     "show-replies": "Show replies",
-    "edit-comment": "Edit comment",
-    "delete-comment": "Delete comment",
-    "modal-delete-title": "Do you really want to delete your comment?",
-    "modal-delete-body": "This action cannot be undone.",
-    "deleted-comment": "Deleted."
+    "earlier-replies": "Earlier replies",
+    "edit-comment": "Edit",
+    "delete-comment": "Delete",
+    "modal-delete-title": "Are you sure you want to delete your comment?",
+    "modal-delete-body": "This can't be undone.",
+    "deleted-comment": "Comment deleted"
   },
   "EVENT_CARD": {
     "by": "by"

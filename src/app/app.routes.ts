@@ -1,4 +1,4 @@
-import { Routes } from '@angular/router';
+import { RedirectFunction, Router, Routes } from '@angular/router';
 import { MainPage } from './features/main-page/main-page';
 import { FullPostView } from './features/full-post-view/full-post-view';
 import { TranslateService } from '@ngx-translate/core';
@@ -12,6 +12,34 @@ import { EditPostView } from './features/edit-post-view/edit-post-view';
 import { MyEventsView } from './features/my-events-view/my-events-view';
 import { AuthCallbackView } from './features/auth-callback-view/auth-callback-view';
 import { InterestsView, unsavedInterestsGuard } from './features/interests-view/interests-view';
+
+/**
+ * Sends a moved path to its new one, with `:name` filled from the old path. A function because a
+ * string redirect loses the query string and fragment, on the server as well as in the browser.
+ */
+function movedTo(path: string): RedirectFunction {
+  return ({ params, queryParams, fragment }) => {
+    // As separate segments, because createUrlTree encodes each one itself.
+    const segments = path
+      .split('/')
+      .map((part) => (part[0] === ':' ? params[part.slice(1)] : part));
+    return inject(Router).createUrlTree(['/', ...segments.filter(Boolean)], {
+      queryParams,
+      fragment: fragment ?? undefined,
+    });
+  };
+}
+
+/** The app's old paths and where they went, so saved links keep working. */
+export const MOVED_ROUTES: Routes = [
+  { path: 'post/:id', redirectTo: movedTo('/posts/:id') },
+  { path: 'addPost', redirectTo: movedTo('/posts/new') },
+  { path: 'editPost/:id', redirectTo: movedTo('/posts/:id/edit') },
+  { path: 'myEvents', redirectTo: movedTo('/plans') },
+  { path: 'u/:username', redirectTo: movedTo('/users/:username') },
+  { path: 'discover', redirectTo: movedTo('/people') },
+  { path: 'interests', redirectTo: movedTo('/profile/interests') },
+];
 
 export const routes: Routes = [
   {
@@ -33,16 +61,36 @@ export const routes: Routes = [
     pathMatch: 'full',
   },
   {
-    path: 'post/:id',
-    component: FullPostView,
-  },
-  {
-    path: 'addPost',
+    // Before posts/:id, which would take "new" for an id.
+    path: 'posts/new',
     component: AddPostView,
     canActivate: [authGuard],
     title: () => {
       const translate = inject(TranslateService);
       return translate.get('ADD_POST.title');
+    },
+  },
+  {
+    path: 'posts/:id/edit',
+    component: EditPostView,
+    canActivate: [authGuard],
+    title: () => {
+      const translate = inject(TranslateService);
+      return translate.get('EDIT_POST.title');
+    },
+  },
+  {
+    path: 'posts/:id',
+    component: FullPostView,
+  },
+  {
+    path: 'profile/interests',
+    component: InterestsView,
+    canActivate: [authGuard],
+    canDeactivate: [unsavedInterestsGuard],
+    title: () => {
+      const translate = inject(TranslateService);
+      return translate.get('INTERESTS.title');
     },
   },
   {
@@ -55,7 +103,7 @@ export const routes: Routes = [
     },
   },
   {
-    path: 'u/:username',
+    path: 'users/:username',
     component: UserProfileView,
     canActivate: [authGuard],
     title: () => {
@@ -64,7 +112,7 @@ export const routes: Routes = [
     },
   },
   {
-    path: 'discover',
+    path: 'people',
     component: DiscoverView,
     canActivate: [authGuard],
     title: () => {
@@ -73,16 +121,7 @@ export const routes: Routes = [
     },
   },
   {
-    path: 'editPost/:id',
-    component: EditPostView,
-    canActivate: [authGuard],
-    title: () => {
-      const translate = inject(TranslateService);
-      return translate.get('EDIT_POST.title');
-    },
-  },
-  {
-    path: 'myEvents',
+    path: 'plans',
     component: MyEventsView,
     canActivate: [authGuard],
     title: () => {
@@ -91,19 +130,10 @@ export const routes: Routes = [
     },
   },
   {
-    path: 'interests',
-    component: InterestsView,
-    canActivate: [authGuard],
-    canDeactivate: [unsavedInterestsGuard],
-    title: () => {
-      const translate = inject(TranslateService);
-      return translate.get('INTERESTS.title');
-    },
-  },
-  {
     path: 'auth/callback',
     component: AuthCallbackView,
   },
+  ...MOVED_ROUTES,
   // ** WILDCARD must be on the bottom of the router!
   {
     path: '**',

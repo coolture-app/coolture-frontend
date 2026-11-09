@@ -1,0 +1,81 @@
+@if (sheet.post(); as post) {
+  @if (!docked()) {
+    <div class="sheet__scrim" aria-hidden="true" (click)="close()"></div>
+  }
+  <div
+    #panel
+    class="sheet"
+    tabindex="-1"
+    role="dialog"
+    aria-labelledby="comments-sheet-title"
+    [cdkTrapFocus]="!docked()"
+    [attr.aria-modal]="docked() ? null : 'true'"
+    [class.sheet--docked]="docked()"
+    [class.sheet--full]="size() === 'full'"
+    [class.sheet--dragging]="dragHeight() !== null"
+    [style.height.px]="dragHeight()"
+  >
+    <div
+      class="sheet__header"
+      (pointerdown)="onDragStart($event)"
+      (pointermove)="onDragMove($event)"
+      (pointerup)="onDragEnd()"
+      (pointercancel)="onDragEnd()"
+    >
+      <span class="sheet__handle" aria-hidden="true"></span>
+      <div class="sheet__heading">
+        @if (docked()) {
+          <div class="sheet__post">
+            <a
+              class="sheet__avatar-link"
+              tabindex="-1"
+              aria-hidden="true"
+              [routerLink]="['/users', post.author.username]"
+              [replaceUrl]="true"
+            >
+              @if (post.author.avatar; as avatar) {
+                <img [src]="avatar.url" alt="" class="sheet__avatar" />
+              } @else {
+                <span class="sheet__avatar sheet__avatar--placeholder">
+                  {{ post.author.firstName?.charAt(0) }}{{ post.author.lastName?.charAt(0) }}
+                </span>
+              }
+            </a>
+            <div class="sheet__post-text">
+              <a
+                class="sheet__author"
+                [routerLink]="['/users', post.author.username]"
+                [replaceUrl]="true"
+                >{{ post.author.username }}</a
+              >
+              <a class="sheet__post-title" [routerLink]="['/posts', post.id]" [replaceUrl]="true">{{
+                post.title
+              }}</a>
+            </div>
+          </div>
+        }
+        <h2 id="comments-sheet-title" class="sheet__title">
+          {{ 'COMMENT.title' | translate }} ({{ sheet.count() }})
+        </h2>
+      </div>
+      <button
+        type="button"
+        class="sheet__close"
+        [appTooltip]="'COMMENT.close' | translate"
+        (pointerdown)="$event.stopPropagation()"
+        (click)="close()"
+      >
+        <ng-icon name="lucideX" />
+      </button>
+    </div>
+    <!-- Keyed by the post, so switching to another card's comments starts a new list. -->
+    @for (current of [post]; track current.id) {
+      <app-comment-thread
+        [postId]="current.id"
+        [inSheet]="true"
+        (countChange)="sheet.changeCount($event)"
+        (composerFocused)="grow()"
+      />
+    }
+  </div>
+}

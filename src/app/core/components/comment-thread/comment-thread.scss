@@ -1,0 +1,162 @@
+@use '_mixin' as *;
+
+:host {
+  display: block;
+}
+
+// Room for the bar pinned to the screen, so the last comment isn't under it.
+.thread__list {
+  padding-bottom: 96px;
+}
+
+.thread__end {
+  height: 1px;
+}
+
+.thread__note {
+  margin: 0;
+  padding: var(--space-lg) 0;
+  font-size: var(--text-body);
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+
+.thread__retry {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-weight: var(--font-semibold);
+  color: var(--color-accent);
+  cursor: pointer;
+}
+
+// Always in the same place on the post page, so it can't jump away from a click (finding C1).
+.composer {
+  position: fixed;
+  right: 0;
+  bottom: max(var(--bottom-bar-height), var(--keyboard-inset, 0px));
+  left: 0;
+  z-index: var(--z-sticky);
+  border-top: 1px solid var(--color-border-light);
+  background: var(--color-surface);
+}
+
+.composer__inner {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: var(--space-sm) var(--space-md);
+}
+
+// In the sheet, the list scrolls by itself and the box closes the panel's bottom edge.
+:host(.thread--sheet) {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+
+  .thread__list {
+    flex: 1;
+    min-height: 0;
+    padding: 0 var(--space-md) var(--space-md);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    @include scrollbar;
+  }
+
+  .composer {
+    position: static;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+.composer__reply {
+  @include flex-between;
+  margin-bottom: var(--space-xs);
+  font-size: var(--text-meta);
+  color: var(--color-text-secondary);
+}
+
+.composer__cancel {
+  display: flex;
+  padding: var(--space-xs);
+  border: none;
+  background: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  --ng-icon__size: 16px;
+}
+
+.composer__row {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-sm);
+}
+
+.composer__avatar {
+  @include avatar(36px);
+
+  &--placeholder {
+    @include avatar-placeholder(36px);
+  }
+}
+
+.composer__input {
+  @include input-base;
+  flex: 1;
+  min-width: 0;
+  max-height: 150px;
+  overflow-y: auto;
+  border-radius: 18px;
+  font-size: var(--text-body);
+  line-height: 1.4;
+  resize: none;
+  @include scrollbar;
+}
+
+.composer__send {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: none;
+  color: var(--color-accent);
+  cursor: pointer;
+  --ng-icon__size: 20px;
+
+  &:disabled {
+    color: var(--color-text-tertiary);
+    cursor: default;
+  }
+
+  &:not(:disabled):hover {
+    background: var(--color-surface-hover);
+  }
+}
+
+.composer__counter {
+  margin: var(--space-xs) 0 0;
+  font-size: var(--text-meta);
+  text-align: right;
+  color: var(--color-text-secondary);
+}
+
+.composer__sign-in {
+  width: 100%;
+  padding: var(--space-sm);
+  border: 1px solid var(--color-border);
+  border-radius: 18px;
+  background: none;
+  font: inherit;
+  font-size: var(--text-body);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--color-surface-hover);
+  }
+}

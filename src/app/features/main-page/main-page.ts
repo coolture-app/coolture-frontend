@@ -12,7 +12,7 @@ import {
 } from '@angular/core';
 import { ViewportScroller } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { NavigationStart, Router } from '@angular/router';
+import { ActivatedRoute, NavigationStart, Params, Router } from '@angular/router';
 import { debounceTime, filter, merge } from 'rxjs';
 import { TranslatePipe } from '@ngx-translate/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -48,6 +48,7 @@ import {
   RADII_KM,
   START_SORT,
 } from './home-view';
+import { fromHomeParams, sameHomeParams, toHomeParams } from './home-url';
 import { FeedFilters } from './feed-filters/feed-filters';
 
 const LOCATION_WAIT_MS = 1500;
@@ -100,6 +101,7 @@ const CARDS_BEFORE_END = 15;
 export class MainPage implements OnDestroy {
   private postService = inject(PostService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private destroyRef = inject(DestroyRef);
   private location = inject(LocationService);
   private scroller = inject(ViewportScroller);
@@ -136,8 +138,10 @@ export class MainPage implements OnDestroy {
   ];
 
   filtersForm = createFiltersForm();
-  /** The user's position, for "Moja lokalizacja" and Najbliższe, once the browser gave it. Never stored. */
+  /** The user's position, for "Moja lokalizacja" and Najbliższe, once the browser gave it. */
   private nearPosition = signal<GeoPoint | null>(null);
+  /** A place that isn't the user's, for "Wskazane miejsce". Comes from a link for now. */
+  readonly pickedPlace = signal<GeoPoint | null>(null);
 
   /** The applied search and filters, also what the map shows. Both tabs share them. */
   readonly activeFilters = signal<PostFilterParams>({});
@@ -146,6 +150,13 @@ export class MainPage implements OnDestroy {
   /** Wszystkie's order. Kept while on Dla Ciebie, so going back finds it as it was. */
   readonly sort = signal<PostsSort>(START_SORT);
   readonly isFeed = computed(() => this.tab() === 'forYou');
+  /** Where Najbliższe measures from: the radius's centre if one is on, so the two can't disagree. */
+  private readonly sortPoint = computed<GeoPoint | null>(() => {
+    const { latitude, longitude } = this.activeFilters();
+    return latitude !== undefined && longitude !== undefined
+      ? { latitude, longitude }
+      : (this.nearPosition() ?? this.pickedPlace());
+  });
   /** How many filters the panel has on, counting a date range and a place as one each. Not the search. */
   readonly activeFilterCount = computed(() => {
     const { type, tags, startsFrom, startsTo, visibility, status, includePast, latitude } =
@@ -179,16 +190,23 @@ export class MainPage implements OnDestroy {
   private listOutdated = false;
 
   constructor() {
-    this.restoreView();
+    const restored = this.restoreView();
     this.postService.clearActivePost();
 
-    afterNextRender(() => this.ready.set(true));
+    // The page is prerendered with no query, so the URL applies only after hydration matched it.
+    afterNextRender(() => {
+      if (restored) {
+        this.ready.set(true);
+      } else {
+        void this.openFromUrl().then(() => this.ready.set(true));
+      }
+    });
 
     // Cards measure distances from the point the list was filtered or sorted by, so they agree with
     // it: the radius's centre, or Najbliższe's position. See LocationService.
     effect(() => {
       const { latitude, longitude, radiusKm } = this.activeFilters();
-      const nearest = !this.isFeed() && this.sort() === 'NEAREST' ? this.nearPosition() : null;
+      const nearest = !this.isFeed() && this.sort() === 'NEAREST' ? this.sortPoint() : null;
       const centre = radiusKm && latitude !== undefined && longitude !== undefined;
       this.location.measureFrom(centre ? { latitude, longitude } : nearest);
     });
@@ -204,11 +222,11 @@ export class MainPage implements OnDestroy {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.startFresh());
 
-    this.filtersForm.controls.near.valueChanges
+    this.filtersForm.controls.place.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((near) => {
+      .subscribe((place) => {
         this.locationFailed.set(false);
-        if (near && !this.nearPosition()) {
+        if (place === 'mine' && !this.nearPosition()) {
           void this.locateForFilter();
         }
       });
@@ -292,7 +310,7 @@ export class MainPage implements OnDestroy {
   /** Najbliższe needs the position. If the browser won't give it, the order stays and a note says why. */
   async setSortBy(sortBy: PostsSort): Promise<void> {
     this.showSortMenu.set(false);
-    if (sortBy === 'NEAREST' && !this.nearPosition()) {
+    if (sortBy === 'NEAREST' && !this.sortPoint()) {
       const position = await this.location.request();
       if (!position) {
         this.toast.show(this.translate.instant('MAIN_PAGE.nearestNeedsLocation'));
@@ -349,6 +367,7 @@ export class MainPage implements OnDestroy {
     this.sort.set(START_SORT);
     this.activeFilters.set(this.readFilters());
     this.isMapView.set(false);
+    this.showInUrl();
     this.load();
   }
 
@@ -361,6 +380,7 @@ export class MainPage implements OnDestroy {
     if (listKey() !== before) {
       // A different list starts at its beginning, not where the last one was scrolled to.
       this.scroller.scrollToPosition([0, 0]);
+      this.showInUrl();
       this.load();
     }
   }
@@ -375,7 +395,7 @@ export class MainPage implements OnDestroy {
       void this.startFeed(run);
     } else {
       const sortBy = this.sort();
-      const position = sortBy === 'NEAREST' ? this.nearPosition() : null;
+      const position = sortBy === 'NEAREST' ? this.sortPoint() : null;
       this.list.start({
         kind: 'posts',
         filters: { ...this.activeFilters(), ...position, sortBy },
@@ -398,6 +418,60 @@ export class MainPage implements OnDestroy {
     }
   }
 
+  /**
+   * Puts the page in the state its URL describes. A radius or Najbliższe with no point in the link
+   * needs the reader's position, and without it they fall back as they do when picked by hand.
+   */
+  private async openFromUrl(): Promise<void> {
+    // After this render's own check has finished, which the form's values would otherwise change under.
+    await Promise.resolve();
+    const { search, filters, tab, sort, point } = fromHomeParams(this.route.snapshot.queryParams);
+    this.searchControl.setValue(search, { emitEvent: false });
+    this.filtersForm.setValue(filters, { emitEvent: false });
+    this.tab.set(tab);
+    this.sort.set(sort);
+    this.pickedPlace.set(point);
+
+    const needsPosition = filters.place === 'mine' || (sort === 'NEAREST' && !point);
+    if (needsPosition) {
+      const position = await this.location.currentOrAsk(LOCATION_WAIT_MS, LOCATION_ANSWER_MS);
+      this.nearPosition.set(position);
+      if (!position && filters.place === 'mine') {
+        this.filtersForm.controls.place.setValue('', { emitEvent: false });
+        this.locationFailed.set(true);
+      }
+      if (!position && sort === 'NEAREST') {
+        this.sort.set(START_SORT);
+        this.toast.show(this.translate.instant('MAIN_PAGE.nearestNeedsLocation'));
+      }
+    }
+    this.activeFilters.set(this.readFilters());
+    this.showInUrl();
+  }
+
+  /** The current state as the URL's query string. */
+  private urlParams(): Params {
+    const { latitude, longitude } = this.activeFilters();
+    const nearest = !this.isFeed() && this.sort() === 'NEAREST';
+    const inFilter = latitude !== undefined && longitude !== undefined;
+    return toHomeParams({
+      search: this.searchControl.value,
+      filters: this.filtersForm.getRawValue(),
+      tab: this.tab(),
+      sort: this.sort(),
+      point: inFilter || nearest ? this.sortPoint() : null,
+    });
+  }
+
+  /** Replaces the URL, so Back still leaves the home page rather than undoing each filter. */
+  private showInUrl(): void {
+    const queryParams = this.urlParams();
+    const current = this.router.parseUrl(this.router.url).queryParams;
+    if (!sameHomeParams(queryParams, current)) {
+      void this.router.navigate([], { relativeTo: this.route, queryParams, replaceUrl: true });
+    }
+  }
+
   /** "Moja lokalizacja" needs the position first. Without it, the filter goes back to "Wszędzie". */
   private async locateForFilter(): Promise<void> {
     this.locating.set(true);
@@ -407,7 +481,7 @@ export class MainPage implements OnDestroy {
       this.nearPosition.set(position);
       this.applyControls();
     } else {
-      this.filtersForm.controls.near.setValue(false, { emitEvent: false });
+      this.filtersForm.controls.place.setValue('', { emitEvent: false });
       this.locationFailed.set(true);
     }
   }
@@ -415,13 +489,20 @@ export class MainPage implements OnDestroy {
   private resetControls(): void {
     this.filtersForm.reset(NO_FILTERS, { emitEvent: false });
     this.searchControl.setValue('', { emitEvent: false });
+    this.pickedPlace.set(null);
+  }
+
+  /** The radius filter's centre, if it's on. */
+  private filterCentre(): GeoPoint | null {
+    const place = this.filtersForm.controls.place.value;
+    return place === 'picked' ? this.pickedPlace() : place === 'mine' ? this.nearPosition() : null;
   }
 
   private readFilters(): PostFilterParams {
     const search = this.searchControl.value.trim();
-    const { type, tags, startsFrom, startsTo, visibility, status, includePast, near, radiusKm } =
+    const { type, tags, startsFrom, startsTo, visibility, status, includePast, radiusKm } =
       this.filtersForm.getRawValue();
-    const position = near ? this.nearPosition() : null;
+    const position = this.filterCentre();
     const tagList = tags
       .split(',')
       .map((tag) => tag.trim())
@@ -449,19 +530,22 @@ export class MainPage implements OnDestroy {
       isMapView: this.isMapView(),
       listScrollY: this.listScrollY,
       nearPosition: this.nearPosition(),
+      pickedPlace: this.pickedPlace(),
+      url: this.urlParams(),
     });
   }
 
   /**
    * On Back or Forward, puts the page back as it was left, from memory and with no request, so the
-   * router's scroll restoration lands on the same card. Otherwise a new list will start.
+   * router's scroll restoration lands on the same card. Otherwise a new list will start, from the URL.
+   * Memory holds the last home page left, which may not be the entry Back landed on, so the URL decides.
    */
-  private restoreView(): void {
+  private restoreView(): boolean {
     const comingBack = this.router.currentNavigation()?.trigger === 'popstate';
     const view = comingBack ? this.memory.restore() : null;
-    if (!view) {
+    if (!view || !sameHomeParams(view.url, this.route.snapshot.queryParams)) {
       this.list.clear();
-      return;
+      return false;
     }
 
     this.searchControl.setValue(view.search, { emitEvent: false });
@@ -469,6 +553,7 @@ export class MainPage implements OnDestroy {
     this.tab.set(view.tab);
     this.sort.set(view.sort);
     this.nearPosition.set(view.nearPosition);
+    this.pickedPlace.set(view.pickedPlace);
     this.isMapView.set(view.isMapView);
     this.listScrollY = view.listScrollY;
     this.activeFilters.set(this.readFilters());
@@ -477,5 +562,6 @@ export class MainPage implements OnDestroy {
     if (post) {
       this.list.updateItem(post);
     }
+    return true;
   }
 }

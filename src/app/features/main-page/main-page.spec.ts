@@ -834,7 +834,7 @@ describe('MainPage', () => {
         chip('MAIN_PAGE.myLocation').click();
         await debounce();
 
-        expect(component.filtersForm.controls.near.value).toBeFalse();
+        expect(component.filtersForm.controls.place.value).toBe('');
         expect(text()).toContain('MAIN_PAGE.locationFailed');
       });
 
@@ -872,13 +872,167 @@ describe('MainPage', () => {
     });
   });
 
+  describe('the URL', () => {
+    function chip(label: string): HTMLButtonElement {
+      const chips = fixture.nativeElement.querySelectorAll('.chip') as NodeListOf<HTMLElement>;
+      return Array.from(chips).find((c) => c.textContent!.trim() === label) as HTMLButtonElement;
+    }
+
+    it('stays a plain / on the default feed', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      await settle();
+
+      expect(router.url).toBe('/');
+    });
+
+    it('shows the search, tab and sort, and replaces the entry so Back leaves the page', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      const navigate = spyOn(router, 'navigate').and.callThrough();
+
+      component.setTab('all');
+      await settle();
+      expectPosts().flush(page());
+      await component.setSortBy('POPULAR');
+      await settle();
+      expectPosts().flush(page());
+      component.searchControl.setValue('jazz');
+      await debounce();
+      expectPosts().flush(page());
+      await settle();
+
+      expect(router.url).toBe('/?tab=all&sort=popular&q=jazz');
+      navigate.calls.allArgs().forEach(([, extras]) => expect(extras?.replaceUrl).toBeTrue());
+    });
+
+    it('opens with what the URL holds', async () => {
+      await router.navigateByUrl('/?tab=all&sort=popular&q=jazz&type=offline&past=true');
+
+      await open();
+
+      const posts = expectPosts();
+      expect(param(posts, 'sortBy')).toBe('POPULAR');
+      expect(param(posts, 'q')).toBe('jazz');
+      expect(param(posts, 'type')).toBe('OFFLINE');
+      expect(param(posts, 'includePast')).toBe('true');
+      expect(component.tab()).toBe('all');
+      expect(component.searchControl.value).toBe('jazz');
+      expect(component.activeFilterCount()).toBe(2);
+      posts.flush(page());
+    });
+
+    it('clears a value it can’t use from the URL', async () => {
+      await router.navigateByUrl('/?sort=nope&radius=7');
+
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      await settle();
+
+      expect(router.url).toBe('/');
+    });
+
+    it('offers a linked place as Wskazane miejsce, and lists around it', async () => {
+      await router.navigateByUrl('/?radius=25&lat=54.35&lng=18.65');
+
+      await open();
+
+      const feed = expectFeed();
+      expect(param(feed, 'latitude')).toBe('54.35');
+      expect(param(feed, 'longitude')).toBe('18.65');
+      expect(param(feed, 'radiusKm')).toBe('25');
+      feed.flush({ ...page(), mode: 'RANKED' });
+      component.toggleFilters();
+      await settle();
+      expect(chip('MAIN_PAGE.pickedPlace').getAttribute('aria-pressed')).toBe('true');
+      expect(chip('MAIN_PAGE.myLocation').getAttribute('aria-pressed')).toBe('false');
+    });
+
+    it('moves from a linked place to the user’s own position, and shows that in the URL', async () => {
+      askedLocation = { latitude: 50.06, longitude: 19.94 };
+      await router.navigateByUrl('/?radius=25&lat=54.35&lng=18.65');
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      component.toggleFilters();
+      await settle();
+
+      chip('MAIN_PAGE.myLocation').click();
+      await debounce();
+
+      const feed = expectFeed();
+      expect(param(feed, 'latitude')).toBe('50.06');
+      feed.flush({ ...page(), mode: 'RANKED' });
+      await settle();
+      expect(router.url).toBe('/?radius=25&lat=50.06&lng=19.94');
+      expect(chip('MAIN_PAGE.pickedPlace')).toBeDefined();
+    });
+
+    it('has no Wskazane miejsce without a linked place, and clearing removes it', async () => {
+      await router.navigateByUrl('/?radius=25&lat=54.35&lng=18.65');
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      component.toggleFilters();
+      await settle();
+
+      component.clearFilters();
+      await settle();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      await settle();
+
+      expect(chip('MAIN_PAGE.pickedPlace')).toBeUndefined();
+      expect(router.url).toBe('/');
+    });
+
+    it('sorts Najbliższe from the linked point', async () => {
+      await router.navigateByUrl('/?tab=all&sort=nearest&lat=54.35&lng=18.65');
+
+      await open();
+
+      const posts = expectPosts();
+      expect(param(posts, 'sortBy')).toBe('NEAREST');
+      expect(param(posts, 'latitude')).toBe('54.35');
+      posts.flush(page());
+    });
+
+    it('falls back when a link asks for Najbliższe and no position comes', async () => {
+      await router.navigateByUrl('/?tab=all&sort=nearest');
+
+      await open();
+
+      const posts = expectPosts();
+      expect(param(posts, 'sortBy')).toBe('UPCOMING');
+      posts.flush(page());
+      await settle();
+      expect(router.url).toBe('/?tab=all');
+      expect(TestBed.inject(ToastService).message()).toBe('MAIN_PAGE.nearestNeedsLocation');
+    });
+
+    it('goes back to a plain / when Home starts a fresh feed', async () => {
+      await router.navigateByUrl('/?tab=all&q=jazz');
+      await open();
+      expectPosts().flush(page());
+      await settle();
+
+      TestBed.inject(HomeTapService).freshFeed.next();
+      await settle();
+
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      await settle();
+      expect(router.url).toBe('/');
+    });
+  });
+
   describe('coming back to the list', () => {
+    let homeUrl = '/';
+
     async function leaveAfterScrolling(): Promise<void> {
+      homeUrl = router.url;
       await router.navigateByUrl('/other');
       fixture.destroy();
     }
 
     async function comeBack(navigation: Partial<Navigation>): Promise<void> {
+      await router.navigateByUrl(homeUrl);
       currentNavigation.and.returnValue(navigation);
       fixture = TestBed.createComponent(MainPage);
       component = fixture.componentInstance;
@@ -942,6 +1096,19 @@ describe('MainPage', () => {
       expect(shownTitles()).toEqual(['Edited', 'Post b']);
       expect(component.list.items()[0].myReaction).toBe('LIKE');
       expect(TestBed.inject(PostService).activePost()).toBeNull();
+    });
+
+    it('starts from the URL when Back lands on a different home page than memory holds', async () => {
+      await leaveAfterScrolling();
+      homeUrl = '/?tab=all&q=rock';
+
+      await comeBack({ trigger: 'popstate', extras: {} });
+
+      const posts = expectPosts();
+      expect(param(posts, 'q')).toBe('rock');
+      posts.flush(page(['z']));
+      await settle();
+      expect(shownTitles()).toEqual(['Post z']);
     });
 
     it('starts a new session on any other navigation', async () => {
