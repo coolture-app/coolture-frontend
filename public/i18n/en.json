@@ -6,11 +6,9 @@
   },
   "MAIN_PAGE": {
     "searchbar": "Search for events",
-    "search": "Search",
     "sort": "Filters and sorting",
     "title": "Home Page",
     "no-posts": "No posts to display... Sad face.",
-    "addPost": "Add Post",
     "filters": "Filters",
     "sortBy": "Sort by",
     "order": "Order",
@@ -38,7 +36,36 @@
     "public": "Public",
     "private": "Private",
     "friends": "Friends",
-    "recommended": "Recommended"
+    "recommended": "Recommended",
+    "loading": "Loading...",
+    "endOfList": "That's everything",
+    "loadError": "Could not load posts.",
+    "retry": "Try again",
+    "locationFailed": "Could not get your location. Allow it in your browser settings.",
+    "includePast": "Show past events",
+    "searchPast": "Search past events too",
+    "clearSearch": "Clear search",
+    "list": "List",
+    "map": "Map",
+    "view": "View",
+    "filtersActive": "Filters, {{count}} on",
+    "sortLabel": "Sort: {{sort}}",
+    "location": "Location",
+    "anywhere": "Anywhere",
+    "myLocation": "My location",
+    "radius": "Radius",
+    "km": "{{km}} km",
+    "done": "Done",
+    "tabs": "Lists",
+    "forYou": "For you",
+    "all": "All",
+    "forYouHint": "New to you, best match first",
+    "allHint": "Every event, in the order you choose",
+    "sortNearest": "Nearest",
+    "nearestNeedsLocation": "Nearest needs your location. Allow it in your browser settings.",
+    "widenRadius": "Widen to {{km}} km",
+    "seenBefore": "For you leaves out your own, liked and saved posts.",
+    "showInAll": "Show in All"
   },
   "FULL_POST": {
     "title": "Cool post",
@@ -48,36 +75,39 @@
     "replying-to": "Replying to comment"
   },
   "POST": {
-    "starts": "Starts",
-    "share": "Share",
+    "starts": "Event start",
     "show-more": "Show more",
     "show-less": "Show less",
-    "show-all-photos": "See the rest",
     "loading": "Loading post...",
-    "likes": "likes",
     "participating": "going",
-    "comments": "comments",
+    "comments": "Show comments",
     "photo-alt": "Event photo",
     "edit": "Edit post",
     "delete": "Delete post",
     "modal-delete-title": "Do you really want to delete your post?",
     "modal-delete-body": "This action cannot be undone.",
-    "thousand": "k",
-    "million": "mil",
-    "interested": "Mark as interested",
-    "takes_part": "Mark as taking part"
-  },
-  "FOOTER": {
-    "main-page": "Home",
-    "friends": "Find friends",
-    "my-events": "My Events",
-    "my-profile": "Profile"
+    "interested": "Interested",
+    "takes_part": "Going",
+    "online": "Online",
+    "like": "Like",
+    "saved-to-plans": "Saved in Plans",
+    "open-photo": "Show the photo full screen",
+    "photos": "Photos",
+    "close-photos": "Close",
+    "previous-photo": "Previous photo",
+    "next-photo": "Next photo",
+    "distance": "Distance from you"
   },
   "NAVBAR": {
+    "main-page": "Home",
+    "friends": "People",
+    "my-events": "Plans",
+    "my-profile": "Profile",
     "menu": "Menu",
-    "addPost": "Add post!",
+    "addPost": "Add post",
     "logout": "Log out",
-    "login": "Log in"
+    "login": "Log in",
+    "switch-language": "Switch to Polish (PL)"
   },
   "LANG": {
     "pl": "PL",
@@ -178,7 +208,7 @@
     "location-latitude-error": "Latitude is required (-90 to 90).",
     "location-longitude": "Longitude",
     "location-longitude-error": "Longitude is required (-180 to 180).",
-    "media-label": "Photos",
+    "media-label": "Photos ({{count}}/{{max}})",
     "media-click": "Click or drag to add photos",
     "media-drag-hint": "or drag files here",
     "remove-photo": "Remove photo",
@@ -188,7 +218,8 @@
     "newly-added": "Newly added photos",
     "submit-saving": "Saving...",
     "submit-create": "Publish event",
-    "submit-edit": "Save changes"
+    "submit-edit": "Save changes",
+    "too-many-photos": "A post can have at most {{max}} photos."
   },
   "COMMENT": {
     "reply": "Reply",
@@ -209,11 +240,11 @@
     "ok": "Okay"
   },
   "MY_EVENTS": {
-    "title": "My Events",
+    "title": "Plans",
     "no-events": "You don't have any events yet... Sad face.",
     "all": "All",
     "interested": "Interested",
-    "takes_part": "Participating"
+    "takes_part": "Going"
   },
   "INTERESTS": {
     "title": "Your interests",

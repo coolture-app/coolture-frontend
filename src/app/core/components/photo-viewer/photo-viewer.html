@@ -1,0 +1,45 @@
+@if (viewer.open(); as open) {
+  <div class="viewer" role="dialog" aria-modal="true" [attr.aria-label]="'POST.photos' | translate">
+    <div class="viewer__track" #track (scroll)="onScroll()">
+      @for (photo of open.photos; track $index) {
+        <div class="viewer__slide">
+          <img class="viewer__photo" [src]="photo.url" [alt]="'POST.photo-alt' | translate" />
+        </div>
+      }
+    </div>
+
+    <button
+      #closeButton
+      type="button"
+      class="viewer__button viewer__close"
+      [appTooltip]="'POST.close-photos' | translate"
+      (click)="close()"
+    >
+      <ng-icon name="lucideX" />
+    </button>
+
+    @if (open.photos.length > 1) {
+      <button
+        type="button"
+        class="viewer__button viewer__arrow viewer__arrow--prev"
+        [disabled]="index() === 0"
+        [appTooltip]="'POST.previous-photo' | translate"
+        (click)="go(-1)"
+      >
+        <ng-icon name="lucideChevronLeft" />
+      </button>
+      <button
+        type="button"
+        class="viewer__button viewer__arrow viewer__arrow--next"
+        [disabled]="index() === open.photos.length - 1"
+        [appTooltip]="'POST.next-photo' | translate"
+        (click)="go(1)"
+      >
+        <ng-icon name="lucideChevronRight" />
+      </button>
+      <span class="viewer__count" aria-live="polite">
+        {{ index() + 1 }} / {{ open.photos.length }}
+      </span>
+    }
+  </div>
+}

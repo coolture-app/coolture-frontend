@@ -7,6 +7,7 @@
 }
 
 .comments {
+  scroll-margin-top: calc(var(--navbar-height) + var(--space-sm));
   margin-top: var(--space-lg);
 }
 
@@ -17,7 +18,7 @@
 
   &.sticky {
     position: sticky;
-    bottom: calc(var(--footer-height) + var(--space-md));
+    bottom: var(--space-md);
     background: var(--color-background);
     z-index: var(--z-sticky);
   }
@@ -29,7 +30,7 @@
   padding: var(--space-xs) var(--space-sm);
   border-radius: var(--radius-sm);
   margin-bottom: var(--space-sm);
-  font-size: var(--font-size-sm);
+  font-size: var(--text-meta);
   color: var(--color-text-secondary);
 }
 

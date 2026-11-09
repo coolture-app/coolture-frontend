@@ -10,7 +10,7 @@ import {
   SimpleChanges,
   DestroyRef,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, formatDate } from '@angular/common';
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { lastValueFrom, Observable } from 'rxjs';
@@ -25,10 +25,20 @@ import { Btn } from '../btn/btn';
 import { PostFormData } from '../../models/posts/post-form-data.model';
 import { PostDetail, PostMedia } from '../../models/posts/post-detail.model';
 import { PostType, PostVisibility } from '../../models/common/enums';
-import { MediaService } from '../../services/media/media.service';
+import { imageSize, MediaService } from '../../services/media/media.service';
 import { DictionaryService } from '../../services/dictionary/dictionary.service';
 import { CountryCode } from '../../models/dictionary/country-code.model';
 import { MediaResource } from '../../models/media/media-resource.model';
+import { MAX_POST_PHOTOS } from '../../models/posts/post-limits';
+import { ToastService } from '../../services/toast/toast.service';
+
+/**
+ * A `datetime-local` input holds a local time with no zone, and the API sends UTC.
+ * onSubmit reads the input back as local time, so it has to be filled with local time too.
+ */
+function toLocalInputValue(iso: string | undefined): string {
+  return iso ? formatDate(iso, "yyyy-MM-dd'T'HH:mm", 'en-US') : '';
+}
 
 interface MediaPreview {
   file: File;
@@ -67,6 +77,7 @@ export class PostForm implements OnInit, OnChanges {
   private cdr = inject(ChangeDetectorRef);
   private destroyRef = inject(DestroyRef);
   private translate = inject(TranslateService);
+  private toast = inject(ToastService);
 
   countryCodes$: Observable<CountryCode[]> = this.dictionaryService.getCountryCodes();
 
@@ -169,6 +180,17 @@ export class PostForm implements OnInit, OnChanges {
     return this.mediaPreviews.some((p) => p.isUploading);
   }
 
+  readonly maxPhotos = MAX_POST_PHOTOS;
+
+  /** Photos the post holds now: kept, being uploaded and uploaded. */
+  get photoCount(): number {
+    return this.existingMedia.length + this.mediaPreviews.length + this.newlyUploadedMedia.length;
+  }
+
+  get photosFull(): boolean {
+    return this.photoCount >= MAX_POST_PHOTOS;
+  }
+
   ngOnInit(): void {
     // Load dictionaries, then re-patch form if initialData already arrived
     this.countryCodes$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((codes) => {
@@ -220,9 +242,9 @@ export class PostForm implements OnInit, OnChanges {
     this.postForm.patchValue({
       title: post.title,
       type: post.type,
-      startsAt: post.startsAt ? post.startsAt.substring(0, 16) : '',
-      endsAt: post.endsAt ? post.endsAt.substring(0, 16) : '',
-      description: post.description,
+      startsAt: toLocalInputValue(post.startsAt),
+      endsAt: toLocalInputValue(post.endsAt),
+      description: post.description ?? '',
       eventUrl: post.eventUrl ?? '',
       tags: tagsStr,
       visibility: post.visibility ?? 'PUBLIC',
@@ -271,7 +293,14 @@ export class PostForm implements OnInit, OnChanges {
     controls.forEach((c) => c.updateValueAndValidity({ emitEvent: false }));
   }
 
-  async onFilesSelected(files: File[]): Promise<void> {
+  async onFilesSelected(selected: File[]): Promise<void> {
+    const room = Math.max(0, MAX_POST_PHOTOS - this.photoCount);
+    const files = selected.slice(0, room);
+    if (files.length < selected.length) {
+      this.toast.show(
+        this.translate.instant('POST_FORM.too-many-photos', { max: MAX_POST_PHOTOS }),
+      );
+    }
     for (const file of files) {
       const preview: MediaPreview = {
         file,
@@ -281,12 +310,14 @@ export class PostForm implements OnInit, OnChanges {
       this.mediaPreviews.push(preview);
 
       try {
+        const size = await imageSize(file);
         const initRes = await lastValueFrom(
           this.mediaService.initUpload({
             purpose: 'EVENT_MEDIA',
             mimeType: file.type,
             sizeBytes: file.size,
             fileName: file.name,
+            ...size,
           }),
         );
 

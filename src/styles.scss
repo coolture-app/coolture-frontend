@@ -4,67 +4,12 @@
 @use 'app/static/styles/flex';
 @import 'maplibre-gl/dist/maplibre-gl.css';
 
+// The wordmark's typeface only. Text uses the system font stack in --font-sans.
 @font-face {
-  font-family: 'Helvetica';
-  src: url('assets/fonts/NeueHaasDisplayBlack.ttf') format('truetype');
+  font-family: 'Coolture Display';
+  src: url('assets/fonts/NeueHaasDisplayBold.ttf') format('truetype');
   font-weight: 700;
   font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Helvetica';
-  src: url('assets/fonts/NeueHaasDisplayBlackItalic.ttf') format('truetype');
-  font-weight: 700;
-  font-style: italic;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Helvetica';
-  src: url('assets/fonts/NeueHaasDisplayMediu.ttf') format('truetype');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Helvetica';
-  src: url('assets/fonts/NeueHaasDisplayMediumItalic.ttf') format('truetype');
-  font-weight: 500;
-  font-style: italic;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Helvetica';
-  src: url('assets/fonts/NeueHaasDisplayRoman.ttf') format('truetype');
-  font-weight: 300;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Helvetica';
-  src: url('assets/fonts/NeueHaasDisplayRomanItalic.ttf') format('truetype');
-  font-weight: 300;
-  font-style: italic;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Helvetica';
-  src: url('assets/fonts/NeueHaasDisplayThin.ttf') format('truetype');
-  font-weight: 200;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Helvetica';
-  src: url('assets/fonts/NeueHaasDisplayThinItalic.ttf') format('truetype');
-  font-weight: 200;
-  font-style: italic;
   font-display: swap;
 }
 
@@ -88,7 +33,6 @@ body {
   line-height: 1.5;
   color: var(--color-text);
   background-color: var(--color-background);
-  padding-bottom: var(--footer-height);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -98,6 +42,8 @@ app-root {
   display: flex;
   flex-direction: column;
   flex-grow: 1;
+  // Room for the phone's bottom bar, so the end of a page isn't under it.
+  padding-bottom: var(--bottom-bar-height);
 }
 
 a {
@@ -113,4 +59,31 @@ img {
   max-width: 100%;
   height: auto;
   display: block;
+}
+
+// The one tooltip style, from the appTooltip directive.
+.app-tooltip {
+  position: fixed;
+  z-index: var(--z-toast);
+  max-width: min(260px, calc(100vw - 16px));
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  background: rgba(17, 17, 17, 0.92);
+  color: var(--color-text-inverse);
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  line-height: 1.4;
+  pointer-events: none;
+  animation: app-tooltip-in var(--transition-fast);
+}
+
+@keyframes app-tooltip-in {
+  from {
+    opacity: 0;
+  }
+}
+
+// An outline icon drawn filled, for the "on" state of a toggle.
+ng-icon.icon--filled svg {
+  fill: currentColor;
 }

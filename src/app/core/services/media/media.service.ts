@@ -7,6 +7,28 @@ import { MediaUploadInitResponse } from '../../models/media/media-upload-init-re
 import { MediaCompleteRequest } from '../../models/media/media-complete-request.model';
 import { MediaResource } from '../../models/media/media-resource.model';
 
+/**
+ * An image's size in pixels, as the browser shows it (turned by its EXIF orientation), or null when
+ * the file isn't an image the browser can read.
+ */
+export async function imageSize(file: Blob): Promise<{ width: number; height: number } | null> {
+  if (!file.type.startsWith('image/')) {
+    return null;
+  }
+  const url = URL.createObjectURL(file);
+  try {
+    const image = new Image();
+    image.src = url;
+    await image.decode();
+    const { naturalWidth: width, naturalHeight: height } = image;
+    return width > 0 && height > 0 ? { width, height } : null;
+  } catch {
+    return null;
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
 @Injectable({
   providedIn: 'root',
 })

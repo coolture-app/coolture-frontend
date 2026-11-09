@@ -13,6 +13,8 @@ describe('FollowListComponent', () => {
 
     fixture = TestBed.createComponent(FollowListComponent);
     component = fixture.componentInstance;
+    fixture.componentRef.setInput('userId', 'u1');
+    fixture.componentRef.setInput('type', 'followers');
     fixture.detectChanges();
   });
 

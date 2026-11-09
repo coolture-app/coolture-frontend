@@ -5,7 +5,7 @@
         <img [src]="avatar.url" [alt]="comment.author.username" class="comment__avatar" />
       } @else {
         <div class="comment__avatar comment__avatar--placeholder">
-          {{ comment.author.firstName.charAt(0) }}{{ comment.author.lastName.charAt(0) }}
+          {{ comment.author.firstName?.charAt(0) }}{{ comment.author.lastName?.charAt(0) }}
         </div>
       }
     }

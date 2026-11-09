@@ -1,0 +1,107 @@
+@let f = form();
+<div class="filters">
+  <div class="filters__header">
+    <span class="filters__title">{{ 'MAIN_PAGE.filters' | translate }}</span>
+    <app-btn variant="plain" size="sm" (btnClick)="clear.emit()">
+      <ng-icon name="heroXMark" /> {{ 'MAIN_PAGE.clear' | translate }}
+    </app-btn>
+  </div>
+
+  <fieldset class="filters__group">
+    <legend class="filters__label">{{ 'MAIN_PAGE.location' | translate }}</legend>
+    <div class="chips">
+      <button
+        type="button"
+        class="chip"
+        [class.chip--on]="!f.controls.near.value"
+        [attr.aria-pressed]="!f.controls.near.value"
+        (click)="setNear(false)"
+      >
+        {{ 'MAIN_PAGE.anywhere' | translate }}
+      </button>
+      <button
+        type="button"
+        class="chip"
+        [class.chip--on]="f.controls.near.value"
+        [attr.aria-pressed]="f.controls.near.value"
+        [attr.aria-busy]="locating()"
+        (click)="setNear(true)"
+      >
+        {{ 'MAIN_PAGE.myLocation' | translate }}
+      </button>
+    </div>
+    @if (f.controls.near.value) {
+      <div class="chips" role="group" [attr.aria-label]="'MAIN_PAGE.radius' | translate">
+        @for (km of radii; track km) {
+          <button
+            type="button"
+            class="chip chip--small"
+            [class.chip--on]="f.controls.radiusKm.value === km"
+            [attr.aria-pressed]="f.controls.radiusKm.value === km"
+            (click)="setRadius(km)"
+          >
+            {{ 'MAIN_PAGE.km' | translate: { km } }}
+          </button>
+        }
+      </div>
+    }
+    @if (locationFailed()) {
+      <p class="filters__note" role="status">{{ 'MAIN_PAGE.locationFailed' | translate }}</p>
+    }
+  </fieldset>
+
+  <div class="filters__row">
+    <div class="filters__field">
+      <label for="type">{{ 'MAIN_PAGE.type' | translate }}</label>
+      <select id="type" [formControl]="f.controls.type">
+        <option value="">{{ 'MAIN_PAGE.allTypes' | translate }}</option>
+        <option value="OFFLINE">{{ 'MAIN_PAGE.offline' | translate }}</option>
+        <option value="ONLINE">{{ 'MAIN_PAGE.online' | translate }}</option>
+      </select>
+    </div>
+
+    <div class="filters__field">
+      <label for="tags">{{ 'MAIN_PAGE.tags' | translate }}</label>
+      <input
+        id="tags"
+        type="text"
+        [formControl]="f.controls.tags"
+        placeholder="{{ 'MAIN_PAGE.tagsPlaceholder' | translate }}"
+      />
+    </div>
+
+    <div class="filters__field">
+      <label for="visibility">{{ 'MAIN_PAGE.visibility' | translate }}</label>
+      <select id="visibility" [formControl]="f.controls.visibility">
+        <option value="">{{ 'MAIN_PAGE.allVisibility' | translate }}</option>
+        <option value="PUBLIC">{{ 'MAIN_PAGE.public' | translate }}</option>
+        <option value="PRIVATE">{{ 'MAIN_PAGE.private' | translate }}</option>
+        <option value="FRIENDS">{{ 'MAIN_PAGE.friends' | translate }}</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="filters__row">
+    <div class="filters__field">
+      <label for="startsFrom">{{ 'MAIN_PAGE.startsFrom' | translate }}</label>
+      <input id="startsFrom" type="datetime-local" [formControl]="f.controls.startsFrom" />
+    </div>
+
+    <div class="filters__field">
+      <label for="startsTo">{{ 'MAIN_PAGE.startsTo' | translate }}</label>
+      <input id="startsTo" type="datetime-local" [formControl]="f.controls.startsTo" />
+    </div>
+  </div>
+
+  <div class="filters__past">
+    <app-switch
+      [formControl]="f.controls.includePast"
+      [label]="'MAIN_PAGE.includePast' | translate"
+    ></app-switch>
+    <span>{{ 'MAIN_PAGE.includePast' | translate }}</span>
+  </div>
+
+  <div class="filters__footer">
+    <app-btn variant="primary" (btnClick)="done.emit()">{{ 'MAIN_PAGE.done' | translate }}</app-btn>
+  </div>
+</div>

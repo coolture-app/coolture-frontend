@@ -3,6 +3,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
 import { PostCard } from '../../models/posts/post-card.model';
 import { DateFormatService } from '../../services/date-format/date-format.service';
+import { postPlace } from '../../models/posts/post-place';
 
 @Component({
   selector: 'app-event-card',
@@ -16,6 +17,10 @@ export class EventCard {
 
   private dateFormatService = inject(DateFormatService);
   readonly dateFormats = this.dateFormatService.formats;
+
+  get place(): string {
+    return postPlace(this.post);
+  }
 
   onClick(): void {
     this.cardClick.emit(this.post.id);

@@ -1,8 +1,9 @@
 <app-navbar />
 <div class="app__content" [attr.inert]="interestsRequired() ? '' : null">
   <router-outlet />
-  <app-footer />
 </div>
+<app-toast />
+<app-photo-viewer />
 @if (interestsRequired()) {
   <div class="app__interests" role="dialog" aria-modal="true">
     <app-interests-view onboarding (dismissed)="interestsDismissed.set(true)" />

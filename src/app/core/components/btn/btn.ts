@@ -1,5 +1,6 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Tooltip } from '../../directives/tooltip';
 
 export type BtnVariant =
   | 'primary'
@@ -13,7 +14,7 @@ export type BtnSize = 'sm' | 'md' | 'lg';
 
 @Component({
   selector: 'app-btn',
-  imports: [CommonModule],
+  imports: [CommonModule, Tooltip],
   templateUrl: './btn.html',
   styleUrl: './btn.scss',
 })
@@ -24,6 +25,8 @@ export class Btn {
   @Input() fullWidth = false;
   @Input() pressed?: boolean;
   @Input() type: 'button' | 'submit' | 'reset' = 'button';
+  /** What the button does: its accessible name, and the tooltip on hover and keyboard focus. */
+  @Input() label = '';
 
   @Output() btnClick = new EventEmitter<Event>();
 

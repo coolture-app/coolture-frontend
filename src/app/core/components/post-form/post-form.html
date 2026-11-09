@@ -265,12 +265,12 @@
 
     <!-- Upload button -->
     <app-form-file-upload
-      [label]="'POST_FORM.media-label' | translate"
+      [label]="'POST_FORM.media-label' | translate: { count: photoCount, max: maxPhotos }"
       [buttonText]="'POST_FORM.media-click'"
       accept="image/*"
       [multiple]="true"
       [required]="false"
-      [disabled]="hasUploading"
+      [disabled]="hasUploading || photosFull"
       (filesSelected)="onFilesSelected($event)"
     ></app-form-file-upload>
   </div>
