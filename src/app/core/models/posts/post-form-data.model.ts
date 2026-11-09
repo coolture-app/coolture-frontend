@@ -11,6 +11,8 @@ export interface PostFormData {
   tags: string[];
   visibility: PostVisibility;
   location: EventLocationRequest | null;
+  /** In the order the post shows them. The first is the cover. */
   mediaIds: string[];
-  coverMediaId: string | null;
+  /** Saved photos taken off the post, to delete once it's saved. */
+  removedMediaIds: string[];
 }

@@ -210,7 +210,7 @@ export class PostComponent implements OnInit {
       .trim();
   }
 
-  /** Every photo, cover first, in a carousel: the post page's own list, or the card's. */
+  /** Every photo, in their order with the cover first, in a carousel: the post page's own list, or the card's. */
   get photos(): Photo[] {
     const media =
       this.isFullView && 'media' in this.data

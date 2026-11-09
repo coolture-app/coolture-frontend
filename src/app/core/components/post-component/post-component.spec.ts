@@ -146,11 +146,10 @@ describe('PostComponent', () => {
 
     it('shows every photo on the post page as a carousel, framed by the first', () => {
       const media = [
-        { media: cover, position: 0, isCover: true },
+        { media: cover, position: 0 },
         {
           media: { id: 'm2', url: 'http://x/q.png', width: 2000, height: 1000 },
           position: 1,
-          isCover: false,
         },
       ];
       render({ ...card({ coverMedia: cover }), media } as PostDetail, true);

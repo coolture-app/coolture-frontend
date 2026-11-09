@@ -11,7 +11,6 @@ export type FeedMode = 'RANKED' | 'UPCOMING';
 export type MediaPurpose =
   | 'PROFILE_IMAGE'
   | 'PROFILE_IMAGE_THUMBNAIL'
-  | 'EVENT_COVER'
   | 'EVENT_MEDIA';
 export type MediaStatus = 'PENDING' | 'UPLOADED' | 'ATTACHED' | 'DELETED';
 export type CommentStatus = 'ACTIVE' | 'DELETED';

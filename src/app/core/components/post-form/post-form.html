@@ -183,89 +183,177 @@
 
   <!-- Media section -->
   <div class="post-form__media-section">
-    <!-- Existing media (edit mode) -->
-    @if (mode === 'edit' && existingMedia.length > 0) {
-      <div class="post-form__media-gallery">
-        <h4 class="post-form__media-subtitle">{{ 'POST_FORM.current-photos' | translate }}</h4>
-        <div class="post-form__gallery-grid">
-          @for (mediaItem of existingMedia; track mediaItem.media.id) {
-            <div class="post-form__media-item post-form__media-item--existing">
-              <img [src]="mediaItem.media.url" [alt]="'POST_FORM.photo-alt' | translate" />
-              <button
-                type="button"
-                class="post-form__media-remove"
-                (click)="removeExisting(mediaItem.media.id)"
-                [title]="'POST_FORM.remove-photo' | translate"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-              </button>
-            </div>
-          }
-        </div>
-      </div>
-    }
+    @if (photos.length > 0) {
+      <fieldset class="post-form__photos" aria-describedby="post-form-photos-hint">
+        <legend class="post-form__photos-title">{{ 'POST_FORM.photos-title' | translate }}</legend>
+        <p class="post-form__photos-hint" id="post-form-photos-hint">
+          {{
+            (photos.length > 1 ? 'POST_FORM.photos-hint' : 'POST_FORM.photos-hint-one') | translate
+          }}
+        </p>
 
-    @if (mode === 'edit' && existingMedia.length === 0) {
+        <ul
+          class="post-form__gallery-grid"
+          cdkDropList
+          cdkDropListOrientation="mixed"
+          [cdkDropListData]="photos"
+          (cdkDropListDropped)="onPhotoDropped($event)"
+        >
+          @for (photo of photos; track photo.key; let i = $index) {
+            <li
+              class="post-form__tile"
+              [class.post-form__tile--cover]="i === 0"
+              cdkDrag
+              [cdkDragStartDelay]="{ touch: 250, mouse: 0 }"
+              [attr.data-photo-key]="photo.key"
+              [attr.aria-busy]="photo.isUploading ? 'true' : null"
+            >
+              <div class="post-form__tile-frame">
+                <img
+                  class="post-form__tile-photo"
+                  draggable="false"
+                  [src]="photo.url"
+                  [alt]="
+                    'POST_FORM.photo-number' | translate: { number: i + 1, total: photos.length }
+                  "
+                />
+                @if (photo.isUploading) {
+                  <div class="post-form__upload-overlay">
+                    <span class="post-form__spinner"></span>
+                  </div>
+                } @else {
+                  <button
+                    type="button"
+                    class="post-form__media-remove"
+                    data-control="remove"
+                    (click)="removePhoto(i)"
+                    [title]="'POST_FORM.remove-photo' | translate"
+                    [attr.aria-label]="
+                      'POST_FORM.remove-photo-number'
+                        | translate: { number: i + 1, total: photos.length }
+                    "
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                  </button>
+                }
+              </div>
+
+              <div class="post-form__tile-order">
+                <button
+                  type="button"
+                  class="post-form__tile-move"
+                  data-control="earlier"
+                  [attr.aria-disabled]="i === 0"
+                  (click)="movePhoto(i, -1)"
+                  [title]="'POST_FORM.move-earlier' | translate"
+                  [attr.aria-label]="
+                    'POST_FORM.move-earlier-number'
+                      | translate: { number: i + 1, total: photos.length }
+                  "
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                  </svg>
+                </button>
+                <span class="post-form__tile-position" aria-hidden="true">
+                  {{ i + 1 }} / {{ photos.length }}
+                </span>
+                <button
+                  type="button"
+                  class="post-form__tile-move"
+                  data-control="later"
+                  [attr.aria-disabled]="i === photos.length - 1"
+                  (click)="movePhoto(i, 1)"
+                  [title]="'POST_FORM.move-later' | translate"
+                  [attr.aria-label]="
+                    'POST_FORM.move-later-number'
+                      | translate: { number: i + 1, total: photos.length }
+                  "
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
+                </button>
+              </div>
+
+              @if (i === 0) {
+                <span class="post-form__tile-cover">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="13"
+                    height="13"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M12 2.5l2.9 6.2 6.8.8-5 4.6 1.3 6.7-6-3.4-6 3.4 1.3-6.7-5-4.6 6.8-.8z"
+                    />
+                  </svg>
+                  {{ 'POST_FORM.cover-badge' | translate }}
+                </span>
+              } @else {
+                <button
+                  type="button"
+                  class="post-form__tile-set-cover"
+                  (click)="setAsCover(i)"
+                  [attr.aria-label]="
+                    'POST_FORM.cover-set-number'
+                      | translate: { number: i + 1, total: photos.length }
+                  "
+                >
+                  {{ 'POST_FORM.cover-set' | translate }}
+                </button>
+              }
+            </li>
+          }
+        </ul>
+      </fieldset>
+    } @else if (mode === 'edit') {
       <p class="post-form__no-photos">{{ 'POST_FORM.no-current-photos' | translate }}</p>
     }
 
-    <!-- Newly uploaded previews -->
-    @if (mediaPreviews.length > 0) {
-      <div class="post-form__media-gallery">
-        @if (mode === 'edit') {
-          <h4 class="post-form__media-subtitle">{{ 'POST_FORM.newly-added' | translate }}</h4>
-        }
-        <div class="post-form__gallery-grid">
-          @for (preview of mediaPreviews; track $index) {
-            <div class="post-form__media-item post-form__media-item--new">
-              <img [src]="preview.previewUrl" [alt]="preview.file.name" />
-              <div class="post-form__upload-overlay" *ngIf="preview.isUploading">
-                <span class="post-form__spinner"></span>
-              </div>
-              <button
-                *ngIf="!preview.isUploading"
-                type="button"
-                class="post-form__media-remove"
-                (click)="removeNewPreview($index)"
-                [title]="'POST_FORM.remove-photo' | translate"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-              </button>
-            </div>
-          }
-        </div>
-      </div>
-    }
+    <p class="post-form__visually-hidden" role="status">{{ photoStatus }}</p>
 
     <!-- Upload button -->
     <app-form-file-upload
-      [label]="'POST_FORM.media-label' | translate: { count: photoCount, max: maxPhotos }"
+      [label]="'POST_FORM.media-label' | translate: { count: photos.length, max: maxPhotos }"
       [buttonText]="'POST_FORM.media-click'"
       accept="image/*"
       [multiple]="true"

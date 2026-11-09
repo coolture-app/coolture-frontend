@@ -36,7 +36,6 @@ export class AddPostView {
         visibility: data.visibility,
         location: data.location,
         mediaIds: data.mediaIds.length > 0 ? data.mediaIds : undefined,
-        coverMediaId: data.coverMediaId,
       };
 
       const createdPost = await lastValueFrom(this.postService.addPost(payload));
