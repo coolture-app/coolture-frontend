@@ -7,6 +7,7 @@ import {
   ChangeDetectorRef,
   AfterViewChecked,
   ElementRef,
+  OnDestroy,
   OnInit,
   OnChanges,
   SimpleChanges,
@@ -72,7 +73,7 @@ type PhotoControl = 'earlier' | 'later' | 'remove';
   templateUrl: './post-form.html',
   styleUrl: './post-form.scss',
 })
-export class PostForm implements OnInit, OnChanges, AfterViewChecked {
+export class PostForm implements OnInit, OnChanges, AfterViewChecked, OnDestroy {
   @Input() mode: 'create' | 'edit' = 'create';
   @Input() initialData?: PostDetail;
   @Input() existingMedia: PostMedia[] = [];
@@ -100,6 +101,7 @@ export class PostForm implements OnInit, OnChanges, AfterViewChecked {
 
   private removedMediaIds: string[] = [];
   private nextPhotoKey = 0;
+  private isLeft = false;
   private pendingFocus: { key: string | null; control: PhotoControl } | null = null;
 
   typeOptions: SelectOption[] = [
@@ -315,6 +317,9 @@ export class PostForm implements OnInit, OnChanges, AfterViewChecked {
       );
     }
     for (const file of files) {
+      if (this.isLeft) {
+        return;
+      }
       const photo: FormPhoto = {
         key: `new-${this.nextPhotoKey++}`,
         url: URL.createObjectURL(file),
@@ -344,12 +349,18 @@ export class PostForm implements OnInit, OnChanges, AfterViewChecked {
 
         photo.mediaId = initRes.mediaId;
         photo.isUploading = false;
+        if (this.isLeft) {
+          this.deleteUpload(initRes.mediaId);
+          return;
+        }
         this.cdr.detectChanges();
       } catch (err) {
         console.error('Error while loading file', file.name, err);
         URL.revokeObjectURL(photo.url);
         this.photos = this.photos.filter((p) => p !== photo);
-        this.toast.show(this.translate.instant('POST_FORM.upload-failed', { name: file.name }));
+        if (!this.isLeft) {
+          this.toast.show(this.translate.instant('POST_FORM.upload-failed', { name: file.name }));
+        }
         this.cdr.detectChanges();
       }
     }
@@ -384,10 +395,7 @@ export class PostForm implements OnInit, OnChanges, AfterViewChecked {
     } else {
       URL.revokeObjectURL(photo.url);
       if (photo.mediaId) {
-        // Nothing else knows about an upload this form made, and it can't be attached any more.
-        this.mediaService.deleteMedia(photo.mediaId).subscribe({
-          error: (err) => console.error('Could not delete uploaded image', err),
-        });
+        this.deleteUpload(photo.mediaId);
       }
     }
     const next = this.photos[Math.min(index, this.photos.length - 1)];
@@ -410,6 +418,26 @@ export class PostForm implements OnInit, OnChanges, AfterViewChecked {
       ? page.querySelector(`[data-photo-key="${focus.key}"] [data-control="${focus.control}"]`)
       : page.querySelector('.form-file-upload__dropzone');
     (target as HTMLElement | null)?.focus();
+  }
+
+  /**
+   * Leaving without publishing drops what this form uploaded, and a daily job catches a closed tab.
+   * While saving, the post may already hold these photos, so they stay.
+   */
+  ngOnDestroy(): void {
+    this.isLeft = true;
+    for (const photo of this.photos.filter((p) => !p.isSaved)) {
+      URL.revokeObjectURL(photo.url);
+      if (photo.mediaId && !this.isSubmitting) {
+        this.deleteUpload(photo.mediaId);
+      }
+    }
+  }
+
+  private deleteUpload(mediaId: string): void {
+    this.mediaService.deleteMedia(mediaId).subscribe({
+      error: (err) => console.error('Could not delete uploaded image', err),
+    });
   }
 
   private moveTo(from: number, to: number): void {

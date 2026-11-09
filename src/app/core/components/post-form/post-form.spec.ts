@@ -1,6 +1,6 @@
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 
 import { FormPhoto, PostForm } from './post-form';
 import { PostFormData } from '../../models/posts/post-form-data.model';
@@ -244,6 +244,117 @@ describe('PostForm photos', () => {
 
     expect(keys()).toEqual(['a']);
     expect(toast).toHaveBeenCalled();
+  });
+
+  function uploadsSucceed(): void {
+    media.initUpload.and.returnValue(
+      of({ mediaId: 'n1', uploadUrl: 'http://s', requiredHeaders: {} }) as never,
+    );
+    media.uploadToS3.and.returnValue(of(undefined) as never);
+    media.completeUpload.and.returnValue(of({ id: 'n1' }) as never);
+  }
+
+  it('deletes what it uploaded when left without publishing', async () => {
+    uploadsSucceed();
+    showSaved(saved('a', 0));
+    await component.onFilesSelected([new File(['x'], 'n.png', { type: 'image/png' })]);
+
+    fixture.destroy();
+
+    expect(media.deleteMedia).toHaveBeenCalledOnceWith('n1');
+  });
+
+  it('stops uploading the other chosen photos once left', async () => {
+    const finishing = new Subject<unknown>();
+    media.initUpload.and.returnValue(
+      of({ mediaId: 'n1', uploadUrl: 'http://s', requiredHeaders: {} }) as never,
+    );
+    media.uploadToS3.and.returnValue(finishing as never);
+    media.completeUpload.and.returnValue(of({ id: 'n1' }) as never);
+    showSaved();
+    const uploading = component.onFilesSelected([
+      new File(['x'], 'a.png', { type: 'image/png' }),
+      new File(['y'], 'b.png', { type: 'image/png' }),
+    ]);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    fixture.destroy();
+    finishing.next(undefined);
+    finishing.complete();
+    await uploading;
+
+    expect(media.initUpload).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows nothing about a failed upload once left', async () => {
+    const finishing = new Subject<unknown>();
+    spyOn(console, 'error');
+    const toast = spyOn(TestBed.inject(ToastService), 'show');
+    media.initUpload.and.returnValue(
+      of({ mediaId: 'n1', uploadUrl: 'http://s', requiredHeaders: {} }) as never,
+    );
+    media.uploadToS3.and.returnValue(finishing as never);
+    showSaved();
+    const uploading = component.onFilesSelected([new File(['x'], 'a.png', { type: 'image/png' })]);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    fixture.destroy();
+    finishing.error(new Error('nope'));
+    await uploading;
+
+    expect(toast).not.toHaveBeenCalled();
+  });
+
+  it('never deletes a saved photo on leaving', () => {
+    showSaved(saved('a', 0));
+
+    component.removePhoto(0);
+    fixture.destroy();
+
+    expect(media.deleteMedia).not.toHaveBeenCalled();
+  });
+
+  it('keeps its uploads when left while saving, because the post may hold them', async () => {
+    uploadsSucceed();
+    showSaved(saved('a', 0));
+    await component.onFilesSelected([new File(['x'], 'n.png', { type: 'image/png' })]);
+    submit();
+
+    fixture.destroy();
+
+    expect(media.deleteMedia).not.toHaveBeenCalled();
+  });
+
+  it('deletes after publishing nothing it just cleared', async () => {
+    uploadsSucceed();
+    showSaved();
+    await component.onFilesSelected([new File(['x'], 'n.png', { type: 'image/png' })]);
+    submit();
+    component.resetForm();
+
+    fixture.destroy();
+
+    expect(media.deleteMedia).not.toHaveBeenCalled();
+  });
+
+  it('deletes an upload that finishes after the form was left', async () => {
+    const finishing = new Subject<unknown>();
+    media.initUpload.and.returnValue(
+      of({ mediaId: 'n1', uploadUrl: 'http://s', requiredHeaders: {} }) as never,
+    );
+    media.uploadToS3.and.returnValue(finishing as never);
+    media.completeUpload.and.returnValue(of({ id: 'n1' }) as never);
+    showSaved();
+    const uploading = component.onFilesSelected([new File(['x'], 'n.png', { type: 'image/png' })]);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    fixture.destroy();
+    expect(media.deleteMedia).not.toHaveBeenCalled();
+    finishing.next(undefined);
+    finishing.complete();
+    await uploading;
+
+    expect(media.deleteMedia).toHaveBeenCalledOnceWith('n1');
   });
 
   it('has no gallery with no photos', () => {

@@ -250,6 +250,35 @@
                     </svg>
                   </button>
                 }
+                @if (i === 0) {
+                  <span class="post-form__tile-cover">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="13"
+                      height="13"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M12 2.5l2.9 6.2 6.8.8-5 4.6 1.3 6.7-6-3.4-6 3.4 1.3-6.7-5-4.6 6.8-.8z"
+                      />
+                    </svg>
+                    {{ 'POST_FORM.cover-badge' | translate }}
+                  </span>
+                } @else {
+                  <button
+                    type="button"
+                    class="post-form__tile-set-cover"
+                    (click)="setAsCover(i)"
+                    [attr.aria-label]="
+                      'POST_FORM.cover-set-number'
+                        | translate: { number: i + 1, total: photos.length }
+                    "
+                  >
+                    {{ 'POST_FORM.cover-set' | translate }}
+                  </button>
+                }
               </div>
 
               <div class="post-form__tile-order">
@@ -311,36 +340,6 @@
                   </svg>
                 </button>
               </div>
-
-              @if (i === 0) {
-                <span class="post-form__tile-cover">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="13"
-                    height="13"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M12 2.5l2.9 6.2 6.8.8-5 4.6 1.3 6.7-6-3.4-6 3.4 1.3-6.7-5-4.6 6.8-.8z"
-                    />
-                  </svg>
-                  {{ 'POST_FORM.cover-badge' | translate }}
-                </span>
-              } @else {
-                <button
-                  type="button"
-                  class="post-form__tile-set-cover"
-                  (click)="setAsCover(i)"
-                  [attr.aria-label]="
-                    'POST_FORM.cover-set-number'
-                      | translate: { number: i + 1, total: photos.length }
-                  "
-                >
-                  {{ 'POST_FORM.cover-set' | translate }}
-                </button>
-              }
             </li>
           }
         </ul>
