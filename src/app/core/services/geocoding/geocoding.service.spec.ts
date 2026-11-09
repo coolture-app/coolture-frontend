@@ -22,6 +22,8 @@ const ERGO_ARENA = {
   },
 };
 
+const TRICITY = { latitude: 54.4, longitude: 18.6 };
+
 function photon(...features: unknown[]) {
   return { type: 'FeatureCollection', features };
 }
@@ -44,7 +46,7 @@ describe('GeocodingService', () => {
 
   describe('suggest', () => {
     it('asks Photon for local names in Poland, without stops, near the given point', () => {
-      service.suggest('Ergo', { latitude: 54.4, longitude: 18.6 }).subscribe();
+      service.suggest('Ergo', TRICITY).subscribe();
 
       const request = http.expectOne((r) => r.url === '/geo/api');
       expect(params(request)).toEqual({
@@ -61,7 +63,7 @@ describe('GeocodingService', () => {
 
     it('maps a venue to our fields, latitude from the second coordinate', () => {
       let places: PlaceSuggestion[] = [];
-      service.suggest('Ergo').subscribe((result) => (places = result));
+      service.suggest('Ergo', TRICITY).subscribe((result) => (places = result));
 
       http.expectOne((r) => r.url === '/geo/api').flush(photon(ERGO_ARENA));
 
@@ -79,7 +81,7 @@ describe('GeocodingService', () => {
 
     it('leaves out what Photon leaves out, and never takes a street or city name for a venue', () => {
       let places: PlaceSuggestion[] = [];
-      service.suggest('Długa').subscribe((result) => (places = result));
+      service.suggest('Długa', TRICITY).subscribe((result) => (places = result));
 
       http
         .expectOne((r) => r.url === '/geo/api')
@@ -106,7 +108,7 @@ describe('GeocodingService', () => {
 
     it("cuts text to the API's limits", () => {
       let places: PlaceSuggestion[] = [];
-      service.suggest('Teatr').subscribe((result) => (places = result));
+      service.suggest('Teatr', TRICITY).subscribe((result) => (places = result));
 
       http
         .expectOne((r) => r.url === '/geo/api')
@@ -123,19 +125,25 @@ describe('GeocodingService', () => {
   });
 
   describe('reverse', () => {
+    it('sends no country filter, which Photon refuses on reverse', () => {
+      service.reverse(54.6044, 18.348).subscribe();
+
+      const request = http.expectOne((r) => r.url === '/geo/reverse');
+      expect(params(request)).toEqual({
+        lang: ['default'],
+        exclude: ['osm.highway.bus_stop', 'osm.public_transport', 'osm.amenity.shelter'],
+        lat: ['54.6044'],
+        lon: ['18.348'],
+        limit: ['1'],
+      });
+      request.flush(photon());
+    });
+
     it('offers the name at the pin but never fills the venue', () => {
       let place: PlaceSuggestion | null = null;
       service.reverse(54.6044, 18.348).subscribe((result) => (place = result));
 
       const request = http.expectOne((r) => r.url === '/geo/reverse');
-      expect(params(request)).toEqual(
-        jasmine.objectContaining({
-          lat: ['54.6044'],
-          lon: ['18.348'],
-          limit: ['1'],
-          lang: ['default'],
-        }),
-      );
       request.flush(
         photon({
           geometry: { coordinates: [18.348, 54.6044] },
@@ -179,9 +187,7 @@ describe('GeocodingService', () => {
       jasmine.clock().install().mockDate(new Date('2026-11-09T12:00:00Z'));
       texts = new Subject<string>();
       results = [];
-      service
-        .search(texts, () => ({ latitude: 54.4, longitude: 18.6 }))
-        .subscribe((result) => results.push(result));
+      service.search(texts, () => TRICITY).subscribe((result) => results.push(result));
     });
 
     afterEach(() => jasmine.clock().uninstall());

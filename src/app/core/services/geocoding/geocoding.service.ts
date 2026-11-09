@@ -79,9 +79,9 @@ export class GeocodingService {
 
   /**
    * Suggestions for a search box's text as it changes. Waits for a pause in typing, and asks only from 3 characters.
-   * `near` biases the results towards a point, such as the map's centre.
+   * `near` is read for each request, so it can follow the map's centre.
    */
-  search(texts: Observable<string>, near?: () => GeoPoint | null): Observable<PlaceSearch> {
+  search(texts: Observable<string>, near: () => GeoPoint): Observable<PlaceSearch> {
     return texts.pipe(
       map((text) => text.trim()),
       debounceTime(DEBOUNCE_MS),
@@ -90,7 +90,7 @@ export class GeocodingService {
       switchMap((text) =>
         text.length < MIN_CHARACTERS
           ? of({ text, places: [], unavailable: false })
-          : this.suggest(text, near?.() ?? undefined).pipe(
+          : this.suggest(text, near()).pipe(
               map((places) => ({ text, places, unavailable: false })),
               catchError(() => of({ text, places: [], unavailable: true })),
             ),
@@ -98,11 +98,19 @@ export class GeocodingService {
     );
   }
 
-  /** One search, with no waiting. Errors when the geocoder fails or takes over 3 seconds. */
-  suggest(text: string, near?: GeoPoint): Observable<PlaceSuggestion[]> {
-    let params = this.params().set('q', text).set('limit', SUGGESTIONS);
-    if (near) {
-      params = params.set('lat', near.latitude).set('lon', near.longitude);
+  /**
+   * One search, with no waiting. Errors when the geocoder fails or takes over 3 seconds. `near` is required: without
+   * it a short text matches anywhere in Poland, and "Ergo" gave three offices called Ergo before Ergo Arena.
+   */
+  suggest(text: string, near: GeoPoint): Observable<PlaceSuggestion[]> {
+    let params = this.params()
+      .set('q', text)
+      .set('limit', SUGGESTIONS)
+      .set('lat', near.latitude)
+      .set('lon', near.longitude);
+    // Search only: /reverse answers 400 to it.
+    for (const code of geocoder.countryCodes) {
+      params = params.append('countrycode', code);
     }
     return this.get('/api', params).pipe(
       map((features) => features.map((f) => toPlace(f, 'search'))),
@@ -123,9 +131,6 @@ export class GeocodingService {
    */
   private params(): HttpParams {
     let params = new HttpParams().set('lang', 'default');
-    for (const code of geocoder.countryCodes) {
-      params = params.append('countrycode', code);
-    }
     for (const category of EXCLUDED) {
       params = params.append('exclude', category);
     }
