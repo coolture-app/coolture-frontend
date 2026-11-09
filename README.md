@@ -13,6 +13,9 @@ npm install
 npm start          # http://localhost:4200, reloads on every change
 ```
 
+Place search calls `/geo`, which `npm start` proxies to the geocoder container in coolture-aws, as CloudFront does on
+AWS. That container needs a one-time `make geo-index` there. Without it the post form works, with no suggestions.
+
 The development build has a **DEV** pill at the bottom left that picks who the app acts as: a guest (the default), the
 demo users Anna, Jan and Ola, the bot that imported the events, or `local_dev`, the admin. Zaloguj opens its menu and
 Wyloguj goes back to the guest. The choice is the `coolture_dev_user` cookie, so server-rendered pages fetch as the same
