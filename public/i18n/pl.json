@@ -53,6 +53,7 @@
     "location": "Lokalizacja",
     "anywhere": "Wszędzie",
     "myLocation": "Moja lokalizacja",
+    "pickedPlace": "Wskazane miejsce",
     "radius": "Promień",
     "km": "{{km}} km",
     "done": "Gotowe",

@@ -1,5 +1,5 @@
 import { Component, DOCUMENT, inject, signal } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { IsActiveMatchOptions, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -47,6 +47,16 @@ export class Navbar {
     { path: '/plans', icon: 'lucideCalendarDays', labelKey: 'NAVBAR.my-events' },
     { path: '/profile', icon: 'lucideUserRound', labelKey: 'NAVBAR.my-profile' },
   ];
+
+  /** Home is active on its own path alone, whatever search or filters its URL holds. */
+  activeOptions(path: string): IsActiveMatchOptions {
+    return {
+      paths: path === '/' ? 'exact' : 'subset',
+      queryParams: 'ignored',
+      matrixParams: 'ignored',
+      fragment: 'ignored',
+    };
+  }
 
   constructor() {
     this.translate.onLangChange.subscribe((event) => {

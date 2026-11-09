@@ -12,6 +12,8 @@ const VIEW: HomeView = {
   isMapView: false,
   listScrollY: 0,
   nearPosition: null,
+  pickedPlace: null,
+  url: { q: 'jazz' },
 };
 
 describe('HomeViewMemory', () => {

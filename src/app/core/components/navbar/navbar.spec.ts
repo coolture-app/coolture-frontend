@@ -80,6 +80,25 @@ describe('Navbar', () => {
     document.body.style.height = '';
   });
 
+  it('keeps Home active when the home URL holds a search, and on no other page', async () => {
+    await router.navigateByUrl('/?q=jazz');
+    await fixture.whenStable();
+    expect(home().classList).toContain('active');
+
+    await router.navigateByUrl('/people');
+    await fixture.whenStable();
+    expect(home().classList).not.toContain('active');
+  });
+
+  it('tells a Home tap apart on a home URL that holds a search', async () => {
+    await router.navigateByUrl('/?q=jazz');
+    window.scrollTo(0, 0);
+
+    home().click();
+
+    expect(freshFeeds).toBe(1);
+  });
+
   it('is an ordinary link on other pages', async () => {
     await router.navigateByUrl('/people');
 

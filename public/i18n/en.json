@@ -53,6 +53,7 @@
     "location": "Location",
     "anywhere": "Anywhere",
     "myLocation": "My location",
+    "pickedPlace": "Chosen place",
     "radius": "Radius",
     "km": "{{km}} km",
     "done": "Done",

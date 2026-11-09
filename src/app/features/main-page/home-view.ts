@@ -1,10 +1,17 @@
 import { inject, Injectable } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
+import { Params } from '@angular/router';
 import { GeoPoint } from '../../core/models/common/geo.model';
 import { PostsSort } from '../../core/models/common/enums';
 import { PostListQuery, PostListStore } from '../../core/services/post-list/post-list.store';
 
 const RESTORE_WINDOW_MS = 30 * 60 * 1000;
+
+/**
+ * What the radius filter is centred on: the user's position, or a place that was picked. A link is the
+ * only way to pick one so far; the geocoder's place picker will fill the same slot.
+ */
+export type PlaceFilter = '' | 'mine' | 'picked';
 
 /** The filter panel's values, as its form holds them. */
 export const NO_FILTERS = {
@@ -15,8 +22,8 @@ export const NO_FILTERS = {
   visibility: '',
   status: '',
   includePast: false,
-  /** "Moja lokalizacja" instead of "Wszędzie", within `radiusKm` of the user's position. */
-  near: false,
+  /** The radius filter's centre, as a place from `PlaceFilter`, or '' for "Wszędzie". */
+  place: '' as PlaceFilter,
   radiusKm: 5,
 };
 export type FilterValues = typeof NO_FILTERS;
@@ -39,7 +46,7 @@ export function createFiltersForm() {
     visibility: new FormControl(NO_FILTERS.visibility, { nonNullable: true }),
     status: new FormControl(NO_FILTERS.status, { nonNullable: true }),
     includePast: new FormControl(NO_FILTERS.includePast, { nonNullable: true }),
-    near: new FormControl(NO_FILTERS.near, { nonNullable: true }),
+    place: new FormControl(NO_FILTERS.place, { nonNullable: true }),
     radiusKm: new FormControl(NO_FILTERS.radiusKm, { nonNullable: true }),
   });
 }
@@ -54,8 +61,12 @@ export interface HomeView {
   isMapView: boolean;
   /** Where the list under the map was scrolled to. The router restores only the page's own scroll. */
   listScrollY: number;
-  /** The position the location filter used. Kept in memory for this visit only, never stored. */
+  /** The position the location filter used. Kept in memory for this visit only. */
   nearPosition: GeoPoint | null;
+  /** The place the filter can centre on instead, which so far comes from a link. */
+  pickedPlace: GeoPoint | null;
+  /** The query string this view had, to tell whether a return to the page is a return to this view. */
+  url: Params;
 }
 
 /**

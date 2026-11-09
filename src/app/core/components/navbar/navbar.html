@@ -11,7 +11,7 @@
         [routerLink]="link.path"
         routerLinkActive="active"
         ariaCurrentWhenActive="page"
-        [routerLinkActiveOptions]="{ exact: link.path === '/' }"
+        [routerLinkActiveOptions]="activeOptions(link.path)"
         [appTooltip]="link.labelKey | translate"
         (click)="link.path === '/' && homeTapped($event)"
       >

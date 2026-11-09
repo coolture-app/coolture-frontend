@@ -8,7 +8,7 @@ import { AuthService } from './core/services/auth/auth.service';
 import { InterestsView } from './features/interests-view/interests-view';
 import { Toast } from './core/components/toast/toast';
 import { PhotoViewer } from './core/components/photo-viewer/photo-viewer';
-import { filter, first } from 'rxjs';
+import { distinctUntilChanged, filter, first, map } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -36,8 +36,15 @@ export class App implements OnInit {
   ngOnInit(): void {
     this.authService.checkSession().pipe(first()).subscribe();
 
-    this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe(() => {
-      this.authService.checkSession().pipe(first()).subscribe();
-    });
+    // By path, because the home page rewrites its query string as filters change.
+    this.router.events
+      .pipe(
+        filter((event) => event instanceof NavigationEnd),
+        map((event) => event.urlAfterRedirects.split(/[?#]/)[0]),
+        distinctUntilChanged(),
+      )
+      .subscribe(() => {
+        this.authService.checkSession().pipe(first()).subscribe();
+      });
   }
 }

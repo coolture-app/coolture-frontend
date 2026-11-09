@@ -131,6 +131,7 @@
           [form]="filtersForm"
           [locating]="locating()"
           [locationFailed]="locationFailed()"
+          [hasPickedPlace]="pickedPlace() !== null"
           (clear)="clearFilters()"
           (done)="showFilters.set(false)"
         />
