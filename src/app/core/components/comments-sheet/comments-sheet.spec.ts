@@ -67,7 +67,11 @@ describe('CommentsSheet', () => {
       author: { id: 'u1', username: 'ola', followersCount: 0, followingCount: 0 },
     };
     wide = false;
-    spyOn(window, 'matchMedia').and.callFake(() => ({ matches: wide }) as MediaQueryList);
+    const realMatchMedia = window.matchMedia.bind(window);
+    // Only the panel's own question. The CDK asks others, and needs a real answer.
+    spyOn(window, 'matchMedia').and.callFake((query: string) =>
+      query.includes('1024px') ? ({ matches: wide } as MediaQueryList) : realMatchMedia(query),
+    );
     TestBed.configureTestingModule({
       imports: [CommentsSheet],
       providers: [

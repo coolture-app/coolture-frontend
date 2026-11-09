@@ -86,7 +86,7 @@ describe('PostComponent', () => {
   });
 
   it('has four icon actions, each named and pressed when on, and no Share', () => {
-    render(card({ myParticipation: 'TAKES_PART' }));
+    render(card({ myParticipation: 'TAKES_PART', positiveReactionCount: 0, commentsCount: 0 }));
 
     const actions = Array.from(element().querySelectorAll('.post__social button'));
     expect(actions.map((b) => b.getAttribute('aria-label'))).toEqual([
