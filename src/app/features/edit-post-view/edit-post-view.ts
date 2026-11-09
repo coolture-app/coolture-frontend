@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { catchError, forkJoin, of, switchMap } from 'rxjs';
 
 import { PostService } from '../../core/services/post/post.service';
 import { MediaService } from '../../core/services/media/media.service';
@@ -53,18 +54,6 @@ export class EditPostView implements OnInit {
     }
   }
 
-  onExistingMediaRemove(mediaId: string): void {
-    this.mediaService
-      .deleteMedia(mediaId)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: () => {
-          this.existingMedia.update((media) => media.filter((m) => m.media.id !== mediaId));
-        },
-        error: (err) => console.error('Could not delete existing image', err),
-      });
-  }
-
   onFormSubmit(data: PostFormData): void {
     const post = this.currentPost();
     if (!post) return;
@@ -80,12 +69,28 @@ export class EditPostView implements OnInit {
       visibility: data.visibility,
       location: data.location,
       mediaIds: data.mediaIds,
-      coverMediaId: data.coverMediaId,
     };
 
     this.postService
       .updatePost(post.id, payload)
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        // Only now: the API refuses to delete a photo still on a post. A failure leaves a file nobody sees.
+        switchMap(() =>
+          data.removedMediaIds.length > 0
+            ? forkJoin(
+                data.removedMediaIds.map((id) =>
+                  this.mediaService.deleteMedia(id).pipe(
+                    catchError((err) => {
+                      console.error('Could not delete removed image', err);
+                      return of(undefined);
+                    }),
+                  ),
+                ),
+              )
+            : of([]),
+        ),
+        takeUntilDestroyed(this.destroyRef),
+      )
       .subscribe({
         next: () => {
           // Back to where the edit was opened from, so "Wróć" there never lands on this form.

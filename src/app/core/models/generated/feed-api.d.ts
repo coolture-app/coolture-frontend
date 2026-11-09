@@ -160,7 +160,7 @@ export interface components {
       /** Format: uuid */
       id: string;
       /** @enum {string} */
-      purpose?: 'PROFILE_IMAGE' | 'PROFILE_IMAGE_THUMBNAIL' | 'EVENT_COVER' | 'EVENT_MEDIA';
+      purpose?: 'PROFILE_IMAGE' | 'PROFILE_IMAGE_THUMBNAIL' | 'EVENT_MEDIA';
       mimeType?: string;
       /** Format: int64 */
       sizeBytes?: number;

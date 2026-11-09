@@ -14,5 +14,4 @@ export interface PostCreateRequest {
 
   // List of ids from S3
   mediaIds?: string[]; // Tablica UUID
-  coverMediaId?: string | null; // UUID
 }

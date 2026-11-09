@@ -5,11 +5,15 @@ import {
   EventEmitter,
   inject,
   ChangeDetectorRef,
+  AfterViewChecked,
+  ElementRef,
+  OnDestroy,
   OnInit,
   OnChanges,
   SimpleChanges,
   DestroyRef,
 } from '@angular/core';
+import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { CommonModule, formatDate } from '@angular/common';
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -28,7 +32,6 @@ import { PostType, PostVisibility } from '../../models/common/enums';
 import { imageSize, MediaService } from '../../services/media/media.service';
 import { DictionaryService } from '../../services/dictionary/dictionary.service';
 import { CountryCode } from '../../models/dictionary/country-code.model';
-import { MediaResource } from '../../models/media/media-resource.model';
 import { MAX_POST_PHOTOS } from '../../models/posts/post-limits';
 import { ToastService } from '../../services/toast/toast.service';
 
@@ -40,12 +43,17 @@ function toLocalInputValue(iso: string | undefined): string {
   return iso ? formatDate(iso, "yyyy-MM-dd'T'HH:mm", 'en-US') : '';
 }
 
-interface MediaPreview {
-  file: File;
-  previewUrl: string;
+/** One photo in the form's gallery: saved on the post, or added in this form. */
+export interface FormPhoto {
+  /** Stays the same while the photo uploads, so it can be moved before it finishes. */
+  key: string;
+  url: string;
   isUploading: boolean;
+  isSaved: boolean;
   mediaId?: string;
 }
+
+type PhotoControl = 'earlier' | 'later' | 'remove';
 
 @Component({
   selector: 'app-post-form',
@@ -59,17 +67,18 @@ interface MediaPreview {
     FormTextarea,
     FormFileUpload,
     Btn,
+    CdkDropList,
+    CdkDrag,
   ],
   templateUrl: './post-form.html',
   styleUrl: './post-form.scss',
 })
-export class PostForm implements OnInit, OnChanges {
+export class PostForm implements OnInit, OnChanges, AfterViewChecked, OnDestroy {
   @Input() mode: 'create' | 'edit' = 'create';
   @Input() initialData?: PostDetail;
   @Input() existingMedia: PostMedia[] = [];
 
   @Output() formSubmit = new EventEmitter<PostFormData>();
-  @Output() existingMediaRemove = new EventEmitter<string>();
 
   private fb = inject(FormBuilder);
   private mediaService = inject(MediaService);
@@ -78,14 +87,22 @@ export class PostForm implements OnInit, OnChanges {
   private destroyRef = inject(DestroyRef);
   private translate = inject(TranslateService);
   private toast = inject(ToastService);
+  private host = inject(ElementRef);
 
   countryCodes$: Observable<CountryCode[]> = this.dictionaryService.getCountryCodes();
 
   countryCodeOptions: SelectOption[] = [];
 
-  mediaPreviews: MediaPreview[] = [];
-  newlyUploadedMedia: MediaResource[] = [];
+  /** In the order the post shows them. The first is the cover. */
+  photos: FormPhoto[] = [];
+  /** What screen readers hear after a change to the photos, which sighted people see happen. */
+  photoStatus = '';
   isSubmitting = false;
+
+  private removedMediaIds: string[] = [];
+  private nextPhotoKey = 0;
+  private isLeft = false;
+  private pendingFocus: { key: string | null; control: PhotoControl } | null = null;
 
   typeOptions: SelectOption[] = [
     { value: 'ONLINE', label: '' },
@@ -177,18 +194,13 @@ export class PostForm implements OnInit, OnChanges {
   }
 
   get hasUploading(): boolean {
-    return this.mediaPreviews.some((p) => p.isUploading);
+    return this.photos.some((photo) => photo.isUploading);
   }
 
   readonly maxPhotos = MAX_POST_PHOTOS;
 
-  /** Photos the post holds now: kept, being uploaded and uploaded. */
-  get photoCount(): number {
-    return this.existingMedia.length + this.mediaPreviews.length + this.newlyUploadedMedia.length;
-  }
-
   get photosFull(): boolean {
-    return this.photoCount >= MAX_POST_PHOTOS;
+    return this.photos.length >= MAX_POST_PHOTOS;
   }
 
   ngOnInit(): void {
@@ -221,6 +233,9 @@ export class PostForm implements OnInit, OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['initialData'] && this.initialData) {
       this.patchFormFromPost(this.initialData);
+    }
+    if (changes['existingMedia']) {
+      this.showSavedPhotos();
     }
   }
 
@@ -294,7 +309,7 @@ export class PostForm implements OnInit, OnChanges {
   }
 
   async onFilesSelected(selected: File[]): Promise<void> {
-    const room = Math.max(0, MAX_POST_PHOTOS - this.photoCount);
+    const room = Math.max(0, MAX_POST_PHOTOS - this.photos.length);
     const files = selected.slice(0, room);
     if (files.length < selected.length) {
       this.toast.show(
@@ -302,12 +317,18 @@ export class PostForm implements OnInit, OnChanges {
       );
     }
     for (const file of files) {
-      const preview: MediaPreview = {
-        file,
-        previewUrl: URL.createObjectURL(file),
+      if (this.isLeft) {
+        return;
+      }
+      const photo: FormPhoto = {
+        key: `new-${this.nextPhotoKey++}`,
+        url: URL.createObjectURL(file),
         isUploading: true,
+        isSaved: false,
       };
-      this.mediaPreviews.push(preview);
+      this.photos.push(photo);
+      // Later files arrive after the first's upload, with no event to show them.
+      this.cdr.markForCheck();
 
       try {
         const size = await imageSize(file);
@@ -326,28 +347,129 @@ export class PostForm implements OnInit, OnChanges {
         );
         await lastValueFrom(this.mediaService.completeUpload(initRes.mediaId));
 
-        preview.mediaId = initRes.mediaId;
-        preview.isUploading = false;
+        photo.mediaId = initRes.mediaId;
+        photo.isUploading = false;
+        if (this.isLeft) {
+          this.deleteUpload(initRes.mediaId);
+          return;
+        }
         this.cdr.detectChanges();
       } catch (err) {
         console.error('Error while loading file', file.name, err);
-        this.mediaPreviews = this.mediaPreviews.filter((p) => p !== preview);
+        URL.revokeObjectURL(photo.url);
+        this.photos = this.photos.filter((p) => p !== photo);
+        if (!this.isLeft) {
+          this.toast.show(this.translate.instant('POST_FORM.upload-failed', { name: file.name }));
+        }
         this.cdr.detectChanges();
       }
     }
   }
 
-  removeNewPreview(index: number): void {
-    URL.revokeObjectURL(this.mediaPreviews[index].previewUrl);
-    this.mediaPreviews.splice(index, 1);
+  onPhotoDropped(event: CdkDragDrop<FormPhoto[]>): void {
+    this.moveTo(event.previousIndex, event.currentIndex);
   }
 
-  removeExisting(mediaId: string): void {
-    this.existingMediaRemove.emit(mediaId);
+  /** The button keeps the focus, even at the end of the row, because moving a tile in the page would drop it. */
+  movePhoto(index: number, by: -1 | 1): void {
+    const target = index + by;
+    if (target < 0 || target >= this.photos.length) {
+      return;
+    }
+    this.pendingFocus = { key: this.photos[index].key, control: by < 0 ? 'earlier' : 'later' };
+    this.moveTo(index, target);
   }
 
-  removeNewlyUploaded(mediaId: string): void {
-    this.newlyUploadedMedia = this.newlyUploadedMedia.filter((m) => m.id !== mediaId);
+  /** Moves the photo to the front, and the others keep their order. */
+  setAsCover(index: number): void {
+    // This photo's "set as cover" button is about to go, so the focus moves to the one beside it.
+    this.pendingFocus = { key: this.photos[index].key, control: 'later' };
+    this.moveTo(index, 0);
+  }
+
+  removePhoto(index: number): void {
+    const [photo] = this.photos.splice(index, 1);
+    if (photo.isSaved) {
+      // The post keeps it until the form is saved, and leaving without saving changes nothing.
+      this.removedMediaIds.push(photo.mediaId!);
+    } else {
+      URL.revokeObjectURL(photo.url);
+      if (photo.mediaId) {
+        this.deleteUpload(photo.mediaId);
+      }
+    }
+    const next = this.photos[Math.min(index, this.photos.length - 1)];
+    this.pendingFocus = { key: next?.key ?? null, control: 'remove' };
+    this.announce(
+      index === 0 && next ? 'POST_FORM.status-cover-removed' : 'POST_FORM.status-removed',
+      { total: this.photos.length },
+    );
+  }
+
+  /** The removed or moved control took the focus with it, so it comes back here once the page is updated. */
+  ngAfterViewChecked(): void {
+    const focus = this.pendingFocus;
+    if (!focus) {
+      return;
+    }
+    this.pendingFocus = null;
+    const page: HTMLElement = this.host.nativeElement;
+    const target = focus.key
+      ? page.querySelector(`[data-photo-key="${focus.key}"] [data-control="${focus.control}"]`)
+      : page.querySelector('.form-file-upload__dropzone');
+    (target as HTMLElement | null)?.focus();
+  }
+
+  /**
+   * Leaving without publishing drops what this form uploaded, and a daily job catches a closed tab.
+   * While saving, the post may already hold these photos, so they stay.
+   */
+  ngOnDestroy(): void {
+    this.isLeft = true;
+    for (const photo of this.photos.filter((p) => !p.isSaved)) {
+      URL.revokeObjectURL(photo.url);
+      if (photo.mediaId && !this.isSubmitting) {
+        this.deleteUpload(photo.mediaId);
+      }
+    }
+  }
+
+  private deleteUpload(mediaId: string): void {
+    this.mediaService.deleteMedia(mediaId).subscribe({
+      error: (err) => console.error('Could not delete uploaded image', err),
+    });
+  }
+
+  private moveTo(from: number, to: number): void {
+    if (from === to) {
+      return;
+    }
+    moveItemInArray(this.photos, from, to);
+    this.announce(from === 0 || to === 0 ? 'POST_FORM.status-cover' : 'POST_FORM.status-moved', {
+      number: to + 1,
+      total: this.photos.length,
+    });
+  }
+
+  private announce(key: string, params: Record<string, number>): void {
+    this.photoStatus = this.translate.instant(key, params);
+  }
+
+  private showSavedPhotos(): void {
+    const added = this.photos.filter((photo) => !photo.isSaved);
+    const saved = [...this.existingMedia]
+      .sort((a, b) => a.position - b.position)
+      .map(
+        (item): FormPhoto => ({
+          key: item.media.id,
+          url: item.media.url ?? '',
+          isUploading: false,
+          isSaved: true,
+          mediaId: item.media.id,
+        }),
+      );
+    this.photos = [...saved, ...added];
+    this.removedMediaIds = [];
   }
 
   onSubmit(): void {
@@ -360,11 +482,8 @@ export class PostForm implements OnInit, OnChanges {
     const formValue = this.postForm.getRawValue();
     const isOffline = formValue.type === 'OFFLINE';
 
-    // Collect all media IDs
-    const existingIds = this.existingMedia.map((m) => m.media.id);
-    const newPreviewIds = this.mediaPreviews.map((p) => p.mediaId!).filter(Boolean);
-    const newlyUploadedIds = this.newlyUploadedMedia.map((m) => m.id);
-    const allMediaIds = [...existingIds, ...newPreviewIds, ...newlyUploadedIds];
+    // In the order the post will show them: the first is the cover.
+    const mediaIds = this.photos.flatMap((photo) => photo.mediaId ?? []);
 
     // Parse tags from comma-separated string
     const tagsRaw = formValue.tags ?? '';
@@ -398,8 +517,8 @@ export class PostForm implements OnInit, OnChanges {
             },
           }
         : null,
-      mediaIds: allMediaIds,
-      coverMediaId: allMediaIds.length > 0 ? allMediaIds[0] : null,
+      mediaIds,
+      removedMediaIds: this.removedMediaIds,
     };
 
     this.formSubmit.emit(data);
@@ -423,9 +542,11 @@ export class PostForm implements OnInit, OnChanges {
         coordinates: { latitude: null, longitude: null },
       },
     });
-    this.mediaPreviews.forEach((p) => URL.revokeObjectURL(p.previewUrl));
-    this.mediaPreviews = [];
-    this.newlyUploadedMedia = [];
+    this.photos.filter((p) => !p.isSaved).forEach((p) => URL.revokeObjectURL(p.url));
+    this.photos = [];
+    this.removedMediaIds = [];
+    this.photoStatus = '';
+    this.pendingFocus = null;
     this.isSubmitting = false;
   }
 }
