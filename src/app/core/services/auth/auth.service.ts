@@ -5,6 +5,7 @@ import { catchError, finalize, map, Observable, of, shareReplay, tap } from 'rxj
 import { ApiUrlService } from '../api-url.service';
 import { Me, UserProfile } from '../../models/users/user-profile.model';
 import { environment } from '../../../../environments/environment';
+import { DEV_IDENTITY } from '../../auth/dev-identity';
 
 interface StoredTokens {
   idToken: string;
@@ -37,6 +38,8 @@ export class AuthService {
   private http = inject(HttpClient);
   private apiUrl = inject(ApiUrlService);
   private platformId = inject(PLATFORM_ID);
+  /** Development builds act as whoever the DEV pill says, in place of a login. */
+  private devIdentity = inject(DEV_IDENTITY, { optional: true });
   private refreshing: Promise<string | null> | null = null;
   private sessionCheck: Observable<boolean> | null = null;
 
@@ -84,6 +87,10 @@ export class AuthService {
 
   async login(returnUrl?: string): Promise<void> {
     if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+    if (this.devIdentity) {
+      this.devIdentity.openMenu();
       return;
     }
     if (!this.isCognitoConfigured()) {
@@ -150,6 +157,10 @@ export class AuthService {
     }
     this.clearTokens();
     this.clearUser();
+    if (this.devIdentity) {
+      this.devIdentity.signOut();
+      return;
+    }
     if (!this.isCognitoConfigured()) {
       localStorage.setItem(LOCAL_LOGOUT_KEY, 'true');
       window.location.assign('/');
@@ -190,6 +201,9 @@ export class AuthService {
   }
 
   private isSignedOut(): boolean {
+    if (this.devIdentity) {
+      return this.devIdentity.isGuest();
+    }
     if (this.isCognitoConfigured()) {
       return !this.readTokens();
     }

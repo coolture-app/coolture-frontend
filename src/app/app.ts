@@ -1,5 +1,6 @@
 import { Component, computed, signal, inject, OnInit } from '@angular/core';
 import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
+import { NgComponentOutlet } from '@angular/common';
 import { Navbar } from './core/components/navbar/navbar';
 import { TranslateService } from '@ngx-translate/core';
 import translationEN from '../../public/i18n/en.json';
@@ -10,10 +11,19 @@ import { Toast } from './core/components/toast/toast';
 import { PhotoViewer } from './core/components/photo-viewer/photo-viewer';
 import { CommentsSheet } from './core/components/comments-sheet/comments-sheet';
 import { distinctUntilChanged, filter, first, map } from 'rxjs';
+import { environment } from '../environments/environment';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, Navbar, InterestsView, Toast, PhotoViewer, CommentsSheet],
+  imports: [
+    RouterOutlet,
+    NgComponentOutlet,
+    Navbar,
+    InterestsView,
+    Toast,
+    PhotoViewer,
+    CommentsSheet,
+  ],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
@@ -22,6 +32,8 @@ export class App implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
   protected readonly title = signal('frontend');
+  /** The DEV pill, in development builds only. */
+  protected readonly devSwitcher = environment.devTools?.component ?? null;
   protected readonly interestsDismissed = signal(false);
   protected readonly interestsRequired = computed(
     () => this.authService.interestsSelected() === false && !this.interestsDismissed(),
