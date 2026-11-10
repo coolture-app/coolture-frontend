@@ -97,6 +97,7 @@ export class PlacePicker implements OnInit {
   readonly group = input.required<LocationForm>();
 
   readonly limits = LOCATION_LIMITS;
+  readonly describe = describePlace;
   readonly mapStyle = MAP_STYLE;
 
   readonly draft = signal<PlaceDraft>(EMPTY_DRAFT);
@@ -201,17 +202,16 @@ export class PlacePicker implements OnInit {
   }
 
   ngOnInit(): void {
-    const group = this.group();
-    this.draft.set(this.fromForm(EMPTY_DRAFT));
+    this.syncFromForm();
     // Programmatic writes don't emit, so whatever arrives here is the user typing or a saved post loading.
-    group.valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.draft.update((draft) => this.fromForm(draft)));
+    this.group()
+      .valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.syncFromForm());
   }
 
-  private fromForm(draft: PlaceDraft): PlaceDraft {
+  private syncFromForm(): void {
     const value = this.group().getRawValue();
-    let next = draft;
+    let next = this.draft();
     for (const field of PLACE_FIELDS) {
       if (value[field] !== next.text[field]) {
         next = typed(next, field, value[field]);
@@ -224,7 +224,7 @@ export class PlacePicker implements OnInit {
         this.view = { center: lngLat(value.coordinates), zoom: PLACE_ZOOM };
       }
     }
-    return next;
+    this.draft.set(next);
   }
 
   private apply(next: PlaceDraft): void {
@@ -297,10 +297,6 @@ export class PlacePicker implements OnInit {
     this.searchBox()?.nativeElement.focus();
   }
 
-  describe(place: PlaceSuggestion): { name: string; address: string } {
-    return describePlace(place);
-  }
-
   // --- Map ---
 
   onMapLoad(instance: MapLibreMap): void {
@@ -369,14 +365,9 @@ export class PlacePicker implements OnInit {
     }
   }
 
-  /** The post form calls this when saving fails, so a missing city or pin is in view. */
+  /** The post form calls this when saving fails, so a missing city shows. The form then focuses the first error. */
   revealErrors(): void {
-    const controls = this.group().controls;
-    if (controls.coordinates.invalid) {
-      this.searchBox()?.nativeElement.focus();
-      return;
-    }
-    if (this.group().invalid) {
+    if (this.hasPlace() && this.group().invalid) {
       this.fieldsOpen.set(true);
     }
   }
