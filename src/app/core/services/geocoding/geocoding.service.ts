@@ -118,8 +118,8 @@ export class GeocodingService {
   }
 
   /** The address at a point on the map. Null when there's none, as in the sea. Errors like `suggest`. */
-  reverse(lat: number, lon: number): Observable<PlaceSuggestion | null> {
-    const params = this.params().set('lat', lat).set('lon', lon).set('limit', 1);
+  reverse(at: GeoPoint): Observable<PlaceSuggestion | null> {
+    const params = this.params().set('lat', at.latitude).set('lon', at.longitude).set('limit', 1);
     return this.get('/reverse', params).pipe(
       map(([first]) => (first ? toPlace(first, 'pin') : null)),
     );

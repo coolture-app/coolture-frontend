@@ -126,7 +126,7 @@ describe('GeocodingService', () => {
 
   describe('reverse', () => {
     it('sends no country filter, which Photon refuses on reverse', () => {
-      service.reverse(54.6044, 18.348).subscribe();
+      service.reverse({ latitude: 54.6044, longitude: 18.348 }).subscribe();
 
       const request = http.expectOne((r) => r.url === '/geo/reverse');
       expect(params(request)).toEqual({
@@ -141,7 +141,9 @@ describe('GeocodingService', () => {
 
     it('offers the name at the pin but never fills the venue', () => {
       let place: PlaceSuggestion | null = null;
-      service.reverse(54.6044, 18.348).subscribe((result) => (place = result));
+      service
+        .reverse({ latitude: 54.6044, longitude: 18.348 })
+        .subscribe((result) => (place = result));
 
       const request = http.expectOne((r) => r.url === '/geo/reverse');
       request.flush(
@@ -166,7 +168,9 @@ describe('GeocodingService', () => {
 
     it('gives null where there is no address, as in the sea', () => {
       let place: PlaceSuggestion | null | undefined;
-      service.reverse(54.65, 18.85).subscribe((result) => (place = result));
+      service
+        .reverse({ latitude: 54.65, longitude: 18.85 })
+        .subscribe((result) => (place = result));
 
       http.expectOne((r) => r.url === '/geo/reverse').flush(photon());
 
