@@ -1,5 +1,4 @@
-<form [formGroup]="postForm" (ngSubmit)="onSubmit()" class="post-form">
-  <!-- Title -->
+<form [formGroup]="postForm" (ngSubmit)="onSubmit()" class="post-form" novalidate>
   <app-form-input
     [control]="titleControl"
     [label]="'POST_FORM.title' | translate"
@@ -13,55 +12,79 @@
     }"
   ></app-form-input>
 
-  <!-- Type -->
-  <app-form-select
-    [control]="typeControl"
-    [label]="'POST_FORM.type' | translate"
-    [options]="typeOptions"
-    [required]="true"
-    inputId="type"
-  ></app-form-select>
+  <section class="post-form__section" aria-labelledby="when-label">
+    <h3 class="post-form__section-title" id="when-label">{{ 'POST_FORM.when' | translate }}</h3>
+    <div class="post-form__when">
+      <app-form-input
+        [control]="startsAtControl"
+        [label]="'POST_FORM.starts-at' | translate"
+        type="datetime-local"
+        [required]="true"
+        inputId="startsAt"
+        [errorMessages]="{ required: ('POST_FORM.starts-at-error' | translate) }"
+      ></app-form-input>
+      @if (showEnd) {
+        <div class="post-form__end">
+          <app-form-input
+            [control]="endsAtControl"
+            [label]="'POST_FORM.ends-at' | translate"
+            type="datetime-local"
+            inputId="endsAt"
+            [errorMessages]="{ afterStart: ('POST_FORM.ends-at-error' | translate) }"
+          ></app-form-input>
+          <button
+            type="button"
+            class="post-form__remove-end"
+            (click)="removeEnd()"
+            [title]="'POST_FORM.remove-end' | translate"
+            [attr.aria-label]="'POST_FORM.remove-end' | translate"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              aria-hidden="true"
+            >
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+      }
+    </div>
+    @if (!showEnd) {
+      <button type="button" class="post-form__add" (click)="addEnd()">
+        + {{ 'POST_FORM.add-end' | translate }}
+      </button>
+    }
+  </section>
 
-  <!-- Visibility -->
-  <app-form-select
-    [control]="visibilityControl"
-    [label]="'POST_FORM.visibility' | translate"
-    [options]="visibilityOptions"
-    [required]="true"
-    inputId="visibility"
-  ></app-form-select>
+  <section class="post-form__section" aria-labelledby="where-label">
+    <div class="post-form__where-head">
+      <h3 class="post-form__section-title" id="where-label">{{ 'POST_FORM.where' | translate }}</h3>
+      <div class="post-form__segmented" role="radiogroup" aria-labelledby="where-label">
+        <label class="post-form__segment">
+          <input type="radio" formControlName="type" value="OFFLINE" />
+          <span>{{ 'POST_FORM.type-offline' | translate }}</span>
+        </label>
+        <label class="post-form__segment">
+          <input type="radio" formControlName="type" value="ONLINE" />
+          <span>{{ 'POST_FORM.type-online' | translate }}</span>
+        </label>
+      </div>
+    </div>
+    @if (isOffline) {
+      <app-place-picker [group]="locationGroup"></app-place-picker>
+    } @else {
+      <p class="post-form__hint">{{ 'POST_FORM.online-hint' | translate }}</p>
+    }
+  </section>
 
-  <!-- Start date + End date row -->
-  <div class="post-form__row">
-    <app-form-input
-      [control]="startsAtControl"
-      [label]="'POST_FORM.starts-at' | translate"
-      type="datetime-local"
-      [required]="true"
-      inputId="startsAt"
-      [errorMessages]="{ required: ('POST_FORM.starts-at-error' | translate) }"
-    ></app-form-input>
-
-    <app-form-input
-      [control]="endsAtControl"
-      [label]="'POST_FORM.ends-at' | translate"
-      type="datetime-local"
-      [required]="false"
-      inputId="endsAt"
-    ></app-form-input>
-  </div>
-
-  <!-- Event URL -->
-  <app-form-input
-    [control]="eventUrlControl"
-    [label]="'POST_FORM.event-url' | translate"
-    [placeholder]="'POST_FORM.event-url-placeholder' | translate"
-    type="url"
-    [required]="false"
-    inputId="eventUrl"
-  ></app-form-input>
-
-  <!-- Description -->
   <app-form-textarea
     [control]="descriptionControl"
     [label]="'POST_FORM.description' | translate"
@@ -75,111 +98,6 @@
       maxlength: ('POST_FORM.description-error-maxlength' | translate),
     }"
   ></app-form-textarea>
-
-  <!-- Tags -->
-  <app-form-input
-    [control]="tagsControl"
-    [label]="'POST_FORM.tags' | translate"
-    [placeholder]="'POST_FORM.tags-placeholder' | translate"
-    type="text"
-    [required]="false"
-    inputId="tags"
-  ></app-form-input>
-
-  <!-- Location section (OFFLINE only) -->
-  @if (isOffline) {
-    <div class="post-form__location" formGroupName="location">
-      <h3 class="post-form__section-title">{{ 'POST_FORM.location-title' | translate }}</h3>
-
-      <div class="post-form__row">
-        <app-form-select
-          [control]="countryCodeControl"
-          [label]="'POST_FORM.location-country' | translate"
-          [placeholder]="'POST_FORM.location-country-placeholder' | translate"
-          [options]="countryCodeOptions"
-          [required]="true"
-          inputId="countryCode"
-          [errorMessages]="{ required: ('POST_FORM.location-country-error' | translate) }"
-        ></app-form-select>
-
-        <app-form-input
-          [control]="cityControl"
-          [label]="'POST_FORM.location-city' | translate"
-          [required]="true"
-          [maxLength]="128"
-          inputId="city"
-          [errorMessages]="{ required: ('POST_FORM.location-city-error' | translate) }"
-        ></app-form-input>
-      </div>
-
-      <div class="post-form__row">
-        <app-form-input
-          [control]="postalCodeControl"
-          [label]="'POST_FORM.location-postal-code' | translate"
-          [required]="true"
-          [maxLength]="16"
-          inputId="postalCode"
-          [errorMessages]="{ required: ('POST_FORM.location-postal-code-error' | translate) }"
-        ></app-form-input>
-
-        <app-form-input
-          [control]="streetControl"
-          [label]="'POST_FORM.location-street' | translate"
-          [required]="false"
-          [maxLength]="128"
-          inputId="street"
-        ></app-form-input>
-      </div>
-
-      <div class="post-form__row">
-        <app-form-input
-          [control]="buildingNumControl"
-          [label]="'POST_FORM.location-building-num' | translate"
-          [required]="false"
-          [maxLength]="16"
-          inputId="buildingNum"
-        ></app-form-input>
-
-        <app-form-input
-          [control]="venueNameControl"
-          [label]="'POST_FORM.location-venue-name' | translate"
-          [required]="false"
-          [maxLength]="64"
-          inputId="venueName"
-        ></app-form-input>
-      </div>
-
-      <div class="post-form__row" formGroupName="coordinates">
-        <app-form-input
-          [control]="latitudeControl"
-          [label]="'POST_FORM.location-latitude' | translate"
-          type="number"
-          step="any"
-          [required]="true"
-          inputId="latitude"
-          [errorMessages]="{
-            required: ('POST_FORM.location-latitude-error' | translate),
-            min: ('POST_FORM.location-latitude-error' | translate),
-            max: ('POST_FORM.location-latitude-error' | translate),
-          }"
-        ></app-form-input>
-
-        <app-form-input
-          [control]="longitudeControl"
-          [label]="'POST_FORM.location-longitude' | translate"
-          type="number"
-          step="any"
-          [required]="true"
-          inputId="longitude"
-          [errorMessages]="{
-            required: ('POST_FORM.location-longitude-error' | translate),
-            min: ('POST_FORM.location-longitude-error' | translate),
-            max: ('POST_FORM.location-longitude-error' | translate),
-          }"
-        ></app-form-input>
-      </div>
-    </div>
-  }
 
   <!-- Media section -->
   <div class="post-form__media-section">
@@ -362,13 +280,24 @@
     ></app-form-file-upload>
   </div>
 
-  <!-- Submit -->
+  <app-form-input
+    [control]="eventUrlControl"
+    [label]="'POST_FORM.event-url' | translate"
+    [placeholder]="'POST_FORM.event-url-placeholder' | translate"
+    type="url"
+    inputId="eventUrl"
+  ></app-form-input>
+
   <div class="post-form__actions">
-    <app-btn
-      variant="primary"
-      type="submit"
-      [disabled]="postForm.invalid || isSubmitting || hasUploading"
-    >
+    <label class="post-form__audience">
+      <span>{{ 'POST_FORM.visibility' | translate }}</span>
+      <select class="post-form__audience-select" formControlName="visibility">
+        @for (option of visibilityOptions; track option.value) {
+          <option [value]="option.value">{{ option.labelKey | translate }}</option>
+        }
+      </select>
+    </label>
+    <app-btn variant="primary" type="submit" [disabled]="isSubmitting || hasUploading">
       {{
         isSubmitting
           ? ('POST_FORM.submit-saving' | translate)

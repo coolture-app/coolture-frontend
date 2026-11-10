@@ -7,4 +7,6 @@ export interface PostMark {
   coverMediaUrl?: string;
   positiveReactionCount: number;
   coordinates: GeoPoint;
+  venueName?: string;
+  city?: string;
 }

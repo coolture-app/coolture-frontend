@@ -3,6 +3,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, Subject, throwError } from 'rxjs';
 
 import { FormPhoto, PostForm } from './post-form';
+import { PlacePicker } from '../place-picker/place-picker';
+import { WITHOUT_MAPLIBRE } from '../map/map-stubs.testing';
 import { PostFormData } from '../../models/posts/post-form-data.model';
 import { PostDetail, PostMedia } from '../../models/posts/post-detail.model';
 import { MediaService } from '../../services/media/media.service';
@@ -11,6 +13,7 @@ import { ToastService } from '../../services/toast/toast.service';
 const SUMMER_START = '2026-07-10T17:00:00Z';
 const SUMMER_END = '2026-07-10T19:30:00Z';
 const WINTER_START = '2026-12-10T18:00:00Z';
+const WINTER_END = '2026-12-10T21:00:00Z';
 
 function post(startsAt: string, endsAt?: string): PostDetail {
   return {
@@ -93,7 +96,9 @@ describe('PostForm photos', () => {
     await TestBed.configureTestingModule({
       imports: [PostForm],
       providers: [{ provide: MediaService, useValue: media }],
-    }).compileComponents();
+    })
+      .overrideComponent(PlacePicker, WITHOUT_MAPLIBRE)
+      .compileComponents();
     fixture = TestBed.createComponent(PostForm);
     component = fixture.componentInstance;
   });
@@ -382,7 +387,9 @@ describe('PostForm editing an existing post', () => {
   }
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({ imports: [PostForm] }).compileComponents();
+    await TestBed.configureTestingModule({ imports: [PostForm] })
+      .overrideComponent(PlacePicker, WITHOUT_MAPLIBRE)
+      .compileComponents();
     fixture = TestBed.createComponent(PostForm);
     component = fixture.componentInstance;
   });
@@ -395,13 +402,16 @@ describe('PostForm editing an existing post', () => {
   });
 
   it('saves the same moment when nothing was changed, in summer and in winter', () => {
-    for (const startsAt of [SUMMER_START, WINTER_START]) {
-      load(post(startsAt, SUMMER_END));
+    for (const [startsAt, endsAt] of [
+      [SUMMER_START, SUMMER_END],
+      [WINTER_START, WINTER_END],
+    ]) {
+      load(post(startsAt, endsAt));
 
       const saved = submit();
 
       expect(new Date(saved.startsAt).getTime()).toBe(new Date(startsAt).getTime());
-      expect(new Date(saved.endsAt!).getTime()).toBe(new Date(SUMMER_END).getTime());
+      expect(new Date(saved.endsAt!).getTime()).toBe(new Date(endsAt).getTime());
       component.resetSubmitting();
     }
   });
@@ -422,5 +432,116 @@ describe('PostForm editing an existing post', () => {
 
     expect(component.endsAtControl.value).toBe('');
     expect(submit().endsAt).toBeNull();
+  });
+});
+
+describe('PostForm fields', () => {
+  let component: PostForm;
+  let fixture: ComponentFixture<PostForm>;
+
+  function submit(): PostFormData | undefined {
+    let emitted: PostFormData | undefined;
+    component.formSubmit.subscribe((data) => (emitted = data));
+    component.onSubmit();
+    return emitted;
+  }
+
+  function fillEventFields(): void {
+    component.postForm.patchValue({
+      title: 'Koncert',
+      startsAt: '2030-05-01T19:00',
+      description: 'Opis',
+    });
+  }
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({ imports: [PostForm] })
+      .overrideComponent(PlacePicker, WITHOUT_MAPLIBRE)
+      .compileComponents();
+    fixture = TestBed.createComponent(PostForm);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('starts in person, with the end hidden and no errors shown', () => {
+    expect(component.isOffline).toBeTrue();
+    expect(component.showEnd).toBeFalse();
+    expect(fixture.nativeElement.querySelectorAll('.has-error').length).toBe(0);
+  });
+
+  it('needs a place in person, and a pin with a city is enough', () => {
+    fillEventFields();
+
+    expect(submit()).toBeUndefined();
+
+    component.locationGroup.patchValue({
+      city: 'Gdańsk',
+      coordinates: { latitude: 54.35, longitude: 18.65 },
+    });
+    const data = submit()!;
+
+    expect(data.location).toEqual({
+      countryCode: null,
+      venueName: null,
+      street: null,
+      buildingNum: null,
+      postalCode: null,
+      city: 'Gdańsk',
+      coordinates: { latitude: 54.35, longitude: 18.65 },
+    });
+  });
+
+  it('marks what is missing after a failed save', () => {
+    submit();
+    fixture.detectChanges();
+
+    expect(component.titleControl.touched).toBeTrue();
+    expect(fixture.nativeElement.querySelectorAll('.has-error').length).toBeGreaterThan(0);
+  });
+
+  it('sends no place online, and keeps the typed one for a switch back', () => {
+    fillEventFields();
+    component.locationGroup.patchValue({ city: 'Gdańsk' });
+
+    component.postForm.controls.type.setValue('ONLINE');
+
+    expect(submit()!.location).toBeNull();
+    expect(component.locationGroup.controls.city.value).toBe('Gdańsk');
+  });
+
+  it('refuses an end before the start', () => {
+    fillEventFields();
+    component.postForm.controls.type.setValue('ONLINE');
+    component.addEnd();
+    component.endsAtControl.setValue('2030-05-01T18:00');
+
+    expect(submit()).toBeUndefined();
+    expect(component.endsAtControl.hasError('afterStart')).toBeTrue();
+
+    component.endsAtControl.setValue('2030-05-01T22:00');
+
+    expect(submit()!.endsAt).toBe(new Date('2030-05-01T22:00').toISOString());
+  });
+
+  it('sends no end once it is removed', () => {
+    fillEventFields();
+    component.postForm.controls.type.setValue('ONLINE');
+    component.addEnd();
+    component.endsAtControl.setValue('2030-05-01T22:00');
+
+    component.removeEnd();
+
+    expect(submit()!.endsAt).toBeNull();
+  });
+
+  it('offers no Prywatne, except on a post saved as private', () => {
+    expect(component.visibilityOptions.map((option) => option.value)).toEqual([
+      'PUBLIC',
+      'FRIENDS',
+    ]);
+
+    fixture.componentRef.setInput('initialData', { ...post(SUMMER_START), visibility: 'PRIVATE' });
+
+    expect(component.visibilityOptions.map((option) => option.value)).toContain('PRIVATE');
   });
 });

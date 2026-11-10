@@ -1,0 +1,299 @@
+@let form = group();
+@let current = draft();
+<div class="place-picker">
+  <div class="place-picker__search">
+    <svg
+      class="place-picker__search-icon"
+      xmlns="http://www.w3.org/2000/svg"
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="11" cy="11" r="7"></circle>
+      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+    </svg>
+    <label for="place-search" class="place-picker__visually-hidden">{{
+      'PLACE_PICKER.search-label' | translate
+    }}</label>
+    <input
+      #searchBox
+      id="place-search"
+      class="place-picker__input"
+      type="text"
+      role="combobox"
+      autocomplete="off"
+      aria-autocomplete="list"
+      aria-controls="place-suggestions"
+      [attr.aria-expanded]="listOpen() && suggestions().length > 0"
+      [attr.aria-activedescendant]="active() >= 0 ? 'place-option-' + active() : null"
+      [attr.aria-invalid]="form.controls.coordinates.touched && form.controls.coordinates.invalid"
+      [attr.aria-describedby]="
+        form.controls.coordinates.touched && form.controls.coordinates.invalid
+          ? 'place-error'
+          : null
+      "
+      [placeholder]="
+        (hasPlace() ? 'PLACE_PICKER.search-again' : 'PLACE_PICKER.search-placeholder') | translate
+      "
+      [value]="query()"
+      (input)="onType($any($event.target).value)"
+      (keydown)="onSearchKey($event)"
+      (focus)="listOpen.set(true)"
+      (blur)="listOpen.set(false)"
+    />
+
+    @if (listOpen() && suggestions().length > 0) {
+      <div class="place-picker__dropdown">
+        <ul id="place-suggestions" class="place-picker__list" role="listbox">
+          @for (place of suggestions(); track $index; let i = $index) {
+            @let lines = describe(place);
+            <!-- The keyboard works through the search box, as a combobox's options do. -->
+            <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+            <li
+              [id]="'place-option-' + i"
+              class="place-picker__option"
+              [class.place-picker__option--active]="i === active()"
+              role="option"
+              [attr.aria-selected]="i === active()"
+              (mousedown)="$event.preventDefault()"
+              (click)="pick(place)"
+            >
+              <span class="place-picker__option-name">{{ lines.name }}</span>
+              @if (lines.address) {
+                <span class="place-picker__option-address">{{ lines.address }}</span>
+              }
+            </li>
+          }
+        </ul>
+        <p class="place-picker__attribution">
+          ©
+          <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener"
+            >OpenStreetMap contributors</a
+          >
+        </p>
+      </div>
+    }
+  </div>
+
+  @if (searchUnavailable() || lookupFailed()) {
+    <p class="place-picker__note" role="status">
+      {{
+        (searchUnavailable() ? 'PLACE_PICKER.search-unavailable' : 'PLACE_PICKER.lookup-failed')
+          | translate
+      }}
+    </p>
+  }
+
+  @if (form.controls.coordinates.touched && form.controls.coordinates.invalid) {
+    <p id="place-error" class="place-picker__error">
+      {{ 'PLACE_PICKER.error-no-place' | translate }}
+    </p>
+  }
+
+  @if (!showMap()) {
+    <button type="button" class="place-picker__link" (click)="mapRequested.set(true)">
+      {{ 'PLACE_PICKER.point-on-map' | translate }}
+    </button>
+  }
+
+  @if (hasPlace()) {
+    <div class="place-picker__summary">
+      <svg
+        class="place-picker__summary-icon"
+        xmlns="http://www.w3.org/2000/svg"
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        aria-hidden="true"
+      >
+        <path
+          d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"
+        />
+      </svg>
+      <div class="place-picker__summary-text" aria-live="polite">
+        <span class="place-picker__summary-name">
+          {{ summary().name || ('PLACE_PICKER.pinned-place' | translate) }}
+        </span>
+        @if (lookingUp()) {
+          <span class="place-picker__summary-address">{{
+            'PLACE_PICKER.looking-up' | translate
+          }}</span>
+        } @else if (summary().address) {
+          <span class="place-picker__summary-address">{{ summary().address }}</span>
+        }
+      </div>
+      <button
+        type="button"
+        class="place-picker__clear"
+        (click)="clear()"
+        [attr.aria-label]="'PLACE_PICKER.clear' | translate"
+        [title]="'PLACE_PICKER.clear' | translate"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          aria-hidden="true"
+        >
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    @if (current.offer; as offer) {
+      <div class="place-picker__offers">
+        @if (offeredAddress(); as address) {
+          <p class="place-picker__offer">
+            <span>{{ 'PLACE_PICKER.offer-address' | translate: { address } }}</span>
+            <button type="button" class="place-picker__link" (click)="take('address')">
+              {{ 'PLACE_PICKER.use-address' | translate }}
+            </button>
+          </p>
+        }
+        @if (offer.name) {
+          <p class="place-picker__offer">
+            <span>{{ 'PLACE_PICKER.offer-name' | translate: { name: offer.name } }}</span>
+            <button type="button" class="place-picker__link" (click)="take('name')">
+              {{ 'PLACE_PICKER.use-name' | translate }}
+            </button>
+          </p>
+        }
+      </div>
+    }
+  }
+
+  @if (showMap()) {
+    @if (tilesFailed()) {
+      <div class="place-picker__coordinates">
+        <p class="place-picker__note">{{ 'PLACE_PICKER.map-unavailable' | translate }}</p>
+        <div class="place-picker__row">
+          <app-form-input
+            [control]="latitude"
+            [label]="'PLACE_PICKER.latitude' | translate"
+            type="number"
+            step="any"
+            [required]="true"
+            inputId="place-latitude"
+            (change)="onCoordinatesTyped()"
+          ></app-form-input>
+          <app-form-input
+            [control]="longitude"
+            [label]="'PLACE_PICKER.longitude' | translate"
+            type="number"
+            step="any"
+            [required]="true"
+            inputId="place-longitude"
+            (change)="onCoordinatesTyped()"
+          ></app-form-input>
+        </div>
+      </div>
+    } @else if (inBrowser()) {
+      <div class="place-picker__map">
+        <mgl-map
+          [style]="mapStyle"
+          [center]="view.center"
+          [zoom]="[view.zoom]"
+          [cooperativeGestures]="true"
+          [attributionControl]="{ compact: true }"
+          (mapLoad)="onMapLoad($event)"
+          (mapError)="onMapError()"
+          (mapClick)="onMapClick($event)"
+        >
+          @if (pin(); as at) {
+            <mgl-marker
+              [lngLat]="at"
+              [draggable]="true"
+              anchor="bottom"
+              (markerDragEnd)="onPinDragged($event)"
+            >
+              <svg
+                class="place-picker__pin"
+                xmlns="http://www.w3.org/2000/svg"
+                width="32"
+                height="40"
+                viewBox="0 0 32 40"
+                aria-hidden="true"
+              >
+                <path
+                  d="M16 1C7.7 1 1 7.6 1 15.8 1 27 16 39 16 39s15-12 15-23.2C31 7.6 24.3 1 16 1z"
+                  fill="currentColor"
+                  stroke="#fff"
+                  stroke-width="2"
+                />
+                <circle cx="16" cy="15.5" r="5.5" fill="#fff" />
+              </svg>
+            </mgl-marker>
+          }
+        </mgl-map>
+      </div>
+      <p class="place-picker__hint">
+        {{
+          (hasPlace() ? 'PLACE_PICKER.map-hint-move' : 'PLACE_PICKER.map-hint-place') | translate
+        }}
+      </p>
+    }
+  }
+
+  @if (hasPlace() || tilesFailed()) {
+    @if (fieldsOpen()) {
+      <div class="place-picker__fields">
+        <app-form-input
+          [control]="form.controls.venueName"
+          [label]="'PLACE_PICKER.venue-name' | translate"
+          [maxLength]="limits.venueName"
+          inputId="place-venue-name"
+        ></app-form-input>
+        <div class="place-picker__row place-picker__row--street">
+          <app-form-input
+            [control]="form.controls.street"
+            [label]="'PLACE_PICKER.street' | translate"
+            [maxLength]="limits.street"
+            inputId="place-street"
+          ></app-form-input>
+          <app-form-input
+            [control]="form.controls.buildingNum"
+            [label]="'PLACE_PICKER.building-num' | translate"
+            [maxLength]="limits.buildingNum"
+            inputId="place-building-num"
+          ></app-form-input>
+        </div>
+        <div class="place-picker__row place-picker__row--town">
+          <app-form-input
+            [control]="form.controls.postalCode"
+            [label]="'PLACE_PICKER.postal-code' | translate"
+            [maxLength]="limits.postalCode"
+            inputId="place-postal-code"
+          ></app-form-input>
+          <app-form-input
+            [control]="form.controls.city"
+            [label]="'PLACE_PICKER.city' | translate"
+            [required]="true"
+            [maxLength]="limits.city"
+            inputId="place-city"
+            [errorMessages]="{
+              required: ('PLACE_PICKER.error-city' | translate),
+              pattern: ('PLACE_PICKER.error-city' | translate),
+            }"
+          ></app-form-input>
+        </div>
+      </div>
+    } @else {
+      <button type="button" class="place-picker__link" (click)="fieldsOpen.set(true)">
+        {{ 'PLACE_PICKER.edit-address' | translate }}
+      </button>
+    }
+  }
+</div>

@@ -8,7 +8,6 @@ export interface PostFormData {
   endsAt: string | null;
   description: string;
   eventUrl: string | null;
-  tags: string[];
   visibility: PostVisibility;
   location: EventLocationRequest | null;
   /** In the order the post shows them. The first is the cover. */

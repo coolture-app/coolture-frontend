@@ -12,26 +12,35 @@ import {
   OnChanges,
   SimpleChanges,
   DestroyRef,
+  afterNextRender,
+  Injector,
+  viewChild,
 } from '@angular/core';
 import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { CommonModule, formatDate } from '@angular/common';
-import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormBuilder,
+  FormControl,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { lastValueFrom, Observable } from 'rxjs';
+import { lastValueFrom } from 'rxjs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { FormInput } from '../form-input/form-input';
-import { FormSelect, SelectOption } from '../form-select/form-select';
 import { FormTextarea } from '../form-textarea/form-textarea';
 import { FormFileUpload } from '../form-file-upload/form-file-upload';
 import { Btn } from '../btn/btn';
+import { locationForm, PlacePicker } from '../place-picker/place-picker';
 
 import { PostFormData } from '../../models/posts/post-form-data.model';
 import { PostDetail, PostMedia } from '../../models/posts/post-detail.model';
 import { PostType, PostVisibility } from '../../models/common/enums';
+import { EventLocationRequest } from '../../models/common/geo.model';
 import { imageSize, MediaService } from '../../services/media/media.service';
-import { DictionaryService } from '../../services/dictionary/dictionary.service';
-import { CountryCode } from '../../models/dictionary/country-code.model';
 import { MAX_POST_PHOTOS } from '../../models/posts/post-limits';
 import { ToastService } from '../../services/toast/toast.service';
 
@@ -41,6 +50,20 @@ import { ToastService } from '../../services/toast/toast.service';
  */
 function toLocalInputValue(iso: string | undefined): string {
   return iso ? formatDate(iso, "yyyy-MM-dd'T'HH:mm", 'en-US') : '';
+}
+
+/** The API refuses an end that isn't after the start. The error sits on the end, where it shows. */
+function endAfterStart(form: AbstractControl): ValidationErrors | null {
+  const startsAt: string = form.get('startsAt')?.value;
+  const endsAt = form.get('endsAt');
+  if (!endsAt) {
+    return null;
+  }
+  const wrong = !!startsAt && !!endsAt.value && endsAt.value <= startsAt;
+  if (wrong !== endsAt.hasError('afterStart')) {
+    endsAt.setErrors(wrong ? { afterStart: true } : null);
+  }
+  return null;
 }
 
 /** One photo in the form's gallery: saved on the post, or added in this form. */
@@ -55,6 +78,12 @@ export interface FormPhoto {
 
 type PhotoControl = 'earlier' | 'later' | 'remove';
 
+const VISIBILITY_LABELS: Record<PostVisibility, string> = {
+  PUBLIC: 'POST_FORM.visibility-public',
+  FRIENDS: 'POST_FORM.visibility-friends',
+  PRIVATE: 'POST_FORM.visibility-private',
+};
+
 @Component({
   selector: 'app-post-form',
   standalone: true,
@@ -63,12 +92,12 @@ type PhotoControl = 'earlier' | 'later' | 'remove';
     ReactiveFormsModule,
     TranslatePipe,
     FormInput,
-    FormSelect,
     FormTextarea,
     FormFileUpload,
     Btn,
     CdkDropList,
     CdkDrag,
+    PlacePicker,
   ],
   templateUrl: './post-form.html',
   styleUrl: './post-form.scss',
@@ -82,115 +111,71 @@ export class PostForm implements OnInit, OnChanges, AfterViewChecked, OnDestroy 
 
   private fb = inject(FormBuilder);
   private mediaService = inject(MediaService);
-  private dictionaryService = inject(DictionaryService);
   private cdr = inject(ChangeDetectorRef);
   private destroyRef = inject(DestroyRef);
+  private injector = inject(Injector);
   private translate = inject(TranslateService);
   private toast = inject(ToastService);
   private host = inject(ElementRef);
 
-  countryCodes$: Observable<CountryCode[]> = this.dictionaryService.getCountryCodes();
-
-  countryCodeOptions: SelectOption[] = [];
+  private readonly placePicker = viewChild(PlacePicker);
 
   /** In the order the post shows them. The first is the cover. */
   photos: FormPhoto[] = [];
   /** What screen readers hear after a change to the photos, which sighted people see happen. */
   photoStatus = '';
   isSubmitting = false;
+  /** Most events have no end, so its field waits for "Dodaj zakończenie". */
+  showEnd = false;
 
   private removedMediaIds: string[] = [];
   private nextPhotoKey = 0;
   private isLeft = false;
   private pendingFocus: { key: string | null; control: PhotoControl } | null = null;
 
-  typeOptions: SelectOption[] = [
-    { value: 'ONLINE', label: '' },
-    { value: 'OFFLINE', label: '' },
-  ];
-
-  visibilityOptions: SelectOption[] = [
-    { value: 'PUBLIC', label: '' },
-    { value: 'PRIVATE', label: '' },
-    { value: 'FRIENDS', label: '' },
-  ];
-
-  // Form definition with validation matching API contract + DB schema
-  postForm = this.fb.group({
-    title: ['', [Validators.required, Validators.maxLength(128)]],
-    type: ['ONLINE' as PostType, Validators.required],
-    startsAt: ['', Validators.required],
-    endsAt: [''],
-    description: ['', [Validators.required, Validators.maxLength(1024)]],
-    eventUrl: [''],
-    tags: [''],
-    visibility: ['PUBLIC' as PostVisibility, Validators.required],
-    location: this.fb.group({
-      countryCode: ['', [Validators.minLength(3), Validators.maxLength(3)]],
-      venueName: ['', Validators.maxLength(64)],
-      buildingNum: ['', Validators.maxLength(16)],
-      street: ['', Validators.maxLength(128)],
-      postalCode: ['', Validators.maxLength(16)],
-      city: ['', Validators.maxLength(128)],
-      coordinates: this.fb.group({
-        latitude: [null as number | null, [Validators.min(-90), Validators.max(90)]],
-        longitude: [null as number | null, [Validators.min(-180), Validators.max(180)]],
-      }),
-    }),
-  });
-
-  // FormControl getters for template
-  get titleControl(): FormControl {
-    return this.postForm.get('title') as FormControl;
+  /** Prywatne left the form. A post saved as private keeps it while being edited. */
+  get visibilityOptions(): { value: PostVisibility; labelKey: string }[] {
+    const values: PostVisibility[] =
+      this.initialData?.visibility === 'PRIVATE'
+        ? ['PUBLIC', 'FRIENDS', 'PRIVATE']
+        : ['PUBLIC', 'FRIENDS'];
+    return values.map((value) => ({ value, labelKey: VISIBILITY_LABELS[value] }));
   }
-  get typeControl(): FormControl {
-    return this.postForm.get('type') as FormControl;
+
+  readonly locationGroup = locationForm();
+
+  postForm = this.fb.group(
+    {
+      title: ['', [Validators.required, Validators.maxLength(128)]],
+      type: ['OFFLINE' as PostType, Validators.required],
+      startsAt: ['', Validators.required],
+      endsAt: [''],
+      description: ['', [Validators.required, Validators.maxLength(1024)]],
+      eventUrl: [''],
+      visibility: ['PUBLIC' as PostVisibility, Validators.required],
+      location: this.locationGroup,
+    },
+    { validators: endAfterStart },
+  );
+
+  get titleControl(): FormControl {
+    return this.postForm.controls.title;
   }
   get startsAtControl(): FormControl {
-    return this.postForm.get('startsAt') as FormControl;
+    return this.postForm.controls.startsAt;
   }
   get endsAtControl(): FormControl {
-    return this.postForm.get('endsAt') as FormControl;
+    return this.postForm.controls.endsAt;
   }
   get descriptionControl(): FormControl {
-    return this.postForm.get('description') as FormControl;
+    return this.postForm.controls.description;
   }
   get eventUrlControl(): FormControl {
-    return this.postForm.get('eventUrl') as FormControl;
-  }
-  get tagsControl(): FormControl {
-    return this.postForm.get('tags') as FormControl;
-  }
-  get visibilityControl(): FormControl {
-    return this.postForm.get('visibility') as FormControl;
-  }
-  get countryCodeControl(): FormControl {
-    return this.postForm.get('location.countryCode') as FormControl;
-  }
-  get cityControl(): FormControl {
-    return this.postForm.get('location.city') as FormControl;
-  }
-  get postalCodeControl(): FormControl {
-    return this.postForm.get('location.postalCode') as FormControl;
-  }
-  get streetControl(): FormControl {
-    return this.postForm.get('location.street') as FormControl;
-  }
-  get buildingNumControl(): FormControl {
-    return this.postForm.get('location.buildingNum') as FormControl;
-  }
-  get venueNameControl(): FormControl {
-    return this.postForm.get('location.venueName') as FormControl;
-  }
-  get latitudeControl(): FormControl {
-    return this.postForm.get('location.coordinates.latitude') as FormControl;
-  }
-  get longitudeControl(): FormControl {
-    return this.postForm.get('location.coordinates.longitude') as FormControl;
+    return this.postForm.controls.eventUrl;
   }
 
   get isOffline(): boolean {
-    return this.postForm.get('type')?.value === 'OFFLINE';
+    return this.postForm.controls.type.value === 'OFFLINE';
   }
 
   get hasUploading(): boolean {
@@ -204,30 +189,9 @@ export class PostForm implements OnInit, OnChanges, AfterViewChecked, OnDestroy 
   }
 
   ngOnInit(): void {
-    // Load dictionaries, then re-patch form if initialData already arrived
-    this.countryCodes$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((codes) => {
-      this.countryCodeOptions = codes.map((c) => ({ value: c.code, label: c.code }));
-      // Re-sync select after options are available
-      if (this.initialData?.location) {
-        this.countryCodeControl.setValue(this.initialData.location.countryCode ?? '', {
-          emitEvent: false,
-        });
-      }
-    });
-
-    // Subscribe to type changes for location validators
-    this.postForm
-      .get('type')
-      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((type) => this.toggleLocationValidators(type ?? 'ONLINE'));
-
-    this.toggleLocationValidators(this.postForm.get('type')?.value ?? 'ONLINE');
-
-    // Set translated labels for type/visibility
-    this.updateTranslatedOptions();
-    this.translate.onLangChange
+    this.postForm.controls.type.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.updateTranslatedOptions());
+      .subscribe((type) => this.matchLocationTo(type ?? 'OFFLINE'));
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -239,21 +203,17 @@ export class PostForm implements OnInit, OnChanges, AfterViewChecked, OnDestroy 
     }
   }
 
-  private updateTranslatedOptions(): void {
-    this.typeOptions = [
-      { value: 'ONLINE', label: this.translate.instant('POST_FORM.type-online') },
-      { value: 'OFFLINE', label: this.translate.instant('POST_FORM.type-offline') },
-    ];
-    this.visibilityOptions = [
-      { value: 'PUBLIC', label: this.translate.instant('POST_FORM.visibility-public') },
-      { value: 'PRIVATE', label: this.translate.instant('POST_FORM.visibility-private') },
-      { value: 'FRIENDS', label: this.translate.instant('POST_FORM.visibility-friends') },
-    ];
+  /** An online post has no place, so its fields don't validate. They stay filled for a switch back. */
+  private matchLocationTo(type: PostType): void {
+    if (type === 'OFFLINE') {
+      this.locationGroup.enable({ emitEvent: false });
+    } else {
+      this.locationGroup.disable({ emitEvent: false });
+    }
   }
 
   private patchFormFromPost(post: PostDetail): void {
-    const tagsStr = post.tags ? post.tags.join(', ') : '';
-
+    const location = post.location;
     this.postForm.patchValue({
       title: post.title,
       type: post.type,
@@ -261,51 +221,29 @@ export class PostForm implements OnInit, OnChanges, AfterViewChecked, OnDestroy 
       endsAt: toLocalInputValue(post.endsAt),
       description: post.description ?? '',
       eventUrl: post.eventUrl ?? '',
-      tags: tagsStr,
       visibility: post.visibility ?? 'PUBLIC',
       location: {
-        countryCode: post.location?.countryCode ?? '',
-        venueName: post.location?.venueName ?? '',
-        buildingNum: post.location?.buildingNum ?? '',
-        street: post.location?.street ?? '',
-        postalCode: post.location?.postalCode ?? '',
-        city: post.location?.city ?? '',
-        coordinates: {
-          latitude: post.location?.coordinates?.latitude ?? null,
-          longitude: post.location?.coordinates?.longitude ?? null,
-        },
+        venueName: location?.venueName ?? '',
+        street: location?.street ?? '',
+        buildingNum: location?.buildingNum ?? '',
+        postalCode: location?.postalCode ?? '',
+        city: location?.city ?? '',
+        countryCode: location?.countryCode ?? null,
+        coordinates: location?.coordinates ?? null,
       },
     });
-
-    this.toggleLocationValidators(post.type);
+    this.showEnd = !!post.endsAt;
+    this.matchLocationTo(post.type);
   }
 
-  private toggleLocationValidators(type: PostType): void {
-    const controls = [
-      this.countryCodeControl,
-      this.postalCodeControl,
-      this.cityControl,
-      this.latitudeControl,
-      this.longitudeControl,
-    ];
+  addEnd(): void {
+    this.showEnd = true;
+    this.focusAfterRender('#endsAt');
+  }
 
-    if (controls.some((c) => !c)) return;
-
-    if (type === 'OFFLINE') {
-      this.countryCodeControl.addValidators(Validators.required);
-      this.postalCodeControl.addValidators(Validators.required);
-      this.cityControl.addValidators(Validators.required);
-      this.latitudeControl.addValidators(Validators.required);
-      this.longitudeControl.addValidators(Validators.required);
-    } else {
-      this.countryCodeControl.removeValidators(Validators.required);
-      this.postalCodeControl.removeValidators(Validators.required);
-      this.cityControl.removeValidators(Validators.required);
-      this.latitudeControl.removeValidators(Validators.required);
-      this.longitudeControl.removeValidators(Validators.required);
-    }
-
-    controls.forEach((c) => c.updateValueAndValidity({ emitEvent: false }));
+  removeEnd(): void {
+    this.showEnd = false;
+    this.postForm.controls.endsAt.setValue('');
   }
 
   async onFilesSelected(selected: File[]): Promise<void> {
@@ -473,55 +411,62 @@ export class PostForm implements OnInit, OnChanges, AfterViewChecked, OnDestroy 
   }
 
   onSubmit(): void {
-    if (this.postForm.invalid || this.isSubmitting || this.hasUploading) {
+    if (this.isSubmitting || this.hasUploading) {
+      return;
+    }
+    if (this.postForm.invalid) {
       this.postForm.markAllAsTouched();
+      this.revealFirstError();
       return;
     }
 
     this.isSubmitting = true;
-    const formValue = this.postForm.getRawValue();
-    const isOffline = formValue.type === 'OFFLINE';
-
-    // In the order the post will show them: the first is the cover.
-    const mediaIds = this.photos.flatMap((photo) => photo.mediaId ?? []);
-
-    // Parse tags from comma-separated string
-    const tagsRaw = formValue.tags ?? '';
-    const tags = tagsRaw
-      .split(',')
-      .map((t: string) => t.trim())
-      .filter((t: string) => t.length > 0)
-      .slice(0, 10)
-      .map((t: string) => t.substring(0, 32));
+    const form = this.postForm.getRawValue();
 
     const data: PostFormData = {
-      title: formValue.title ?? '',
-      type: formValue.type ?? 'ONLINE',
-      startsAt: formValue.startsAt ? new Date(formValue.startsAt).toISOString() : '',
-      endsAt: formValue.endsAt ? new Date(formValue.endsAt).toISOString() : null,
-      description: formValue.description ?? '',
-      eventUrl: formValue.eventUrl || null,
-      tags,
-      visibility: (formValue.visibility as PostVisibility) ?? 'PUBLIC',
-      location: isOffline
-        ? {
-            countryCode: formValue.location?.countryCode ?? '',
-            venueName: formValue.location?.venueName || null,
-            buildingNum: formValue.location?.buildingNum || null,
-            street: formValue.location?.street || null,
-            postalCode: formValue.location?.postalCode ?? '',
-            city: formValue.location?.city ?? '',
-            coordinates: {
-              latitude: Number(formValue.location?.coordinates?.latitude),
-              longitude: Number(formValue.location?.coordinates?.longitude),
-            },
-          }
-        : null,
-      mediaIds,
+      title: form.title ?? '',
+      type: form.type ?? 'OFFLINE',
+      startsAt: form.startsAt ? new Date(form.startsAt).toISOString() : '',
+      endsAt: this.showEnd && form.endsAt ? new Date(form.endsAt).toISOString() : null,
+      description: form.description ?? '',
+      eventUrl: form.eventUrl?.trim() || null,
+      visibility: form.visibility ?? 'PUBLIC',
+      location: form.type === 'OFFLINE' ? this.locationRequest() : null,
+      // In the order the post will show them: the first is the cover.
+      mediaIds: this.photos.flatMap((photo) => photo.mediaId ?? []),
       removedMediaIds: this.removedMediaIds,
     };
 
     this.formSubmit.emit(data);
+  }
+
+  private locationRequest(): EventLocationRequest {
+    const place = this.locationGroup.getRawValue();
+    const optional = (text: string) => text.trim() || null;
+    return {
+      countryCode: place.countryCode,
+      venueName: optional(place.venueName),
+      street: optional(place.street),
+      buildingNum: optional(place.buildingNum),
+      postalCode: optional(place.postalCode),
+      city: place.city.trim(),
+      coordinates: place.coordinates!,
+    };
+  }
+
+  /** Once the errors are on screen, the first one takes the focus, which scrolls it into view. */
+  private revealFirstError(): void {
+    if (this.isOffline) {
+      this.placePicker()?.revealErrors();
+    }
+    this.focusAfterRender('.has-error input, .has-error textarea, [aria-invalid="true"]');
+  }
+
+  private focusAfterRender(selector: string): void {
+    afterNextRender(
+      () => (this.host.nativeElement as HTMLElement).querySelector<HTMLElement>(selector)?.focus(),
+      { injector: this.injector },
+    );
   }
 
   resetSubmitting(): void {
@@ -529,19 +474,9 @@ export class PostForm implements OnInit, OnChanges, AfterViewChecked, OnDestroy 
   }
 
   resetForm(): void {
-    this.postForm.reset({
-      type: 'ONLINE',
-      visibility: 'PUBLIC',
-      location: {
-        countryCode: '',
-        venueName: '',
-        buildingNum: '',
-        street: '',
-        postalCode: '',
-        city: '',
-        coordinates: { latitude: null, longitude: null },
-      },
-    });
+    this.postForm.reset({ type: 'OFFLINE', visibility: 'PUBLIC' });
+    this.matchLocationTo('OFFLINE');
+    this.showEnd = false;
     this.photos.filter((p) => !p.isSaved).forEach((p) => URL.revokeObjectURL(p.url));
     this.photos = [];
     this.removedMediaIds = [];

@@ -26,6 +26,7 @@ import {
 import { FeatureCollection, Point, Feature, Polygon } from 'geojson';
 import { MapMarker } from '../map-marker/map-marker';
 import { MapPopup } from '../map-popup/map-popup';
+import { MAP_STYLE } from '../map-style';
 
 @Component({
   selector: 'app-map',
@@ -47,6 +48,8 @@ import { MapPopup } from '../map-popup/map-popup';
 })
 export class Map implements OnDestroy {
   private postService = inject(PostService);
+
+  readonly mapStyle = MAP_STYLE;
 
   filters = input<PostFilterParams>({});
   /** The feed's tab: leave out what the feed leaves out, so the map shows the same posts as the list. */

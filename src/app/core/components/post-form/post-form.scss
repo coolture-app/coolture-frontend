@@ -5,30 +5,134 @@
   flex-direction: column;
   gap: var(--space-lg);
 
-  &__row {
+  &__section {
     display: flex;
-    gap: var(--space-md);
-
-    > * {
-      flex: 1;
-    }
+    flex-direction: column;
+    gap: var(--space-sm);
   }
 
   &__section-title {
-    margin: 0 0 var(--space-sm) 0;
+    margin: 0;
     font-size: var(--text-base);
     font-weight: var(--font-semibold);
     color: var(--color-text);
   }
 
-  &__location {
-    border: 1px solid var(--color-border-light);
-    border-radius: var(--radius-md);
-    padding: var(--space-md);
-    display: flex;
-    flex-direction: column;
+  &__when {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: var(--space-md);
-    background: var(--color-surface-alt);
+  }
+
+  &__end {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-xs);
+
+    app-form-input {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+
+  &__remove-end {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    // Level with the input, under its label.
+    margin-top: 30px;
+    border: none;
+    border-radius: var(--radius-full);
+    background: none;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+
+    &:hover {
+      background: var(--color-surface-alt);
+      color: var(--color-text);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-accent);
+    }
+  }
+
+  &__add {
+    align-self: flex-start;
+    padding: 2px 0;
+    border: none;
+    background: none;
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    color: var(--color-accent);
+    cursor: pointer;
+
+    &:hover {
+      text-decoration: underline;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-accent);
+      outline-offset: 2px;
+    }
+  }
+
+  &__where-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+  }
+
+  &__segmented {
+    display: inline-flex;
+    padding: 3px;
+    border-radius: var(--radius-full);
+    background: var(--color-border-light);
+  }
+
+  &__segment {
+    position: relative;
+
+    input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    span {
+      display: block;
+      padding: 6px 14px;
+      border-radius: var(--radius-full);
+      font-size: var(--text-sm);
+      font-weight: var(--font-medium);
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      transition:
+        background var(--transition-fast),
+        color var(--transition-fast);
+    }
+
+    input:checked + span {
+      background: var(--color-surface);
+      color: var(--color-text);
+      box-shadow: var(--shadow-sm);
+    }
+
+    input:focus-visible + span {
+      outline: 2px solid var(--color-accent);
+      outline-offset: 1px;
+    }
+  }
+
+  &__hint {
+    margin: 0;
+    font-size: var(--text-meta);
+    color: var(--color-text-secondary);
   }
 
   // --- Media Section ---
@@ -294,7 +398,10 @@
   // --- Actions ---
   &__actions {
     display: flex;
+    flex-wrap: wrap;
+    align-items: center;
     justify-content: flex-end;
+    gap: var(--space-md);
     margin-top: var(--space-md);
     padding-top: var(--space-md);
     border-top: 1px solid var(--color-border-light);
@@ -302,6 +409,34 @@
     app-btn {
       padding: var(--space-md) var(--space-xl);
       font-size: var(--text-base);
+    }
+  }
+
+  &__audience {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+  }
+
+  &__audience-select {
+    padding: 6px 28px 6px 10px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+    background: var(--color-surface)
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5' stroke-linecap='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")
+      no-repeat right 10px center;
+    font-family: inherit;
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    color: var(--color-text);
+    appearance: none;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid var(--color-accent);
+      outline-offset: 1px;
     }
   }
 }
@@ -346,10 +481,6 @@
 }
 
 @media (max-width: 600px) {
-  .post-form__row {
-    flex-direction: column;
-  }
-
   .post-form__gallery-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 6px;
