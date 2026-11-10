@@ -285,6 +285,7 @@
     "search-unavailable": "Place search isn't working right now. Point to the place on the map and type the city.",
     "lookup-failed": "Couldn't read the address here. Type the city.",
     "point-on-map": "Not on the list? Point to it on the map",
+    "point-on-map-only": "Point to it on the map",
     "pinned-place": "Pinned place",
     "looking-up": "Finding the address…",
     "clear": "Remove the place",

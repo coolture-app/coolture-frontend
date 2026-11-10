@@ -98,7 +98,10 @@
 
   @if (!showMap()) {
     <button type="button" class="place-picker__link" (click)="mapRequested.set(true)">
-      {{ 'PLACE_PICKER.point-on-map' | translate }}
+      {{
+        (searchUnavailable() ? 'PLACE_PICKER.point-on-map-only' : 'PLACE_PICKER.point-on-map')
+          | translate
+      }}
     </button>
   }
 
@@ -152,27 +155,6 @@
         </svg>
       </button>
     </div>
-
-    @if (current.offer; as offer) {
-      <div class="place-picker__offers">
-        @if (offeredAddress(); as address) {
-          <p class="place-picker__offer">
-            <span>{{ 'PLACE_PICKER.offer-address' | translate: { address } }}</span>
-            <button type="button" class="place-picker__link" (click)="take('address')">
-              {{ 'PLACE_PICKER.use-address' | translate }}
-            </button>
-          </p>
-        }
-        @if (offer.name) {
-          <p class="place-picker__offer">
-            <span>{{ 'PLACE_PICKER.offer-name' | translate: { name: offer.name } }}</span>
-            <button type="button" class="place-picker__link" (click)="take('name')">
-              {{ 'PLACE_PICKER.use-name' | translate }}
-            </button>
-          </p>
-        }
-      </div>
-    }
   }
 
   @if (showMap()) {
@@ -245,6 +227,27 @@
         }}
       </p>
     }
+  }
+
+  @if (hasPlace() && current.offer; as offer) {
+    <div class="place-picker__offers">
+      @if (offeredAddress(); as address) {
+        <p class="place-picker__offer">
+          <span>{{ 'PLACE_PICKER.offer-address' | translate: { address } }}</span>
+          <button type="button" class="place-picker__link" (click)="take('address')">
+            {{ 'PLACE_PICKER.use-address' | translate }}
+          </button>
+        </p>
+      }
+      @if (offer.name) {
+        <p class="place-picker__offer">
+          <span>{{ 'PLACE_PICKER.offer-name' | translate: { name: offer.name } }}</span>
+          <button type="button" class="place-picker__link" (click)="take('name')">
+            {{ 'PLACE_PICKER.use-name' | translate }}
+          </button>
+        </p>
+      }
+    </div>
   }
 
   @if (hasPlace() || tilesFailed()) {

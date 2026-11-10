@@ -27,6 +27,7 @@ import { FeatureCollection, Point, Feature, Polygon } from 'geojson';
 import { MapMarker } from '../map-marker/map-marker';
 import { MapPopup } from '../map-popup/map-popup';
 import { MAP_STYLE } from '../map-style';
+import { placeLine } from '../../../models/posts/post-place';
 
 @Component({
   selector: 'app-map',
@@ -166,6 +167,7 @@ export class Map implements OnDestroy {
             title: mark.title,
             description: mark.description,
             coverMediaUrl: mark.coverMediaUrl,
+            place: placeLine(mark),
             positiveReactionCount: mark.positiveReactionCount,
           },
         }));

@@ -306,6 +306,11 @@ export class PlacePicker implements OnInit {
   onMapLoad(instance: MapLibreMap): void {
     this.mapInstance = instance;
     this.mapLoaded = true;
+    // MapLibre opens the compact credit, which covers a third of a phone-sized map. It stays one tap away.
+    instance
+      .getContainer()
+      .querySelector('.maplibregl-ctrl-attrib')
+      ?.classList.remove('maplibregl-compact-show');
   }
 
   onMapError(): void {

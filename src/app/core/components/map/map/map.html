@@ -79,6 +79,7 @@
         <app-map-popup
           [postId]="feature.properties?.['id'] ?? ''"
           [popupTitle]="feature.properties?.['title'] ?? ''"
+          [place]="feature.properties?.['place'] ?? ''"
           [popupBody]="feature.properties?.['description'] ?? ''"
         ></app-map-popup>
       </mgl-popup>

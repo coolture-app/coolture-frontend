@@ -285,6 +285,7 @@
     "search-unavailable": "Wyszukiwarka miejsc teraz nie działa. Wskaż miejsce na mapie i wpisz miasto.",
     "lookup-failed": "Nie udało się odczytać adresu w tym miejscu. Wpisz miasto.",
     "point-on-map": "Nie ma na liście? Wskaż na mapie",
+    "point-on-map-only": "Wskaż na mapie",
     "pinned-place": "Wskazane miejsce",
     "looking-up": "Szukam adresu…",
     "clear": "Usuń miejsce",

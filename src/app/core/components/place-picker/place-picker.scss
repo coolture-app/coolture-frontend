@@ -155,7 +155,6 @@
     display: flex;
     flex-direction: column;
     gap: 2px;
-    padding-left: 32px;
   }
 
   &__summary {
@@ -245,11 +244,19 @@
     gap: var(--space-md);
 
     &--street {
-      grid-template-columns: 1fr 96px;
+      grid-template-columns: 2fr 1fr;
     }
 
     &--town {
-      grid-template-columns: 120px 1fr;
+      grid-template-columns: 1fr 2fr;
+    }
+
+    @media (max-width: 480px) {
+      &,
+      &--street,
+      &--town {
+        grid-template-columns: 1fr;
+      }
     }
   }
 }
