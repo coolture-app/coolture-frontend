@@ -7,7 +7,6 @@ import { catchError, forkJoin, of, switchMap } from 'rxjs';
 
 import { PostService } from '../../core/services/post/post.service';
 import { MediaService } from '../../core/services/media/media.service';
-import { AuthService } from '../../core/services/auth/auth.service';
 import { PostForm } from '../../core/components/post-form/post-form';
 import { PostFormData } from '../../core/models/posts/post-form-data.model';
 import { PostDetail, PostMedia } from '../../core/models/posts/post-detail.model';
@@ -28,7 +27,6 @@ export class EditPostView implements OnInit {
   private router = inject(Router);
   private destroyRef = inject(DestroyRef);
   private backService = inject(BackService);
-  public authService = inject(AuthService);
 
   @ViewChild(PostForm) postFormComponent!: PostForm;
 

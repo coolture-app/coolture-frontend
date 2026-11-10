@@ -5,7 +5,6 @@ import { Router } from '@angular/router';
 import { lastValueFrom } from 'rxjs';
 
 import { PostService } from '../../core/services/post/post.service';
-import { AuthService } from '../../core/services/auth/auth.service';
 import { PostForm } from '../../core/components/post-form/post-form';
 import { PostFormData } from '../../core/models/posts/post-form-data.model';
 import { PostCreateRequest } from '../../core/models/posts/post-create-request.model';
@@ -19,7 +18,6 @@ import { PostCreateRequest } from '../../core/models/posts/post-create-request.m
 export class AddPostView {
   private postService = inject(PostService);
   private router = inject(Router);
-  public authService = inject(AuthService);
 
   @ViewChild(PostForm) postFormComponent!: PostForm;
 
