@@ -1,4 +1,11 @@
 <div class="popup-wrapper">
-  <a class="popup-title" (click)="onTitleClick()" role="button" tabindex="0" (keydown.enter)="onTitleClick()">{{ popupTitle() }}</a>
+  <a
+    class="popup-title"
+    (click)="onTitleClick()"
+    role="button"
+    tabindex="0"
+    (keydown.enter)="onTitleClick()"
+    >{{ popupTitle() }}</a
+  >
   <p class="popup-body">{{ popupBody() }}</p>
 </div>

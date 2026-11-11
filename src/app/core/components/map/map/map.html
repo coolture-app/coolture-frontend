@@ -1,7 +1,7 @@
 <div class="map-wrapper">
   <mgl-map
     #map
-    [style]="'https://tiles.stadiamaps.com/styles/alidade_smooth.json'"
+    [style]="'https://tiles.openfreemap.org/styles/liberty'"
     [zoom]="[12]"
     [center]="[18.23, 54.6]"
     (mapLoad)="onMapLoad($event)"
@@ -14,7 +14,7 @@
       [clusterMaxZoom]="14"
       [clusterRadius]="50"
       [clusterProperties]="{
-        coverMediaUrl: ['max', ['get', 'coverMediaUrl']]
+        coverMediaUrl: ['max', ['get', 'coverMediaUrl']],
       }"
     ></mgl-geojson-source>
 

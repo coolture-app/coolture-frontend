@@ -10,6 +10,7 @@ import { UserProfileView } from './features/my-profile-view/my-profile-view';
 import { authGuard } from './core/auth/auth.guard';
 import { EditPostView } from './features/edit-post-view/edit-post-view';
 import { MyEventsView } from './features/my-events-view/my-events-view';
+import { AuthCallbackView } from './features/auth-callback-view/auth-callback-view';
 
 export const routes: Routes = [
   {
@@ -87,6 +88,10 @@ export const routes: Routes = [
       const translate = inject(TranslateService);
       return translate.get('MY_EVENTS.title');
     },
+  },
+  {
+    path: 'auth/callback',
+    component: AuthCallbackView,
   },
   // ** WILDCARD must be on the bottom of the router!
   {
