@@ -1,45 +1,64 @@
 ---
-name: Deploy Frontend
+name: CI/CD
 
 on:
+  pull_request:
   push:
-    branches: ["main", "dev"]
+    branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
-  deploy:
-    name: Deploy frontend with Docker Compose
-    runs-on: [self-hosted, linux, host, deployer]
-    concurrency:
-      group: deploy-frontend
-      cancel-in-progress: false
+  build:
+    runs-on: ubuntu-24.04
     env:
-      DEPLOY_DIR: /home/admin/coolture/dev/frontend
-      BRANCH: dev
-
+      HUSKY: '0'
+      REQUIRE_ENVIRONMENT: ${{ github.event_name != 'pull_request' }}
+      API_URL_SERVER: ${{ vars.API_URL_SERVER }}
+      COGNITO_DOMAIN: ${{ vars.COGNITO_DOMAIN }}
+      COGNITO_CLIENT_ID: ${{ vars.COGNITO_CLIENT_ID }}
     steps:
-      - name: Fix git safe directory
-        run: git config --global --add safe.directory "$DEPLOY_DIR"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run lint
+      - run: ci/build.sh
+      - if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: dist
+          path: dist/frontend
+          retention-days: 1
 
-      - name: Update deploy repository
-        run: |
-          if [ ! -d "$DEPLOY_DIR/.git" ]; then
-            echo "Missing git repository in $DEPLOY_DIR"
-            exit 1
-          fi
-
-          git -C "$DEPLOY_DIR" fetch --all --prune
-          git -C "$DEPLOY_DIR" checkout "$BRANCH"
-          git -C "$DEPLOY_DIR" reset --hard "origin/$BRANCH"
-          git -C "$DEPLOY_DIR" clean -fd
-
-      - name: Ensure shared Docker network exists
-        run: docker network inspect coolture-core_devnet || docker network create coolture-core_devnet
-
-      - name: Tear down existing stack
-        working-directory: ${{ env.DEPLOY_DIR }}
-        run: docker-compose -f ${{ env.DEPLOY_DIR }}/docker-compose.yml down
-
-      - name: Deploy frontend stack
-        run: docker-compose up --build -d
-        working-directory: /home/admin/coolture/dev/frontend
+  deploy:
+    needs: build
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    environment: dev
+    concurrency: coolture-frontend-dev
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+        with:
+          name: dist
+          path: dist/frontend
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: eu-north-1
+          mask-aws-account-id: true
+      - run: ci/deploy.sh
+        env:
+          DISTRIBUTION_ID: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}
