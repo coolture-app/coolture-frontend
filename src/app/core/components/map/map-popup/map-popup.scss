@@ -17,6 +17,19 @@
     }
   }
 
+  .popup-place {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin: 0 0 4px;
+    font-size: var(--text-meta);
+    color: var(--color-text-secondary);
+
+    svg {
+      flex-shrink: 0;
+    }
+  }
+
   .popup-body {
     margin: 0;
     font-size: 12px;

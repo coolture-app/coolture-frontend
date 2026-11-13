@@ -1,7 +1,7 @@
 <div class="map-wrapper">
   <mgl-map
     #map
-    [style]="'https://tiles.openfreemap.org/styles/liberty'"
+    [style]="mapStyle"
     [zoom]="[12]"
     [center]="[18.23, 54.6]"
     (mapLoad)="onMapLoad($event)"
@@ -79,6 +79,7 @@
         <app-map-popup
           [postId]="feature.properties?.['id'] ?? ''"
           [popupTitle]="feature.properties?.['title'] ?? ''"
+          [place]="feature.properties?.['place'] ?? ''"
           [popupBody]="feature.properties?.['description'] ?? ''"
         ></app-map-popup>
       </mgl-popup>

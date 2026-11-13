@@ -22,4 +22,14 @@ describe('MapPopup', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('shows the place under the title, and nothing for a post without one', async () => {
+    const element: HTMLElement = fixture.nativeElement;
+    expect(element.querySelector('.popup-place')).toBeNull();
+
+    fixture.componentRef.setInput('place', 'Ergo Arena, Gdańsk');
+    await fixture.whenStable();
+
+    expect(element.querySelector('.popup-place')?.textContent?.trim()).toBe('Ergo Arena, Gdańsk');
+  });
 });

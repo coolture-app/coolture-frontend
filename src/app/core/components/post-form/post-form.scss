@@ -1,300 +1,145 @@
-@use '_mixin' as *;
-
 .post-form {
   display: flex;
   flex-direction: column;
   gap: var(--space-lg);
 
-  &__row {
+  &__section {
     display: flex;
-    gap: var(--space-md);
-
-    > * {
-      flex: 1;
-    }
+    flex-direction: column;
+    gap: var(--space-sm);
   }
 
   &__section-title {
-    margin: 0 0 var(--space-sm) 0;
+    margin: 0;
     font-size: var(--text-base);
     font-weight: var(--font-semibold);
     color: var(--color-text);
   }
 
-  &__location {
-    border: 1px solid var(--color-border-light);
-    border-radius: var(--radius-md);
-    padding: var(--space-md);
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-md);
-    background: var(--color-surface-alt);
-  }
-
-  // --- Media Section ---
-  &__media-section {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-md);
-  }
-
-  &__photos {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-    min-width: 0;
-    margin: 0;
-    padding: 0;
-    border: none;
-  }
-
-  &__photos-title {
-    padding: 0;
-    font-size: var(--text-sm);
-    font-weight: var(--font-medium);
-    color: var(--color-text-primary);
-  }
-
-  &__photos-hint {
-    margin: 0;
-    font-size: var(--text-sm);
-    color: var(--color-text-secondary);
-  }
-
-  &__gallery-grid {
+  &__when {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: var(--space-sm);
-    margin: 0;
-    padding: 0;
-    list-style: none;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--space-md);
   }
 
-  &__tile {
+  &__end {
     display: flex;
-    flex-direction: column;
-    min-width: 0;
-    cursor: grab;
-    // A long press on a phone starts a drag, not the system's image menu or a text selection.
-    -webkit-touch-callout: none;
-    user-select: none;
+    align-items: flex-start;
+    gap: var(--space-xs);
 
-    // What's being dragged, what marks where it lands, and the others making room.
-    &.cdk-drag-preview {
-      cursor: grabbing;
-    }
-
-    &.cdk-drag-preview &-frame {
-      box-shadow: var(--shadow-lg);
-    }
-
-    &.cdk-drag-placeholder {
-      opacity: 0.35;
-    }
-
-    &.cdk-drag-animating {
-      transition: transform 200ms ease;
+    app-form-input {
+      flex: 1;
+      min-width: 0;
     }
   }
 
-  &__gallery-grid.cdk-drop-list-dragging &__tile:not(.cdk-drag-placeholder) {
-    transition: transform 200ms ease;
-  }
-
-  &__tile-frame {
-    position: relative;
-    aspect-ratio: 1;
-    border-radius: var(--radius-sm);
-    overflow: hidden;
-    background: var(--color-surface-alt);
-    box-shadow: 0 0 0 1px var(--color-border-light);
-  }
-
-  &__tile--cover &__tile-frame {
-    box-shadow: 0 0 0 2px var(--color-accent);
-  }
-
-  &__tile-photo {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    pointer-events: none;
-  }
-
-  // On the photo, see-through enough to keep the photo visible, and dark or coloured enough to read on a white one.
-  &__tile-set-cover,
-  &__tile-cover {
-    position: absolute;
-    left: 3px;
-    right: 3px;
-    bottom: 3px;
+  &__remove-end {
     display: flex;
+    flex-shrink: 0;
     align-items: center;
     justify-content: center;
-    gap: 3px;
-    min-height: 24px;
-    padding: 2px;
+    width: 36px;
+    height: 36px;
+    // Level with the input, under its label.
+    margin-top: 30px;
     border: none;
-    border-radius: var(--radius-sm);
-    color: white;
-    font-size: 11px;
-    font-weight: var(--font-medium);
-    line-height: 1.15;
-    text-align: center;
-  }
-
-  &__tile-set-cover {
-    background: rgba(0, 0, 0, 0.55);
+    border-radius: var(--radius-full);
+    background: none;
+    color: var(--color-text-secondary);
     cursor: pointer;
-    transition: background var(--transition-fast);
 
     &:hover {
-      background: rgba(0, 0, 0, 0.75);
-    }
-
-    &:focus-visible {
-      outline: 2px solid white;
-      outline-offset: -2px;
-    }
-  }
-
-  &__tile-cover {
-    background: color-mix(
-      in srgb,
-      color-mix(in srgb, var(--color-accent) 80%, black) 85%,
-      transparent
-    );
-    cursor: inherit;
-  }
-
-  // Quiet until needed: no borders, and only as tall as it has to be.
-  &__tile-order {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: 2px;
-  }
-
-  &__tile-position {
-    font-size: 11px;
-    color: var(--color-text-tertiary);
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-  }
-
-  // Not the disabled attribute: that would drop the focus of someone moving a photo with the keyboard.
-  &__tile-move {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex: 0 1 32px;
-    min-width: 24px;
-    height: 24px;
-    padding: 0;
-    border: none;
-    border-radius: var(--radius-sm);
-    background: transparent;
-    color: var(--color-text-secondary);
-    cursor: pointer;
-    transition:
-      background var(--transition-fast),
-      color var(--transition-fast);
-
-    &:hover:not([aria-disabled='true']) {
       background: var(--color-surface-alt);
-      color: var(--color-text-primary);
+      color: var(--color-text);
     }
 
     &:focus-visible {
       outline: 2px solid var(--color-accent);
-      outline-offset: -1px;
-    }
-
-    &[aria-disabled='true'] {
-      opacity: 0.3;
-      cursor: not-allowed;
     }
   }
 
-  &__media-remove {
-    position: absolute;
-    top: 3px;
-    right: 3px;
-    width: 24px;
-    height: 24px;
-    padding: 0;
-    border-radius: var(--radius-full);
+  &__add {
+    align-self: flex-start;
+    padding: 2px 0;
     border: none;
-    background: rgba(0, 0, 0, 0.55);
-    color: white;
+    background: none;
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    color: var(--color-accent);
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background var(--transition-fast);
-
-    svg {
-      width: 12px;
-      height: 12px;
-    }
-
-    // A larger target than the circle.
-    &::before {
-      content: '';
-      position: absolute;
-      inset: -3px;
-    }
 
     &:hover {
-      background: var(--color-danger);
+      text-decoration: underline;
     }
 
     &:focus-visible {
-      outline: 2px solid white;
+      outline: 2px solid var(--color-accent);
+      outline-offset: 2px;
+    }
+  }
+
+  &__where-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+  }
+
+  &__segmented {
+    display: inline-flex;
+    padding: 3px;
+    border-radius: var(--radius-full);
+    background: var(--color-border-light);
+  }
+
+  &__segment {
+    position: relative;
+
+    input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    span {
+      display: block;
+      padding: 6px 14px;
+      border-radius: var(--radius-full);
+      font-size: var(--text-sm);
+      font-weight: var(--font-medium);
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      transition:
+        background var(--transition-fast),
+        color var(--transition-fast);
+    }
+
+    input:checked + span {
+      background: var(--color-surface);
+      color: var(--color-text);
+      box-shadow: var(--shadow-sm);
+    }
+
+    input:focus-visible + span {
+      outline: 2px solid var(--color-accent);
       outline-offset: 1px;
     }
   }
 
-  &__visually-hidden {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-    padding: 0;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
-
-  &__upload-overlay {
-    position: absolute;
-    inset: 0;
-    background: rgba(255, 255, 255, 0.75);
-    @include center-flex;
-  }
-
-  &__spinner {
-    width: 24px;
-    height: 24px;
-    border: 3px solid var(--color-border);
-    border-top-color: var(--color-accent);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-  }
-
-  &__no-photos {
-    color: var(--color-text-tertiary);
-    font-style: italic;
-    font-size: var(--text-sm);
+  &__hint {
     margin: 0;
+    font-size: var(--text-meta);
+    color: var(--color-text-secondary);
   }
 
   // --- Actions ---
   &__actions {
     display: flex;
+    flex-wrap: wrap;
+    align-items: center;
     justify-content: flex-end;
+    gap: var(--space-md);
     margin-top: var(--space-md);
     padding-top: var(--space-md);
     border-top: 1px solid var(--color-border-light);
@@ -304,61 +149,32 @@
       font-size: var(--text-base);
     }
   }
-}
 
-// A finger needs more room than a mouse, which the targets take from the space around them.
-@media (pointer: coarse) {
-  .post-form__tile-order {
-    margin-top: 0;
+  &__audience {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
   }
 
-  .post-form__tile-move {
-    height: 28px;
+  &__audience-select {
+    padding: 6px 28px 6px 10px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+    background: var(--color-surface)
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5' stroke-linecap='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")
+      no-repeat right 10px center;
+    font-family: inherit;
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    color: var(--color-text);
+    appearance: none;
+    cursor: pointer;
 
-    &::before {
-      content: '';
-      position: absolute;
-      inset: 0 0 -6px;
+    &:focus-visible {
+      outline: 2px solid var(--color-accent);
+      outline-offset: 1px;
     }
-  }
-
-  .post-form__tile-set-cover,
-  .post-form__tile-cover {
-    min-height: 28px;
-  }
-
-  .post-form__media-remove::before {
-    inset: -8px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .post-form__tile.cdk-drag-animating,
-  .post-form__gallery-grid.cdk-drop-list-dragging .post-form__tile {
-    transition: none;
-  }
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (max-width: 600px) {
-  .post-form__row {
-    flex-direction: column;
-  }
-
-  .post-form__gallery-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 6px;
-  }
-}
-
-// Too narrow for three that can still be read and tapped.
-@media (max-width: 359px) {
-  .post-form__gallery-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

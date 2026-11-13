@@ -68,6 +68,24 @@ function toPlace(
 }
 
 /**
+ * Photon lists an OSM object once per tag it indexes, so Opera Leśna came as a theatre and as bleachers, and the two
+ * rows read the same. Photon's order stays.
+ */
+function withoutRepeats(places: PlaceSuggestion[]): PlaceSuggestion[] {
+  const seen = new Set<string>();
+  return places.filter((place) => {
+    const text = [place.venueName, place.street, place.buildingNum, place.postalCode, place.city]
+      .map((part) => part ?? '')
+      .join('\n');
+    if (seen.has(text)) {
+      return false;
+    }
+    seen.add(text);
+    return true;
+  });
+}
+
+/**
  * The only code that knows the geocoder, Photon. The form must work without it: every failure, a timeout or a `429`
  * included, ends as `unavailable` or an error, never as a stuck form.
  */
@@ -113,7 +131,7 @@ export class GeocodingService {
       params = params.append('countrycode', code);
     }
     return this.get('/api', params).pipe(
-      map((features) => features.map((f) => toPlace(f, 'search'))),
+      map((features) => withoutRepeats(features.map((f) => toPlace(f, 'search')))),
     );
   }
 

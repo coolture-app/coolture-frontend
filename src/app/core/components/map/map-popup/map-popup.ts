@@ -11,6 +11,7 @@ export class MapPopup {
 
   postId = input.required<string>();
   popupTitle = input.required<string>();
+  place = input('');
   popupBody = input.required<string>();
 
   onTitleClick(): void {

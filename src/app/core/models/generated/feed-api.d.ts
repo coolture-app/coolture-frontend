@@ -124,6 +124,8 @@ export interface components {
       coverMediaUrl?: string;
       positiveReactionCount: number;
       coordinates: components['schemas']['GeoPoint'];
+      venueName?: string;
+      city?: string;
     };
     UserSummary: {
       /** Format: uuid */
@@ -138,8 +140,7 @@ export interface components {
       followingCount: number;
     };
     EventLocation: {
-      /** Format: uuid */
-      id: string;
+      /** @description ISO 3166-1 alpha-2, such as PL. */
       countryCode?: string;
       venueName?: string;
       buildingNum?: string;
@@ -147,8 +148,6 @@ export interface components {
       postalCode?: string;
       city?: string;
       coordinates: components['schemas']['GeoPoint'];
-      /** Format: date-time */
-      createdAt?: string;
     };
     GeoPoint: {
       /** Format: double */
@@ -221,7 +220,7 @@ export interface components {
     Longitude: number;
     /** @description Only posts with a place within this many km of latitude and longitude. Ignored without them. */
     RadiusKm: number;
-    /** @description Matches a part of the title or the description, ignoring case. */
+    /** @description Matches a part of the title, the description, the city or the place's name, ignoring case. */
     Q: string;
     /** @description Comma-separated or repeated. A post matches if it has any of them. */
     Tags: string[];
@@ -255,7 +254,7 @@ export interface operations {
         longitude?: components['parameters']['Longitude'];
         /** @description When false, events that ended over 12 hours ago are hidden. UPCOMING always hides ended events. */
         includePast?: components['parameters']['IncludePast'];
-        /** @description Matches a part of the title or the description, ignoring case. */
+        /** @description Matches a part of the title, the description, the city or the place's name, ignoring case. */
         q?: components['parameters']['Q'];
         /** @description Comma-separated or repeated. A post matches if it has any of them. */
         tags?: components['parameters']['Tags'];
@@ -300,7 +299,7 @@ export interface operations {
         sortBy?: 'RECENT' | 'POPULAR' | 'UPCOMING' | 'NEAREST';
         /** @description When false, events that ended over 12 hours ago are hidden. UPCOMING always hides ended events. */
         includePast?: components['parameters']['IncludePast'];
-        /** @description Matches a part of the title or the description, ignoring case. */
+        /** @description Matches a part of the title, the description, the city or the place's name, ignoring case. */
         q?: components['parameters']['Q'];
         /** @description Comma-separated or repeated. A post matches if it has any of them. */
         tags?: components['parameters']['Tags'];
@@ -344,7 +343,15 @@ export interface operations {
   };
   getPostMarks: {
     parameters: {
-      query?: {
+      query: {
+        /** @description The view's north edge. */
+        'leftUpper.latitude': number;
+        /** @description The view's west edge. */
+        'leftUpper.longitude': number;
+        /** @description The view's south edge. */
+        'rightBottom.latitude': number;
+        /** @description The view's east edge. */
+        'rightBottom.longitude': number;
         /** @description When false, events that ended over 12 hours ago are hidden. UPCOMING always hides ended events. */
         includePast?: components['parameters']['IncludePast'];
         /** @description Only posts with a place within this many km of latitude and longitude. Ignored without them. */
