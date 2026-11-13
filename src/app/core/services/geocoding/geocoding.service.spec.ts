@@ -45,6 +45,19 @@ describe('GeocodingService', () => {
   afterEach(() => http.verify());
 
   describe('suggest', () => {
+    it('lists a place that Photon gives twice, once per tag, only once', () => {
+      const theatre = {
+        ...ERGO_ARENA,
+        properties: { ...ERGO_ARENA.properties, osm_key: 'amenity', osm_value: 'theatre' },
+      };
+      let places: PlaceSuggestion[] = [];
+      service.suggest('Ergo', TRICITY).subscribe((result) => (places = result));
+
+      http.expectOne((r) => r.url === '/geo/api').flush(photon(ERGO_ARENA, theatre));
+
+      expect(places.length).toBe(1);
+    });
+
     it('asks Photon for local names in Poland, without stops, near the given point', () => {
       service.suggest('Ergo', TRICITY).subscribe();
 
