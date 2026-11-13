@@ -251,8 +251,13 @@ export class PlacePicker implements OnInit {
   // --- Search ---
 
   onType(text: string): void {
-    this.query.set(text);
+    this.setQuery(text);
     this.listOpen.set(true);
+  }
+
+  /** The search skips a text equal to the last one it saw, so it hears every change of the box, emptying included. */
+  private setQuery(text: string): void {
+    this.query.set(text);
     this.texts.next(text);
   }
 
@@ -286,7 +291,7 @@ export class PlacePicker implements OnInit {
 
   pick(place: PlaceSuggestion): void {
     this.apply(picked(place));
-    this.query.set('');
+    this.setQuery('');
     this.listOpen.set(false);
     this.lookupFailed.set(false);
     this.fieldsOpen.set(false);

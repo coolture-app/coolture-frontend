@@ -31,12 +31,14 @@ const NEXT_DOOR: PlaceSuggestion = {
 
 class FakeGeocoding {
   readonly answers = new Subject<PlaceSearch>();
+  readonly asked: string[] = [];
   near: (() => GeoPoint) | null = null;
   reverseAnswer: Observable<PlaceSuggestion | null> = of(null);
   readonly reverse = jasmine.createSpy('reverse').and.callFake(() => this.reverseAnswer);
 
-  search(_texts: Observable<string>, near: () => GeoPoint): Observable<PlaceSearch> {
+  search(texts: Observable<string>, near: () => GeoPoint): Observable<PlaceSearch> {
     this.near = near;
+    texts.subscribe((text) => this.asked.push(text));
     return this.answers;
   }
 }
@@ -125,6 +127,14 @@ describe('PlacePicker', () => {
     expect(text()).toContain('Plac Dwóch Miast 1, 80-344 Gdańsk');
     expect(fixture.nativeElement.querySelector('mgl-map')).not.toBeNull();
     expect(geocoding.reverse).not.toHaveBeenCalled();
+  });
+
+  it('a pick empties the search, so the same text asks again', () => {
+    picker.onType('ergo');
+
+    picker.pick(ERGO_ARENA);
+
+    expect(geocoding.asked).toEqual(['ergo', '']);
   });
 
   it('moving the pin never overwrites typed text, and offers the map’s address', async () => {
