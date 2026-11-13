@@ -131,7 +131,11 @@ export class PlacePicker implements OnInit {
   readonly mapRequested = signal(false);
   readonly showMap = computed(() => this.hasPlace() || this.mapRequested());
   readonly fieldsOpen = signal(false);
-  readonly lookingUp = signal(false);
+  private readonly lookingUpAt = signal<GeoPoint | null>(null);
+  readonly lookingUp = computed(() => {
+    const at = this.lookingUpAt();
+    return at !== null && at === this.draft().coordinates;
+  });
   readonly lookupFailed = signal(false);
   /** The map's style or tiles never loaded, so typed coordinates are the only way to set a pin. */
   readonly tilesFailed = signal(false);
@@ -183,19 +187,23 @@ export class PlacePicker implements OnInit {
       .pipe(
         switchMap((at) =>
           this.geocoding.reverse(at).pipe(
-            map((found) => ({ found })),
+            map((found) => ({ at, found, failed: false })),
             // A failed lookup leaves the fields as they are: the user types the city.
-            catchError(() => of(null)),
+            catchError(() => of({ at, found: null, failed: true })),
           ),
         ),
         takeUntilDestroyed(),
       )
-      .subscribe((answer) => {
-        this.lookingUp.set(false);
-        if (answer) {
-          this.apply(addressFound(this.draft(), answer.found));
-        } else {
+      .subscribe(({ at, found, failed }) => {
+        // A pick, a clear or a saved post came first, so the answer is about a pin that's gone.
+        if (at !== this.draft().coordinates) {
+          return;
+        }
+        this.lookingUpAt.set(null);
+        if (failed) {
           this.lookupFailed.set(true);
+        } else {
+          this.apply(addressFound(this.draft(), found));
         }
         this.openFieldsIfIncomplete();
       });
@@ -342,7 +350,7 @@ export class PlacePicker implements OnInit {
   private placePin(at: GeoPoint): void {
     this.apply(pinMoved(this.draft(), at));
     this.group().controls.coordinates.markAsTouched();
-    this.lookingUp.set(true);
+    this.lookingUpAt.set(at);
     this.lookupFailed.set(false);
     this.pins.next(at);
   }

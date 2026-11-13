@@ -157,6 +157,22 @@ describe('PlacePicker', () => {
     expect(text()).not.toContain('PLACE_PICKER.use-address');
   });
 
+  it('a lookup that answers after a pick leaves the picked place alone', async () => {
+    const slow = new Subject<PlaceSuggestion | null>();
+    geocoding.reverseAnswer = slow;
+    picker.mapRequested.set(true);
+    picker.onMapClick(click(NEXT_DOOR.coordinates));
+
+    picker.pick(ERGO_ARENA);
+    slow.next(NEXT_DOOR);
+    await render();
+
+    expect(group.controls.street.value).toBe('Plac Dwóch Miast');
+    expect(group.controls.coordinates.value).toEqual(ERGO_ARENA.coordinates);
+    expect(text()).not.toContain('PLACE_PICKER.looking-up');
+    expect(text()).not.toContain('PLACE_PICKER.use-address');
+  });
+
   it('opening a saved post keeps its place as it is', async () => {
     group.patchValue({
       venueName: 'Klub',
