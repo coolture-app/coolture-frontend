@@ -304,17 +304,41 @@
   }
 }
 
+// Like and comment share what's left; the stances keep their size.
 .post__social {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  display: flex;
+  align-items: center;
   gap: var(--space-xs);
   margin: 0 var(--space-sm);
   padding: var(--space-xs) 0;
   border-top: 1px solid var(--color-border-light);
 
+  > app-btn {
+    flex: 1;
+    min-width: 0;
+  }
+
   ng-icon {
     --ng-icon__size: 20px;
   }
+}
+
+.post__stances {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--radius-full);
+  background: var(--color-border-light);
+}
+
+.post__folded {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  color: var(--color-text-secondary);
+  font-size: var(--text-body);
 }
 
 // A count on the corner of an action's icon. Neutral, because blue or red would read as something

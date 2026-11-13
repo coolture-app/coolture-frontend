@@ -96,7 +96,12 @@
     "close-photos": "Zamknij",
     "previous-photo": "Poprzednie zdjęcie",
     "next-photo": "Następne zdjęcie",
-    "distance": "Odległość od Ciebie"
+    "distance": "Odległość od Ciebie",
+    "not-for-me": "Nie dla mnie",
+    "stance": "Twój wybór",
+    "hidden": "Ukryto. Pokażemy mniej takich.",
+    "restored": "Przywrócono.",
+    "undo": "Cofnij"
   },
   "NAVBAR": {
     "main-page": "Strona główna",
@@ -150,7 +155,8 @@
     "no-followers": "Nikt jeszcze nie obserwuje",
     "no-following": "Nie obserwujesz nikogo",
     "load-more": "Załaduj więcej",
-    "loading": "Ładowanie..."
+    "loading": "Ładowanie...",
+    "hidden-posts": "Ukryte posty"
   },
   "DISCOVER": {
     "title": "Odkrywaj",
@@ -306,5 +312,12 @@
     "city": "Miasto",
     "error-city": "Podaj miasto.",
     "error-no-place": "Wybierz miejsce z listy albo wskaż je na mapie."
+  },
+  "HIDDEN": {
+    "title": "Ukryte posty",
+    "intro": "Posty oznaczone „Nie dla mnie”. Widzisz je tylko Ty.",
+    "empty": "Nie ukryto jeszcze żadnego posta.",
+    "load-error": "Nie udało się wczytać ukrytych postów.",
+    "retry": "Spróbuj ponownie"
   }
 }

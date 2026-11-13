@@ -175,6 +175,17 @@
       outline-offset: -2px;
     }
 
+    // One choice of a joined group, on the group's light grey.
+    &.segment {
+      min-width: 44px;
+      height: 36px;
+      border-radius: var(--radius-full);
+
+      &:hover:not(:disabled) {
+        background: var(--color-border);
+      }
+    }
+
     // "On" is the icon filled, in its own colour, on a tint of that colour.
     &.liked {
       color: var(--color-accent);
@@ -195,6 +206,17 @@
 
       &:hover:not(:disabled) {
         background: #a7f3d0;
+      }
+    }
+
+    // A private "no": neutral, neither an achievement nor a warning. A filled crossed eye loses its shape, so the
+    // segment is filled instead.
+    &.not-for-me {
+      color: var(--color-text-inverse);
+      background: var(--color-text-secondary);
+
+      &:hover:not(:disabled) {
+        background: #4b5563;
       }
     }
 
