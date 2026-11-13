@@ -32,11 +32,16 @@ export class PostListStore {
   readonly hasMore = signal(false);
   readonly loading = signal(false);
   readonly failed = signal(false);
-  readonly canLoadMore = computed(() => this.hasMore() && !this.loading() && !this.failed());
+  readonly renewing = signal(false);
+  readonly canLoadMore = computed(
+    () => this.hasMore() && !this.loading() && !this.failed() && !this.renewing(),
+  );
 
   private cursor: string | undefined;
   private seenIds = new Set<string>();
   private request: Subscription | undefined;
+  private renewal: Subscription | undefined;
+  private settleRenewal: ((renewed: boolean) => void) | undefined;
   private restarted = false;
   private user = '';
 
@@ -68,6 +73,31 @@ export class PostListStore {
     }
   }
 
+  /**
+   * A new session, like `start`, that keeps what's shown until its first page arrives. Resolves false
+   * only if that page failed, so the list is still the old one. A list started meanwhile wins.
+   */
+  renew(): Promise<boolean> {
+    const query = this.query();
+    if (!query || this.renewing()) {
+      return Promise.resolve(true);
+    }
+    this.renewing.set(true);
+    return new Promise((resolve) => {
+      this.settleRenewal = resolve;
+      this.renewal = this.page(query, undefined).subscribe({
+        next: (page) => {
+          this.reset();
+          this.accept(page);
+        },
+        error: () => {
+          this.endRenewal();
+          resolve(false);
+        },
+      });
+    });
+  }
+
   loadMore(): void {
     if (this.canLoadMore()) {
       this.fetch();
@@ -94,7 +124,16 @@ export class PostListStore {
     this.items.update((items) => items.map((item) => (item.id === card.id ? card : item)));
   }
 
+  private endRenewal(): void {
+    this.renewal?.unsubscribe();
+    this.renewal = undefined;
+    this.settleRenewal = undefined;
+    this.renewing.set(false);
+  }
+
   private reset(): void {
+    this.settleRenewal?.(true);
+    this.endRenewal();
     this.request?.unsubscribe();
     this.items.set([]);
     this.hasMore.set(false);

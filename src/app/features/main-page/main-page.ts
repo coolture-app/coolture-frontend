@@ -28,6 +28,8 @@ import { PostComponent } from '../../core/components/post-component/post-compone
 import { Btn } from '../../core/components/btn/btn';
 import { PostSkeleton } from '../../core/components/post-skeleton/post-skeleton';
 import { InfiniteScroll } from '../../core/directives/infinite-scroll';
+import { PULL_THRESHOLD, PullToRefresh } from '../../core/directives/pull-to-refresh';
+import { lucideRefreshCw } from '@ng-icons/lucide';
 import { PostFilterParams } from '../../core/models/posts/post-filter-params.model';
 import { GeoPoint } from '../../core/models/common/geo.model';
 import { PostService } from '../../core/services/post/post.service';
@@ -79,6 +81,7 @@ const CARDS_BEFORE_END = 15;
     Map,
     FeedFilters,
     InfiniteScroll,
+    PullToRefresh,
     PostSkeleton,
     Tooltip,
   ],
@@ -88,6 +91,7 @@ const CARDS_BEFORE_END = 15;
       heroMagnifyingGlass,
       heroXMark,
       heroChevronDown,
+      lucideRefreshCw,
     }),
   ],
   templateUrl: './main-page.html',
@@ -166,6 +170,7 @@ export class MainPage implements OnDestroy {
   });
   /** A screenful for the first page. After that one is enough, and the posts stay what's on screen. */
   readonly skeletons = computed(() => Array(this.list.items().length > 0 ? 1 : 3));
+  readonly pullThreshold = PULL_THRESHOLD;
   readonly nextPageTrigger = computed(() =>
     Math.max(0, this.list.items().length - CARDS_BEFORE_END),
   );
@@ -295,6 +300,13 @@ export class MainPage implements OnDestroy {
 
   removeChild(idToRemove: string): void {
     this.list.removeItem(idToRemove);
+  }
+
+  /** A new session that keeps the cards in view until its first page arrives, and keeps them if it fails. */
+  async renewList(): Promise<void> {
+    if (!(await this.list.renew())) {
+      this.toast.show(this.translate.instant('MAIN_PAGE.refreshFailed'));
+    }
   }
 
   toggleSortMenu(): void {

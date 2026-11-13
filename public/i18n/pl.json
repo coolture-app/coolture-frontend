@@ -41,6 +41,8 @@
     "endOfList": "To już wszystko",
     "loadError": "Nie udało się wczytać postów.",
     "retry": "Spróbuj ponownie",
+    "refreshing": "Odświeżanie",
+    "refreshFailed": "Nie udało się odświeżyć",
     "locationFailed": "Nie udało się pobrać lokalizacji. Zezwól na nią w ustawieniach przeglądarki.",
     "includePast": "Pokaż minione wydarzenia",
     "searchPast": "Szukaj też w minionych",
