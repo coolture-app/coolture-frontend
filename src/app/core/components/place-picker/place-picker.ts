@@ -152,8 +152,8 @@ export class PlacePicker implements OnInit {
   ]);
 
   private readonly searchBox = viewChild<ElementRef<HTMLInputElement>>('searchBox');
+  /** The map on screen, once it loaded. */
   private mapInstance: MapLibreMap | null = null;
-  private mapLoaded = false;
   /** Where the map opens and what a short search is near, until the map can say. */
   private start: GeoPoint = TRICITY;
   /** The view the map should show when it appears. */
@@ -304,6 +304,8 @@ export class PlacePicker implements OnInit {
   clear(): void {
     this.apply(EMPTY_DRAFT);
     this.group().markAsUntouched();
+    // The map leaves the page with the place.
+    this.mapInstance = null;
     this.mapRequested.set(false);
     this.fieldsOpen.set(false);
     this.lookupFailed.set(false);
@@ -314,7 +316,6 @@ export class PlacePicker implements OnInit {
 
   onMapLoad(instance: MapLibreMap): void {
     this.mapInstance = instance;
-    this.mapLoaded = true;
     // MapLibre opens the compact credit, which covers a third of a phone-sized map. It stays one tap away.
     instance
       .getContainer()
@@ -324,7 +325,7 @@ export class PlacePicker implements OnInit {
 
   onMapError(): void {
     // A tile that fails later leaves a usable map; only a map that never loaded needs typed coordinates.
-    if (!this.mapLoaded) {
+    if (!this.mapInstance) {
       this.tilesFailed.set(true);
       this.openFieldsIfIncomplete(true);
     }

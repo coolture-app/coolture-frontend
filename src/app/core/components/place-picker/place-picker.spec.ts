@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Observable, of, Subject, throwError } from 'rxjs';
-import type { MapMouseEvent } from 'maplibre-gl';
+import type { Map as MapLibreMap, MapMouseEvent } from 'maplibre-gl';
 
 import { locationForm, LocationForm, PlacePicker } from './place-picker';
 import { WITHOUT_MAPLIBRE } from '../map/map-stubs.testing';
@@ -45,6 +45,10 @@ class FakeGeocoding {
 
 function click(at: GeoPoint): MapMouseEvent {
   return { lngLat: { lat: at.latitude, lng: at.longitude } } as MapMouseEvent;
+}
+
+function fakeMap(): MapLibreMap {
+  return { getContainer: () => document.createElement('div') } as unknown as MapLibreMap;
 }
 
 describe('PlacePicker', () => {
@@ -247,6 +251,20 @@ describe('PlacePicker', () => {
     picker.onCoordinatesTyped();
 
     expect(group.controls.coordinates.value).toEqual({ latitude: 54.4, longitude: 18.6 });
+  });
+
+  it('a map that fails after a clear still offers coordinate fields', async () => {
+    picker.pick(ERGO_ARENA);
+    await render();
+    picker.onMapLoad(fakeMap());
+    picker.clear();
+
+    picker.mapRequested.set(true);
+    await render();
+    picker.onMapError();
+    await render();
+
+    expect(fixture.nativeElement.querySelector('#place-latitude')).not.toBeNull();
   });
 
   it('clearing the place empties it and goes back to the search', async () => {
