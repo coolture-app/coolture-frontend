@@ -1,3 +1,14 @@
+@let user = authService.currentUser();
+<!-- The signed-in user's photo, or the first letter of their handle. -->
+<ng-template #avatar>
+  @if (user?.avatar?.url; as url) {
+    <img class="navbar__avatar" [src]="url" alt="" />
+  } @else {
+    <span class="navbar__avatar navbar__avatar--letter" aria-hidden="true">{{
+      user?.username?.charAt(0)
+    }}</span>
+  }
+</ng-template>
 <nav class="navbar">
   <h1 class="navbar__title">
     <a routerLink="/">COOLTURE</a>
@@ -5,9 +16,11 @@
   <!-- One list of links: in the top bar on wider screens, a bar at the bottom on phones. -->
   <div class="navbar__links">
     @for (link of links; track link.path) {
+      @let isAccount = link.path === '/profile' && !!user;
       <a
         class="navbar__link"
         [class.navbar__link--add]="link.path === '/posts/new'"
+        [class.navbar__link--account]="isAccount"
         [routerLink]="link.path"
         routerLinkActive="active"
         ariaCurrentWhenActive="page"
@@ -15,11 +28,28 @@
         [appTooltip]="link.labelKey | translate"
         (click)="link.path === '/' && homeTapped($event)"
       >
-        <ng-icon [name]="link.icon" />
+        @if (isAccount) {
+          <ng-container [ngTemplateOutlet]="avatar" />
+        } @else {
+          <ng-icon [name]="link.icon" />
+        }
       </a>
     }
   </div>
   <span class="navbar__actions">
+    @if (user) {
+      <!-- On wide screens the profile link is here, with the handle, instead of among the places. -->
+      <a
+        class="navbar__account"
+        routerLink="/profile"
+        routerLinkActive="navbar__account--active"
+        ariaCurrentWhenActive="page"
+        [appTooltip]="'NAVBAR.my-profile' | translate"
+      >
+        <ng-container [ngTemplateOutlet]="avatar" />
+        <span class="navbar__account-name">{{ user.username }}</span>
+      </a>
+    }
     <app-btn
       variant="secondary"
       size="sm"
@@ -28,7 +58,7 @@
     >
       {{ currentLang() === 'pl' ? 'EN' : 'PL' }}
     </app-btn>
-    @if (authService.isAuthenticated()) {
+    @if (user) {
       <app-btn
         variant="secondary"
         size="sm"

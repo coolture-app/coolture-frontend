@@ -1,4 +1,5 @@
 import { Component, DOCUMENT, inject, signal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { IsActiveMatchOptions, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -18,7 +19,7 @@ import { Tooltip } from '../../directives/tooltip';
 
 @Component({
   selector: 'app-navbar',
-  imports: [TranslateModule, Btn, RouterLink, RouterLinkActive, NgIcon, Tooltip],
+  imports: [TranslateModule, Btn, RouterLink, RouterLinkActive, NgIcon, Tooltip, NgTemplateOutlet],
   viewProviders: [
     provideIcons({
       lucideCalendarDays,

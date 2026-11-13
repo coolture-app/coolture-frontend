@@ -4,6 +4,8 @@ import { provideRouter, Router } from '@angular/router';
 
 import { Navbar } from './navbar';
 import { HomeTapService } from '../../services/home-tap/home-tap.service';
+import { AuthService } from '../../services/auth/auth.service';
+import { UserProfile } from '../../models/users/user-profile.model';
 
 @Component({ template: '' })
 class Page {}
@@ -107,5 +109,44 @@ describe('Navbar', () => {
 
     expect(freshFeeds).toBe(0);
     expect(router.url).toBe('/');
+  });
+
+  describe('account', () => {
+    function signIn(user: Partial<UserProfile>): void {
+      TestBed.inject(AuthService).currentUser.set({
+        id: 'u1',
+        username: 'kacper',
+        followersCount: 0,
+        followingCount: 0,
+        ...user,
+      } as UserProfile);
+      fixture.detectChanges();
+    }
+
+    function account(): HTMLAnchorElement | null {
+      return fixture.nativeElement.querySelector('.navbar__account');
+    }
+
+    it('shows a guest the person icon and no account', () => {
+      expect(account()).toBeNull();
+      expect(links()[4].querySelector('ng-icon')).not.toBeNull();
+    });
+
+    it('shows the handle and photo, linking to the profile', () => {
+      signIn({ avatar: { id: 'a1', url: 'http://x/a.png' } });
+
+      expect(account()!.getAttribute('href')).toBe('/profile');
+      expect(account()!.textContent).toContain('kacper');
+      expect(account()!.querySelector('img')!.getAttribute('src')).toBe('http://x/a.png');
+    });
+
+    it('turns the profile place into the photo, for the phone bar', () => {
+      signIn({});
+
+      const profile = links()[4];
+      expect(profile.classList).toContain('navbar__link--account');
+      expect(profile.querySelector('ng-icon')).toBeNull();
+      expect(profile.querySelector('.navbar__avatar')!.textContent!.trim()).toBe('k');
+    });
   });
 });

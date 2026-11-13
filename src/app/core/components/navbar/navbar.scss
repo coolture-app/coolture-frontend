@@ -91,6 +91,63 @@
   }
 }
 
+.navbar__avatar {
+  @include avatar(28px);
+  display: block;
+  transition: box-shadow var(--transition-fast);
+
+  &--letter {
+    @include avatar-placeholder(28px);
+    font-size: var(--text-sm);
+    text-transform: uppercase;
+  }
+}
+
+// Wide screens show the account at the top right, so the places keep only the four icons.
+.navbar__link--account {
+  display: none;
+}
+
+// Active like the other places, as a ring, since the photo can't change colour.
+.navbar__link.active .navbar__avatar,
+.navbar__account--active .navbar__avatar {
+  box-shadow:
+    0 0 0 2px var(--color-surface),
+    0 0 0 4px var(--color-accent);
+}
+
+.navbar__account {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  max-width: 200px;
+  padding: 4px 12px 4px 4px;
+  border-radius: var(--radius-full);
+  color: var(--color-text);
+  transition: background var(--transition-fast);
+
+  &:hover {
+    background: var(--color-surface-alt);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  &--active .navbar__account-name {
+    color: var(--color-accent);
+  }
+}
+
+.navbar__account-name {
+  overflow: hidden;
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 .navbar__actions {
   display: flex;
   justify-self: end;
@@ -137,6 +194,15 @@
 
   .navbar__action-label {
     display: none;
+  }
+
+  // On a phone the account is the bottom bar's last place, with no handle, as in Instagram.
+  .navbar__account {
+    display: none;
+  }
+
+  .navbar__link--account {
+    display: flex;
   }
 
   .navbar__action-icon {

@@ -158,14 +158,12 @@
   "ADD_POST": {
     "title": "Add post!",
     "header-title": "Add new event",
-    "header-desc": "Fill the form to publish a new post.",
-    "posting-as": "Posting as"
+    "header-desc": "Fill the form to publish a new post."
   },
   "EDIT_POST": {
     "title": "Edit post!",
     "header-title": "Edit event",
-    "header-desc": "Change the details of your event.",
-    "editing-as": "Editing as"
+    "header-desc": "Change the details of your event."
   },
   "POST_FORM": {
     "optional": "(Optional)",
