@@ -232,6 +232,56 @@ describe('PostListStore', () => {
     });
   });
 
+  describe('renewing', () => {
+    beforeEach(() => {
+      store.start({ kind: 'feed' });
+      expectFeedRequest().flush(page(['a', 'b'], 'c1'));
+    });
+
+    it('keeps what is shown until the new first page arrives, then replaces it', async () => {
+      const renewed = store.renew();
+      expect(ids()).toEqual(['a', 'b']);
+      expect(store.renewing()).toBeTrue();
+
+      expectFeedRequest().flush(page(['b', 'x'], 'n1'));
+
+      expect(await renewed).toBeTrue();
+      expect(ids()).toEqual(['b', 'x']);
+      expect(store.renewing()).toBeFalse();
+      store.loadMore();
+      expectFeedRequest({ cursor: 'n1' }).flush(page(['y']));
+      expect(ids()).toEqual(['b', 'x', 'y']);
+    });
+
+    it('loads no more pages of the old list meanwhile', () => {
+      void store.renew();
+
+      expect(store.canLoadMore()).toBeFalse();
+      store.loadMore();
+      expectFeedRequest().flush(page(['x']));
+    });
+
+    it('keeps the list and reports it when the new page fails', async () => {
+      const renewed = store.renew();
+      expectFeedRequest().flush('down', { status: 500, statusText: 'Server Error' });
+
+      expect(await renewed).toBeFalse();
+      expect(ids()).toEqual(['a', 'b']);
+      expect(store.failed()).toBeFalse();
+      expect(store.canLoadMore()).toBeTrue();
+    });
+
+    it('gives way to a list started meanwhile', async () => {
+      const renewed = store.renew();
+      store.start({ kind: 'posts', filters: {} });
+
+      expect(await renewed).toBeTrue();
+      expect(http.expectOne((r) => r.url.endsWith('/feed')).cancelled).toBeTrue();
+      http.expectOne((r) => r.url.endsWith('/posts')).flush(page(['p']));
+      expect(ids()).toEqual(['p']);
+    });
+  });
+
   describe('changes made elsewhere', () => {
     beforeEach(() => {
       store.start({ kind: 'feed' });

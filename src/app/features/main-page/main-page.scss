@@ -68,6 +68,42 @@
     }
   }
 
+  // Fades in and comes down over the list as it's pulled, turning with the pull. The list itself stays put.
+  .pull {
+    --size: 36px;
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    display: grid;
+    place-items: center;
+    width: var(--size);
+    height: var(--size);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-md);
+    color: var(--color-text-secondary);
+    opacity: min(1, calc(var(--pull) / 48));
+    transform: translate(-50%, calc(var(--pull) * 1px - var(--size) - var(--space-sm)));
+
+    ng-icon {
+      transform: rotate(calc(var(--pull) * 3deg));
+    }
+
+    &--ready {
+      color: var(--color-accent);
+    }
+
+    &--renewing {
+      color: var(--color-accent);
+      transition: transform var(--transition-base);
+
+      ng-icon {
+        animation: pull-spin 0.8s linear infinite;
+      }
+    }
+  }
+
   // Dims the list below while the panel is open; a tap on it closes the panel.
   .filters-scrim {
     position: absolute;
@@ -412,4 +448,10 @@
 
 .list-trigger {
   height: 0;
+}
+
+@keyframes pull-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }

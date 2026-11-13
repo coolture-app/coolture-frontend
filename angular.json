@@ -92,6 +92,7 @@
           "builder": "@angular/build:karma",
           "options": {
             "main": "src/test-main.ts",
+            "browsers": "ChromeHeadless",
             "tsConfig": "tsconfig.spec.json",
             "inlineStyleLanguage": "scss",
             "stylePreprocessorOptions": {

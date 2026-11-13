@@ -1,4 +1,9 @@
-<div class="page">
+<div
+  class="page"
+  [appPullToRefresh]="!isMapView() && list.query() !== null"
+  #ptr="pullToRefresh"
+  (refresh)="renewList()"
+>
   <!-- Sticks under the navbar. On phones it slides away while scrolling down, back on scrolling up. -->
   <div
     class="searchbar"
@@ -139,6 +144,18 @@
         />
       }
     </div>
+    @if (ptr.pull() > 0 || list.renewing()) {
+      <div
+        class="pull"
+        [class.pull--renewing]="list.renewing()"
+        [class.pull--ready]="ptr.pull() >= pullThreshold"
+        [style.--pull]="list.renewing() ? pullThreshold : ptr.pull()"
+        [attr.role]="list.renewing() ? 'status' : null"
+        [attr.aria-label]="list.renewing() ? ('MAIN_PAGE.refreshing' | translate) : null"
+      >
+        <ng-icon name="lucideRefreshCw" size="20" aria-hidden="true" />
+      </div>
+    }
   </div>
 
   @if (!isMapView()) {

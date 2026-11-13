@@ -27,7 +27,7 @@ replaces `dev-tools.ts` in development builds only, so production builds don't c
 | Command             | Does                                                                                                             |
 | ------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | `npm start`         | Development server with server rendering                                                                         |
-| `npm test`          | Unit tests (Karma, in Chrome)                                                                                    |
+| `npm test`          | Unit tests (Karma, in headless Chrome). `-- --browsers=Chrome` to watch them, kept in front: hidden, it stalls   |
 | `npm run lint`      | ESLint                                                                                                           |
 | `npm run format`    | Prettier                                                                                                         |
 | `npm run build`     | Production build into `dist/`                                                                                    |
