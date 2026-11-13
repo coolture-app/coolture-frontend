@@ -171,6 +171,7 @@
         (deleteRequest)="removeChild($event)"
         [data]="item"
         [isFullView]="false"
+        [folds]="isFeed() ? 'marked' : null"
       />
     }
     <!-- A jump to the bottom, such as End, passes the trigger above without it ever being in view. -->

@@ -11,7 +11,6 @@ function card(id: string): PostCard {
     startsAt: '2026-12-01T18:00:00Z',
     tags: [],
     positiveReactionCount: 0,
-    negativeReactionCount: 0,
     participantCount: 0,
     commentsCount: 0,
     type: 'ONLINE',

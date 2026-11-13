@@ -23,7 +23,6 @@ function post(startsAt: string, endsAt?: string): PostDetail {
     endsAt,
     tags: [],
     positiveReactionCount: 0,
-    negativeReactionCount: 0,
     participantCount: 0,
     commentsCount: 0,
     type: 'ONLINE',

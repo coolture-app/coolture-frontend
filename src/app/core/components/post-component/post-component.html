@@ -1,5 +1,12 @@
 <div class="post" [class.post--feed]="!isFullView">
-  @if (data) {
+  @if (data && folded()) {
+    <div class="post__folded" role="status">
+      <span>{{ (isNotForMe() ? 'POST.hidden' : 'POST.restored') | translate }}</span>
+      <app-btn variant="secondary" size="sm" (btnClick)="undoFold()">{{
+        'POST.undo' | translate
+      }}</app-btn>
+    </div>
+  } @else if (data) {
     <div class="post__header">
       <div
         class="post__author-wrapper"
@@ -201,26 +208,37 @@
           }
         </span>
       </app-btn>
-      <app-btn
-        variant="social"
-        [fullWidth]="true"
-        [class]="isInterested() ? 'interested' : ''"
-        [pressed]="isInterested()"
-        [label]="'POST.interested' | translate"
-        (btnClick)="setInterested()"
-      >
-        <ng-icon name="lucideBookmark" [class.icon--filled]="isInterested()" />
-      </app-btn>
-      <app-btn
-        variant="social"
-        [fullWidth]="true"
-        [class]="isTakesPart() ? 'takes-part' : ''"
-        [pressed]="isTakesPart()"
-        [label]="'POST.takes_part' | translate"
-        (btnClick)="setTakesPart()"
-      >
-        <ng-icon name="appTicket" [class.icon--filled]="isTakesPart()" />
-      </app-btn>
+      <div class="post__stances" role="group" [attr.aria-label]="'POST.stance' | translate">
+        @if (!isMyPost()) {
+          <app-btn
+            variant="social"
+            [class]="isNotForMe() ? 'segment not-for-me' : 'segment'"
+            [pressed]="isNotForMe()"
+            [label]="'POST.not-for-me' | translate"
+            (btnClick)="setNotForMe()"
+          >
+            <ng-icon name="lucideEyeOff" />
+          </app-btn>
+        }
+        <app-btn
+          variant="social"
+          [class]="isInterested() ? 'segment interested' : 'segment'"
+          [pressed]="isInterested()"
+          [label]="'POST.interested' | translate"
+          (btnClick)="setInterested()"
+        >
+          <ng-icon name="lucideBookmark" [class.icon--filled]="isInterested()" />
+        </app-btn>
+        <app-btn
+          variant="social"
+          [class]="isTakesPart() ? 'segment takes-part' : 'segment'"
+          [pressed]="isTakesPart()"
+          [label]="'POST.takes_part' | translate"
+          (btnClick)="setTakesPart()"
+        >
+          <ng-icon name="appTicket" [class.icon--filled]="isTakesPart()" />
+        </app-btn>
+      </div>
     </div>
   } @else {
     <div class="post__loading">{{ 'POST.loading' | translate }}</div>

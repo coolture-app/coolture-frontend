@@ -11,6 +11,7 @@ import { authGuard } from './core/auth/auth.guard';
 import { EditPostView } from './features/edit-post-view/edit-post-view';
 import { MyEventsView } from './features/my-events-view/my-events-view';
 import { AuthCallbackView } from './features/auth-callback-view/auth-callback-view';
+import { HiddenPostsView } from './features/hidden-posts-view/hidden-posts-view';
 import { InterestsView, unsavedInterestsGuard } from './features/interests-view/interests-view';
 
 /**
@@ -91,6 +92,15 @@ export const routes: Routes = [
     title: () => {
       const translate = inject(TranslateService);
       return translate.get('INTERESTS.title');
+    },
+  },
+  {
+    path: 'profile/hidden',
+    component: HiddenPostsView,
+    canActivate: [authGuard],
+    title: () => {
+      const translate = inject(TranslateService);
+      return translate.get('HIDDEN.title');
     },
   },
   {

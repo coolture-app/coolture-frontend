@@ -96,7 +96,12 @@
     "close-photos": "Close",
     "previous-photo": "Previous photo",
     "next-photo": "Next photo",
-    "distance": "Distance from you"
+    "distance": "Distance from you",
+    "not-for-me": "Not for me",
+    "stance": "Your choice",
+    "hidden": "Hidden. We'll show fewer like this.",
+    "restored": "Restored.",
+    "undo": "Undo"
   },
   "NAVBAR": {
     "main-page": "Home",
@@ -150,7 +155,8 @@
     "no-followers": "No followers yet",
     "no-following": "Not following anyone yet",
     "load-more": "Load More",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "hidden-posts": "Hidden posts"
   },
   "DISCOVER": {
     "title": "Discover",
@@ -306,5 +312,12 @@
     "city": "City",
     "error-city": "Type the city.",
     "error-no-place": "Pick a place from the list or point to it on the map."
+  },
+  "HIDDEN": {
+    "title": "Hidden posts",
+    "intro": "Posts you marked “Not for me”. Only you see them.",
+    "empty": "You haven't hidden any posts yet.",
+    "load-error": "Couldn't load your hidden posts.",
+    "retry": "Try again"
   }
 }

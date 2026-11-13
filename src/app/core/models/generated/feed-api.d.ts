@@ -98,7 +98,6 @@ export interface components {
       endsAt?: string;
       tags: string[];
       positiveReactionCount: number;
-      negativeReactionCount: number;
       participantCount: number;
       commentsCount: number;
       type: components['schemas']['PostType'];
@@ -182,9 +181,12 @@ export interface components {
     /** @enum {string} */
     PostVisibility: 'PUBLIC' | 'PRIVATE' | 'FRIENDS';
     /** @enum {string} */
-    ReactionType: 'LIKE' | 'DISLIKE';
-    /** @enum {string} */
-    ParticipationType: 'INTERESTED' | 'TAKES_PART';
+    ReactionType: 'LIKE';
+    /**
+     * @description NOT_INTERESTED is "Nie dla mnie", private to the viewer. It hides the post from /feed, pushes similar posts down, and isn't counted in participantCount.
+     * @enum {string}
+     */
+    ParticipationType: 'INTERESTED' | 'TAKES_PART' | 'NOT_INTERESTED';
     Error: {
       error: string;
     };
@@ -295,8 +297,8 @@ export interface operations {
         cursor?: components['parameters']['Cursor'];
         /** @description Page size. Values above 100 are capped. Non-numeric values return 400. */
         limit?: components['parameters']['Limit'];
-        /** @description NEAREST needs latitude and longitude, and shows only posts with a place. */
-        sortBy?: 'RECENT' | 'POPULAR' | 'UPCOMING' | 'NEAREST';
+        /** @description NEAREST needs latitude and longitude, and shows only posts with a place. STANCE_NEWEST needs participationTypes and puts the viewer's newest of those stances first. */
+        sortBy?: 'RECENT' | 'POPULAR' | 'UPCOMING' | 'NEAREST' | 'STANCE_NEWEST';
         /** @description When false, events that ended over 12 hours ago are hidden. UPCOMING always hides ended events. */
         includePast?: components['parameters']['IncludePast'];
         /** @description Matches a part of the title, the description, the city or the place's name, ignoring case. */
@@ -317,7 +319,7 @@ export interface operations {
         longitude?: components['parameters']['Longitude'];
         /** @description Only posts with a place within this many km of latitude and longitude. Ignored without them. */
         radiusKm?: components['parameters']['RadiusKm'];
-        /** @description Signed-in only. */
+        /** @description Signed-in only. Only the viewer's own stances; NOT_INTERESTED (Nie dla mnie) is never shown to anyone else. */
         participationTypes?: components['schemas']['ParticipationType'][];
         /** @description Signed-in only. */
         reactionType?: components['schemas']['ReactionType'];

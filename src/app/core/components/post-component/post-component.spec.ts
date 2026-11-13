@@ -19,7 +19,6 @@ function card(overrides: Partial<PostCard> = {}): PostCard {
     startsAt: '2026-12-01T18:00:00Z',
     tags: [],
     positiveReactionCount: 3,
-    negativeReactionCount: 0,
     participantCount: 2,
     commentsCount: 0,
     type: 'OFFLINE',
@@ -85,13 +84,14 @@ describe('PostComponent', () => {
     ]);
   });
 
-  it('has four icon actions, each named and pressed when on, and no Share', () => {
+  it('has five icon actions, each named and pressed when on, and no Share', () => {
     render(card({ myParticipation: 'TAKES_PART', positiveReactionCount: 0, commentsCount: 0 }));
 
     const actions = Array.from(element().querySelectorAll('.post__social button'));
     expect(actions.map((b) => b.getAttribute('aria-label'))).toEqual([
       'POST.like',
       'POST.comments',
+      'POST.not-for-me',
       'POST.interested',
       'POST.takes_part',
     ]);
@@ -99,9 +99,31 @@ describe('PostComponent', () => {
       'false',
       null,
       'false',
+      'false',
       'true',
     ]);
     expect(actions.every((b) => b.textContent!.trim() === '')).toBeTrue();
+  });
+
+  it('groups the three stances, one of which can be on', () => {
+    render(card({ myParticipation: 'NOT_INTERESTED' }));
+
+    const group = element().querySelector('.post__stances[role="group"]')!;
+    const pressed = Array.from(group.querySelectorAll('button')).map((b) =>
+      b.getAttribute('aria-pressed'),
+    );
+    expect(group.getAttribute('aria-label')).toBe('POST.stance');
+    expect(pressed).toEqual(['true', 'false', 'false']);
+  });
+
+  it('offers no "Nie dla mnie" on your own post', () => {
+    TestBed.inject(AuthService).currentUser.set({ id: 'u1' } as UserProfile);
+    render(card());
+
+    const labels = Array.from(element().querySelectorAll('.post__stances button')).map((b) =>
+      b.getAttribute('aria-label'),
+    );
+    expect(labels).toEqual(['POST.interested', 'POST.takes_part']);
   });
 
   describe('the like count', () => {
@@ -447,8 +469,97 @@ describe('PostComponent', () => {
     });
   });
 
+  describe('folding', () => {
+    beforeEach(() => {
+      TestBed.inject(AuthService).currentUser.set({ id: 'u2' } as UserProfile);
+    });
+
+    function folded(): string | undefined {
+      return element().querySelector('.post__folded span')?.textContent?.trim();
+    }
+
+    it('folds a marked card on Dla Ciebie, and Cofnij brings back the stance and the like', () => {
+      const data = card({ myParticipation: 'INTERESTED', myReaction: 'LIKE' });
+      fixture.componentRef.setInput('folds', 'marked');
+      render(data);
+      component.isLiked.set(true);
+
+      component.setNotForMe();
+      http.expectOne((r) => r.method === 'PUT').flush({});
+      fixture.detectChanges();
+      expect(folded()).toBe('POST.hidden');
+      expect(element().querySelector('.post__social')).toBeNull();
+
+      (element().querySelector('.post__folded button') as HTMLButtonElement).click();
+      const stance = http.expectOne((r) => r.method === 'PUT' && r.url.endsWith('/participation'));
+      expect(stance.request.body).toEqual({ type: 'INTERESTED' });
+      stance.flush({});
+      http.expectOne((r) => r.method === 'PUT' && r.url.endsWith('/reaction')).flush({});
+      fixture.detectChanges();
+
+      expect(folded()).toBeUndefined();
+      expect(data.myParticipation).toBe('INTERESTED');
+      expect(data.myReaction).toBe('LIKE');
+      expect(data.participantCount).toBe(2);
+    });
+
+    it('keeps the card on Wszystkie and the post page, with the eye pressed', () => {
+      render(card());
+
+      component.setNotForMe();
+      http.expectOne((r) => r.method === 'PUT').flush({});
+      fixture.detectChanges();
+
+      expect(folded()).toBeUndefined();
+      const eye = element().querySelector('.post__stances button')!;
+      expect(eye.getAttribute('aria-pressed')).toBe('true');
+    });
+
+    it('folds an unmarked card on Ukryte posty, and Cofnij marks it again', () => {
+      const data = card({ myParticipation: 'NOT_INTERESTED' });
+      fixture.componentRef.setInput('folds', 'unmarked');
+      render(data);
+      expect(folded()).toBeUndefined();
+
+      component.setNotForMe();
+      http.expectOne((r) => r.method === 'DELETE').flush(null);
+      fixture.detectChanges();
+      expect(folded()).toBe('POST.restored');
+
+      component.undoFold();
+      const mark = http.expectOne((r) => r.method === 'PUT');
+      expect(mark.request.body).toEqual({ type: 'NOT_INTERESTED' });
+      mark.flush({});
+      fixture.detectChanges();
+      expect(folded()).toBeUndefined();
+    });
+  });
+
+  describe('a guest', () => {
+    it('goes to sign-in from any stance or the like, and back to this page', () => {
+      const auth = TestBed.inject(AuthService);
+      const login = spyOn(auth, 'login').and.resolveTo();
+      render(card());
+
+      component.likePost();
+      component.setNotForMe();
+      component.setInterested();
+      component.setTakesPart();
+
+      expect(login).toHaveBeenCalledTimes(4);
+      expect(login).toHaveBeenCalledWith(TestBed.inject(Router).url);
+      http.expectNone(() => true);
+      expect(component.isLiked()).toBeFalse();
+      expect(component.stance()).toBeUndefined();
+    });
+  });
+
   describe('interactions keep the data in step, for when the card is shown again', () => {
     const serverError = { status: 500, statusText: 'Server Error' };
+
+    beforeEach(() => {
+      TestBed.inject(AuthService).currentUser.set({ id: 'u2' } as UserProfile);
+    });
 
     it('records a like, and removes it again', () => {
       const data = card();
@@ -529,6 +640,71 @@ describe('PostComponent', () => {
       component.setInterested();
       http.expectOne((r) => r.method === 'DELETE').flush(null);
       expect(toast.message()).toBeNull();
+    });
+
+    it('marks a post "Nie dla mnie" without counting it, or saying it went to Plans', () => {
+      const toast = TestBed.inject(ToastService);
+      const data = card();
+      render(data);
+
+      component.setNotForMe();
+      const request = http.expectOne((r) => r.method === 'PUT');
+      expect(request.request.body).toEqual({ type: 'NOT_INTERESTED' });
+      request.flush({});
+
+      expect(data.myParticipation).toBe('NOT_INTERESTED');
+      expect(data.participantCount).toBe(2);
+      expect(toast.message()).toBeNull();
+    });
+
+    it('takes the participant back out of the count when "Interesuje mnie" becomes a mark', () => {
+      const data = card({ myParticipation: 'INTERESTED' });
+      render(data);
+
+      component.setNotForMe();
+      http.expectOne((r) => r.method === 'PUT').flush({});
+
+      expect(data.participantCount).toBe(1);
+      expect(component.isInterested()).toBeFalse();
+    });
+
+    it('takes the like back with a mark, as the server does, and returns it if the mark fails', () => {
+      const data = card({ myReaction: 'LIKE' });
+      render(data);
+      component.isLiked.set(true);
+
+      component.setNotForMe();
+      expect(data.myReaction).toBeUndefined();
+      expect(data.positiveReactionCount).toBe(2);
+
+      http.expectOne((r) => r.method === 'PUT').flush({ error: 'down' }, serverError);
+      expect(data.myReaction).toBe('LIKE');
+      expect(data.positiveReactionCount).toBe(3);
+      expect(data.myParticipation).toBeUndefined();
+    });
+
+    it('takes a mark back with a like', () => {
+      const data = card({ myParticipation: 'NOT_INTERESTED' });
+      render(data);
+
+      component.likePost();
+      http.expectOne((r) => r.method === 'PUT' && r.url.endsWith('/reaction')).flush({});
+
+      expect(data.myParticipation).toBeUndefined();
+      expect(component.isNotForMe()).toBeFalse();
+      expect(data.myReaction).toBe('LIKE');
+    });
+
+    it('sends one request at a time, in the order they were made', () => {
+      render(card());
+
+      component.setNotForMe();
+      component.setNotForMe();
+
+      const mark = http.expectOne((r) => r.method === 'PUT');
+      http.expectNone((r) => r.method === 'DELETE');
+      mark.flush({});
+      http.expectOne((r) => r.method === 'DELETE').flush(null);
     });
 
     it('does not fail on a post with no location', () => {

@@ -1,6 +1,8 @@
 import {
   afterNextRender,
   Component,
+  computed,
+  input,
   ElementRef,
   Injector,
   Input,
@@ -29,9 +31,11 @@ import {
   lucideBookmark,
   lucideChevronLeft,
   lucideChevronRight,
+  lucideEyeOff,
   lucideMessageCircle,
   lucideThumbsUp,
 } from '@ng-icons/lucide';
+import { catchError, concatMap, EMPTY, Observable, Subject, tap } from 'rxjs';
 import { frameShape, Photo, toPhoto } from '../../models/media/photo';
 import { PhotoViewerService } from '../../services/photo-viewer/photo-viewer.service';
 import { appTicket } from '../../icons/ticket';
@@ -57,6 +61,24 @@ import { ToastService } from '../../services/toast/toast.service';
  */
 const expandedPosts = new Set<string>();
 
+/** What a card had before its stance changed, for Cofnij. Kept by id, so it survives going to the post page and back. */
+interface Undo {
+  stance: ParticipationType | undefined;
+  liked: boolean;
+}
+const undoable = new Map<string, Undo>();
+
+/** "Nie dla mnie" isn't taking part, so it isn't counted. */
+function counted(stance: ParticipationType | undefined): boolean {
+  return !!stance && stance !== 'NOT_INTERESTED';
+}
+
+/**
+ * Which cards fold into one line with Cofnij: on Dla Ciebie a post marked "Nie dla mnie", on Ukryte posty one
+ * unmarked. Elsewhere a card stays as it is.
+ */
+export type PostFold = 'marked' | 'unmarked' | null;
+
 @Component({
   selector: 'app-post-component',
   imports: [NgIcon, TranslatePipe, DatePipe, ModalWindow, Btn, Tooltip],
@@ -71,6 +93,7 @@ const expandedPosts = new Set<string>();
       lucideBookmark,
       lucideChevronLeft,
       lucideChevronRight,
+      lucideEyeOff,
       lucideMessageCircle,
       lucideThumbsUp,
     }),
@@ -87,8 +110,21 @@ export class PostComponent implements OnInit {
   slide = signal(0);
 
   isLiked = signal(false);
-  isInterested = signal(false);
-  isTakesPart = signal(false);
+  /** The viewer's stance: one of three at a time, or none. */
+  stance = signal<ParticipationType | undefined>(undefined);
+  isInterested = computed(() => this.stance() === 'INTERESTED');
+  isTakesPart = computed(() => this.stance() === 'TAKES_PART');
+  isNotForMe = computed(() => this.stance() === 'NOT_INTERESTED');
+
+  folds = input<PostFold>(null);
+  folded = computed(() =>
+    this.folds() === 'marked'
+      ? this.isNotForMe()
+      : this.folds() === 'unmarked' && !this.isNotForMe(),
+  );
+
+  /** One request at a time, in order, so a quick Cofnij can't reach the server before what it undoes. */
+  private requests = new Subject<Observable<unknown>>();
 
   private router = inject(Router);
   private interactions = inject(InteractionsService);
@@ -118,20 +154,25 @@ export class PostComponent implements OnInit {
 
   constructor() {
     afterNextRender(() => this.watchDescription());
+    this.requests
+      .pipe(
+        concatMap((request) => request),
+        takeUntilDestroyed(),
+      )
+      .subscribe();
   }
 
   ngOnInit(): void {
     if (this.data) {
       this.isExpanded.set(expandedPosts.has(this.data.id));
       this.isLiked.set(this.data.myReaction === 'LIKE');
-      this.isInterested.set(this.data.myParticipation === 'INTERESTED');
-      this.isTakesPart.set(this.data.myParticipation === 'TAKES_PART');
+      this.stance.set(this.data.myParticipation);
       this.isMyPost.set(this.authService.currentUser()?.id === this.data.author.id ? true : false);
     }
   }
 
   isParticipating(): boolean {
-    return this.isInterested() || this.isTakesPart();
+    return counted(this.stance());
   }
 
   /** A badge stays small. The exact number is in the button's name and tooltip. */
@@ -242,20 +283,29 @@ export class PostComponent implements OnInit {
     return frameShape(this.photos[0]);
   }
 
+  /** A like takes back "Nie dla mnie", on the server too. */
   likePost(): void {
-    if (!this.isLiked()) {
-      this.applyReaction(true);
-      this.interactions
-        .setReaction(this.data.id, { type: 'LIKE' })
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe({ error: () => this.applyReaction(false) });
-    } else {
-      this.applyReaction(false);
-      this.interactions
-        .removeReaction(this.data.id)
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe({ error: () => this.applyReaction(true) });
+    if (!this.signedIn()) {
+      return;
     }
+    const liked = !this.isLiked();
+    const wasMarked = liked && this.isNotForMe();
+    if (wasMarked) {
+      undoable.set(this.data.id, { stance: 'NOT_INTERESTED', liked: false });
+      this.applyParticipation(undefined);
+    }
+    this.applyReaction(liked);
+    this.send(
+      liked
+        ? this.interactions.setReaction(this.data.id, { type: 'LIKE' })
+        : this.interactions.removeReaction(this.data.id),
+      () => {
+        this.applyReaction(!liked);
+        if (wasMarked) {
+          this.applyParticipation('NOT_INTERESTED');
+        }
+      },
+    );
   }
 
   setInterested(): void {
@@ -266,39 +316,98 @@ export class PostComponent implements OnInit {
     this.toggleParticipation('TAKES_PART');
   }
 
+  setNotForMe(): void {
+    this.toggleParticipation('NOT_INTERESTED');
+  }
+
+  /** Cofnij on a folded card: back to the stance and like from before the fold. */
+  undoFold(): void {
+    const undo = undoable.get(this.data.id);
+    if (!undo || !this.signedIn()) {
+      return;
+    }
+    undoable.delete(this.data.id);
+    const now: Undo = { stance: this.data.myParticipation, liked: this.isLiked() };
+    const revert = () => {
+      this.applyParticipation(now.stance);
+      this.applyReaction(now.liked);
+    };
+    this.applyParticipation(undo.stance);
+    this.send(
+      undo.stance
+        ? this.interactions.setParticipation(this.data.id, { type: undo.stance })
+        : this.interactions.removeParticipation(this.data.id),
+      revert,
+    );
+    if (undo.liked) {
+      this.applyReaction(true);
+      this.send(this.interactions.setReaction(this.data.id, { type: 'LIKE' }), revert);
+    }
+  }
+
+  /** A guest's tap signs in, and comes back to this page. */
+  private signedIn(): boolean {
+    if (this.authService.isAuthenticated()) {
+      return true;
+    }
+    void this.authService.login(this.router.url);
+    return false;
+  }
+
+  private send(request: Observable<unknown>, revert: () => void, done?: () => void): void {
+    this.requests.next(
+      request.pipe(
+        tap({ next: () => done?.(), error: revert }),
+        catchError(() => EMPTY),
+      ),
+    );
+  }
+
   // `data` is what a card shows again after coming back to the list, so it has to stay in step.
   private applyReaction(liked: boolean): void {
+    if (this.isLiked() === liked) {
+      return;
+    }
     this.data.positiveReactionCount += liked ? 1 : -1;
     this.data.myReaction = liked ? 'LIKE' : undefined;
     this.isLiked.set(liked);
   }
 
+  /** "Nie dla mnie" takes back the like, on the server too. */
   private toggleParticipation(type: ParticipationType): void {
-    const previous = this.data.myParticipation;
-    if (previous === type) {
-      this.applyParticipation(undefined);
-      this.interactions
-        .removeParticipation(this.data.id)
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe({ error: () => this.applyParticipation(previous) });
-    } else {
-      this.applyParticipation(type);
-      this.interactions
-        .setParticipation(this.data.id, { type })
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe({
-          // The post leaves the feed on its next refresh, and this says where it went.
-          next: () => this.toast.show(this.translate.instant('POST.saved-to-plans')),
-          error: () => this.applyParticipation(previous),
-        });
+    if (!this.signedIn()) {
+      return;
     }
+    const previous = this.data.myParticipation;
+    const next = previous === type ? undefined : type;
+    const takesLike = next === 'NOT_INTERESTED' && this.isLiked();
+    undoable.set(this.data.id, { stance: previous, liked: this.isLiked() });
+    this.applyParticipation(next);
+    if (takesLike) {
+      this.applyReaction(false);
+    }
+    this.send(
+      next
+        ? this.interactions.setParticipation(this.data.id, { type: next })
+        : this.interactions.removeParticipation(this.data.id),
+      () => {
+        this.applyParticipation(previous);
+        if (takesLike) {
+          this.applyReaction(true);
+        }
+      },
+      // The post leaves the feed on its next refresh, and this says where it went.
+      counted(next)
+        ? () => this.toast.show(this.translate.instant('POST.saved-to-plans'))
+        : undefined,
+    );
   }
 
   private applyParticipation(type: ParticipationType | undefined): void {
-    this.data.participantCount += (type ? 1 : 0) - (this.data.myParticipation ? 1 : 0);
+    this.data.participantCount +=
+      (counted(type) ? 1 : 0) - (counted(this.data.myParticipation) ? 1 : 0);
     this.data.myParticipation = type;
-    this.isInterested.set(type === 'INTERESTED');
-    this.isTakesPart.set(type === 'TAKES_PART');
+    this.stance.set(type);
   }
 
   editPost(): void {

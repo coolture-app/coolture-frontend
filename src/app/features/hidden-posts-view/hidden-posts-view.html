@@ -1,0 +1,35 @@
+<div class="page">
+  <div class="hidden-posts">
+    <h1 class="hidden-posts__title">{{ 'HIDDEN.title' | translate }}</h1>
+    <p class="hidden-posts__intro">{{ 'HIDDEN.intro' | translate }}</p>
+
+    @for (item of list.items(); track item.id) {
+      @if ($index === nextPageTrigger()) {
+        <div
+          class="hidden-posts__trigger"
+          [appInfiniteScroll]="list.canLoadMore()"
+          (reachedEnd)="list.loadMore()"
+        ></div>
+      }
+      <app-post-component [data]="item" [isFullView]="false" folds="unmarked" />
+    }
+    <div
+      class="hidden-posts__trigger"
+      [appInfiniteScroll]="list.canLoadMore()"
+      (reachedEnd)="list.loadMore()"
+    ></div>
+
+    @if (list.failed()) {
+      <div class="hidden-posts__empty" role="alert">
+        <span>{{ 'HIDDEN.load-error' | translate }}</span>
+        <app-btn variant="secondary" size="sm" (btnClick)="list.retry()">{{
+          'HIDDEN.retry' | translate
+        }}</app-btn>
+      </div>
+    } @else if (list.loading()) {
+      <app-post-skeleton />
+    } @else if (list.items().length === 0) {
+      <p class="hidden-posts__empty">{{ 'HIDDEN.empty' | translate }}</p>
+    }
+  </div>
+</div>
