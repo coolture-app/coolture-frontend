@@ -147,7 +147,7 @@
   >
     <ng-icon name="lucideLocateFixed" aria-hidden="true" />
   </button>
-  @if (picks() && !(selected() && !wide())) {
+  @if (picks() && !selected()) {
     <p class="map-legend">
       <!-- The map's own badge (map-layers.ts), so the legend shows exactly what the pins show. -->
       <svg class="map-legend__badge" viewBox="0 0 16 16" aria-hidden="true">
