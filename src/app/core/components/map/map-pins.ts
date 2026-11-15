@@ -1,6 +1,7 @@
 import { Feature, FeatureCollection, Point } from 'geojson';
 import { GeoPoint } from '../../models/common/geo.model';
 import { PostMark } from '../../models/posts/post-mark.model';
+import { placeLine } from '../../models/posts/post-place';
 import { haversineMeters } from '../../services/location/location.service';
 
 /**
@@ -120,6 +121,39 @@ export function shortTitle(title: string): string {
   return `${(space > TITLE_CHARS / 2 ? cut.slice(0, space) : cut).trimEnd()}…`;
 }
 
+/** The pin's date: a post's, or "od jutra 20:00" style for a place's soonest. */
+function placeDate(place: Place, now: Date, locale: string, words: PinWords): string {
+  return pinLabel(
+    place.posts[0],
+    now,
+    locale,
+    place.posts.length > 1
+      ? { ...words, today: words.todayFrom, tomorrow: words.tomorrowFrom }
+      : words,
+  );
+}
+
+/**
+ * What hovering a pin says: a name, then details. A post: its title, then when and where. A place: its name, then
+ * how many events and from when.
+ */
+export function hoverText(
+  place: Place,
+  now: Date,
+  locale: string,
+  words: PinWords,
+  events: (count: number) => string,
+): { name: string; details: string } {
+  const [first] = place.posts;
+  const count = place.posts.length;
+  const where = placeLine(first);
+  const when = placeDate(place, now, locale, words);
+  if (count === 1) {
+    return { name: first.title, details: where ? `${when} · ${where}` : when };
+  }
+  return { name: where || first.title, details: `${events(count)} · ${words.from} ${when}` };
+}
+
 /** The pins as map features. Picks and then the soonest are drawn on top. `picks` is null where nothing is picked. */
 export function pinFeatures(
   places: readonly Place[],
@@ -131,12 +165,7 @@ export function pinFeatures(
   const features = places.map((place): Feature<Point, PinProperties> => {
     const [first] = place.posts;
     const count = place.posts.length;
-    const date = pinLabel(
-      first,
-      now,
-      locale,
-      count > 1 ? { ...words, today: words.todayFrom, tomorrow: words.tomorrowFrom } : words,
-    );
+    const date = placeDate(place, now, locale, words);
     const tone: PinTone = !picks
       ? 'plain'
       : place.posts.some((post) => picks.has(post.id))

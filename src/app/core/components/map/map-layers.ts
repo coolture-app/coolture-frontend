@@ -17,6 +17,12 @@ type CirclePaint = Extract<AnyPaint, { 'circle-color'?: unknown }>;
 const REGULAR = ['Noto Sans Regular'];
 const BOLD = ['Noto Sans Bold'];
 
+/** The clusters' count is of posts, not of places. */
+export const CLUSTER_POSTS: Record<string, ExpressionSpecification> = {
+  posts: ['+', ['get', 'count']],
+  picks: ['+', ['case', ['==', ['get', 'tone'], 'pick'], 1, 0]],
+};
+
 const PIXEL_RATIO = 2;
 const PILL_HEIGHT = 26;
 /** How far a pick's star sticks out above and right of its pill, in CSS pixels, as it does on a cluster. */

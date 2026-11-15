@@ -8,6 +8,8 @@ export interface MapView {
   center: [number, number];
   zoom: number;
   selected: string | null;
+  /** The post opened from the selected place's list. */
+  opened: string | null;
 }
 
 @Injectable({ providedIn: 'root' })

@@ -7,6 +7,8 @@ import { Map, MapArea } from './map';
 import { GeoPoint } from '../../../models/common/geo.model';
 import { LocationService } from '../../../services/location/location.service';
 import { MapMemory } from '../map-memory';
+import { MapMarks } from '../map-marks';
+import { mark } from '../map-stubs.testing';
 
 /** What the component asks of a MapLibre map, around a view from (54.30, 18.50) to (54.40, 18.70). */
 function fakeMap() {
@@ -99,7 +101,12 @@ describe('Map', () => {
   });
 
   it('opens where it was left on Back from a post, though setting its padding ends a move', async () => {
-    TestBed.inject(MapMemory).view = { center: [18.6, 54.4], zoom: 14.5, selected: 'p1' };
+    TestBed.inject(MapMemory).view = {
+      center: [18.6, 54.4],
+      zoom: 14.5,
+      selected: 'p1',
+      opened: null,
+    };
     fixture.componentRef.setInput('resume', true);
     const map = fakeMap();
     // MapLibre's setPadding is a jump, and a jump ends with a moveend.
@@ -108,6 +115,41 @@ describe('Map', () => {
     await load(map);
 
     expect(map.jumpTo).toHaveBeenCalledWith({ center: [18.6, 54.4], zoom: 14.5 });
+  });
+
+  it('shows the pins it had on Back from a post, with no request', async () => {
+    const store = TestBed.inject(MapMarks);
+    store.load(
+      { north: 54.4, south: 54.3, west: 18.5, east: 18.7 },
+      { filters: {}, excludeMine: false },
+    );
+    http.expectOne(marks()).flush([mark('p1')]);
+    TestBed.inject(MapMemory).view = {
+      center: [18.6, 54.35],
+      zoom: 12,
+      selected: 'p1',
+      opened: null,
+    };
+    fixture.componentRef.setInput('resume', true);
+
+    await load();
+
+    http.expectNone(marks());
+    expect(component.selected()?.id).toBe('p1');
+  });
+
+  it('starts without the pins of an earlier look when opened afresh', async () => {
+    const store = TestBed.inject(MapMarks);
+    store.load(
+      { north: 54.4, south: 54.3, west: 18.5, east: 18.7 },
+      { filters: {}, excludeMine: false },
+    );
+    http.expectOne(marks()).flush([mark('old')]);
+
+    await load();
+
+    expect(component.places()).toEqual([]);
+    http.expectOne(marks()).flush([]);
   });
 
   it('moves to the browser position over the home, if it is already allowed', async () => {
@@ -144,37 +186,6 @@ describe('Map', () => {
     expect(component.moved()).toBeFalse();
   });
 
-  it('shows the answer to the newest request only', async () => {
-    await load();
-    http.match((r) => r.url.endsWith('/posts/map')).forEach((r) => r.flush([]));
-
-    fixture.componentRef.setInput('excludeMine', true);
-    await fixture.whenStable();
-    const older = http.expectOne((r) => r.params.get('excludeMine') === 'true');
-    fixture.componentRef.setInput('excludeMine', false);
-    await fixture.whenStable();
-    const newer = http.expectOne(
-      (r) => r.url.endsWith('/posts/map') && !r.params.has('excludeMine'),
-    );
-
-    expect(older.cancelled).toBeTrue();
-    newer.flush([mark('newer')]);
-    expect(component.places().map((p) => p.id)).toEqual(['newer']);
-  });
-
-  it('keeps the pins it has when a request fails', async () => {
-    await load();
-    http.expectOne((r) => r.url.endsWith('/posts/map')).flush([mark('kept')]);
-
-    fixture.componentRef.setInput('excludeMine', true);
-    await fixture.whenStable();
-    http
-      .expectOne((r) => r.url.endsWith('/posts/map'))
-      .flush(null, { status: 500, statusText: 'Server Error' });
-
-    expect(component.places().map((p) => p.id)).toEqual(['kept']);
-  });
-
   it('keeps the search button busy until the area it handed over has its pins', async () => {
     const map = await load();
     http.match((r) => r.url.endsWith('/posts/map')).forEach((r) => r.flush([]));
@@ -209,47 +220,6 @@ describe('Map', () => {
     await fixture.whenStable();
     expect(map.fitBounds).toHaveBeenCalledTimes(1);
   });
-  it('fetches a box two views wider on each side, and asks again before a pan reaches its edge', async () => {
-    const map = await load();
-    const first = http.expectOne(marks());
-    expect(Number(first.request.params.get('leftUpper.latitude'))).toBeCloseTo(54.6);
-    expect(Number(first.request.params.get('rightBottom.longitude'))).toBeCloseTo(19.1);
-    first.flush([mark('kept', 54.42)]);
-
-    map.view.west = 18.55;
-    map.view.east = 18.75;
-    component.onMoveEnd({ target: map });
-    await new Promise((resolve) => setTimeout(resolve, 150));
-    http.expectNone(marks());
-
-    map.view.west = 18.9;
-    map.view.east = 19.1;
-    component.onMoveEnd({ target: map });
-    await new Promise((resolve) => setTimeout(resolve, 150));
-    http.expectOne(marks()).flush([mark('new', 54.35)]);
-
-    // 18.6 is inside the new box, so the answer is the truth there; 'kept' was at 18.6 too and went.
-    expect(component.places().map((p) => p.id)).toEqual(['new']);
-  });
-
-  it('keeps the pins it loaded outside the box of a new answer', async () => {
-    const map = await load();
-    http.expectOne(marks()).flush([mark('far', 54.35)]);
-
-    map.view.north = 56.4;
-    map.view.south = 56.3;
-    component.onMoveEnd({ target: map });
-    await new Promise((resolve) => setTimeout(resolve, 150));
-    http.expectOne(marks()).flush([mark('north', 56.35)]);
-
-    expect(
-      component
-        .places()
-        .map((p) => p.id)
-        .sort(),
-    ).toEqual(['far', 'north']);
-  });
-
   it('waits while Lista hides it, and fetches when shown', async () => {
     fixture.componentRef.setInput('visible', false);
     await fixture.whenStable();
@@ -290,14 +260,3 @@ describe('Map', () => {
     ]);
   });
 });
-
-function mark(id: string, latitude = 54.35) {
-  return {
-    id,
-    title: id,
-    startsAt: '2026-12-01T18:00:00Z',
-    positiveReactionCount: 0,
-    coordinates: { latitude, longitude: 18.6 },
-    city: 'Gdańsk',
-  };
-}

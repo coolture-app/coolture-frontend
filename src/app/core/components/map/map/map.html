@@ -50,7 +50,7 @@
       [cluster]="true"
       [clusterMaxZoom]="16"
       [clusterRadius]="44"
-      [clusterProperties]="clusterPosts"
+      [clusterProperties]="layers.CLUSTER_POSTS"
     ></mgl-geojson-source>
     <mgl-layer
       id="titles"
@@ -133,7 +133,7 @@
         [maxWidth]="'360px'"
         className="map-card"
       >
-        <app-map-preview [place]="place" (closed)="closePreview()" />
+        <app-map-preview [place]="place" [(opened)]="opened" (closed)="closePreview()" />
       </mgl-popup>
     }
   </mgl-map>
@@ -162,7 +162,7 @@
   }
   @if (!wide() && selected(); as place) {
     <div class="map-sheet">
-      <app-map-preview [place]="place" (closed)="closePreview()" />
+      <app-map-preview [place]="place" [(opened)]="opened" (closed)="closePreview()" />
     </div>
   }
 </div>

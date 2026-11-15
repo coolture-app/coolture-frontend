@@ -4,6 +4,7 @@ import {
   effect,
   inject,
   input,
+  model,
   output,
   signal,
   untracked,
@@ -56,16 +57,21 @@ export class MapPreview {
   readonly place = input.required<Place>();
   readonly closed = output<void>();
 
-  /** The post opened from a place's list. */
-  readonly opened = signal<PostMark | null>(null);
+  /** The post opened from a place's list. The map keeps it, so Back from that post opens it again. */
+  readonly opened = model<string | null>(null);
   /** The row under the mouse, shown beside the list. */
   readonly peek = signal<PostMark | null>(null);
   /** The peek goes on the side with room for it. */
   readonly peekLeft = signal(false);
 
   readonly many = computed(() => this.place().posts.length > 1);
+  /** A fetch rebuilds the place; only another place's pin closes the peek. */
+  private readonly placeId = computed(() => this.place().id);
   /** The post the card shows whole: a single pin's, or one opened from the list. */
-  readonly shown = computed(() => (this.many() ? this.opened() : this.place().posts[0]));
+  readonly shown = computed(() => {
+    const { posts } = this.place();
+    return this.many() ? (posts.find((post) => post.id === this.opened()) ?? null) : posts[0];
+  });
   readonly placeName = computed(() => placeLine(this.place().posts[0]));
   readonly directions = computed(() =>
     directionsUrl(
@@ -76,17 +82,14 @@ export class MapPreview {
 
   constructor() {
     effect(() => {
-      this.place();
-      untracked(() => {
-        this.opened.set(null);
-        this.peek.set(null);
-      });
+      this.placeId();
+      untracked(() => this.peek.set(null));
     });
   }
 
   open(post: PostMark): void {
     this.peek.set(null);
-    this.opened.set(post);
+    this.opened.set(post.id);
   }
 
   onRowEnter(post: PostMark, event: MouseEvent): void {
