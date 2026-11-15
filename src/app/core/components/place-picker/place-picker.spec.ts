@@ -49,7 +49,10 @@ function click(at: GeoPoint): MapMouseEvent {
 }
 
 function fakeMap(): MapLibreMap {
-  return { getContainer: () => document.createElement('div') } as unknown as MapLibreMap;
+  return {
+    getContainer: () => document.createElement('div'),
+    getStyle: () => ({ layers: [] }),
+  } as unknown as MapLibreMap;
 }
 
 describe('PlacePicker', () => {

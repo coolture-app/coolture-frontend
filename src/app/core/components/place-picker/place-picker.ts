@@ -13,13 +13,13 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { MapComponent, MarkerComponent } from '@maplibre/ngx-maplibre-gl';
 import type { LngLat, Map as MapLibreMap, MapMouseEvent, Marker } from 'maplibre-gl';
 import { catchError, map, of, Subject, switchMap } from 'rxjs';
 
 import { FormInput } from '../form-input/form-input';
-import { collapseCredit, MAP_STYLE, TRICITY } from '../map/map-style';
+import { collapseCredit, followLanguage, MAP_STYLE, TRICITY } from '../map/map-style';
 import { GeocodingService } from '../../services/geocoding/geocoding.service';
 import { LocationService } from '../../services/location/location.service';
 import { GeoPoint } from '../../models/common/geo.model';
@@ -71,6 +71,7 @@ export class PlacePicker implements OnInit {
   private geocoding = inject(GeocodingService);
   private location = inject(LocationService);
   private destroyRef = inject(DestroyRef);
+  private translate = inject(TranslateService);
 
   readonly group = input.required<LocationForm>();
 
@@ -295,6 +296,8 @@ export class PlacePicker implements OnInit {
   onMapLoad(instance: MapLibreMap): void {
     this.mapInstance = instance;
     collapseCredit(instance);
+    const labels = followLanguage(instance, this.translate);
+    this.destroyRef.onDestroy(() => labels.unsubscribe());
   }
 
   onMapError(): void {
