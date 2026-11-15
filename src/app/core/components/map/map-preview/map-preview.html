@@ -32,7 +32,7 @@
             (click)="open(post)"
             (mouseenter)="onRowEnter(post, $event)"
           >
-            <span class="preview__date">{{ post.startsAt | date: dateFormats().eventCard }}</span>
+            <span class="preview__date">{{ when(post) }}</span>
             <span class="preview__row-title">{{ post.title }}</span>
           </button>
         </li>
@@ -60,7 +60,7 @@
       }
       <div class="mini__heading">
         <span class="mini__title">{{ post.title }}</span>
-        <span class="mini__meta">{{ post.startsAt | date: dateFormats().eventCard }}</span>
+        <span class="mini__meta">{{ when(post) }}</span>
         @if (placeName()) {
           <span class="mini__meta mini__place">{{ placeName() }}</span>
         }

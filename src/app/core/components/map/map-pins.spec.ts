@@ -1,5 +1,5 @@
 import { PostMark } from '../../models/posts/post-mark.model';
-import { groupPlaces, pinFeatures, pinLabel, pluralForm, shortTitle } from './map-pins';
+import { cardDate, groupPlaces, pinFeatures, pinLabel, pluralForm, shortTitle } from './map-pins';
 
 const WORDS = {
   today: 'dziś',
@@ -123,5 +123,14 @@ describe('pinFeatures', () => {
     const key = (id: string) => features.find((f) => f.properties.id === id)!.properties.sortKey;
 
     expect(key('other')).toBeGreaterThan(key('pick'));
+  });
+});
+
+describe('cardDate', () => {
+  it('says the day, the short month and the hour in the app language', () => {
+    const start = new Date(2026, 10, 22, 18, 0).toISOString();
+
+    expect(cardDate(start, 'pl')).toBe('22 lis, 18:00');
+    expect(cardDate(start, 'en')).toBe('Nov 22, 18:00');
   });
 });

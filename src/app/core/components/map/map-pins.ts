@@ -90,24 +90,37 @@ export function pinLabel(
     return words.now;
   }
   const days = Math.round((startOfDay(start) - startOfDay(now)) / DAY_MS);
-  const hour = new Intl.DateTimeFormat(locale, {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  });
   if (days === 0) {
-    return `${words.today} ${hour.format(start)}`;
+    return `${words.today} ${hour(start, locale)}`;
   }
   if (days === 1) {
-    return `${words.tomorrow} ${hour.format(start)}`;
+    return `${words.tomorrow} ${hour(start, locale)}`;
   }
   if (days > 1 && days <= WEEKDAY_DAYS) {
     const weekday = new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(start);
     return `${weekday.replace('.', '')} ${start.getDate()}`;
   }
+  return dayMonth(start, locale);
+}
+
+/** "22 lis, 18:00": a post's start as the preview shows it, in the pins' words. */
+export function cardDate(iso: string, locale: string): string {
+  const date = new Date(iso);
+  return `${dayMonth(date, locale)}, ${hour(date, locale)}`;
+}
+
+function dayMonth(date: Date, locale: string): string {
   return new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' })
-    .format(start)
+    .format(date)
     .replace('.', '');
+}
+
+function hour(date: Date, locale: string): string {
+  return new Intl.DateTimeFormat(locale, {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(date);
 }
 
 /** The title beside the pill when zoomed in, cut on a word where it can be. */

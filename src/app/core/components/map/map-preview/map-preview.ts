@@ -9,9 +9,11 @@ import {
   signal,
   untracked,
 } from '@angular/core';
-import { DatePipe, NgTemplateOutlet } from '@angular/common';
+import { NgTemplateOutlet } from '@angular/common';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs';
 import { RouterLink } from '@angular/router';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideBookmark,
@@ -22,10 +24,9 @@ import {
   lucideX,
 } from '@ng-icons/lucide';
 import { appTicket } from '../../../icons/ticket';
-import { DateFormatService } from '../../../services/date-format/date-format.service';
 import { placeLine } from '../../../models/posts/post-place';
 import { PostMark } from '../../../models/posts/post-mark.model';
-import { Place } from '../map-pins';
+import { cardDate, Place } from '../map-pins';
 import { directionsUrl } from '../map-memory';
 import { Tooltip } from '../../../directives/tooltip';
 
@@ -35,7 +36,7 @@ import { Tooltip } from '../../../directives/tooltip';
  */
 @Component({
   selector: 'app-map-preview',
-  imports: [DatePipe, NgTemplateOutlet, RouterLink, TranslatePipe, NgIcon, Tooltip],
+  imports: [NgTemplateOutlet, RouterLink, TranslatePipe, NgIcon, Tooltip],
   viewProviders: [
     provideIcons({
       appTicket,
@@ -51,7 +52,10 @@ import { Tooltip } from '../../../directives/tooltip';
   styleUrl: './map-preview.scss',
 })
 export class MapPreview {
-  readonly dateFormats = inject(DateFormatService).formats;
+  private translate = inject(TranslateService);
+  private readonly lang = toSignal(this.translate.onLangChange.pipe(map((change) => change.lang)), {
+    initialValue: this.translate.getCurrentLang() || 'pl',
+  });
   readonly hoverable = typeof window !== 'undefined' && window.matchMedia('(hover: hover)').matches;
 
   readonly place = input.required<Place>();
@@ -85,6 +89,10 @@ export class MapPreview {
       this.placeId();
       untracked(() => this.peek.set(null));
     });
+  }
+
+  when(post: PostMark): string {
+    return cardDate(post.startsAt, this.lang());
   }
 
   open(post: PostMark): void {
