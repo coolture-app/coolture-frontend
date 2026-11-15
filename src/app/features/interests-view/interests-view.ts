@@ -41,6 +41,8 @@ export class InterestsView implements OnInit {
   /** First selection after sign-up, shown as an overlay: nothing saved yet, may be skipped, no navigation after saving. */
   readonly onboarding = input(false, { transform: booleanAttribute });
   readonly dismissed = output<void>();
+  /** Onboarding goes on to its next step. */
+  readonly saved = output<void>();
 
   private leaveModal = viewChild.required(ModalWindow);
   private resolveLeave: ((leave: boolean) => void) | null = null;
@@ -120,7 +122,12 @@ export class InterestsView implements OnInit {
   }
 
   protected async save(): Promise<void> {
-    if ((await this.persist()) && !this.onboarding()) {
+    if (!(await this.persist())) {
+      return;
+    }
+    if (this.onboarding()) {
+      this.saved.emit();
+    } else {
       await this.router.navigateByUrl('/profile');
     }
   }

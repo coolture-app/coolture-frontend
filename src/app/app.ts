@@ -7,6 +7,7 @@ import translationEN from '../../public/i18n/en.json';
 import translationPL from '../../public/i18n/pl.json';
 import { AuthService } from './core/services/auth/auth.service';
 import { InterestsView } from './features/interests-view/interests-view';
+import { HomeArea } from './features/home-area/home-area';
 import { Toast } from './core/components/toast/toast';
 import { PhotoViewer } from './core/components/photo-viewer/photo-viewer';
 import { CommentsSheet } from './core/components/comments-sheet/comments-sheet';
@@ -20,6 +21,7 @@ import { devTools } from '../environments/dev-tools';
     NgComponentOutlet,
     Navbar,
     InterestsView,
+    HomeArea,
     Toast,
     PhotoViewer,
     CommentsSheet,
@@ -37,6 +39,9 @@ export class App implements OnInit {
   protected readonly interestsRequired = computed(
     () => this.authService.interestsSelected() === false && !this.interestsDismissed(),
   );
+  /** Onboarding's optional second step, right after the interests are saved. Skipping it ends onboarding. */
+  protected readonly homeStep = signal(false);
+  protected readonly onboarding = computed(() => this.interestsRequired() || this.homeStep());
 
   constructor() {
     this.translate.addLangs(['pl', 'en']);

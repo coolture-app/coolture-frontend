@@ -17,6 +17,7 @@ import {
   heroArrowDownOnSquare,
   heroArrowUpOnSquare,
   heroArrowLeft,
+  heroMapPin,
 } from '@ng-icons/heroicons/outline';
 
 import { AuthService } from '../../core/services/auth/auth.service';
@@ -28,6 +29,7 @@ import { UserSummary } from '../../core/models/users/user-summary.model';
 import { UserProfileUpdateRequest } from '../../core/models/users/user-profile-update-request.model';
 import { FollowListComponent } from '../../core/components/follow-list/follow-list';
 import { Btn } from '../../core/components/btn/btn';
+import { HomeArea } from '../home-area/home-area';
 import { DateFormatService } from '../../core/services/date-format/date-format.service';
 
 @Component({
@@ -41,6 +43,7 @@ import { DateFormatService } from '../../core/services/date-format/date-format.s
     FollowListComponent,
     RouterModule,
     Btn,
+    HomeArea,
   ],
   viewProviders: [
     provideIcons({
@@ -55,6 +58,7 @@ import { DateFormatService } from '../../core/services/date-format/date-format.s
       heroArrowDownOnSquare,
       heroArrowUpOnSquare,
       heroArrowLeft,
+      heroMapPin,
     }),
   ],
   templateUrl: './my-profile-view.html',
@@ -84,6 +88,9 @@ export class UserProfileView implements OnInit {
   showFollowers = signal(false);
   showFollowing = signal(false);
   showBlocked = signal(false);
+  showHome = signal(false);
+  /** Private, so only shown on your own profile, from `/auth/me`. */
+  readonly home = this.authService.home;
   blockedUsers = signal<UserSummary[]>([]);
 
   async ngOnInit() {
