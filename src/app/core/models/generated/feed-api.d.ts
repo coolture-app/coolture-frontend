@@ -115,7 +115,7 @@ export interface components {
       /** @description Every photo of the post, cover first, then in the post's order. At most 8, the limit a post can have (PostLimits.MAX_PHOTOS). Left out when the post has none. */
       photos?: components['schemas']['MediaResource'][];
     };
-    /** @description What a pin and its preview need. No description: the map loads every post in view at once, and the description was over half of the answer. */
+    /** @description What a pin and its preview need. Only the description's start: the map loads every post in view at once, and whole descriptions were over half of the answer. */
     PostMark: {
       /** Format: uuid */
       id: string;
@@ -125,7 +125,13 @@ export interface components {
       /** Format: date-time */
       endsAt?: string;
       coverMediaUrl?: string;
+      /** @description The description's first 200 characters, with runs of whitespace as one space. Left out when empty. */
+      excerpt?: string;
       positiveReactionCount: number;
+      /** @description People who marked it Interesuje mnie. */
+      interestedCount: number;
+      /** @description People who marked it Wezmę udział. */
+      goingCount: number;
       coordinates: components['schemas']['GeoPoint'];
       venueName?: string;
       city?: string;

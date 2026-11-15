@@ -343,7 +343,17 @@
     "locate": "My location",
     "locateFailed": "Couldn't get your location",
     "loading": "Loading events on the map",
-    "events": "Events here: {{count}}"
+    "legend": "Star: the best fit for you",
+    "back": "All here ({{count}})",
+    "open": "See the event",
+    "likes": "Likes: {{count}}",
+    "going": "Going: {{count}}",
+    "todayFrom": "today",
+    "tomorrowFrom": "tomorrow",
+    "events_one": "{{count}} event",
+    "events_few": "{{count}} events",
+    "events_many": "{{count}} events",
+    "interested": "Interested: {{count}}"
   },
   "PLACE_SEARCH": {
     "unavailable": "Place search isn't working. Try again in a moment."

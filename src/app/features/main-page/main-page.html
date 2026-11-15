@@ -7,6 +7,7 @@
 >
   <!-- Sticks under the navbar. On phones it slides away while scrolling down, back on scrolling up. -->
   <div
+    #searchbar
     class="searchbar"
     [class.searchbar--scrolling]="scrolling()"
     [class.searchbar--hidden]="barHidden()"
@@ -266,6 +267,7 @@
         [focus]="mapFocusPost()"
         [resume]="mapResumes()"
         [home]="home()?.coordinates ?? null"
+        [topInset]="mapTopInset()"
         (searchArea)="searchArea($event)"
       ></app-map>
     }

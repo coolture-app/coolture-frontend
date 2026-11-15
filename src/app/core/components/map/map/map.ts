@@ -14,7 +14,18 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideLocateFixed } from '@ng-icons/lucide';
-import { Subject, takeUntil, debounceTime, switchMap, tap, catchError, of } from 'rxjs';
+import {
+  Subject,
+  takeUntil,
+  debounceTime,
+  switchMap,
+  tap,
+  catchError,
+  of,
+  map as toAnswer,
+  throttleTime,
+  asyncScheduler,
+} from 'rxjs';
 import type {
   ExpressionSpecification,
   FilterSpecification,
@@ -34,7 +45,8 @@ import { PostFilterParams } from '../../../models/posts/post-filter-params.model
 import { PostMark } from '../../../models/posts/post-mark.model';
 import { MapBounds } from '../../../models/posts/map-bounds.model';
 import { collapseCredit, MAP_STYLE, TRICITY } from '../map-style';
-import { groupPlaces, pinFeatures, PinWords, Place } from '../map-pins';
+import { groupPlaces, pinFeatures, pinLabel, PinWords, Place, pluralForm } from '../map-pins';
+import { placeLine } from '../../../models/posts/post-place';
 import * as layers from '../map-layers';
 import { MapMemory } from '../map-memory';
 import { MapPreview } from '../map-preview/map-preview';
@@ -57,7 +69,12 @@ const START_PINS = 3;
 const WIDEST_START_ZOOM = 9;
 /** On a phone the preview covers the bottom of the map, so a tapped pin settles this far above the middle. */
 const PHONE_PIN_LIFT_PX = 110;
+/** On a wide screen the card opens under the pin, so the pin settles this far from the map's top. */
+const WIDE_PIN_TOP_PX = 70;
 const PIN_LAYERS = ['pins', 'lit'];
+/** A cluster tap zooms at least this far in, and no further than `MAX_TAP_ZOOM`. */
+const MIN_TAP_ZOOM_STEP = 1.5;
+const MAX_TAP_ZOOM = 18;
 
 /** What "Szukaj w tym obszarze" hands over: the circle inside the view, touching its nearer edges. */
 export interface MapArea {
@@ -88,6 +105,7 @@ interface Box {
   templateUrl: './map.html',
   styleUrls: ['./map.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { '[style.--map-top-inset.px]': 'topInset()' },
 })
 export class Map implements OnDestroy {
   private postService = inject(PostService);
@@ -113,6 +131,8 @@ export class Map implements OnDestroy {
   resume = input(false);
   /** Lista hides the map instead of destroying it, so its style and tiles stay loaded. */
   visible = input(true);
+  /** How much of the map's top a bar floats over, on phones. The map's own buttons and its middle sit below it. */
+  topInset = input(0);
   /** The user tapped "Szukaj w tym obszarze". */
   searchArea = output<MapArea>();
 
@@ -157,6 +177,33 @@ export class Map implements OnDestroy {
       this.words() as PinWords,
     ),
   );
+  /**
+   * What hovering a pin says: a name, then details. A post: its title, then when and where. A place: its name, then
+   * how many events and from when.
+   */
+  readonly hoverInfo = computed(() => {
+    const place = this.hovered();
+    if (!place) {
+      return null;
+    }
+    const words = this.words() as PinWords;
+    const locale = this.translate.getCurrentLang() || 'pl';
+    const [first] = place.posts;
+    const count = place.posts.length;
+    const where = placeLine(first);
+    if (count === 1) {
+      const when = pinLabel(first, new Date(), locale, words);
+      return { name: first.title, details: where ? `${when} · ${where}` : when };
+    }
+    const when = pinLabel(first, new Date(), locale, {
+      ...words,
+      today: words.todayFrom,
+      tomorrow: words.tomorrowFrom,
+    });
+    const events = this.translate.instant(`MAP.events_${pluralForm(count, locale)}`, { count });
+    return { name: where || first.title, details: `${events} · ${words.from} ${when}` };
+  });
+
   readonly selected = computed(() => {
     const id = this.selectedPost();
     return id ? (this.places().find((p) => p.posts.some((post) => post.id === id)) ?? null) : null;
@@ -207,8 +254,11 @@ export class Map implements OnDestroy {
   /** The area this map handed over itself. It's already in view, so the map doesn't fit to it. */
   private handedOver: MapArea | null = null;
   private fittedArea: Feature<Polygon> | null = null;
-  /** What the pins on screen were fetched for: a box around the view, and the filters. */
+  /** What the last request was for: a box around the view, and the filters. */
   private loaded: { box: Box; key: string } | null = null;
+  /** Every pin loaded for these filters, so a pan back or a zoom out shows them at once. */
+  private cache = new globalThis.Map<string, PostMark>();
+  private cacheKey = '';
   /** Something changed while Lista hid the map, so it fetches when shown. */
   private stale = false;
   /** The first view is still easing out to show `START_PINS` pins. */
@@ -216,7 +266,8 @@ export class Map implements OnDestroy {
 
   private destroy$ = new Subject<void>();
   private boundsChange$ = new Subject<void>();
-  private marksWanted$ = new Subject<Box>();
+  private moving$ = new Subject<void>();
+  private marksWanted$ = new Subject<{ box: Box; key: string }>();
 
   constructor() {
     effect(() => {
@@ -239,7 +290,12 @@ export class Map implements OnDestroy {
       const post = this.focus();
       const map = this.map;
       if (post && map) {
-        untracked(() => this.showFocus(map, post, true));
+        // A map hidden under Lista has no size yet, and a post centred in it would land in a corner once shown.
+        const shown = map.getContainer().clientWidth > 0;
+        requestAnimationFrame(() => {
+          map.resize();
+          untracked(() => this.showFocus(map, post, shown));
+        });
       }
     });
 
@@ -259,8 +315,21 @@ export class Map implements OnDestroy {
       untracked(() => this.remember(place));
     });
 
+    effect(() => {
+      const top = this.topInset();
+      this.map?.setPadding({ top, right: 0, bottom: 0, left: 0 });
+    });
+
     this.boundsChange$
       .pipe(debounceTime(100), takeUntil(this.destroy$))
+      .subscribe(() => this.fetchForView());
+
+    // While the map moves, pins ahead of it load before the view gets there.
+    this.moving$
+      .pipe(
+        throttleTime(250, asyncScheduler, { leading: true, trailing: true }),
+        takeUntil(this.destroy$),
+      )
       .subscribe(() => this.fetchForView());
 
     // A newer view or filter cancels the request still running, so an older answer never replaces newer pins.
@@ -268,8 +337,9 @@ export class Map implements OnDestroy {
     this.marksWanted$
       .pipe(
         tap(() => this.loading.set(true)),
-        switchMap((box) =>
+        switchMap(({ box, key }) =>
           this.postService.getMapMarks(this.filters(), toMapBounds(box), this.excludeMine()).pipe(
+            toAnswer((marks) => ({ marks, box, key })),
             catchError(() => {
               this.loaded = null;
               return of(null);
@@ -282,9 +352,9 @@ export class Map implements OnDestroy {
         }),
         takeUntil(this.destroy$),
       )
-      .subscribe((marks) => {
-        if (marks) {
-          this.marks.set(marks);
+      .subscribe((answer) => {
+        if (answer) {
+          this.keep(answer.marks, answer.box, answer.key);
           this.easeOutIfEmpty();
         }
       });
@@ -304,6 +374,8 @@ export class Map implements OnDestroy {
 
   onMapLoad(map: MapLibreMap): void {
     this.map = map;
+    map.setPadding({ top: this.topInset(), right: 0, bottom: 0, left: 0 });
+    map.on('move', () => this.moving$.next());
     collapseCredit(map);
     layers.addPillImages(map);
     const focus = this.focus();
@@ -353,23 +425,27 @@ export class Map implements OnDestroy {
     this.selectedPost.set(post.id);
     const center: [number, number] = [post.coordinates.longitude, post.coordinates.latitude];
     const zoom = Math.max(map.getZoom(), FOCUS_ZOOM);
-    if (animate) {
-      map.easeTo({ center, zoom, duration: EASE_MS, offset: this.pinOffset() });
-    } else {
-      map.jumpTo({ center, zoom });
-    }
+    // A jump has no offset, so an instant one is an ease of no length, leaving room for the card or the sheet.
+    map.easeTo({
+      center,
+      zoom,
+      duration: animate ? EASE_MS : 0,
+      offset: this.pinOffset(),
+      essential: true,
+    });
     this.fetchForView();
   }
 
   onSearchArea(): void {
     const map = this.map!;
+    // The middle and the top edge of what isn't under a floating bar.
     const centre = map.getCenter();
-    const bounds = map.getBounds();
+    const top = map.unproject([map.getCanvas().clientWidth / 2, this.topInset()]);
     const at = { latitude: round(centre.lat), longitude: round(centre.lng) };
     const toEdgeKm =
       Math.min(
-        haversineMeters(at, { latitude: bounds.getNorth(), longitude: at.longitude }),
-        haversineMeters(at, { latitude: at.latitude, longitude: bounds.getEast() }),
+        haversineMeters(at, { latitude: top.lat, longitude: at.longitude }),
+        haversineMeters(at, { latitude: at.latitude, longitude: map.getBounds().getEast() }),
       ) / 1000;
     const area = { centre: at, radiusKm: Math.max(1, Math.round(toEdgeKm)) };
     this.moved.set(false);
@@ -395,6 +471,7 @@ export class Map implements OnDestroy {
       center: [at.longitude, at.latitude],
       zoom: Math.max(this.map.getZoom(), PIN_ZOOM),
       duration: EASE_MS,
+      essential: true,
     });
   }
 
@@ -413,6 +490,7 @@ export class Map implements OnDestroy {
       zoom: zoom < FAR_ZOOM ? PIN_ZOOM : zoom,
       duration: EASE_MS,
       offset: this.pinOffset(),
+      essential: true,
     });
   }
 
@@ -426,7 +504,13 @@ export class Map implements OnDestroy {
     const center = (feature.geometry as Point).coordinates as [number, number];
     const source = map.getSource<GeoJSONSource>('posts');
     void source?.getClusterExpansionZoom(feature.properties['cluster_id']).then((zoom) => {
-      map.easeTo({ center, zoom, duration: EASE_MS });
+      // A split one level in reads as the pins jumping rather than a zoom, so it goes at least a bit further.
+      map.easeTo({
+        center,
+        zoom: Math.min(MAX_TAP_ZOOM, Math.max(zoom, map.getZoom() + MIN_TAP_ZOOM_STEP)),
+        duration: EASE_MS,
+        essential: true,
+      });
     });
   }
 
@@ -484,10 +568,17 @@ export class Map implements OnDestroy {
   }
 
   private pinOffset(): [number, number] {
-    return this.wide() ? [0, 0] : [0, -PHONE_PIN_LIFT_PX];
+    if (!this.wide()) {
+      return [0, -PHONE_PIN_LIFT_PX];
+    }
+    const height = this.map?.getCanvas().clientHeight ?? 0;
+    return [0, -Math.max(0, height / 2 - WIDE_PIN_TOP_PX)];
   }
 
-  /** Fetches a box one view wider on each side, so panning nearby needs no request. */
+  /**
+   * Fetches a box two views wider on each side, and again once the view comes within half a view of its edge, so
+   * pins ahead of a pan are there before the view is.
+   */
   private fetchForView(): void {
     const map = this.map;
     if (!map) {
@@ -500,15 +591,35 @@ export class Map implements OnDestroy {
     this.stale = false;
     const view = toBox(map.getBounds());
     const key = JSON.stringify([this.filters(), this.excludeMine()]);
-    if (this.loaded && this.loaded.key === key && contains(this.loaded.box, view)) {
+    if (this.loaded && this.loaded.key === key && contains(this.loaded.box, padded(view, 0.5))) {
       if (this.searching()) {
         this.searching.set(false);
       }
       return;
     }
-    const box = padded(view);
+    const box = padded(view, 2);
     this.loaded = { box, key };
-    this.marksWanted$.next(box);
+    this.marksWanted$.next({ box, key });
+  }
+
+  /**
+   * Adds an answer to the pins loaded for these filters. Inside the answer's box it's the truth, so a pin there that
+   * it doesn't hold went away; outside, the pins stay.
+   */
+  private keep(marks: PostMark[], box: Box, key: string): void {
+    if (key !== this.cacheKey) {
+      this.cache.clear();
+      this.cacheKey = key;
+    }
+    for (const [id, mark] of this.cache) {
+      if (inBox(box, mark.coordinates)) {
+        this.cache.delete(id);
+      }
+    }
+    for (const mark of marks) {
+      this.cache.set(mark.id, mark);
+    }
+    this.marks.set([...this.cache.values()]);
   }
 
   /** At the start, a view with fewer than `START_PINS` pins eases out to the nearest ones. */
@@ -601,6 +712,7 @@ const WORLD = [
 /** The clusters' count is of posts, not of places. */
 export const CLUSTER_POSTS: Record<string, ExpressionSpecification> = {
   posts: ['+', ['get', 'count']],
+  picks: ['+', ['case', ['==', ['get', 'tone'], 'pick'], 1, 0]],
 };
 
 function matches(query: string): boolean {
@@ -621,9 +733,10 @@ function toBox(bounds: {
   };
 }
 
-function padded({ west, south, east, north }: Box): Box {
-  const width = east - west;
-  const height = north - south;
+/** The box grown by `views` of its own size on each side. */
+function padded({ west, south, east, north }: Box, views: number): Box {
+  const width = (east - west) * views;
+  const height = (north - south) * views;
   return { west: west - width, south: south - height, east: east + width, north: north + height };
 }
 

@@ -1,7 +1,14 @@
 import { PostMark } from '../../models/posts/post-mark.model';
-import { groupPlaces, pinFeatures, pinLabel, shortTitle } from './map-pins';
+import { groupPlaces, pinFeatures, pinLabel, pluralForm, shortTitle } from './map-pins';
 
-const WORDS = { today: 'dziś', tomorrow: 'jutro', now: 'trwa', from: 'od' };
+const WORDS = {
+  today: 'dziś',
+  tomorrow: 'jutro',
+  now: 'trwa',
+  from: 'od',
+  todayFrom: 'dziś',
+  tomorrowFrom: 'jutra',
+};
 /** Wednesday 18 November 2026, 12:00 local time. */
 const NOW = new Date(2026, 10, 18, 12, 0);
 
@@ -60,6 +67,21 @@ describe('pinLabel', () => {
 
   it('says an event that is on is on', () => {
     expect(label(new Date(2026, 10, 10), new Date(2026, 10, 30))).toBe('trwa');
+  });
+});
+
+describe('pluralForm', () => {
+  it('follows Polish forms', () => {
+    expect([1, 2, 4, 5, 12, 22, 25].map((n) => pluralForm(n, 'pl'))).toEqual([
+      'one',
+      'few',
+      'few',
+      'many',
+      'many',
+      'few',
+      'many',
+    ]);
+    expect(pluralForm(3, 'en')).toBe('many');
   });
 });
 

@@ -18,7 +18,10 @@ function fakeMap() {
     resize: jasmine.createSpy('resize'),
     getZoom: () => 12,
     getContainer: () => document.createElement('div'),
-    getCanvas: () => ({ style: {} }),
+    getCanvas: () => ({ style: {}, clientWidth: 400, clientHeight: 600 }),
+    setPadding: jasmine.createSpy('setPadding'),
+    on: jasmine.createSpy('on'),
+    unproject: () => ({ lat: view.north, lng: 18.60456 }),
     // The pills are drawn on a canvas; the specs don't need them.
     hasImage: () => true,
     cameraForBounds: () => ({ zoom: 11 }),
@@ -193,12 +196,12 @@ describe('Map', () => {
     await fixture.whenStable();
     expect(map.fitBounds).toHaveBeenCalledTimes(1);
   });
-  it('fetches a box one view wider on each side, and pans inside it without asking again', async () => {
+  it('fetches a box two views wider on each side, and asks again before a pan reaches its edge', async () => {
     const map = await load();
     const first = http.expectOne(marks());
-    expect(first.request.params.get('leftUpper.latitude')).toBe('54.5');
-    expect(first.request.params.get('rightBottom.longitude')).toBe('18.9');
-    first.flush([]);
+    expect(Number(first.request.params.get('leftUpper.latitude'))).toBeCloseTo(54.6);
+    expect(Number(first.request.params.get('rightBottom.longitude'))).toBeCloseTo(19.1);
+    first.flush([mark('kept', 54.42)]);
 
     map.view.west = 18.55;
     map.view.east = 18.75;
@@ -210,7 +213,28 @@ describe('Map', () => {
     map.view.east = 19.1;
     component.onMoveEnd({ target: map });
     await new Promise((resolve) => setTimeout(resolve, 150));
-    http.expectOne(marks()).flush([]);
+    http.expectOne(marks()).flush([mark('new', 54.35)]);
+
+    // 18.6 is inside the new box, so the answer is the truth there; 'kept' was at 18.6 too and went.
+    expect(component.places().map((p) => p.id)).toEqual(['new']);
+  });
+
+  it('keeps the pins it loaded outside the box of a new answer', async () => {
+    const map = await load();
+    http.expectOne(marks()).flush([mark('far', 54.35)]);
+
+    map.view.north = 56.4;
+    map.view.south = 56.3;
+    component.onMoveEnd({ target: map });
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    http.expectOne(marks()).flush([mark('north', 56.35)]);
+
+    expect(
+      component
+        .places()
+        .map((p) => p.id)
+        .sort(),
+    ).toEqual(['far', 'north']);
   });
 
   it('waits while Lista hides it, and fetches when shown', async () => {
@@ -229,7 +253,9 @@ describe('Map', () => {
     const map = await load();
     http.expectOne(marks()).flush([mark('other')]);
 
-    expect(map.jumpTo).toHaveBeenCalledWith({ center: [18.6, 54.36], zoom: 15 });
+    expect(map.easeTo).toHaveBeenCalledWith(
+      jasmine.objectContaining({ center: [18.6, 54.36], zoom: 15, duration: 0 }),
+    );
     expect(component.places().map((p) => p.id)).toEqual(['focused', 'other']);
     expect(component.selected()?.id).toBe('focused');
   });

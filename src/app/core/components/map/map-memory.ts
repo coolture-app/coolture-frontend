@@ -55,12 +55,21 @@ function toMark(post: PostCard): PostMark | null {
     startsAt: post.startsAt,
     endsAt: post.endsAt,
     coverMediaUrl: post.coverMedia?.url,
+    excerpt: excerpt(post.description),
     positiveReactionCount: post.positiveReactionCount,
     coordinates: location.coordinates,
     venueName: location.venueName,
     city: location.city,
   };
 }
+
+/** As the server cuts it for `/posts/map`, so a post opened from its card reads the same. */
+function excerpt(description: string | undefined): string | undefined {
+  const text = (description ?? '').replace(/\s+/g, ' ').trim().slice(0, EXCERPT_CHARS);
+  return text || undefined;
+}
+
+const EXCERPT_CHARS = 200;
 
 /**
  * Directions to a point in the phone's map app. Apple Maps on Apple devices, where Google's link opens a web page

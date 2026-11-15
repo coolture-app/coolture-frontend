@@ -19,7 +19,7 @@ mgl-map {
 // Floats over the top of the map, under the home page's bar, as Google Maps and Airbnb place it.
 .map-search-area {
   position: absolute;
-  top: var(--space-md);
+  top: calc(var(--map-top-inset, 0px) + var(--space-md));
   left: 50%;
   z-index: 2;
   height: 40px;
@@ -76,7 +76,7 @@ mgl-map {
 // A thin bar along the top while pins load, so a pan never looks frozen.
 .map-loading {
   position: absolute;
-  top: 0;
+  top: var(--map-top-inset, 0px);
   right: 0;
   left: 0;
   z-index: 2;
@@ -162,7 +162,7 @@ mgl-map {
 
 // MapLibre's popups are outside this component's view, so their look is set globally from here.
 :host ::ng-deep .maplibregl-popup.map-card .maplibregl-popup-content {
-  width: 320px;
+  width: 340px;
   padding: var(--space-md);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-xl);
@@ -182,7 +182,43 @@ mgl-map {
     font-size: var(--text-sm);
   }
 
-  span {
+  .map-hover__name {
+    overflow: hidden;
+    font-weight: var(--font-semibold);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .map-hover__details {
     color: var(--color-text-secondary);
+    font-size: var(--text-xs);
+  }
+}
+
+// What the star means, on Dla Ciebie: a caption on the map, not a control. Bottom middle, clear of the locate button
+// and the credit on the right.
+.map-legend {
+  position: absolute;
+  bottom: var(--space-md);
+  left: 50%;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 3px 10px 3px 6px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--color-text-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translateX(-50%);
+
+  &__badge {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
   }
 }

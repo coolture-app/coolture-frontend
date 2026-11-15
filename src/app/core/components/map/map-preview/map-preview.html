@@ -1,17 +1,21 @@
-<div class="preview">
-  @if (single(); as post) {
-    <a class="preview__post" [routerLink]="['/posts', post.id]">
-      @if (post.coverMediaUrl) {
-        <img class="preview__cover" [src]="post.coverMediaUrl" alt="" loading="lazy" />
-      }
-      <span class="preview__text">
-        <span class="preview__title">{{ post.title }}</span>
-        <span class="preview__meta">{{ post.startsAt | date: dateFormats().eventCard }}</span>
-        @if (placeName()) {
-          <span class="preview__meta preview__place">{{ placeName() }}</span>
-        }
-      </span>
-    </a>
+<div class="preview" (mouseleave)="peek.set(null)">
+  <button
+    type="button"
+    class="preview__close"
+    [attr.aria-label]="'MAP.close' | translate"
+    (click)="closed.emit()"
+  >
+    <ng-icon name="lucideX" aria-hidden="true" />
+  </button>
+
+  @if (shown(); as post) {
+    @if (many()) {
+      <button type="button" class="preview__back" (click)="opened.set(null)">
+        <ng-icon name="lucideChevronLeft" aria-hidden="true" />
+        {{ 'MAP.back' | translate: { count: place().posts.length } }}
+      </button>
+    }
+    <ng-container *ngTemplateOutlet="mini; context: { $implicit: post }" />
   } @else {
     <div class="preview__head">
       <ng-icon name="lucideMapPin" aria-hidden="true" />
@@ -21,26 +25,77 @@
     <ul class="preview__list">
       @for (post of place().posts; track post.id) {
         <li>
-          <a class="preview__row" [routerLink]="['/posts', post.id]">
+          <button
+            type="button"
+            class="preview__row"
+            [class.preview__row--peeked]="peek() === post"
+            (click)="open(post)"
+            (mouseenter)="onRowEnter(post, $event)"
+          >
             <span class="preview__date">{{ post.startsAt | date: dateFormats().eventCard }}</span>
             <span class="preview__row-title">{{ post.title }}</span>
-          </a>
+          </button>
         </li>
       }
     </ul>
-  }
-  <div class="preview__actions">
     <a class="preview__directions" [href]="directions()" target="_blank" rel="noopener">
       <ng-icon name="lucideNavigation" aria-hidden="true" />
       {{ 'MAP.directions' | translate }}
     </a>
-    <button
-      type="button"
-      class="preview__close"
-      [attr.aria-label]="'MAP.close' | translate"
-      (click)="closed.emit()"
-    >
-      <ng-icon name="lucideX" aria-hidden="true" />
-    </button>
-  </div>
+    @if (peek(); as post) {
+      <div class="preview__peek" [class.preview__peek--left]="peekLeft()">
+        <div class="preview__peek-card">
+          <ng-container *ngTemplateOutlet="mini; context: { $implicit: post }" />
+        </div>
+      </div>
+    }
+  }
 </div>
+
+<ng-template #mini let-post>
+  <div class="mini">
+    <div class="mini__top">
+      @if (post.coverMediaUrl) {
+        <img class="mini__cover" [src]="post.coverMediaUrl" alt="" loading="lazy" />
+      }
+      <div class="mini__heading">
+        <span class="mini__title">{{ post.title }}</span>
+        <span class="mini__meta">{{ post.startsAt | date: dateFormats().eventCard }}</span>
+        @if (placeName()) {
+          <span class="mini__meta mini__place">{{ placeName() }}</span>
+        }
+      </div>
+    </div>
+    @if (post.excerpt) {
+      <p class="mini__text">{{ post.excerpt }}</p>
+    }
+    <div class="mini__counts">
+      <span
+        [appTooltip]="'MAP.likes' | translate: { count: post.positiveReactionCount }"
+        tabindex="0"
+      >
+        <ng-icon name="lucideThumbsUp" aria-hidden="true" /> {{ post.positiveReactionCount }}
+      </span>
+      @if (post.interestedCount !== undefined) {
+        <span
+          [appTooltip]="'MAP.interested' | translate: { count: post.interestedCount }"
+          tabindex="0"
+        >
+          <ng-icon name="lucideBookmark" aria-hidden="true" /> {{ post.interestedCount }}
+        </span>
+      }
+      @if (post.goingCount !== undefined) {
+        <span [appTooltip]="'MAP.going' | translate: { count: post.goingCount }" tabindex="0">
+          <ng-icon name="appTicket" aria-hidden="true" /> {{ post.goingCount }}
+        </span>
+      }
+    </div>
+    <div class="mini__actions">
+      <a class="mini__open" [routerLink]="['/posts', post.id]">{{ 'MAP.open' | translate }}</a>
+      <a class="preview__directions" [href]="directions()" target="_blank" rel="noopener">
+        <ng-icon name="lucideNavigation" aria-hidden="true" />
+        {{ 'MAP.directions' | translate }}
+      </a>
+    </div>
+  </div>
+</ng-template>

@@ -21,7 +21,10 @@ export interface Place {
   posts: PostMark[];
 }
 
-/** How a pin stands out. On Dla Ciebie the feed's top picks are `pick` and the rest `quiet`; elsewhere `plain`. */
+/**
+ * How a pin stands out. On Dla Ciebie the feed's top picks are `pick`, with a star, and the rest `quiet`, drawn like
+ * `plain` but below the picks.
+ */
 export type PinTone = 'pick' | 'quiet' | 'plain';
 
 export interface PinWords {
@@ -31,6 +34,9 @@ export interface PinWords {
   now: string;
   /** Before a place's soonest date: "8 · od sob 22". */
   from: string;
+  /** "dziś" and "jutro" after `from`: "od jutra 20:00". */
+  todayFrom: string;
+  tomorrowFrom: string;
 }
 
 export interface PinProperties {
@@ -40,6 +46,16 @@ export interface PinProperties {
   count: number;
   tone: PinTone;
   sortKey: number;
+}
+
+/** The Polish plural forms (1 wydarzenie, 2 wydarzenia, 5 wydarzeń); other languages use `one` and `many`. */
+export function pluralForm(count: number, locale: string): 'one' | 'few' | 'many' {
+  if (count === 1) {
+    return 'one';
+  }
+  const tens = count % 100;
+  const few = count % 10 >= 2 && count % 10 <= 4 && (tens < 12 || tens > 14);
+  return locale.startsWith('pl') && few ? 'few' : 'many';
 }
 
 /** Groups posts into places. A post joins the first place within `SAME_PLACE_METERS` of its first post. */
@@ -115,7 +131,12 @@ export function pinFeatures(
   const features = places.map((place): Feature<Point, PinProperties> => {
     const [first] = place.posts;
     const count = place.posts.length;
-    const date = pinLabel(first, now, locale, words);
+    const date = pinLabel(
+      first,
+      now,
+      locale,
+      count > 1 ? { ...words, today: words.todayFrom, tomorrow: words.tomorrowFrom } : words,
+    );
     const tone: PinTone = !picks
       ? 'plain'
       : place.posts.some((post) => picks.has(post.id))

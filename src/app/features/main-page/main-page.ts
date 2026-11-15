@@ -3,12 +3,14 @@ import {
   Component,
   computed,
   DestroyRef,
+  ElementRef,
   effect,
   inject,
   Injector,
   OnDestroy,
   signal,
   untracked,
+  viewChild,
 } from '@angular/core';
 import { ViewportScroller } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
@@ -147,6 +149,11 @@ export class MainPage implements OnDestroy {
   readonly mapResumes = signal(false);
   /** The post a card's place opened the map on. */
   readonly mapFocusPost = signal<PostMark | null>(null);
+  private readonly searchbar = viewChild<ElementRef<HTMLElement>>('searchbar');
+  private readonly barHeight = signal(0);
+  private readonly phone = signal(false);
+  /** On a phone's Mapa the bar floats over the map's top, so the map keeps its own buttons and middle below it. */
+  readonly mapTopInset = computed(() => (this.isMapView() && this.phone() ? this.barHeight() : 0));
   locationFailed = signal(false);
   locating = signal(false);
   /** While the page moves the bar is see-through, and it turns solid once scrolling stops. */
@@ -268,6 +275,22 @@ export class MainPage implements OnDestroy {
       if (this.mapFocus.requested()) {
         untracked(() => this.openOnMap(this.mapFocus.take()!, true));
       }
+    });
+
+    afterNextRender(() => {
+      const bar = this.searchbar()?.nativeElement;
+      const phone = window.matchMedia('(max-width: 639px)');
+      const onPhone = () => this.phone.set(phone.matches);
+      onPhone();
+      phone.addEventListener('change', onPhone);
+      const observer = new ResizeObserver(() => this.barHeight.set(bar?.offsetHeight ?? 0));
+      if (bar) {
+        observer.observe(bar);
+      }
+      this.destroyRef.onDestroy(() => {
+        observer.disconnect();
+        phone.removeEventListener('change', onPhone);
+      });
     });
 
     // The page is prerendered with no query, so the URL applies only after hydration matched it.

@@ -343,7 +343,17 @@
     "locate": "Moja lokalizacja",
     "locateFailed": "Nie udało się ustalić Twojej lokalizacji",
     "loading": "Ładowanie wydarzeń na mapie",
-    "events": "Wydarzenia tutaj: {{count}}"
+    "legend": "Gwiazdka: najlepiej pasują do Ciebie",
+    "back": "Wszystkie tutaj ({{count}})",
+    "open": "Zobacz wydarzenie",
+    "likes": "Polubienia: {{count}}",
+    "going": "Wezmą udział: {{count}}",
+    "todayFrom": "dziś",
+    "tomorrowFrom": "jutra",
+    "events_one": "{{count}} wydarzenie",
+    "events_few": "{{count}} wydarzenia",
+    "events_many": "{{count}} wydarzeń",
+    "interested": "Interesuje: {{count}}"
   },
   "PLACE_SEARCH": {
     "unavailable": "Wyszukiwanie miejsc nie działa. Spróbuj za chwilę."
