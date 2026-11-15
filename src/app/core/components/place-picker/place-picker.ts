@@ -19,7 +19,7 @@ import type { LngLat, Map as MapLibreMap, MapMouseEvent, Marker } from 'maplibre
 import { catchError, map, of, Subject, switchMap } from 'rxjs';
 
 import { FormInput } from '../form-input/form-input';
-import { MAP_STYLE, TRICITY } from '../map/map-style';
+import { collapseCredit, MAP_STYLE, TRICITY } from '../map/map-style';
 import { GeocodingService } from '../../services/geocoding/geocoding.service';
 import { LocationService } from '../../services/location/location.service';
 import { GeoPoint } from '../../models/common/geo.model';
@@ -316,11 +316,7 @@ export class PlacePicker implements OnInit {
 
   onMapLoad(instance: MapLibreMap): void {
     this.mapInstance = instance;
-    // MapLibre opens the compact credit, which covers a third of a phone-sized map. It stays one tap away.
-    instance
-      .getContainer()
-      .querySelector('.maplibregl-ctrl-attrib')
-      ?.classList.remove('maplibregl-compact-show');
+    collapseCredit(instance);
   }
 
   onMapError(): void {

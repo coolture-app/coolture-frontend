@@ -9,13 +9,13 @@ import {
   output,
   signal,
   untracked,
-  ViewChild,
 } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
-import { Subject, takeUntil, debounceTime } from 'rxjs';
+import { Subject, takeUntil, debounceTime, switchMap, tap, catchError, of } from 'rxjs';
 import { PostService } from '../../../services/post/post.service';
 import { PostFilterParams } from '../../../models/posts/post-filter-params.model';
 import { PostMark } from '../../../models/posts/post-mark.model';
+import { MapBounds } from '../../../models/posts/map-bounds.model';
 import {
   MapComponent as MglMapComponent,
   MarkerComponent,
@@ -29,7 +29,7 @@ import {
 import { FeatureCollection, Point, Feature, Polygon } from 'geojson';
 import { MapMarker } from '../map-marker/map-marker';
 import { MapPopup } from '../map-popup/map-popup';
-import { MAP_STYLE, TRICITY } from '../map-style';
+import { collapseCredit, MAP_STYLE, TRICITY } from '../map-style';
 import { placeLine } from '../../../models/posts/post-place';
 import { GeoPoint } from '../../../models/common/geo.model';
 import { haversineMeters, LocationService } from '../../../services/location/location.service';
@@ -87,6 +87,8 @@ export class Map implements OnDestroy {
   };
   /** The user moved the map since its last area was set, so a search in the new view is offered. */
   readonly moved = signal(false);
+  /** The area this map handed over is loading; its button stays up with a spinner until the pins arrive. */
+  readonly searching = signal(false);
   /** The area this map handed over itself. It's already in view, so the map doesn't fit to it. */
   private handedOver: MapArea | null = null;
 
@@ -98,14 +100,27 @@ export class Map implements OnDestroy {
       : null;
   });
 
-  @ViewChild('map') mapComponent!: MglMapComponent;
+  /** The world with the area cut out, dimmed so the searched area reads as the bright part. */
+  readonly outsideArea = computed<Feature<Polygon> | null>(() => {
+    const area = this.radiusArea();
+    return area
+      ? {
+          type: 'Feature',
+          properties: {},
+          geometry: { type: 'Polygon', coordinates: [WORLD, ...area.geometry.coordinates] },
+        }
+      : null;
+  });
+
+  /** Set once MapLibre has loaded; nothing on the map is touched before. */
+  private map: maplibregl.Map | null = null;
 
   postsGeoJson = signal<FeatureCollection<Point>>({ type: 'FeatureCollection', features: [] });
   selectedFeature = signal<Feature<Point> | null>(null);
-  hiddenClusterIds = signal<Set<number>>(new Set());
 
   private destroy$ = new Subject<void>();
   private boundsChange$ = new Subject<maplibregl.LngLatBounds>();
+  private marksWanted$ = new Subject<maplibregl.LngLatBounds>();
 
   constructor() {
     effect(() => {
@@ -114,7 +129,7 @@ export class Map implements OnDestroy {
       this.excludeMine();
       const area = this.radiusArea();
       // Re-fetch when filters change, if we have bounds. A new radius brings its whole area into view first.
-      const map = this.mapComponent?.mapInstance;
+      const map = this.map;
       untracked(() => this.moved.set(false));
       if (area && this.isHandedOver()) {
         this.fittedArea = area;
@@ -129,6 +144,24 @@ export class Map implements OnDestroy {
     this.boundsChange$.pipe(debounceTime(100), takeUntil(this.destroy$)).subscribe((bounds) => {
       this.fetchMarks(bounds);
     });
+
+    // A newer view or filter cancels the request still running, so an older answer never replaces newer pins.
+    // The pins on screen stay until the answer arrives; a failed one keeps them.
+    this.marksWanted$
+      .pipe(
+        switchMap((bounds) =>
+          this.postService
+            .getMapMarks(this.filters(), toMapBounds(bounds), this.excludeMine())
+            .pipe(catchError(() => of(null))),
+        ),
+        tap(() => this.searching.set(false)),
+        takeUntil(this.destroy$),
+      )
+      .subscribe((marks) => {
+        if (marks) {
+          this.postsGeoJson.set({ type: 'FeatureCollection', features: marks.map(toFeature) });
+        }
+      });
   }
 
   ngOnDestroy(): void {
@@ -137,6 +170,8 @@ export class Map implements OnDestroy {
   }
 
   onMapLoad(map: maplibregl.Map): void {
+    this.map = map;
+    collapseCredit(map);
     const home = this.home();
     if (home && !this.radiusArea()) {
       map.jumpTo({ center: [home.longitude, home.latitude], zoom: HOME_ZOOM });
@@ -159,7 +194,7 @@ export class Map implements OnDestroy {
   }
 
   onSearchArea(): void {
-    const map = this.mapComponent.mapInstance;
+    const map = this.map!;
     const centre = map.getCenter();
     const bounds = map.getBounds();
     const at = { latitude: round(centre.lat), longitude: round(centre.lng) };
@@ -170,13 +205,18 @@ export class Map implements OnDestroy {
       ) / 1000;
     const area = { centre: at, radiusKm: Math.max(1, Math.round(toEdgeKm)) };
     this.moved.set(false);
+    // The same area again changes no filter, so nothing would load and end the spinner.
+    this.searching.set(!this.isFilter(area));
     this.handedOver = area;
     this.searchArea.emit(area);
   }
 
   private isHandedOver(): boolean {
+    return this.isFilter(this.handedOver);
+  }
+
+  private isFilter(area: MapArea | null): boolean {
     const { latitude, longitude, radiusKm } = this.filters();
-    const area = this.handedOver;
     return (
       !!area &&
       area.centre.latitude === latitude &&
@@ -212,67 +252,18 @@ export class Map implements OnDestroy {
       this.moved.set(true);
     }
     this.boundsChange$.next(map.getBounds());
-    this.hiddenClusterIds.set(new Set());
   }
 
   private fetchMarks(bounds: maplibregl.LngLatBounds): void {
-    let north = bounds.getNorth();
-    let south = bounds.getSouth();
-    let west = bounds.getWest();
-    let east = bounds.getEast();
-
-    // Prevent bounds from exceeding global max limits
-    if (east - west >= 360) {
-      west = -180;
-      east = 180;
-    } else {
-      west = Math.max(-180, Math.min(180, west));
-      east = Math.max(-180, Math.min(180, east));
-    }
-
-    north = Math.max(-90, Math.min(90, north));
-    south = Math.max(-90, Math.min(90, south));
-
-    const mapBounds = {
-      leftUpper: { latitude: north, longitude: west },
-      rightBottom: { latitude: south, longitude: east },
-    };
-
-    this.postService
-      .getMapMarks(this.filters(), mapBounds, this.excludeMine())
-      .subscribe((marks: PostMark[]) => {
-        const features = marks.map((mark) => ({
-          type: 'Feature' as const,
-          geometry: {
-            type: 'Point' as const,
-            coordinates: [mark.coordinates.longitude, mark.coordinates.latitude],
-          },
-          properties: {
-            id: mark.id,
-            title: mark.title,
-            description: mark.description,
-            coverMediaUrl: mark.coverMediaUrl,
-            place: placeLine(mark),
-            positiveReactionCount: mark.positiveReactionCount,
-          },
-        }));
-        this.postsGeoJson.set({ type: 'FeatureCollection', features });
-      });
+    this.marksWanted$.next(bounds);
   }
 
   onClusterClick(event: Event, feature: Feature<Point>): void {
     event.stopPropagation();
     const clusterId = feature.properties?.['cluster_id'];
-    if (clusterId) {
-      this.hiddenClusterIds.update((ids) => {
-        const next = new Set(ids);
-        next.add(clusterId);
-        return next;
-      });
-    }
-    const source = this.mapComponent.mapInstance.getSource('posts') as maplibregl.GeoJSONSource;
+    const source = this.map!.getSource('posts') as maplibregl.GeoJSONSource;
     source.getClusterExpansionZoom(clusterId).then((zoom: number) => {
-      this.mapComponent.mapInstance.easeTo({
+      this.map!.easeTo({
         center: feature.geometry.coordinates as [number, number],
         zoom,
         duration: 300,
@@ -283,12 +274,60 @@ export class Map implements OnDestroy {
   onPointClick(event: Event, feature: Feature<Point>): void {
     event.stopPropagation();
     // Pan to marker
-    this.mapComponent.mapInstance.panTo(feature.geometry.coordinates as [number, number]);
+    this.map!.panTo(feature.geometry.coordinates as [number, number]);
     this.selectedFeature.set(feature);
   }
 }
 
 const EARTH_RADIUS_KM = 6371;
+
+/** Wound the other way from `circle`'s ring, so MapLibre reads the circle as a hole in it. */
+const WORLD = [
+  [-180, -85],
+  [180, -85],
+  [180, 85],
+  [-180, 85],
+  [-180, -85],
+];
+
+/** The view, kept inside the world's limits. */
+function toMapBounds(bounds: maplibregl.LngLatBounds): MapBounds {
+  let west = bounds.getWest();
+  let east = bounds.getEast();
+  if (east - west >= 360) {
+    west = -180;
+    east = 180;
+  } else {
+    west = clamp(west, 180);
+    east = clamp(east, 180);
+  }
+  return {
+    leftUpper: { latitude: clamp(bounds.getNorth(), 90), longitude: west },
+    rightBottom: { latitude: clamp(bounds.getSouth(), 90), longitude: east },
+  };
+}
+
+function clamp(value: number, limit: number): number {
+  return Math.max(-limit, Math.min(limit, value));
+}
+
+function toFeature(mark: PostMark): Feature<Point> {
+  return {
+    type: 'Feature',
+    geometry: {
+      type: 'Point',
+      coordinates: [mark.coordinates.longitude, mark.coordinates.latitude],
+    },
+    properties: {
+      id: mark.id,
+      title: mark.title,
+      description: mark.description,
+      coverMediaUrl: mark.coverMediaUrl,
+      place: placeLine(mark),
+      positiveReactionCount: mark.positiveReactionCount,
+    },
+  };
+}
 
 /** About 110 m: enough for a radius's centre, and a short link. */
 function round(coordinate: number): number {

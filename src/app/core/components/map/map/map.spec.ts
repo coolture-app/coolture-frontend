@@ -12,6 +12,7 @@ function fakeMap() {
   return {
     jumpTo: jasmine.createSpy('jumpTo'),
     fitBounds: jasmine.createSpy('fitBounds'),
+    getContainer: () => document.createElement('div'),
     getCenter: () => ({ lat: 54.35123, lng: 18.60456 }),
     getBounds: () => ({
       getNorth: () => 54.4,
@@ -52,10 +53,14 @@ describe('Map', () => {
     await fixture.whenStable();
   });
 
-  afterEach(() => http.match(() => true).forEach((r) => r.flush([])));
+  afterEach(() =>
+    http
+      .match(() => true)
+      .filter((r) => !r.cancelled)
+      .forEach((r) => r.flush([])),
+  );
 
   async function load(map = fakeMap()) {
-    component.mapComponent = { mapInstance: map } as never;
     component.onMapLoad(map as never);
     await new Promise((resolve) => setTimeout(resolve));
     await fixture.whenStable();
@@ -108,6 +113,56 @@ describe('Map', () => {
     expect(component.moved()).toBeFalse();
   });
 
+  it('shows the answer to the newest request only', async () => {
+    await load();
+    http.match((r) => r.url.endsWith('/posts/map')).forEach((r) => r.flush([]));
+
+    fixture.componentRef.setInput('excludeMine', true);
+    await fixture.whenStable();
+    const older = http.expectOne((r) => r.params.get('excludeMine') === 'true');
+    fixture.componentRef.setInput('excludeMine', false);
+    await fixture.whenStable();
+    const newer = http.expectOne(
+      (r) => r.url.endsWith('/posts/map') && !r.params.has('excludeMine'),
+    );
+
+    expect(older.cancelled).toBeTrue();
+    newer.flush([mark('newer')]);
+    expect(component.postsGeoJson().features.map((f) => f.properties?.['id'])).toEqual(['newer']);
+  });
+
+  it('keeps the pins it has when a request fails', async () => {
+    await load();
+    http.expectOne((r) => r.url.endsWith('/posts/map')).flush([mark('kept')]);
+
+    fixture.componentRef.setInput('excludeMine', true);
+    await fixture.whenStable();
+    http
+      .expectOne((r) => r.url.endsWith('/posts/map'))
+      .flush(null, { status: 500, statusText: 'Server Error' });
+
+    expect(component.postsGeoJson().features.map((f) => f.properties?.['id'])).toEqual(['kept']);
+  });
+
+  it('keeps the search button busy until the area it handed over has its pins', async () => {
+    const map = await load();
+    http.match((r) => r.url.endsWith('/posts/map')).forEach((r) => r.flush([]));
+    component.onMoveEnd({ target: map, originalEvent: new MouseEvent('mouseup') });
+    component.searchArea.subscribe(({ centre, radiusKm }) =>
+      fixture.componentRef.setInput('filters', { ...centre, radiusKm }),
+    );
+
+    component.onSearchArea();
+    await fixture.whenStable();
+    const button = () => fixture.nativeElement.querySelector('.map-search-area');
+    expect(button().disabled).toBeTrue();
+
+    http.expectOne((r) => r.params.get('radiusKm') === '5').flush([]);
+    await fixture.whenStable();
+    expect(component.searching()).toBeFalse();
+    expect(button()).toBeNull();
+  });
+
   it('keeps its view for the area it handed over, and fits to any other', async () => {
     const map = await load();
     component.onMoveEnd({ target: map, originalEvent: new MouseEvent('mouseup') });
@@ -124,3 +179,14 @@ describe('Map', () => {
     expect(map.fitBounds).toHaveBeenCalledTimes(1);
   });
 });
+
+function mark(id: string) {
+  return {
+    id,
+    title: id,
+    description: '',
+    positiveReactionCount: 0,
+    coordinates: { latitude: 54.35, longitude: 18.6 },
+    city: 'Gdańsk',
+  };
+}
