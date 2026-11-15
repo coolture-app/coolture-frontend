@@ -33,7 +33,12 @@
             (mouseenter)="onRowEnter(post, $event)"
           >
             <span class="preview__date">{{ when(post) }}</span>
-            <span class="preview__row-title">{{ post.title }}</span>
+            <span class="preview__row-title">
+              @if (isPick(post)) {
+                <app-pick-star class="preview__star" />
+              }
+              {{ post.title }}
+            </span>
           </button>
         </li>
       }
@@ -59,10 +64,15 @@
         <img class="mini__cover" [src]="post.coverMediaUrl" alt="" loading="lazy" />
       }
       <div class="mini__heading">
-        <span class="mini__title">{{ post.title }}</span>
+        <span class="mini__title">
+          @if (isPick(post)) {
+            <app-pick-star class="preview__star" />
+          }
+          {{ post.title }}
+        </span>
         <span class="mini__meta">{{ when(post) }}</span>
         @if (placeName()) {
-          <span class="mini__meta mini__place">{{ placeName() }}</span>
+          <span class="mini__meta">{{ placeName() }}</span>
         }
       </div>
     </div>

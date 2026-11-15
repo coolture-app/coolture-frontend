@@ -30,10 +30,11 @@ import {
 import { FeatureCollection, Feature, Point, Polygon } from 'geojson';
 import { PostFilterParams } from '../../../models/posts/post-filter-params.model';
 import { PostMark } from '../../../models/posts/post-mark.model';
-import { collapseCredit, MAP_STYLE, TRICITY } from '../map-style';
+import { collapseCredit, followLanguage, MAP_STYLE, TRICITY } from '../map-style';
 import {
   boundsOf,
   circle,
+  fitPin,
   inBox,
   nearest,
   outside,
@@ -47,6 +48,7 @@ import { groupPlaces, hoverText, pinFeatures, PinWords, Place, pluralForm } from
 import * as layers from '../map-layers';
 import { MapMemory } from '../map-memory';
 import { MapPreview } from '../map-preview/map-preview';
+import { PickStar } from '../pick-star/pick-star';
 import { GeoPoint } from '../../../models/common/geo.model';
 import { haversineMeters, LocationService } from '../../../services/location/location.service';
 import { ToastService } from '../../../services/toast/toast.service';
@@ -64,10 +66,10 @@ const EASE_MS = 500;
 /** The start eases out until this many pins show, but never wider than `WIDEST_START_ZOOM`. */
 const START_PINS = 3;
 const WIDEST_START_ZOOM = 9;
-/** On a phone the preview covers the bottom of the map, so a tapped pin settles this far above the middle. */
-const PHONE_PIN_LIFT_PX = 110;
-/** On a wide screen the card opens under the pin, so the pin settles this far from the map's top. */
-const WIDE_PIN_TOP_PX = 70;
+/** A selected pin and its card keep this far from the map's edges and the sheet. */
+const FIT_MARGIN_PX = 32;
+/** Between a pin and its card on wide screens. */
+const CARD_GAP_PX = 18;
 const PIN_LAYERS = ['pins', 'lit'];
 /** A cluster tap zooms at least this far in, and no further than `MAX_TAP_ZOOM`. */
 const MIN_TAP_ZOOM_STEP = 1.5;
@@ -88,6 +90,7 @@ export interface MapArea {
     GeoJSONSourceComponent,
     LayerComponent,
     MapPreview,
+    PickStar,
     TranslatePipe,
     NgIcon,
   ],
@@ -106,6 +109,7 @@ export class Map implements OnDestroy {
 
   readonly mapStyle = MAP_STYLE;
   readonly layers = layers;
+  readonly cardGap = CARD_GAP_PX;
 
   filters = input<PostFilterParams>({});
   /** The feed's tab: leave out what the feed leaves out, so the map shows the same posts as the list. */
@@ -212,6 +216,8 @@ export class Map implements OnDestroy {
   private stale = false;
   /** The first view is still easing out to show `START_PINS` pins. */
   private easingOut = false;
+  /** Only the latest selection's fit runs. */
+  private fitRun = 0;
 
   private destroy$ = new Subject<void>();
   private boundsChange$ = new Subject<void>();
@@ -309,6 +315,8 @@ export class Map implements OnDestroy {
     map.setPadding({ top: this.topInset(), right: 0, bottom: 0, left: 0 });
     map.on('move', () => this.moving$.next());
     collapseCredit(map);
+    const labels = followLanguage(map, this.translate);
+    this.destroy$.subscribe(() => labels.unsubscribe());
     layers.addPillImages(map);
     const focus = this.focus();
     if (focus) {
@@ -355,14 +363,13 @@ export class Map implements OnDestroy {
     this.easingOut = false;
     this.focused.set(post);
     this.select(post.id);
-    const center: [number, number] = [post.coordinates.longitude, post.coordinates.latitude];
-    const zoom = Math.max(map.getZoom(), FOCUS_ZOOM);
-    // A jump has no offset, so an instant one is an ease of no length, leaving room for the card or the sheet.
+    // A pin on several posts opens on this one.
+    this.opened.set(post.id);
+    map.once('moveend', () => this.fitSelected(false, animate ? EASE_MS : 0));
     map.easeTo({
-      center,
-      zoom,
+      center: [post.coordinates.longitude, post.coordinates.latitude],
+      zoom: Math.max(map.getZoom(), FOCUS_ZOOM),
       duration: animate ? EASE_MS : 0,
-      offset: this.pinOffset(),
       essential: true,
     });
     this.fetchForView();
@@ -416,14 +423,54 @@ export class Map implements OnDestroy {
     this.easingOut = false;
     this.select(place.posts[0].id);
     this.hovered.set(null);
-    const zoom = this.map.getZoom();
-    this.map.easeTo({
-      center: [place.coordinates.longitude, place.coordinates.latitude],
-      zoom: zoom < FAR_ZOOM ? PIN_ZOOM : zoom,
-      duration: EASE_MS,
-      offset: this.pinOffset(),
-      essential: true,
-    });
+    this.fitSelected(true);
+  }
+
+  /**
+   * Moves the map only as far as the selected pin and its card need to be in view, once the card is drawn and its
+   * size known. From far out it also zooms in, around the pin.
+   */
+  fitSelected(zoomIn: boolean, duration = EASE_MS): void {
+    const run = ++this.fitRun;
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => {
+        const map = this.map;
+        const place = this.selected();
+        if (run !== this.fitRun || !map || !place) {
+          return;
+        }
+        const container = map.getContainer();
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        const card = container.querySelector('.map-card .maplibregl-popup-content');
+        const sheet = container.parentElement?.querySelector('.map-sheet');
+        const bottom = sheet
+          ? sheet.getBoundingClientRect().top - container.getBoundingClientRect().top
+          : height;
+        const at: [number, number] = [place.coordinates.longitude, place.coordinates.latitude];
+        const pin = map.project(at);
+        const { dx, dy } = fitPin(
+          pin,
+          { left: 0, top: this.topInset(), right: width, bottom },
+          card?.getBoundingClientRect().height ?? 0,
+          FIT_MARGIN_PX,
+          CARD_GAP_PX,
+        );
+        const zoom = zoomIn && map.getZoom() < FAR_ZOOM ? PIN_ZOOM : map.getZoom();
+        if (!dx && !dy && zoom === map.getZoom()) {
+          return;
+        }
+        // The pin ends up where it is now, moved by the fit; zooming in keeps it there.
+        const centre = map.project(map.getCenter());
+        map.easeTo({
+          center: at,
+          zoom,
+          offset: [pin.x + dx - centre.x, pin.y + dy - centre.y],
+          duration,
+          essential: true,
+        });
+      }),
+    );
   }
 
   onClusterClick(event: MapLayerMouseEvent): void {
@@ -503,14 +550,6 @@ export class Map implements OnDestroy {
         opened: this.opened(),
       };
     }
-  }
-
-  private pinOffset(): [number, number] {
-    if (!this.wide()) {
-      return [0, -PHONE_PIN_LIFT_PX];
-    }
-    const height = this.map?.getCanvas().clientHeight ?? 0;
-    return [0, -Math.max(0, height / 2 - WIDE_PIN_TOP_PX)];
   }
 
   private fetchForView(): void {

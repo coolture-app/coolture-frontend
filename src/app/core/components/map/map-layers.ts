@@ -90,7 +90,7 @@ export function addPillImages(map: MapLibreMap): void {
   }
 }
 
-/** The pick's star: white on an accent circle with a white edge, the same on pills, clusters and the legend. */
+/** The pick's star: white on an accent circle with a white edge, the same on pills, clusters and `PickStar`. */
 function badge(context: CanvasRenderingContext2D, x: number, y: number, radius: number): void {
   const r = PIXEL_RATIO;
   context.beginPath();

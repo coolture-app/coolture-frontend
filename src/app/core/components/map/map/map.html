@@ -128,12 +128,17 @@
         [lngLat]="[place.coordinates.longitude, place.coordinates.latitude]"
         [closeButton]="false"
         [closeOnClick]="false"
-        [offset]="18"
-        anchor="top"
+        [offset]="cardGap"
         [maxWidth]="'360px'"
         className="map-card"
       >
-        <app-map-preview [place]="place" [(opened)]="opened" (closed)="closePreview()" />
+        <app-map-preview
+          [place]="place"
+          [picks]="picks()"
+          [(opened)]="opened"
+          (openedChange)="fitSelected(false)"
+          (closed)="closePreview()"
+        />
       </mgl-popup>
     }
   </mgl-map>
@@ -149,20 +154,19 @@
   </button>
   @if (picks() && !selected()) {
     <p class="map-legend">
-      <!-- The map's own badge (map-layers.ts), so the legend shows exactly what the pins show. -->
-      <svg class="map-legend__badge" viewBox="0 0 16 16" aria-hidden="true">
-        <circle cx="8" cy="8" r="7" fill="#2563eb" stroke="#ffffff" stroke-width="1.5" />
-        <polygon
-          fill="#ffffff"
-          points="8.00,3.95 9.16,6.75 12.18,6.99 9.88,8.96 10.59,11.91 8.00,10.33 5.41,11.91 6.12,8.96 3.82,6.99 6.84,6.75"
-        />
-      </svg>
+      <app-pick-star />
       {{ 'MAP.legend' | translate }}
     </p>
   }
   @if (!wide() && selected(); as place) {
     <div class="map-sheet">
-      <app-map-preview [place]="place" [(opened)]="opened" (closed)="closePreview()" />
+      <app-map-preview
+        [place]="place"
+        [picks]="picks()"
+        [(opened)]="opened"
+        (openedChange)="fitSelected(false)"
+        (closed)="closePreview()"
+      />
     </div>
   }
 </div>

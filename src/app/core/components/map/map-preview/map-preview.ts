@@ -29,6 +29,7 @@ import { PostMark } from '../../../models/posts/post-mark.model';
 import { cardDate, Place } from '../map-pins';
 import { directionsUrl } from '../map-memory';
 import { Tooltip } from '../../../directives/tooltip';
+import { PickStar } from '../pick-star/pick-star';
 
 /**
  * What a pin opens: a mini view of its post, or the posts at its place, soonest first. A row opens its post's mini
@@ -36,7 +37,7 @@ import { Tooltip } from '../../../directives/tooltip';
  */
 @Component({
   selector: 'app-map-preview',
-  imports: [NgTemplateOutlet, RouterLink, TranslatePipe, NgIcon, Tooltip],
+  imports: [NgTemplateOutlet, RouterLink, TranslatePipe, NgIcon, Tooltip, PickStar],
   viewProviders: [
     provideIcons({
       appTicket,
@@ -59,6 +60,8 @@ export class MapPreview {
   readonly hoverable = typeof window !== 'undefined' && window.matchMedia('(hover: hover)').matches;
 
   readonly place = input.required<Place>();
+  /** The feed's top picks, starred as on the pins. */
+  readonly picks = input<ReadonlySet<string> | null>(null);
   readonly closed = output<void>();
 
   /** The post opened from a place's list. The map keeps it, so Back from that post opens it again. */
@@ -89,6 +92,10 @@ export class MapPreview {
       this.placeId();
       untracked(() => this.peek.set(null));
     });
+  }
+
+  isPick(post: PostMark): boolean {
+    return !!this.picks()?.has(post.id);
   }
 
   when(post: PostMark): string {

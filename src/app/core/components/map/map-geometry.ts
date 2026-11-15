@@ -149,3 +149,38 @@ export function pointData(at: GeoPoint | null): FeatureCollection<Point> {
       : [],
   };
 }
+
+/** Screen pixels, relative to the map's top left corner. */
+export interface ScreenBox {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+}
+
+/**
+ * How far a selected pin has to move on screen for it, and a card of `cardHeight` above or below it, to fit in `view`
+ * with `margin` to spare. Zero when they fit already. MapLibre puts the card on whichever side has room, so the pin
+ * moves only towards the nearer side that would. A card too tall for either side leaves the pin at the top.
+ */
+export function fitPin(
+  pin: { x: number; y: number },
+  view: ScreenBox,
+  cardHeight: number,
+  margin: number,
+  gap: number,
+): { dx: number; dy: number } {
+  const card = cardHeight > 0 ? cardHeight + gap : 0;
+  const top = view.top + margin;
+  const bottom = view.bottom - margin;
+  const ranges = [
+    [top, bottom - card],
+    [top + card, bottom],
+  ].filter(([low, high]) => low <= high);
+  const targets = ranges.length
+    ? ranges.map(([low, high]) => Math.min(high, Math.max(low, pin.y)))
+    : [top];
+  const y = targets.reduce((best, t) => (Math.abs(t - pin.y) < Math.abs(best - pin.y) ? t : best));
+  const x = Math.min(view.right - margin, Math.max(view.left + margin, pin.x));
+  return { dx: x - pin.x, dy: y - pin.y };
+}

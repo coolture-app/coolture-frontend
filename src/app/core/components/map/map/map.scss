@@ -183,10 +183,7 @@ mgl-map {
   }
 
   .map-hover__name {
-    overflow: hidden;
     font-weight: var(--font-semibold);
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
 
   .map-hover__details {
@@ -215,10 +212,4 @@ mgl-map {
   white-space: nowrap;
   pointer-events: none;
   transform: translateX(-50%);
-
-  &__badge {
-    flex-shrink: 0;
-    width: 16px;
-    height: 16px;
-  }
 }

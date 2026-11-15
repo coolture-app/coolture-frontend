@@ -24,6 +24,9 @@ function fakeMap() {
     getCanvas: () => ({ style: {}, clientWidth: 400, clientHeight: 600 }),
     setPadding: jasmine.createSpy('setPadding'),
     on: jasmine.createSpy('on'),
+    once: jasmine.createSpy('once'),
+    getStyle: () => ({ layers: [] }),
+    project: () => ({ x: 200, y: 300 }),
     unproject: () => ({ lat: view.north, lng: 18.60456 }),
     // The pills are drawn on a canvas; the specs don't need them.
     hasImage: () => true,
@@ -241,6 +244,18 @@ describe('Map', () => {
     );
     expect(component.places().map((p) => p.id)).toEqual(['focused', 'other']);
     expect(component.selected()?.id).toBe('focused');
+  });
+
+  it('opens a focused post among the posts at its place', async () => {
+    fixture.componentRef.setInput('focus', {
+      ...mark('focused'),
+      startsAt: '2026-12-09T18:00:00Z',
+    });
+    await load();
+    http.expectOne(marks()).flush([mark('sooner')]);
+
+    expect(component.selected()?.posts.map((p) => p.id)).toEqual(['sooner', 'focused']);
+    expect(component.opened()).toBe('focused');
   });
 
   it('lights up the top picks on Dla Ciebie only', async () => {
