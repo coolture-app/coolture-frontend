@@ -17,6 +17,7 @@ import {
 } from '@angular/core';
 import { PostCard } from '../../models/posts/post-card.model';
 import { PostDetail } from '../../models/posts/post-detail.model';
+import { MapFocus } from '../map/map-memory';
 import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -141,6 +142,7 @@ export class PostComponent implements OnInit {
   private toast = inject(ToastService);
   private translate = inject(TranslateService);
   private location = inject(LocationService);
+  private mapFocus = inject(MapFocus);
 
   isMyPost = signal<boolean>(false);
   readonly dateFormats = this.dateFormatService.formats;
@@ -247,6 +249,12 @@ export class PostComponent implements OnInit {
     });
     observer.observe(text);
     this.destroyRef.onDestroy(() => observer.disconnect());
+  }
+
+  /** The place opens this post's pin on the home map. Directions are one tap further, in the pin's preview. */
+  showOnMap(event: Event): void {
+    event.stopPropagation();
+    this.mapFocus.show(this.data);
   }
 
   get place(): string {
