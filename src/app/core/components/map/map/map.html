@@ -1,9 +1,14 @@
 <div class="map-wrapper">
+  @if (moved()) {
+    <button type="button" class="map-search-area" (click)="onSearchArea()">
+      {{ 'MAP.searchArea' | translate }}
+    </button>
+  }
   <mgl-map
     #map
     [style]="mapStyle"
-    [zoom]="[12]"
-    [center]="[18.23, 54.6]"
+    [zoom]="[start.zoom]"
+    [center]="start.center"
     (mapLoad)="onMapLoad($event)"
     (moveEnd)="onMoveEnd($event)"
   >

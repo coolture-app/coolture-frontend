@@ -6,9 +6,12 @@ import {
   inject,
   input,
   OnDestroy,
+  output,
   signal,
+  untracked,
   ViewChild,
 } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { Subject, takeUntil, debounceTime } from 'rxjs';
 import { PostService } from '../../../services/post/post.service';
 import { PostFilterParams } from '../../../models/posts/post-filter-params.model';
@@ -26,8 +29,22 @@ import {
 import { FeatureCollection, Point, Feature, Polygon } from 'geojson';
 import { MapMarker } from '../map-marker/map-marker';
 import { MapPopup } from '../map-popup/map-popup';
-import { MAP_STYLE } from '../map-style';
+import { MAP_STYLE, TRICITY } from '../map-style';
 import { placeLine } from '../../../models/posts/post-place';
+import { GeoPoint } from '../../../models/common/geo.model';
+import { haversineMeters, LocationService } from '../../../services/location/location.service';
+
+/** Gdynia to Gdańsk in view, so the first look at an unknown user's map shows the whole release area. */
+const TRICITY_ZOOM = 10;
+const HOME_ZOOM = 12;
+const POSITION_ZOOM = 13;
+const POSITION_WAIT_MS = 1500;
+
+/** What "Szukaj w tym obszarze" hands over: the view's centre, and how far its corners are from it. */
+export interface MapArea {
+  centre: GeoPoint;
+  reachKm: number;
+}
 
 @Component({
   selector: 'app-map',
@@ -42,6 +59,7 @@ import { placeLine } from '../../../models/posts/post-place';
     LayerComponent,
     MapMarker,
     MapPopup,
+    TranslatePipe,
   ],
   templateUrl: './map.html',
   styleUrls: ['./map.scss'],
@@ -49,12 +67,25 @@ import { placeLine } from '../../../models/posts/post-place';
 })
 export class Map implements OnDestroy {
   private postService = inject(PostService);
+  private location = inject(LocationService);
 
   readonly mapStyle = MAP_STYLE;
 
   filters = input<PostFilterParams>({});
   /** The feed's tab: leave out what the feed leaves out, so the map shows the same posts as the list. */
   excludeMine = input(false);
+  /** Where the user lives, where the map starts when the browser gives no position. */
+  home = input<GeoPoint | null>(null);
+  /** The user tapped "Szukaj w tym obszarze". */
+  searchArea = output<MapArea>();
+
+  /** Where the map opens. Inputs aren't set yet here, so `onMapLoad` moves on to the home or the position. */
+  readonly start = {
+    center: [TRICITY.longitude, TRICITY.latitude] as [number, number],
+    zoom: TRICITY_ZOOM,
+  };
+  /** The user moved the map since its last area was set, so a search in the new view is offered. */
+  readonly moved = signal(false);
 
   /** The location filter's area, drawn over the map. */
   readonly radiusArea = computed(() => {
@@ -81,6 +112,7 @@ export class Map implements OnDestroy {
       const area = this.radiusArea();
       // Re-fetch when filters change, if we have bounds. A new radius brings its whole area into view first.
       const map = this.mapComponent?.mapInstance;
+      untracked(() => this.moved.set(false));
       if (map && area && this.fittedArea !== area) {
         this.fitTo(map, area);
       } else if (map) {
@@ -99,12 +131,37 @@ export class Map implements OnDestroy {
   }
 
   onMapLoad(map: maplibregl.Map): void {
+    const home = this.home();
+    if (home && !this.radiusArea()) {
+      map.jumpTo({ center: [home.longitude, home.latitude], zoom: HOME_ZOOM });
+    }
     const area = this.radiusArea();
     if (area) {
       this.fitTo(map, area);
     } else {
       this.fetchMarks(map.getBounds());
+      void this.startAtPosition(map);
     }
+  }
+
+  /** The browser's position beats the home and Trójmiasto, if it's already allowed and the user hasn't moved yet. */
+  private async startAtPosition(map: maplibregl.Map): Promise<void> {
+    const position = await this.location.currentIfAllowed(POSITION_WAIT_MS);
+    if (position && !this.moved() && !this.radiusArea()) {
+      map.jumpTo({ center: [position.longitude, position.latitude], zoom: POSITION_ZOOM });
+    }
+  }
+
+  onSearchArea(): void {
+    const map = this.mapComponent.mapInstance;
+    const centre = map.getCenter();
+    const corner = map.getBounds().getNorthEast();
+    const at = { latitude: round(centre.lat), longitude: round(centre.lng) };
+    this.moved.set(false);
+    this.searchArea.emit({
+      centre: at,
+      reachKm: haversineMeters(at, { latitude: corner.lat, longitude: corner.lng }) / 1000,
+    });
   }
 
   private fittedArea: Feature<Polygon> | null = null;
@@ -125,7 +182,14 @@ export class Map implements OnDestroy {
   }
 
   onMoveEnd(event: unknown): void {
-    const map = (event as { target: maplibregl.Map }).target;
+    const { target: map, originalEvent } = event as {
+      target: maplibregl.Map;
+      originalEvent?: Event;
+    };
+    // Only the user's own gestures carry an original event; fitting the radius or the start doesn't.
+    if (originalEvent) {
+      this.moved.set(true);
+    }
     this.boundsChange$.next(map.getBounds());
     this.hiddenClusterIds.set(new Set());
   }
@@ -204,6 +268,11 @@ export class Map implements OnDestroy {
 }
 
 const EARTH_RADIUS_KM = 6371;
+
+/** About 110 m: enough for a radius's centre, and a short link. */
+function round(coordinate: number): number {
+  return Math.round(coordinate * 1000) / 1000;
+}
 
 /** A circle on the map as a 64-sided polygon, close enough at city scale. */
 function circle(latitude: number, longitude: number, radiusKm: number): Feature<Polygon> {
