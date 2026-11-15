@@ -373,13 +373,14 @@ export class Map implements OnDestroy {
   }
 
   onMapLoad(map: MapLibreMap): void {
+    // Read first: `setPadding` is a jump, and its move's end remembers the view it starts from.
+    const view = this.resume() ? this.memory.view : null;
     this.map = map;
     map.setPadding({ top: this.topInset(), right: 0, bottom: 0, left: 0 });
     map.on('move', () => this.moving$.next());
     collapseCredit(map);
     layers.addPillImages(map);
     const focus = this.focus();
-    const view = this.resume() ? this.memory.view : null;
     if (focus) {
       this.showFocus(map, focus, false);
       return;

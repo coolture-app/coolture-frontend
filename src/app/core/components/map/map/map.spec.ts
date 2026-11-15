@@ -6,6 +6,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { Map, MapArea } from './map';
 import { GeoPoint } from '../../../models/common/geo.model';
 import { LocationService } from '../../../services/location/location.service';
+import { MapMemory } from '../map-memory';
 
 /** What the component asks of a MapLibre map, around a view from (54.30, 18.50) to (54.40, 18.70). */
 function fakeMap() {
@@ -95,6 +96,18 @@ describe('Map', () => {
     const map = await load();
 
     expect(map.jumpTo).toHaveBeenCalledWith({ center: [18.54, 54.52], zoom: 12 });
+  });
+
+  it('opens where it was left on Back from a post, though setting its padding ends a move', async () => {
+    TestBed.inject(MapMemory).view = { center: [18.6, 54.4], zoom: 14.5, selected: 'p1' };
+    fixture.componentRef.setInput('resume', true);
+    const map = fakeMap();
+    // MapLibre's setPadding is a jump, and a jump ends with a moveend.
+    map.setPadding.and.callFake(() => component.onMoveEnd({}));
+
+    await load(map);
+
+    expect(map.jumpTo).toHaveBeenCalledWith({ center: [18.6, 54.4], zoom: 14.5 });
   });
 
   it('moves to the browser position over the home, if it is already allowed', async () => {
