@@ -3,7 +3,11 @@ import { TestBed } from '@angular/core/testing';
 import { Subject } from 'rxjs';
 
 import { GeocodingService } from './geocoding.service';
-import { PlaceSearch, PlaceSuggestion } from '../../models/common/place-suggestion.model';
+import {
+  PlaceOption,
+  PlaceSearch,
+  PlaceSuggestion,
+} from '../../models/common/place-suggestion.model';
 
 /** As public Photon answered for `Ergo` on 2026-11-09, trimmed. */
 const ERGO_ARENA = {
@@ -265,6 +269,111 @@ describe('GeocodingService', () => {
         ['Ergo', 0, true],
         ['Ergo Arena', 1, false],
       ]);
+    });
+  });
+
+  describe('places to live in or centre on', () => {
+    const AREAS =
+      'osm.place.city,osm.place.town,osm.place.village,osm.place.suburb,osm.place.quarter';
+
+    // As our Photon answered on 2026-11-15, trimmed.
+    function area(type: string, name: string, extra: Record<string, string> = {}) {
+      return { geometry: { coordinates: [18.56, 54.41] }, properties: { type, name, ...extra } };
+    }
+
+    it('asks for cities, towns, villages and districts only, in Poland, near the given point', () => {
+      service.findPlaces('Oliwa', TRICITY, 'area').subscribe();
+
+      const request = http.expectOne((r) => r.url === '/geo/api');
+      expect(params(request)).toEqual({
+        lang: ['default'],
+        include: [AREAS],
+        q: ['Oliwa'],
+        limit: ['5'],
+        lat: ['54.4'],
+        lon: ['18.6'],
+        countrycode: ['PL'],
+      });
+      request.flush(photon());
+    });
+
+    it('names a district with its city, and tells villages of one name apart by county', () => {
+      let places: PlaceOption[] = [];
+      service.findPlaces('Nowa', TRICITY, 'area').subscribe((result) => (places = result));
+
+      http
+        .expectOne((r) => r.url === '/geo/api')
+        .flush(
+          photon(
+            area('district', 'Oliwa', { city: 'Gdańsk' }),
+            area('city', 'Nowa Wieś', { county: 'powiat kartuski' }),
+            area('city', 'Nowa Wieś', { county: 'powiat bytowski' }),
+            area('city', 'Sopot', { state: 'województwo pomorskie' }),
+          ),
+        );
+
+      expect(places.map((p) => [p.name, p.detail])).toEqual([
+        ['Oliwa, Gdańsk', undefined],
+        ['Nowa Wieś', 'powiat kartuski'],
+        ['Nowa Wieś', 'powiat bytowski'],
+        ['Sopot', 'województwo pomorskie'],
+      ]);
+      expect(places[0].coordinates).toEqual({ latitude: 54.41, longitude: 18.56 });
+    });
+
+    it('lists one object Photon gives twice only once', () => {
+      let places: PlaceOption[] = [];
+      service.findPlaces('Gdy', TRICITY, 'area').subscribe((result) => (places = result));
+
+      const gdynia = area('city', 'Gdynia', { county: 'Gdynia' });
+      http.expectOne((r) => r.url === '/geo/api').flush(photon(gdynia, gdynia));
+
+      expect(places.length).toBe(1);
+    });
+
+    it('finds any place for a radius, without stops, with its address as the second line', () => {
+      let places: PlaceOption[] = [];
+      service.findPlaces('Ergo', TRICITY, 'any').subscribe((result) => (places = result));
+
+      const request = http.expectOne((r) => r.url === '/geo/api');
+      expect(params(request)['exclude']).toEqual([
+        'osm.highway.bus_stop',
+        'osm.public_transport',
+        'osm.amenity.shelter',
+      ]);
+      expect(params(request)['include']).toBeUndefined();
+      request.flush(photon(ERGO_ARENA, area('street', 'Grunwaldzka', { city: 'Gdańsk' })));
+
+      expect(places.map((p) => [p.name, p.detail])).toEqual([
+        ['Ergo Arena', 'Plac Dwóch Miast, Gdańsk'],
+        ['Grunwaldzka', 'Gdańsk'],
+      ]);
+    });
+
+    it('names the district or village around a point, without a country filter', () => {
+      let found: PlaceOption | null = null;
+      service.areaAt({ latitude: 54.41, longitude: 18.56 }).subscribe((result) => (found = result));
+
+      const request = http.expectOne((r) => r.url === '/geo/reverse');
+      expect(params(request)).toEqual({
+        lang: ['default'],
+        include: [AREAS],
+        lat: ['54.41'],
+        lon: ['18.56'],
+        limit: ['1'],
+      });
+      request.flush(photon(area('district', 'Oliwa', { city: 'Gdańsk' })));
+
+      expect(found!.name).toBe('Oliwa, Gdańsk');
+    });
+
+    it('gives null where there is no place around a point', () => {
+      let found: PlaceOption | null | undefined;
+      service.areaAt({ latitude: 55, longitude: 18 }).subscribe((result) => (found = result));
+
+      http.expectOne((r) => r.url === '/geo/reverse').flush(photon());
+
+      expect(found).toBeNull();
     });
   });
 });

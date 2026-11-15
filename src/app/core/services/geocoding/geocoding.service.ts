@@ -13,7 +13,12 @@ import {
 import { geocoder } from '../../../../environments/geocoder';
 import { GeoPoint } from '../../models/common/geo.model';
 import { LOCATION_LIMITS } from '../../models/common/location-limits';
-import { PlaceSearch, PlaceSuggestion } from '../../models/common/place-suggestion.model';
+import {
+  PlaceKind,
+  PlaceOption,
+  PlaceSearch,
+  PlaceSuggestion,
+} from '../../models/common/place-suggestion.model';
 
 const MIN_CHARACTERS = 3;
 const DEBOUNCE_MS = 400;
@@ -21,6 +26,13 @@ const TIMEOUT_MS = 3_000;
 const SUGGESTIONS = 5;
 /** Stops share venues' names ("Ergo Arena 04") and would push the venue down the list. */
 const EXCLUDED = ['osm.highway.bus_stop', 'osm.public_transport', 'osm.amenity.shelter'];
+/**
+ * Where someone can live. One parameter, an OR: repeating it finds nothing, `layer=city` brings gminas, and
+ * neighbourhoods bring hamlets named after cities.
+ */
+const AREAS = 'osm.place.city,osm.place.town,osm.place.village,osm.place.suburb,osm.place.quarter';
+/** As long as `users.home_name` in coolture-aws. */
+const PLACE_NAME_MAX = 128;
 
 interface PhotonFeature {
   geometry: { coordinates: [number, number] };
@@ -28,6 +40,8 @@ interface PhotonFeature {
     /** `house` for venues and addresses alike; `street`, `city`, `district` and so on for areas. */
     type?: string;
     name?: string;
+    county?: string;
+    state?: string;
     street?: string;
     housenumber?: string;
     postcode?: string;
@@ -68,6 +82,43 @@ function toPlace(
 }
 
 /**
+ * A district is named with its city ("Oliwa, Gdańsk"), since a district's name alone repeats across cities. A city,
+ * town or village gets its county as the second line, and anything else its street and city.
+ */
+function toOption({ geometry, properties: p }: PhotonFeature): PlaceOption | null {
+  const [longitude, latitude] = geometry.coordinates;
+  const own = p.name ?? [p.street, p.housenumber].filter(Boolean).join(' ');
+  if (!own) {
+    return null;
+  }
+  const district = p.type === 'district' && p.city && p.city !== own;
+  const name = cut(district ? `${own}, ${p.city}` : own, PLACE_NAME_MAX) ?? own;
+  const address = [
+    p.name && p.street ? [p.street, p.housenumber].filter(Boolean).join(' ') : '',
+    p.city,
+  ]
+    .filter((part) => part && part !== own)
+    .join(', ');
+  const detail = district ? undefined : p.type === 'city' ? (p.county ?? p.state) : address;
+  return { name, coordinates: { latitude, longitude }, ...(detail && { detail }) };
+}
+
+function withoutRepeatedOptions(options: (PlaceOption | null)[]): PlaceOption[] {
+  const seen = new Set<string>();
+  return options.filter((option): option is PlaceOption => {
+    const text = option
+      ? `${option.name}
+${option.detail ?? ''}`
+      : '';
+    if (!option || seen.has(text)) {
+      return false;
+    }
+    seen.add(text);
+    return true;
+  });
+}
+
+/**
  * Photon lists an OSM object once per tag it indexes, so Opera Leśna came as a theatre and as bleachers, and the two
  * rows read the same. Photon's order stays.
  */
@@ -100,6 +151,52 @@ export class GeocodingService {
    * `near` is read for each request, so it can follow the map's centre.
    */
   search(texts: Observable<string>, near: () => GeoPoint): Observable<PlaceSearch> {
+    return this.asTyped(texts, (text) => this.suggest(text, near()));
+  }
+
+  /** Like `search`, for places to live in or centre a radius on, named for showing and storing. */
+  searchPlaces(
+    texts: Observable<string>,
+    near: () => GeoPoint,
+    kind: PlaceKind,
+  ): Observable<PlaceSearch<PlaceOption>> {
+    return this.asTyped(texts, (text) => this.findPlaces(text, near(), kind));
+  }
+
+  /** One search for `searchPlaces`, with no waiting. Errors like `suggest`. */
+  findPlaces(text: string, near: GeoPoint, kind: PlaceKind): Observable<PlaceOption[]> {
+    let params = (
+      kind === 'area'
+        ? new HttpParams().set('lang', 'default').set('include', AREAS)
+        : this.params()
+    )
+      .set('q', text)
+      .set('limit', SUGGESTIONS)
+      .set('lat', near.latitude)
+      .set('lon', near.longitude);
+    for (const code of geocoder.countryCodes) {
+      params = params.append('countrycode', code);
+    }
+    return this.get('/api', params).pipe(
+      map((features) => withoutRepeatedOptions(features.map(toOption))),
+    );
+  }
+
+  /** The district, or else the city, town or village, at a point. Null where there's none. Errors like `suggest`. */
+  areaAt(at: GeoPoint): Observable<PlaceOption | null> {
+    const params = new HttpParams()
+      .set('lang', 'default')
+      .set('include', AREAS)
+      .set('lat', at.latitude)
+      .set('lon', at.longitude)
+      .set('limit', 1);
+    return this.get('/reverse', params).pipe(map(([first]) => (first ? toOption(first) : null)));
+  }
+
+  private asTyped<Place>(
+    texts: Observable<string>,
+    ask: (text: string) => Observable<Place[]>,
+  ): Observable<PlaceSearch<Place>> {
     return texts.pipe(
       map((text) => text.trim()),
       debounceTime(DEBOUNCE_MS),
@@ -108,9 +205,9 @@ export class GeocodingService {
       switchMap((text) =>
         text.length < MIN_CHARACTERS
           ? of({ text, places: [], unavailable: false })
-          : this.suggest(text, near()).pipe(
+          : ask(text).pipe(
               map((places) => ({ text, places, unavailable: false })),
-              catchError(() => of({ text, places: [], unavailable: true })),
+              catchError(() => of({ text, places: [] as Place[], unavailable: true })),
             ),
       ),
     );
