@@ -3,6 +3,7 @@ import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpTestingController, TestRequest } from '@angular/common/http/testing';
 import { Navigation, provideRouter, Router } from '@angular/router';
+import { MapFocus } from '../../core/components/map/map-memory';
 
 import { MainPage } from './main-page';
 import { LocationService } from '../../core/services/location/location.service';
@@ -479,6 +480,38 @@ describe('MainPage', () => {
   });
 
   describe('the map switch', () => {
+    it('lights up the first posts of the feed on Dla Ciebie, and none on Wszystkie', async () => {
+      await open();
+      expectFeed().flush({ ...page(['a', 'b']), mode: 'RANKED' });
+      await settle();
+
+      expect([...component.mapPicks()!]).toEqual(['a', 'b']);
+      component.setTab('all');
+      await settle();
+      expectPosts().flush(page());
+      expect(component.mapPicks()).toBeNull();
+    });
+
+    it('opens the map on a post whose place was tapped on its card', async () => {
+      await open();
+      expectFeed().flush({ ...page(['a']), mode: 'RANKED' });
+      await settle();
+      const post = {
+        id: 'a',
+        title: 'a',
+        startsAt: '2026-12-01T18:00:00Z',
+        positiveReactionCount: 0,
+        coordinates: { latitude: 54.35, longitude: 18.6 },
+      };
+
+      TestBed.inject(MapFocus).requested.set(post);
+      await settle();
+
+      expect(component.isMapView()).toBeTrue();
+      expect(component.mapFocusPost()).toEqual(post);
+      expect(TestBed.inject(MapFocus).requested()).toBeNull();
+    });
+
     it('is there on the feed too', async () => {
       await open();
       expectFeed().flush({ ...page(), mode: 'RANKED' });

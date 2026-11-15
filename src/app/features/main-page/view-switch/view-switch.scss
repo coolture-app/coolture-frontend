@@ -45,3 +45,16 @@
     }
   }
 }
+
+@media (max-width: 639px) {
+  .view-switch--vertical {
+    flex-direction: column;
+
+    .view-switch__option {
+      width: 36px;
+      height: 36px;
+      justify-content: center;
+      padding: 0;
+    }
+  }
+}

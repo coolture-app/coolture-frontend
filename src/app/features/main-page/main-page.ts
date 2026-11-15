@@ -42,7 +42,10 @@ import { PostListStore } from '../../core/services/post-list/post-list.store';
 import { HomeTapService } from '../../core/services/home-tap/home-tap.service';
 import { Tooltip } from '../../core/directives/tooltip';
 import { PostType, PostStatus, PostVisibility, PostsSort } from '../../core/models/common/enums';
-import { Map, MapArea } from '../../core/components/map/map/map';
+import { Map, type MapArea } from '../../core/components/map/map/map';
+import { MapFocus } from '../../core/components/map/map-memory';
+import { PostMark } from '../../core/models/posts/post-mark.model';
+import { backClosable } from '../../core/services/back-closable/back-closable';
 import { ToastService } from '../../core/services/toast/toast.service';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -75,6 +78,8 @@ const SCROLL_STOP_MS = 1000;
  * by itself. A page took about 1.1 s locally, and a fast flick covers about 6000 px a second.
  */
 const CARDS_BEFORE_END = 15;
+/** How many of the feed's first posts the map lights up as top picks on Dla Ciebie. */
+const MAP_PICKS = 30;
 
 @Component({
   selector: 'app-main-page',
@@ -104,7 +109,7 @@ const CARDS_BEFORE_END = 15;
     }),
   ],
   templateUrl: './main-page.html',
-  styleUrl: './main-page.scss',
+  styleUrls: ['./main-page.scss', './main-page-map.scss'],
   host: {
     '(document:click)': 'closeSortMenu($event)',
     '(document:keydown.escape)': 'closePopups()',
@@ -124,6 +129,9 @@ export class MainPage implements OnDestroy {
   private toast = inject(ToastService);
   private geocoding = inject(GeocodingService);
   private translate = inject(TranslateService);
+  private mapFocus = inject(MapFocus);
+  /** A place tapped on a card here opens the map in a history entry of its own, so Back returns to the card. */
+  private mapOverlay = backClosable('mapFocus', () => this.toggleMapView(false));
   authService = inject(AuthService);
   list = inject(PostListStore);
 
@@ -133,6 +141,12 @@ export class MainPage implements OnDestroy {
   showPlace = signal(false);
   showSortMenu = signal(false);
   isMapView = signal(false);
+  /** The map stays once opened, hidden under Lista, so its style and tiles load once a visit. */
+  readonly mapOpened = signal(false);
+  /** Back from a post: the map opens where it was left. */
+  readonly mapResumes = signal(false);
+  /** The post a card's place opened the map on. */
+  readonly mapFocusPost = signal<PostMark | null>(null);
   locationFailed = signal(false);
   locating = signal(false);
   /** While the page moves the bar is see-through, and it turns solid once scrolling stops. */
@@ -220,6 +234,22 @@ export class MainPage implements OnDestroy {
     return radius === undefined ? null : (RADII_KM.find((km) => km > radius) ?? null);
   });
 
+  /** Dla Ciebie's first posts, which the map lights up. Null on Wszystkie, where no pin stands out. */
+  readonly mapPicks = computed<ReadonlySet<string> | null>(() => {
+    if (!this.isFeed()) {
+      return null;
+    }
+    const feed = this.list.query()?.kind === 'feed';
+    return new Set(
+      feed
+        ? this.list
+            .items()
+            .slice(0, MAP_PICKS)
+            .map((post) => post.id)
+        : [],
+    );
+  });
+
   /** False until the first render in the browser, so a prerendered page never holds a response. */
   private ready = signal(false);
   private loadRun = 0;
@@ -228,6 +258,17 @@ export class MainPage implements OnDestroy {
   constructor() {
     const restored = this.restoreView();
     this.postService.clearActivePost();
+    this.mapOpened.set(this.isMapView());
+    this.mapResumes.set(restored && this.isMapView());
+    const focus = this.mapFocus.take();
+    if (focus) {
+      this.openOnMap(focus, false);
+    }
+    effect(() => {
+      if (this.mapFocus.requested()) {
+        untracked(() => this.openOnMap(this.mapFocus.take()!, true));
+      }
+    });
 
     // The page is prerendered with no query, so the URL applies only after hydration matched it.
     afterNextRender(() => {
@@ -416,8 +457,14 @@ export class MainPage implements OnDestroy {
     if (isToggled === this.isMapView()) {
       return;
     }
+    if (!isToggled && this.mapOverlay.isOpen()) {
+      // Back to the card the map was opened from, through its history entry.
+      this.mapOverlay.close();
+      return;
+    }
     if (isToggled) {
       this.listScrollY = this.scroller.getScrollPosition()[1];
+      this.mapOpened.set(true);
     }
     this.isMapView.set(isToggled);
     if (isToggled) {
@@ -457,10 +504,29 @@ export class MainPage implements OnDestroy {
     }
   }
 
-  private load(): void {
-    this.listOutdated = this.isMapView();
+  /** The map on a post: from its card on this page, in a history entry of its own; from another page, as it opens. */
+  private openOnMap(post: PostMark, fromThisPage: boolean): void {
+    this.mapFocusPost.set(post);
     if (this.isMapView()) {
       return;
+    }
+    if (fromThisPage) {
+      this.listScrollY = this.scroller.getScrollPosition()[1];
+      this.mapOverlay.opened({ pageStaysLive: true });
+    }
+    this.mapOpened.set(true);
+    this.isMapView.set(true);
+  }
+
+  /** Under the map, Wszystkie waits for Lista. Dla Ciebie loads, as its first posts are the map's top picks. */
+  private load(): void {
+    this.listOutdated = this.isMapView() && !this.isFeed();
+    if (this.listOutdated) {
+      return;
+    }
+    if (this.isMapView()) {
+      // A new list under the map opens at its top on Lista.
+      this.listScrollY = 0;
     }
     const run = ++this.loadRun;
     if (this.isFeed()) {

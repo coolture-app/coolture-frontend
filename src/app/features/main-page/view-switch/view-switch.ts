@@ -9,7 +9,12 @@ import { heroListBullet, heroMap } from '@ng-icons/heroicons/outline';
   imports: [TranslatePipe, NgIcon],
   viewProviders: [provideIcons({ heroListBullet, heroMap })],
   template: `
-    <div class="view-switch" role="group" [attr.aria-label]="'MAIN_PAGE.view' | translate">
+    <div
+      class="view-switch"
+      [class.view-switch--vertical]="vertical()"
+      role="group"
+      [attr.aria-label]="'MAIN_PAGE.view' | translate"
+    >
       <button
         type="button"
         class="view-switch__option"
@@ -38,5 +43,7 @@ import { heroListBullet, heroMap } from '@ng-icons/heroicons/outline';
 })
 export class ViewSwitch {
   readonly mapView = input.required<boolean>();
+  /** On a phone's map the switch stands down the map's edge. */
+  readonly vertical = input(false);
   readonly switched = output<boolean>();
 }

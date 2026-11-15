@@ -1,5 +1,6 @@
 <div
   class="page"
+  [class.page--map]="isMapView()"
   [appPullToRefresh]="!isMapView() && list.query() !== null"
   #ptr="pullToRefresh"
   (refresh)="renewList()"
@@ -138,7 +139,11 @@
             <span class="filters-btn__count" aria-hidden="true">{{ activeFilterCount() }}</span>
           }
         </button>
-        <app-view-switch [mapView]="isMapView()" (switched)="toggleMapView($event)" />
+        <app-view-switch
+          [mapView]="isMapView()"
+          [vertical]="isMapView()"
+          (switched)="toggleMapView($event)"
+        />
       </div>
       <!-- Opens under the bar, wherever the list is scrolled to, over a dimmed page. -->
       @if (showFilters()) {
@@ -249,13 +254,20 @@
       </div>
     }
   }
-  <!-- VIEW WITH MAP ON -->
-  @else {
-    <app-map
-      [filters]="activeFilters()"
-      [excludeMine]="isFeed()"
-      [home]="home()?.coordinates ?? null"
-      (searchArea)="searchArea($event)"
-    ></app-map>
+  @if (mapOpened()) {
+    <!-- MapLibre loads with the first Mapa, not with the list. -->
+    @defer {
+      <app-map
+        [class.map-hidden]="!isMapView()"
+        [visible]="isMapView()"
+        [filters]="activeFilters()"
+        [excludeMine]="isFeed()"
+        [picks]="mapPicks()"
+        [focus]="mapFocusPost()"
+        [resume]="mapResumes()"
+        [home]="home()?.coordinates ?? null"
+        (searchArea)="searchArea($event)"
+      ></app-map>
+    }
   }
 </div>

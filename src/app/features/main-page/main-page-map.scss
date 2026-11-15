@@ -1,0 +1,57 @@
+// Kept apart from main-page.scss, which is near the style budget.
+
+// Lista hides the map instead of destroying it.
+app-map.map-hidden {
+  display: none;
+}
+
+// Phones on Mapa: the map fills the page, the bar floats over it see-through, and Filtry and Lista | Mapa are round
+// buttons down the map's top right.
+@media (max-width: 639px) {
+  .page--map {
+    position: relative;
+    padding: 0;
+
+    .searchbar {
+      position: absolute;
+      top: 0;
+      right: 0;
+      left: 0;
+      margin: 0;
+      background: rgba(250, 250, 250, 0.78);
+      box-shadow: var(--shadow-sm);
+    }
+
+    // Nothing scrolls on the map, so the bar never slides away.
+    .searchbar--hidden {
+      transform: none;
+      visibility: visible;
+    }
+
+    .filters-btn,
+    app-view-switch {
+      position: absolute;
+      right: var(--space-md);
+      box-shadow: var(--shadow-md);
+    }
+
+    .filters-btn {
+      top: calc(100% + var(--space-sm));
+      justify-content: center;
+      width: 44px;
+      height: 44px;
+      padding: 0;
+    }
+
+    app-view-switch {
+      top: calc(100% + var(--space-sm) + 52px);
+    }
+
+    // On the round button's corner.
+    .filters-btn__count {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+    }
+  }
+}
