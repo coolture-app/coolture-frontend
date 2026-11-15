@@ -216,7 +216,7 @@ export interface components {
     Cursor: string;
     /** @description Page size. Values above 100 are capped. Non-numeric values return 400. */
     Limit: number;
-    /** @description Send together with longitude, rounded to 2 decimals. The centre of radiusKm and of NEAREST. On /feed, the first page's position is also used for proximity, and later pages send it again only with radiusKm. */
+    /** @description Send together with longitude, rounded to 2 decimals. The centre of radiusKm and of NEAREST. On /feed, the first page's position is also used for proximity, and later pages send it again only with radiusKm. Without it, /feed measures proximity from the viewer's home, if they set one. */
     Latitude: number;
     /** @description Send together with latitude. See latitude. */
     Longitude: number;
@@ -250,7 +250,7 @@ export interface operations {
         cursor?: components['parameters']['Cursor'];
         /** @description Page size. Values above 100 are capped. Non-numeric values return 400. */
         limit?: components['parameters']['Limit'];
-        /** @description Send together with longitude, rounded to 2 decimals. The centre of radiusKm and of NEAREST. On /feed, the first page's position is also used for proximity, and later pages send it again only with radiusKm. */
+        /** @description Send together with longitude, rounded to 2 decimals. The centre of radiusKm and of NEAREST. On /feed, the first page's position is also used for proximity, and later pages send it again only with radiusKm. Without it, /feed measures proximity from the viewer's home, if they set one. */
         latitude?: components['parameters']['Latitude'];
         /** @description Send together with latitude. See latitude. */
         longitude?: components['parameters']['Longitude'];
@@ -313,7 +313,7 @@ export interface operations {
         startsFrom?: components['parameters']['StartsFrom'];
         /** @description Setting this turns the past-events window off. */
         startsTo?: components['parameters']['StartsTo'];
-        /** @description Send together with longitude, rounded to 2 decimals. The centre of radiusKm and of NEAREST. On /feed, the first page's position is also used for proximity, and later pages send it again only with radiusKm. */
+        /** @description Send together with longitude, rounded to 2 decimals. The centre of radiusKm and of NEAREST. On /feed, the first page's position is also used for proximity, and later pages send it again only with radiusKm. Without it, /feed measures proximity from the viewer's home, if they set one. */
         latitude?: components['parameters']['Latitude'];
         /** @description Send together with latitude. See latitude. */
         longitude?: components['parameters']['Longitude'];

@@ -11,7 +11,7 @@
     "lint": "eslint \"src/**/*.{ts,html}\" --ext .ts,.html",
     "format": "prettier --write \"src/**/*.{ts,html,scss,css,json,md}\"",
     "prepare": "husky",
-    "api-types": "openapi-typescript ../coolture-aws/aws/lambdas/post-read/contracts/feed-api.yaml -o src/app/core/models/generated/feed-api.d.ts && prettier --write src/app/core/models/generated/feed-api.d.ts && tsc -p tsconfig.api-types.json"
+    "api-types": "openapi-typescript ../coolture-aws/aws/lambdas/post-read/contracts/feed-api.yaml -o src/app/core/models/generated/feed-api.d.ts && openapi-typescript ../coolture-aws/aws/lambdas/user/contracts/users-api.yaml -o src/app/core/models/generated/users-api.d.ts && prettier --write src/app/core/models/generated && tsc -p tsconfig.api-types.json"
   },
   "prettier": {
     "printWidth": 100,

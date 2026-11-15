@@ -7,6 +7,7 @@ import { Observable } from 'rxjs';
 import { MediaUploadConfirmation } from '../../models/media/media-upload.confirmation.model';
 import { PaginatedResponse, PaginationInfo } from '../../models/common/paginated-response.model';
 import { UserProfileUpdateRequest } from '../../models/users/user-profile-update-request.model';
+import { NamedPlace } from '../../models/common/geo.model';
 
 @Injectable({
   providedIn: 'root',
@@ -51,6 +52,15 @@ export class Users {
 
   deleteProfileImage(userId: string): Observable<void> {
     return this.http.delete<void>(this.apiurl.path(`/users/${userId}/profile-image`));
+  }
+
+  /** Answers with the home as stored, its point rounded to about a kilometre. */
+  setHome(userId: string, home: NamedPlace): Observable<NamedPlace> {
+    return this.http.put<NamedPlace>(this.apiurl.path(`/users/${userId}/home`), home);
+  }
+
+  clearHome(userId: string): Observable<void> {
+    return this.http.delete<void>(this.apiurl.path(`/users/${userId}/home`));
   }
 
   getUserByUsername(username: string): Observable<UserProfile> {

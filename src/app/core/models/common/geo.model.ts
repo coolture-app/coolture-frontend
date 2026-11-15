@@ -3,6 +3,13 @@ export interface GeoPoint {
   longitude: number;
 }
 
+/** A point with a name to show for it: where someone lives, or what a radius is centred on. */
+export interface NamedPlace {
+  /** "Oliwa, Gdańsk", "Banino", "Ergo Arena". */
+  name: string;
+  coordinates: GeoPoint;
+}
+
 /** What the post form sends. Only the city and the pin are required. */
 export interface EventLocationRequest {
   /** Two letters, such as `PL`. */
