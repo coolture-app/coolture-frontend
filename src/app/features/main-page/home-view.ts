@@ -1,16 +1,13 @@
 import { inject, Injectable } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { Params } from '@angular/router';
-import { GeoPoint } from '../../core/models/common/geo.model';
+import { GeoPoint, NamedPlace } from '../../core/models/common/geo.model';
 import { PostsSort } from '../../core/models/common/enums';
 import { PostListQuery, PostListStore } from '../../core/services/post-list/post-list.store';
 
 const RESTORE_WINDOW_MS = 30 * 60 * 1000;
 
-/**
- * What the radius filter is centred on: the user's position, or a place that was picked. A link is the
- * only way to pick one so far; the geocoder's place picker will fill the same slot.
- */
+/** What the radius is centred on: the user's position, or a picked place. */
 export type PlaceFilter = '' | 'mine' | 'picked';
 
 /** The filter panel's values, as its form holds them. */
@@ -63,8 +60,8 @@ export interface HomeView {
   listScrollY: number;
   /** The position the location filter used. Kept in memory for this visit only. */
   nearPosition: GeoPoint | null;
-  /** The place the filter can centre on instead, which so far comes from a link. */
-  pickedPlace: GeoPoint | null;
+  /** The place the filter can centre on instead of the position. */
+  pickedPlace: NamedPlace | null;
   /** The query string this view had, to tell whether a return to the page is a return to this view. */
   url: Params;
 }

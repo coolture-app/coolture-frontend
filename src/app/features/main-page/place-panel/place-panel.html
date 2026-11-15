@@ -1,0 +1,107 @@
+@let f = form();
+@let home = this.home();
+@let picked = this.picked();
+<div class="panel">
+  <div class="panel__header">
+    <span class="panel__title">{{ 'MAIN_PAGE.where' | translate }}</span>
+    <app-btn
+      variant="icon"
+      size="sm"
+      [label]="'MAIN_PAGE.close' | translate"
+      (btnClick)="done.emit()"
+    >
+      <ng-icon name="heroXMark" />
+    </app-btn>
+  </div>
+
+  <app-place-search
+    kind="any"
+    [near]="near()"
+    [label]="'MAIN_PAGE.placeSearchLabel' | translate"
+    [placeholder]="'MAIN_PAGE.placeSearchPlaceholder' | translate"
+    (picked)="pick.emit($event)"
+  >
+    <div class="panel__options" role="group" [attr.aria-label]="'MAIN_PAGE.location' | translate">
+      @if (home) {
+        <button
+          type="button"
+          class="panel__option"
+          [class.panel__option--on]="isCentre(home)"
+          [attr.aria-pressed]="isCentre(home)"
+          (click)="pick.emit(home)"
+        >
+          <ng-icon name="heroHome" aria-hidden="true" />
+          <span class="panel__option-name">{{ home.name }}</span>
+          <span class="panel__option-detail">{{ 'MAIN_PAGE.yourHome' | translate }}</span>
+        </button>
+      }
+      @if (picked && !isCentre(home)) {
+        <button
+          type="button"
+          class="panel__option"
+          [class.panel__option--on]="f.controls.place.value === 'picked'"
+          [attr.aria-pressed]="f.controls.place.value === 'picked'"
+          (click)="setPlace('picked')"
+        >
+          <ng-icon name="heroMapPin" aria-hidden="true" />
+          <span class="panel__option-name">{{
+            picked.name || ('MAIN_PAGE.pickedPlace' | translate)
+          }}</span>
+        </button>
+      }
+      <button
+        type="button"
+        class="panel__option"
+        [class.panel__option--on]="f.controls.place.value === 'mine'"
+        [attr.aria-pressed]="f.controls.place.value === 'mine'"
+        [attr.aria-busy]="locating()"
+        (click)="setPlace('mine')"
+      >
+        <ng-icon name="lucideLocateFixed" aria-hidden="true" />
+        <span class="panel__option-name">{{ 'MAIN_PAGE.myLocation' | translate }}</span>
+        @if (locating()) {
+          <span class="panel__option-detail">{{ 'MAIN_PAGE.locating' | translate }}</span>
+        }
+      </button>
+      <button
+        type="button"
+        class="panel__option"
+        [class.panel__option--on]="!f.controls.place.value"
+        [attr.aria-pressed]="!f.controls.place.value"
+        (click)="setPlace('')"
+      >
+        <ng-icon name="heroGlobeEuropeAfrica" aria-hidden="true" />
+        <span class="panel__option-name">{{ 'MAIN_PAGE.anywhere' | translate }}</span>
+      </button>
+    </div>
+  </app-place-search>
+
+  @if (locationFailed()) {
+    <p class="panel__note" role="status">{{ 'MAIN_PAGE.locationFailed' | translate }}</p>
+  }
+
+  @if (f.controls.place.value) {
+    <fieldset class="panel__group">
+      <legend class="panel__label">{{ 'MAIN_PAGE.radius' | translate }}</legend>
+      <div class="chips">
+        @for (km of radii; track km) {
+          <button
+            type="button"
+            class="chip"
+            [class.chip--on]="f.controls.radiusKm.value === km"
+            [attr.aria-pressed]="f.controls.radiusKm.value === km"
+            (click)="setRadius(km)"
+          >
+            {{ 'MAIN_PAGE.km' | translate: { km } }}
+          </button>
+        }
+      </div>
+    </fieldset>
+  }
+
+  <div class="panel__footer">
+    <app-btn variant="primary" size="sm" (btnClick)="done.emit()">
+      {{ 'MAIN_PAGE.done' | translate }}
+    </app-btn>
+  </div>
+</div>

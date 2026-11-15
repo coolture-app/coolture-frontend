@@ -13,6 +13,7 @@ import { PostDetail } from '../../core/models/posts/post-detail.model';
 import { InfiniteScroll } from '../../core/directives/infinite-scroll';
 import { HomeTapService } from '../../core/services/home-tap/home-tap.service';
 import { ToastService } from '../../core/services/toast/toast.service';
+import { AuthService } from '../../core/services/auth/auth.service';
 
 @Component({ template: '' })
 class OtherPage {}
@@ -79,6 +80,44 @@ describe('MainPage', () => {
 
   function param(request: TestRequest, name: string): string | null {
     return request.request.params.get(name);
+  }
+
+  /** Answers the lookups that name a place that came as a bare point. */
+  function nameLookups(name: string | null): void {
+    const features = name
+      ? [
+          {
+            geometry: { coordinates: [18.65, 54.35] },
+            properties: { type: 'district', name, city: 'Gdańsk' },
+          },
+        ]
+      : [];
+    http.match((r) => r.url.endsWith('/geo/reverse')).forEach((r) => r.flush({ features }));
+  }
+
+  async function openPlace(): Promise<void> {
+    component.togglePlace();
+    await settle();
+  }
+
+  /** An option in the place panel, by its name. */
+  function option(label: string): HTMLButtonElement {
+    const options = fixture.nativeElement.querySelectorAll(
+      '.panel__option',
+    ) as NodeListOf<HTMLElement>;
+    return Array.from(options).find(
+      (o) => o.querySelector('.panel__option-name')!.textContent!.trim() === label,
+    ) as HTMLButtonElement;
+  }
+
+  function radiusChips(): HTMLButtonElement[] {
+    return Array.from(fixture.nativeElement.querySelectorAll('.panel .chip'));
+  }
+
+  function pill(): string {
+    return (fixture.nativeElement.querySelector('.place-btn') as HTMLElement)
+      .textContent!.replace(/\s+/g, ' ')
+      .trim();
   }
 
   function shownTitles(): string[] {
@@ -342,6 +381,27 @@ describe('MainPage', () => {
       http.expectNone((r) => r.url.endsWith('/posts'));
       expect(component.sort()).toBe('UPCOMING');
       expect(TestBed.inject(ToastService).message()).toBe('MAIN_PAGE.nearestNeedsLocation');
+    });
+
+    it('measures from the home when the position is refused, and says so', async () => {
+      TestBed.inject(AuthService).home.set({
+        name: 'Oliwa, Gdańsk',
+        coordinates: { latitude: 54.41, longitude: 18.56 },
+      });
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      component.setTab('all');
+      await settle();
+      expectPosts().flush(page());
+
+      await component.setSortBy('NEAREST');
+      await settle();
+
+      const posts = expectPosts();
+      expect(param(posts, 'latitude')).toBe('54.41');
+      posts.flush(page());
+      await settle();
+      expect(text()).toContain('MAIN_PAGE.nearestFromHome');
     });
   });
 
@@ -742,24 +802,21 @@ describe('MainPage', () => {
       expect(text()).not.toContain('MAIN_PAGE.nearMe');
     });
 
-    describe('the filter', () => {
+    describe('the place panel', () => {
       async function openFilters(): Promise<void> {
         await open();
         expectFeed().flush({ ...page(), mode: 'RANKED' });
-        component.toggleFilters();
-        await settle();
+        await openPlace();
       }
 
-      function chip(label: string): HTMLButtonElement {
-        const chips = fixture.nativeElement.querySelectorAll('.chip') as NodeListOf<HTMLElement>;
-        return Array.from(chips).find((c) => c.textContent!.trim() === label) as HTMLButtonElement;
-      }
+      const chip = option;
 
       it('starts at Anywhere, with no radius to pick', async () => {
         await openFilters();
 
         expect(chip('MAIN_PAGE.anywhere').getAttribute('aria-pressed')).toBe('true');
-        expect(fixture.nativeElement.querySelectorAll('.chip--small').length).toBe(0);
+        expect(radiusChips().length).toBe(0);
+        expect(pill()).toBe('MAIN_PAGE.anywhere');
       });
 
       it('lists posts within 5 km of the position by default', async () => {
@@ -785,9 +842,9 @@ describe('MainPage', () => {
         expect(param(next, 'latitude')).toBe('54.35');
         next.flush({ ...page(), mode: 'RANKED' });
         await settle();
-        expect(component.activeFilterCount()).toBe(1);
-        const radii = fixture.nativeElement.querySelectorAll('.chip--small');
-        expect(Array.from(radii as NodeListOf<Element>).map((c) => c.textContent!.trim())).toEqual(
+        expect(component.activeFilterCount()).toBe(0);
+        expect(pill()).toBe('MAIN_PAGE.nearMe · MAIN_PAGE.km');
+        expect(radiusChips().map((c) => c.textContent!.trim())).toEqual(
           Array(6).fill('MAIN_PAGE.km'),
         );
       });
@@ -800,7 +857,7 @@ describe('MainPage', () => {
         expectFeed().flush({ ...page(), mode: 'RANKED' });
         await settle();
 
-        (fixture.nativeElement.querySelectorAll('.chip--small')[4] as HTMLButtonElement).click();
+        radiusChips()[4].click();
         await debounce();
 
         expect(param(expectFeed(), 'radiusKm')).toBe('50');
@@ -853,6 +910,78 @@ describe('MainPage', () => {
       });
     });
 
+    it('centres on a searched place, named in the pill', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      await openPlace();
+
+      component.pickPlace({
+        name: 'Ergo Arena',
+        coordinates: { latitude: 54.43, longitude: 18.58 },
+      });
+      await debounce();
+
+      const feed = expectFeed();
+      expect(param(feed, 'latitude')).toBe('54.43');
+      expect(param(feed, 'radiusKm')).toBe('5');
+      feed.flush({ ...page(), mode: 'RANKED' });
+      await settle();
+      expect(pill()).toBe('Ergo Arena · MAIN_PAGE.km');
+      expect(option('Ergo Arena').getAttribute('aria-pressed')).toBe('true');
+    });
+
+    it('offers the home first, and centres on it when picked', async () => {
+      TestBed.inject(AuthService).home.set({
+        name: 'Oliwa, Gdańsk',
+        coordinates: { latitude: 54.41, longitude: 18.56 },
+      });
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      await openPlace();
+
+      const options = fixture.nativeElement.querySelectorAll('.panel__option-name');
+      expect(options[0].textContent.trim()).toBe('Oliwa, Gdańsk');
+      option('Oliwa, Gdańsk').click();
+      await debounce();
+
+      expect(param(expectFeed(), 'latitude')).toBe('54.41');
+      await settle();
+      expect(option('Oliwa, Gdańsk').getAttribute('aria-pressed')).toBe('true');
+    });
+
+    it('makes the map’s view the place, with the smallest radius that covers it, and names it', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+
+      component.searchArea({ centre: { latitude: 54.35, longitude: 18.65 }, reachKm: 7.2 });
+      await settle();
+
+      const feed = expectFeed();
+      expect(param(feed, 'latitude')).toBe('54.35');
+      expect(param(feed, 'radiusKm')).toBe('10');
+      feed.flush({ ...page(), mode: 'RANKED' });
+      nameLookups('Wrzeszcz Górny');
+      await settle();
+      expect(pill()).toBe('Wrzeszcz Górny · MAIN_PAGE.km');
+    });
+
+    it('keeps the place when Filtry is cleared', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      component.pickPlace({ name: 'Sopot', coordinates: { latitude: 54.44, longitude: 18.56 } });
+      component.searchControl.setValue('jazz');
+      await debounce();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+
+      component.clearFilters();
+      await settle();
+
+      const feed = expectFeed();
+      expect(param(feed, 'q')).toBeNull();
+      expect(param(feed, 'latitude')).toBe('54.44');
+      feed.flush({ ...page(), mode: 'RANKED' });
+    });
+
     it('closes the panel on Escape, and on Done', async () => {
       await open();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
@@ -872,10 +1001,7 @@ describe('MainPage', () => {
   });
 
   describe('the URL', () => {
-    function chip(label: string): HTMLButtonElement {
-      const chips = fixture.nativeElement.querySelectorAll('.chip') as NodeListOf<HTMLElement>;
-      return Array.from(chips).find((c) => c.textContent!.trim() === label) as HTMLButtonElement;
-    }
+    const chip = option;
 
     it('stays a plain / on the default feed', async () => {
       await open();
@@ -941,10 +1067,23 @@ describe('MainPage', () => {
       expect(param(feed, 'longitude')).toBe('18.65');
       expect(param(feed, 'radiusKm')).toBe('25');
       feed.flush({ ...page(), mode: 'RANKED' });
-      component.toggleFilters();
-      await settle();
+      nameLookups(null);
+      await openPlace();
       expect(chip('MAIN_PAGE.pickedPlace').getAttribute('aria-pressed')).toBe('true');
       expect(chip('MAIN_PAGE.myLocation').getAttribute('aria-pressed')).toBe('false');
+      expect(pill()).toBe('MAIN_PAGE.pickedPlace · MAIN_PAGE.km');
+    });
+
+    it('names a linked place by the district around it', async () => {
+      await router.navigateByUrl('/?radius=25&lat=54.35&lng=18.65');
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+
+      nameLookups('Wrzeszcz Górny');
+      await settle();
+
+      expect(pill()).toBe('Wrzeszcz Górny · MAIN_PAGE.km');
+      expect(router.url).toBe('/?radius=25&lat=54.35&lng=18.65');
     });
 
     it('moves from a linked place to the user’s own position, and shows that in the URL', async () => {
@@ -952,8 +1091,8 @@ describe('MainPage', () => {
       await router.navigateByUrl('/?radius=25&lat=54.35&lng=18.65');
       await open();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
-      component.toggleFilters();
-      await settle();
+      nameLookups(null);
+      await openPlace();
 
       chip('MAIN_PAGE.myLocation').click();
       await debounce();
@@ -966,20 +1105,24 @@ describe('MainPage', () => {
       expect(chip('MAIN_PAGE.pickedPlace')).toBeDefined();
     });
 
-    it('has no Wskazane miejsce without a linked place, and clearing removes it', async () => {
+    it('has no Wskazane miejsce without a linked place, and Anywhere takes the radius away', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      await openPlace();
+      expect(chip('MAIN_PAGE.pickedPlace')).toBeUndefined();
+
       await router.navigateByUrl('/?radius=25&lat=54.35&lng=18.65');
       await open();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
-      component.toggleFilters();
-      await settle();
-
-      component.clearFilters();
-      await settle();
+      nameLookups(null);
+      await openPlace();
+      chip('MAIN_PAGE.anywhere').click();
+      await debounce();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
       await settle();
 
-      expect(chip('MAIN_PAGE.pickedPlace')).toBeUndefined();
       expect(router.url).toBe('/');
+      expect(pill()).toBe('MAIN_PAGE.anywhere');
     });
 
     it('sorts Najbliższe from the linked point', async () => {
@@ -991,6 +1134,7 @@ describe('MainPage', () => {
       expect(param(posts, 'sortBy')).toBe('NEAREST');
       expect(param(posts, 'latitude')).toBe('54.35');
       posts.flush(page());
+      nameLookups(null);
     });
 
     it('falls back when a link asks for Najbliższe and no position comes', async () => {

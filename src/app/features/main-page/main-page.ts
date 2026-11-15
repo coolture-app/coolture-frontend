@@ -13,7 +13,7 @@ import {
 import { ViewportScroller } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, NavigationStart, Params, Router } from '@angular/router';
-import { debounceTime, filter, merge } from 'rxjs';
+import { debounceTime, filter, firstValueFrom, merge } from 'rxjs';
 import { TranslatePipe } from '@ngx-translate/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -21,6 +21,7 @@ import {
   heroMagnifyingGlass,
   heroXMark,
   heroChevronDown,
+  heroMapPin,
 } from '@ng-icons/heroicons/outline';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
@@ -31,7 +32,9 @@ import { InfiniteScroll } from '../../core/directives/infinite-scroll';
 import { PULL_THRESHOLD, PullToRefresh } from '../../core/directives/pull-to-refresh';
 import { lucideRefreshCw } from '@ng-icons/lucide';
 import { PostFilterParams } from '../../core/models/posts/post-filter-params.model';
-import { GeoPoint } from '../../core/models/common/geo.model';
+import { GeoPoint, NamedPlace } from '../../core/models/common/geo.model';
+import { GeocodingService } from '../../core/services/geocoding/geocoding.service';
+import { TRICITY } from '../../core/components/map/map-style';
 import { PostService } from '../../core/services/post/post.service';
 import { AuthService } from '../../core/services/auth/auth.service';
 import { LocationService } from '../../core/services/location/location.service';
@@ -39,7 +42,7 @@ import { PostListStore } from '../../core/services/post-list/post-list.store';
 import { HomeTapService } from '../../core/services/home-tap/home-tap.service';
 import { Tooltip } from '../../core/directives/tooltip';
 import { PostType, PostStatus, PostVisibility, PostsSort } from '../../core/models/common/enums';
-import { Map } from '../../core/components/map/map/map';
+import { Map, MapArea } from '../../core/components/map/map/map';
 import { ToastService } from '../../core/services/toast/toast.service';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -47,11 +50,14 @@ import {
   HomeTab,
   HomeViewMemory,
   NO_FILTERS,
+  PlaceFilter,
   RADII_KM,
   START_SORT,
 } from './home-view';
 import { fromHomeParams, sameHomeParams, toHomeParams } from './home-url';
 import { FeedFilters } from './feed-filters/feed-filters';
+import { PlacePanel } from './place-panel/place-panel';
+import { ViewSwitch } from './view-switch/view-switch';
 
 const LOCATION_WAIT_MS = 1500;
 /** How long the first page waits for an answer to the browser's location prompt. */
@@ -80,6 +86,8 @@ const CARDS_BEFORE_END = 15;
     Btn,
     Map,
     FeedFilters,
+    PlacePanel,
+    ViewSwitch,
     InfiniteScroll,
     PullToRefresh,
     PostSkeleton,
@@ -91,6 +99,7 @@ const CARDS_BEFORE_END = 15;
       heroMagnifyingGlass,
       heroXMark,
       heroChevronDown,
+      heroMapPin,
       lucideRefreshCw,
     }),
   ],
@@ -113,6 +122,7 @@ export class MainPage implements OnDestroy {
   private homeTap = inject(HomeTapService);
   private injector = inject(Injector);
   private toast = inject(ToastService);
+  private geocoding = inject(GeocodingService);
   private translate = inject(TranslateService);
   authService = inject(AuthService);
   list = inject(PostListStore);
@@ -120,6 +130,7 @@ export class MainPage implements OnDestroy {
   searchControl = new FormControl('', { nonNullable: true });
 
   showFilters = signal(false);
+  showPlace = signal(false);
   showSortMenu = signal(false);
   isMapView = signal(false);
   locationFailed = signal(false);
@@ -144,30 +155,52 @@ export class MainPage implements OnDestroy {
   filtersForm = createFiltersForm();
   /** The user's position, for "Moja lokalizacja" and Najbliższe, once the browser gave it. */
   private nearPosition = signal<GeoPoint | null>(null);
-  /** A place that isn't the user's, for "Wskazane miejsce". Comes from a link for now. */
-  readonly pickedPlace = signal<GeoPoint | null>(null);
+  /**
+   * A place that isn't the user's position, for "Wskazane miejsce": searched for, the home, the map's area or a
+   * link's point. Its name is empty until a lookup names a point that came without one.
+   */
+  readonly pickedPlace = signal<NamedPlace | null>(null);
+  readonly home = this.authService.home;
+  /** The pill has room for the place's own name only: "Oliwa", not "Oliwa, Gdańsk". The panel shows it whole. */
+  readonly pickedShortName = computed(() => this.pickedPlace()?.name.split(',')[0] ?? '');
 
   /** The applied search and filters, also what the map shows. Both tabs share them. */
   readonly activeFilters = signal<PostFilterParams>({});
+  /** What the applied radius is centred on, for the place pill. */
+  readonly activePlace = signal<PlaceFilter>('');
   /** Dla Ciebie is the ranked feed of posts new to the user; Wszystkie is every post, in a chosen order. */
   readonly tab = signal<HomeTab>('forYou');
   /** Wszystkie's order. Kept while on Dla Ciebie, so going back finds it as it was. */
   readonly sort = signal<PostsSort>(START_SORT);
   readonly isFeed = computed(() => this.tab() === 'forYou');
-  /** Where Najbliższe measures from: the radius's centre if one is on, so the two can't disagree. */
-  private readonly sortPoint = computed<GeoPoint | null>(() => {
+  /** A point the user chose or gave: the radius's centre if one is on, so Najbliższe and the radius agree. */
+  private readonly ownPoint = computed<GeoPoint | null>(() => {
     const { latitude, longitude } = this.activeFilters();
     return latitude !== undefined && longitude !== undefined
       ? { latitude, longitude }
-      : (this.nearPosition() ?? this.pickedPlace());
+      : (this.nearPosition() ?? this.pickedPlace()?.coordinates ?? null);
   });
-  /** How many filters the panel has on, counting a date range and a place as one each. Not the search. */
+  /** Where Najbliższe measures from: a point the user chose or gave, else their home. */
+  private readonly sortPoint = computed<GeoPoint | null>(
+    () => this.ownPoint() ?? this.home()?.coordinates ?? null,
+  );
+  /** The home's name while Najbliższe measures from it, so the list can say so. */
+  readonly nearestFromHome = computed(() =>
+    !this.isFeed() && this.sort() === 'NEAREST' && !this.ownPoint()
+      ? (this.home()?.name ?? null)
+      : null,
+  );
+  /** How many filters the panel has on, counting a date range as one. Not the search or the place. */
   readonly activeFilterCount = computed(() => {
-    const { type, tags, startsFrom, startsTo, visibility, status, includePast, latitude } =
+    const { type, tags, startsFrom, startsTo, visibility, status, includePast } =
       this.activeFilters();
-    const on = [type, tags, startsFrom || startsTo, visibility, status, includePast, latitude];
+    const on = [type, tags, startsFrom || startsTo, visibility, status, includePast];
     return on.filter((value) => value !== undefined && value !== false).length;
   });
+  /** Where suggestions in the place search come from first. */
+  readonly searchNear = computed<GeoPoint>(
+    () => this.ownPoint() ?? this.home()?.coordinates ?? TRICITY,
+  );
   /** A screenful for the first page. After that one is enough, and the posts stay what's on screen. */
   readonly skeletons = computed(() => Array(this.list.items().length > 0 ? 1 : 3));
   readonly pullThreshold = PULL_THRESHOLD;
@@ -254,12 +287,36 @@ export class MainPage implements OnDestroy {
   }
 
   applyControls(): void {
-    this.changeList(() => this.activeFilters.set(this.readFilters()));
+    this.changeList(() => this.applyFilters());
   }
 
   closePopups(): void {
     this.showFilters.set(false);
+    this.showPlace.set(false);
     this.showSortMenu.set(false);
+  }
+
+  togglePlace(): void {
+    this.showFilters.set(false);
+    this.showPlace.update((v) => !v);
+  }
+
+  /** A place from the search, or the home: the radius centres on it, with the radius as it was. */
+  pickPlace(place: NamedPlace): void {
+    this.pickedPlace.set({ name: place.name, coordinates: place.coordinates });
+    this.filtersForm.controls.place.setValue('picked');
+  }
+
+  /**
+   * The map's "Szukaj w tym obszarze": the view's centre becomes the picked place, named by a lookup, with the
+   * smallest radius that covers the view.
+   */
+  searchArea({ centre, reachKm }: MapArea): void {
+    const radiusKm = RADII_KM.find((km) => km >= reachKm) ?? RADII_KM[RADII_KM.length - 1];
+    this.pickedPlace.set({ name: '', coordinates: centre });
+    this.filtersForm.patchValue({ place: 'picked', radiusKm }, { emitEvent: false });
+    this.applyControls();
+    void this.nameThePickedPlace();
   }
 
   clearSearch(): void {
@@ -271,7 +328,7 @@ export class MainPage implements OnDestroy {
     const y = window.scrollY;
     const delta = y - this.lastScrollY;
     this.lastScrollY = y;
-    if (y < BAR_ALWAYS_SHOWN_PX || delta < 0 || this.showFilters()) {
+    if (y < BAR_ALWAYS_SHOWN_PX || delta < 0 || this.showFilters() || this.showPlace()) {
       this.barHidden.set(false);
     } else if (delta > 0) {
       this.barHidden.set(true);
@@ -283,11 +340,15 @@ export class MainPage implements OnDestroy {
   }
 
   toggleFilters(): void {
+    this.showPlace.set(false);
     this.showFilters.update((v) => !v);
   }
 
+  /** Filtry's "Wyczyść" leaves the place, which has its own panel. */
   clearFilters(): void {
-    this.resetControls();
+    const { place, radiusKm } = this.filtersForm.getRawValue();
+    this.filtersForm.reset({ ...NO_FILTERS, place, radiusKm }, { emitEvent: false });
+    this.searchControl.setValue('', { emitEvent: false });
     this.applyControls();
   }
 
@@ -319,16 +380,17 @@ export class MainPage implements OnDestroy {
     }
   }
 
-  /** Najbliższe needs the position. If the browser won't give it, the order stays and a note says why. */
+  /** Najbliższe needs a point: the user's position, else their home. With neither, the order stays and a note says why. */
   async setSortBy(sortBy: PostsSort): Promise<void> {
     this.showSortMenu.set(false);
-    if (sortBy === 'NEAREST' && !this.sortPoint()) {
+    if (sortBy === 'NEAREST' && !this.ownPoint()) {
       const position = await this.location.request();
-      if (!position) {
+      if (position) {
+        this.nearPosition.set(position);
+      } else if (!this.home()) {
         this.toast.show(this.translate.instant('MAIN_PAGE.nearestNeedsLocation'));
         return;
       }
-      this.nearPosition.set(position);
     }
     this.changeList(() => this.sort.set(sortBy));
   }
@@ -377,7 +439,7 @@ export class MainPage implements OnDestroy {
     this.resetControls();
     this.tab.set('forYou');
     this.sort.set(START_SORT);
-    this.activeFilters.set(this.readFilters());
+    this.applyFilters();
     this.isMapView.set(false);
     this.showInUrl();
     this.load();
@@ -442,7 +504,7 @@ export class MainPage implements OnDestroy {
     this.filtersForm.setValue(filters, { emitEvent: false });
     this.tab.set(tab);
     this.sort.set(sort);
-    this.pickedPlace.set(point);
+    this.pickedPlace.set(point && { name: '', coordinates: point });
 
     const needsPosition = filters.place === 'mine' || (sort === 'NEAREST' && !point);
     if (needsPosition) {
@@ -452,13 +514,43 @@ export class MainPage implements OnDestroy {
         this.filtersForm.controls.place.setValue('', { emitEvent: false });
         this.locationFailed.set(true);
       }
-      if (!position && sort === 'NEAREST') {
+      if (!position && sort === 'NEAREST' && !this.home()) {
         this.sort.set(START_SORT);
         this.toast.show(this.translate.instant('MAIN_PAGE.nearestNeedsLocation'));
       }
     }
-    this.activeFilters.set(this.readFilters());
+    this.applyFilters();
     this.showInUrl();
+    if (point) {
+      void this.nameThePickedPlace();
+    }
+  }
+
+  /**
+   * A point from the map or a link has no name, so the pill would say only "Wskazane miejsce". The district or city
+   * around it names it, if the geocoder answers before the place changes.
+   */
+  private async nameThePickedPlace(): Promise<void> {
+    const place = this.pickedPlace();
+    if (!place || place.name) {
+      return;
+    }
+    try {
+      const area = await firstValueFrom(this.geocoding.areaAt(place.coordinates));
+      if (area && this.pickedPlace() === place) {
+        this.pickedPlace.set({ ...place, name: area.name });
+      }
+    } catch {
+      // The pill keeps saying "Wskazane miejsce".
+    }
+  }
+
+  /** The filters as the form has them, and what their radius is centred on. */
+  private applyFilters(): void {
+    this.activeFilters.set(this.readFilters());
+    this.activePlace.set(
+      this.activeFilters().radiusKm ? this.filtersForm.controls.place.value : '',
+    );
   }
 
   /** The current state as the URL's query string. */
@@ -507,7 +599,10 @@ export class MainPage implements OnDestroy {
   /** The radius filter's centre, if it's on. */
   private filterCentre(): GeoPoint | null {
     const place = this.filtersForm.controls.place.value;
-    return place === 'picked' ? this.pickedPlace() : place === 'mine' ? this.nearPosition() : null;
+    if (place === 'picked') {
+      return this.pickedPlace()?.coordinates ?? null;
+    }
+    return place === 'mine' ? this.nearPosition() : null;
   }
 
   private readFilters(): PostFilterParams {
@@ -568,7 +663,7 @@ export class MainPage implements OnDestroy {
     this.pickedPlace.set(view.pickedPlace);
     this.isMapView.set(view.isMapView);
     this.listScrollY = view.listScrollY;
-    this.activeFilters.set(this.readFilters());
+    this.applyFilters();
 
     const post = this.postService.activePost();
     if (post) {

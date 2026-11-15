@@ -6,9 +6,9 @@ import { heroXMark } from '@ng-icons/heroicons/outline';
 
 import { Btn } from '../../../core/components/btn/btn';
 import { Switch } from '../../../core/components/switch/switch/switch';
-import { FiltersForm, PlaceFilter, RADII_KM } from '../home-view';
+import { FiltersForm } from '../home-view';
 
-/** The home page's filter panel. The home page owns the form and applies it. */
+/** The home page's filter panel, everything but the place. The home page owns the form and applies it. */
 @Component({
   selector: 'app-feed-filters',
   imports: [ReactiveFormsModule, TranslatePipe, NgIcon, Btn, Switch],
@@ -18,23 +18,7 @@ import { FiltersForm, PlaceFilter, RADII_KM } from '../home-view';
 })
 export class FeedFilters {
   readonly form = input.required<FiltersForm>();
-  /** Waiting for the browser's position after "Moja lokalizacja" was picked. */
-  readonly locating = input(false);
-  /** The position couldn't be had, so the filter went back to "Wszędzie". */
-  readonly locationFailed = input(false);
-  /** Whether a place was picked, so that it can be chosen alongside the user's own position. */
-  readonly hasPickedPlace = input(false);
   readonly clear = output<void>();
   /** Filters apply as they change; this only closes the panel. */
   readonly done = output<void>();
-
-  readonly radii = RADII_KM;
-
-  setPlace(place: PlaceFilter): void {
-    this.form().controls.place.setValue(place);
-  }
-
-  setRadius(km: number): void {
-    this.form().controls.radiusKm.setValue(km);
-  }
 }

@@ -60,6 +60,34 @@
         </span>
       </div>
       <div class="searchbar__row">
+        <button
+          type="button"
+          class="sort-btn place-btn"
+          [class.sort-btn--active]="showPlace() || activePlace() !== ''"
+          [attr.aria-expanded]="showPlace()"
+          [appTooltip]="'MAIN_PAGE.where' | translate"
+          (click)="togglePlace()"
+        >
+          <ng-icon name="heroMapPin" />
+          <span class="place-btn__text">
+            @switch (activePlace()) {
+              @case ('mine') {
+                {{ 'MAIN_PAGE.nearMe' | translate }}
+              }
+              @case ('picked') {
+                {{ pickedShortName() || ('MAIN_PAGE.pickedPlace' | translate) }}
+              }
+              @default {
+                {{ 'MAIN_PAGE.anywhere' | translate }}
+              }
+            }
+          </span>
+          @if (activePlace() !== '') {
+            <span class="place-btn__radius"
+              >· {{ 'MAIN_PAGE.km' | translate: { km: activeFilters().radiusKm } }}</span
+            >
+          }
+        </button>
         @if (!isMapView() && !isFeed()) {
           <div class="sort-wrapper">
             <button
@@ -104,31 +132,12 @@
           (click)="toggleFilters()"
         >
           <ng-icon name="heroAdjustmentsHorizontal" />
-          <span>{{ 'MAIN_PAGE.filters' | translate }}</span>
+          <span class="wide-only">{{ 'MAIN_PAGE.filters' | translate }}</span>
           @if (activeFilterCount()) {
             <span class="filters-btn__count" aria-hidden="true">{{ activeFilterCount() }}</span>
           }
         </button>
-        <div class="view-switch" role="group" [attr.aria-label]="'MAIN_PAGE.view' | translate">
-          <button
-            type="button"
-            class="view-switch__option"
-            [class.view-switch__option--on]="!isMapView()"
-            [attr.aria-pressed]="!isMapView()"
-            (click)="toggleMapView(false)"
-          >
-            {{ 'MAIN_PAGE.list' | translate }}
-          </button>
-          <button
-            type="button"
-            class="view-switch__option"
-            [class.view-switch__option--on]="isMapView()"
-            [attr.aria-pressed]="isMapView()"
-            (click)="toggleMapView(true)"
-          >
-            {{ 'MAIN_PAGE.map' | translate }}
-          </button>
-        </div>
+        <app-view-switch [mapView]="isMapView()" (switched)="toggleMapView($event)" />
       </div>
       <!-- Opens under the bar, wherever the list is scrolled to, over a dimmed page. -->
       @if (showFilters()) {
@@ -136,11 +145,22 @@
         <app-feed-filters
           class="filters-popover"
           [form]="filtersForm"
-          [locating]="locating()"
-          [locationFailed]="locationFailed()"
-          [hasPickedPlace]="pickedPlace() !== null"
           (clear)="clearFilters()"
           (done)="showFilters.set(false)"
+        />
+      }
+      @if (showPlace()) {
+        <div class="filters-scrim" aria-hidden="true" (click)="showPlace.set(false)"></div>
+        <app-place-panel
+          class="filters-popover"
+          [form]="filtersForm"
+          [home]="home()"
+          [picked]="pickedPlace()"
+          [near]="searchNear()"
+          [locating]="locating()"
+          [locationFailed]="locationFailed()"
+          (pick)="pickPlace($event)"
+          (done)="showPlace.set(false)"
         />
       }
     </div>
@@ -159,6 +179,9 @@
   </div>
 
   @if (!isMapView()) {
+    @if (nearestFromHome(); as name) {
+      <p class="list-note">{{ 'MAIN_PAGE.nearestFromHome' | translate: { place: name } }}</p>
+    }
     @for (item of list.items(); track item.id) {
       @if ($index === nextPageTrigger()) {
         <div
@@ -227,6 +250,11 @@
   }
   <!-- VIEW WITH MAP ON -->
   @else {
-    <app-map [filters]="activeFilters()" [excludeMine]="isFeed()"></app-map>
+    <app-map
+      [filters]="activeFilters()"
+      [excludeMine]="isFeed()"
+      [home]="home()?.coordinates ?? null"
+      (searchArea)="searchArea($event)"
+    ></app-map>
   }
 </div>
