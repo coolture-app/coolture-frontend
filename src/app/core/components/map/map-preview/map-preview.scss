@@ -1,0 +1,162 @@
+.preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  font-family: var(--font-sans);
+  color: var(--color-text);
+
+  &__post {
+    display: flex;
+    gap: var(--space-md);
+    color: inherit;
+    text-decoration: none;
+    border-radius: var(--radius-md);
+
+    &:focus-visible {
+      outline: 2px solid var(--color-accent);
+      outline-offset: 2px;
+    }
+  }
+
+  &__cover {
+    flex-shrink: 0;
+    width: 72px;
+    height: 72px;
+    border-radius: var(--radius-md);
+    object-fit: cover;
+    background: var(--color-surface-alt);
+  }
+
+  &__text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  &__title {
+    display: -webkit-box;
+    overflow: hidden;
+    font-size: var(--text-body);
+    font-weight: var(--font-semibold);
+    line-height: 1.3;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  &__meta {
+    color: var(--color-text-secondary);
+    font-size: var(--text-sm);
+  }
+
+  &__place {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+
+    ng-icon {
+      flex-shrink: 0;
+      color: var(--color-accent);
+    }
+  }
+
+  &__count {
+    margin-left: auto;
+    padding: 0 8px;
+    border-radius: var(--radius-full);
+    background: var(--color-accent-light);
+    color: var(--color-accent);
+    font-size: var(--text-sm);
+    font-weight: var(--font-semibold);
+  }
+
+  // A place can hold a theatre's whole month, so the list scrolls inside the card.
+  &__list {
+    max-height: 220px;
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    list-style: none;
+  }
+
+  &__row {
+    display: flex;
+    gap: var(--space-md);
+    padding: var(--space-sm) var(--space-xs);
+    border-top: 1px solid var(--color-border-light);
+    color: inherit;
+    text-decoration: none;
+
+    &:hover {
+      background: var(--color-surface-alt);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-accent);
+      outline-offset: -2px;
+    }
+  }
+
+  &__date {
+    flex-shrink: 0;
+    width: 7.5em;
+    color: var(--color-text-secondary);
+    font-size: var(--text-sm);
+  }
+
+  &__row-title {
+    overflow: hidden;
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  &__directions {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 36px;
+    padding: 0 14px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+    color: var(--color-accent);
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    text-decoration: none;
+
+    &:hover {
+      background: var(--color-accent-light);
+    }
+  }
+
+  &__close {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: var(--radius-full);
+    background: none;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+
+    &:hover {
+      background: var(--color-surface-alt);
+      color: var(--color-text);
+    }
+  }
+}

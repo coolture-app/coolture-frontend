@@ -9,20 +9,31 @@ import { LocationService } from '../../../services/location/location.service';
 
 /** What the component asks of a MapLibre map, around a view from (54.30, 18.50) to (54.40, 18.70). */
 function fakeMap() {
+  const view = { north: 54.4, south: 54.3, west: 18.5, east: 18.7 };
   return {
+    view,
     jumpTo: jasmine.createSpy('jumpTo'),
+    easeTo: jasmine.createSpy('easeTo'),
     fitBounds: jasmine.createSpy('fitBounds'),
+    resize: jasmine.createSpy('resize'),
+    getZoom: () => 12,
     getContainer: () => document.createElement('div'),
+    getCanvas: () => ({ style: {} }),
+    // The pills are drawn on a canvas; the specs don't need them.
+    hasImage: () => true,
+    cameraForBounds: () => ({ zoom: 11 }),
+    queryRenderedFeatures: () => [],
     getCenter: () => ({ lat: 54.35123, lng: 18.60456 }),
     getBounds: () => ({
-      getNorth: () => 54.4,
-      getSouth: () => 54.3,
-      getWest: () => 18.5,
-      getEast: () => 18.7,
-      getNorthEast: () => ({ lat: 54.4, lng: 18.7 }),
+      getNorth: () => view.north,
+      getSouth: () => view.south,
+      getWest: () => view.west,
+      getEast: () => view.east,
     }),
   };
 }
+
+const marks = () => (r: { url: string }) => r.url.endsWith('/posts/map');
 
 describe('Map', () => {
   let component: Map;
@@ -37,7 +48,11 @@ describe('Map', () => {
       providers: [
         {
           provide: LocationService,
-          useValue: { currentIfAllowed: () => Promise.resolve(allowed) },
+          useValue: {
+            currentIfAllowed: () => Promise.resolve(allowed),
+            request: () => Promise.resolve(null),
+            precisePosition: () => null,
+          },
         },
       ],
     })
@@ -128,7 +143,7 @@ describe('Map', () => {
 
     expect(older.cancelled).toBeTrue();
     newer.flush([mark('newer')]);
-    expect(component.postsGeoJson().features.map((f) => f.properties?.['id'])).toEqual(['newer']);
+    expect(component.places().map((p) => p.id)).toEqual(['newer']);
   });
 
   it('keeps the pins it has when a request fails', async () => {
@@ -141,7 +156,7 @@ describe('Map', () => {
       .expectOne((r) => r.url.endsWith('/posts/map'))
       .flush(null, { status: 500, statusText: 'Server Error' });
 
-    expect(component.postsGeoJson().features.map((f) => f.properties?.['id'])).toEqual(['kept']);
+    expect(component.places().map((p) => p.id)).toEqual(['kept']);
   });
 
   it('keeps the search button busy until the area it handed over has its pins', async () => {
@@ -178,15 +193,72 @@ describe('Map', () => {
     await fixture.whenStable();
     expect(map.fitBounds).toHaveBeenCalledTimes(1);
   });
+  it('fetches a box one view wider on each side, and pans inside it without asking again', async () => {
+    const map = await load();
+    const first = http.expectOne(marks());
+    expect(first.request.params.get('leftUpper.latitude')).toBe('54.5');
+    expect(first.request.params.get('rightBottom.longitude')).toBe('18.9');
+    first.flush([]);
+
+    map.view.west = 18.55;
+    map.view.east = 18.75;
+    component.onMoveEnd({ target: map });
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    http.expectNone(marks());
+
+    map.view.west = 18.9;
+    map.view.east = 19.1;
+    component.onMoveEnd({ target: map });
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    http.expectOne(marks()).flush([]);
+  });
+
+  it('waits while Lista hides it, and fetches when shown', async () => {
+    fixture.componentRef.setInput('visible', false);
+    await fixture.whenStable();
+    await load();
+    http.expectNone(marks());
+
+    fixture.componentRef.setInput('visible', true);
+    await fixture.whenStable();
+    http.expectOne(marks()).flush([]);
+  });
+
+  it('opens on a focused post and shows it even when the filters leave it out', async () => {
+    fixture.componentRef.setInput('focus', mark('focused', 54.36));
+    const map = await load();
+    http.expectOne(marks()).flush([mark('other')]);
+
+    expect(map.jumpTo).toHaveBeenCalledWith({ center: [18.6, 54.36], zoom: 15 });
+    expect(component.places().map((p) => p.id)).toEqual(['focused', 'other']);
+    expect(component.selected()?.id).toBe('focused');
+  });
+
+  it('lights up the top picks on Dla Ciebie only', async () => {
+    await load();
+    http.expectOne(marks()).flush([mark('pick'), mark('other', 54.38)]);
+    const tones = () =>
+      component.pins().features.map((f) => [f.properties?.['id'], f.properties?.['tone']]);
+
+    expect(tones()).toEqual([
+      ['other', 'plain'],
+      ['pick', 'plain'],
+    ]);
+    fixture.componentRef.setInput('picks', new Set(['pick']));
+    expect(tones()).toEqual([
+      ['other', 'quiet'],
+      ['pick', 'pick'],
+    ]);
+  });
 });
 
-function mark(id: string) {
+function mark(id: string, latitude = 54.35) {
   return {
     id,
     title: id,
-    description: '',
+    startsAt: '2026-12-01T18:00:00Z',
     positiveReactionCount: 0,
-    coordinates: { latitude: 54.35, longitude: 18.6 },
+    coordinates: { latitude, longitude: 18.6 },
     city: 'Gdańsk',
   };
 }

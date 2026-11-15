@@ -46,6 +46,8 @@ export class LocationService {
   private asked = false;
   /** The last precise position, for distances shown on this device only. Never sent or stored. */
   private readonly precise = signal<GeoPoint | null>(null);
+  /** For the map's own dot, drawn on this device only. */
+  readonly precisePosition = this.precise.asReadonly();
   /**
    * The centre of the list's radius filter, when one is on. Cards then measure from it, so a card
    * inside the radius never shows more than the radius, even if the browser's later readings moved.

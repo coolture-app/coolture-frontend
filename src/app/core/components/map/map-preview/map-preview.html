@@ -1,0 +1,46 @@
+<div class="preview">
+  @if (single(); as post) {
+    <a class="preview__post" [routerLink]="['/posts', post.id]">
+      @if (post.coverMediaUrl) {
+        <img class="preview__cover" [src]="post.coverMediaUrl" alt="" loading="lazy" />
+      }
+      <span class="preview__text">
+        <span class="preview__title">{{ post.title }}</span>
+        <span class="preview__meta">{{ post.startsAt | date: dateFormats().eventCard }}</span>
+        @if (placeName()) {
+          <span class="preview__meta preview__place">{{ placeName() }}</span>
+        }
+      </span>
+    </a>
+  } @else {
+    <div class="preview__head">
+      <ng-icon name="lucideMapPin" aria-hidden="true" />
+      <span class="preview__title">{{ placeName() }}</span>
+      <span class="preview__count">{{ place().posts.length }}</span>
+    </div>
+    <ul class="preview__list">
+      @for (post of place().posts; track post.id) {
+        <li>
+          <a class="preview__row" [routerLink]="['/posts', post.id]">
+            <span class="preview__date">{{ post.startsAt | date: dateFormats().eventCard }}</span>
+            <span class="preview__row-title">{{ post.title }}</span>
+          </a>
+        </li>
+      }
+    </ul>
+  }
+  <div class="preview__actions">
+    <a class="preview__directions" [href]="directions()" target="_blank" rel="noopener">
+      <ng-icon name="lucideNavigation" aria-hidden="true" />
+      {{ 'MAP.directions' | translate }}
+    </a>
+    <button
+      type="button"
+      class="preview__close"
+      [attr.aria-label]="'MAP.close' | translate"
+      (click)="closed.emit()"
+    >
+      <ng-icon name="lucideX" aria-hidden="true" />
+    </button>
+  </div>
+</div>

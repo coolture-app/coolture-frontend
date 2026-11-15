@@ -109,7 +109,9 @@
     "stance": "Twój wybór",
     "hidden": "Ukryto. Pokażemy mniej takich.",
     "restored": "Przywrócono.",
-    "undo": "Cofnij"
+    "undo": "Cofnij",
+    "showOnMap": "{{place}}: pokaż na mapie",
+    "showOnMapHint": "Pokaż na mapie"
   },
   "NAVBAR": {
     "main-page": "Strona główna",
@@ -331,7 +333,17 @@
     "retry": "Spróbuj ponownie"
   },
   "MAP": {
-    "searchArea": "Szukaj w tym obszarze"
+    "searchArea": "Szukaj w tym obszarze",
+    "today": "dziś",
+    "tomorrow": "jutro",
+    "now": "trwa",
+    "from": "od",
+    "directions": "Prowadź",
+    "close": "Zamknij",
+    "locate": "Moja lokalizacja",
+    "locateFailed": "Nie udało się ustalić Twojej lokalizacji",
+    "loading": "Ładowanie wydarzeń na mapie",
+    "events": "Wydarzenia tutaj: {{count}}"
   },
   "PLACE_SEARCH": {
     "unavailable": "Wyszukiwanie miejsc nie działa. Spróbuj za chwilę."

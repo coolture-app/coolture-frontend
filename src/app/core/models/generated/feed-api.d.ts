@@ -115,11 +115,15 @@ export interface components {
       /** @description Every photo of the post, cover first, then in the post's order. At most 8, the limit a post can have (PostLimits.MAX_PHOTOS). Left out when the post has none. */
       photos?: components['schemas']['MediaResource'][];
     };
+    /** @description What a pin and its preview need. No description: the map loads every post in view at once, and the description was over half of the answer. */
     PostMark: {
       /** Format: uuid */
       id: string;
       title: string;
-      description?: string;
+      /** Format: date-time */
+      startsAt: string;
+      /** Format: date-time */
+      endsAt?: string;
       coverMediaUrl?: string;
       positiveReactionCount: number;
       coordinates: components['schemas']['GeoPoint'];

@@ -109,7 +109,9 @@
     "stance": "Your choice",
     "hidden": "Hidden. We'll show fewer like this.",
     "restored": "Restored.",
-    "undo": "Undo"
+    "undo": "Undo",
+    "showOnMap": "{{place}}: show on the map",
+    "showOnMapHint": "Show on the map"
   },
   "NAVBAR": {
     "main-page": "Home",
@@ -331,7 +333,17 @@
     "retry": "Try again"
   },
   "MAP": {
-    "searchArea": "Search this area"
+    "searchArea": "Search this area",
+    "today": "today",
+    "tomorrow": "tomorrow",
+    "now": "on now",
+    "from": "from",
+    "directions": "Directions",
+    "close": "Close",
+    "locate": "My location",
+    "locateFailed": "Couldn't get your location",
+    "loading": "Loading events on the map",
+    "events": "Events here: {{count}}"
   },
   "PLACE_SEARCH": {
     "unavailable": "Place search isn't working. Try again in a moment."
