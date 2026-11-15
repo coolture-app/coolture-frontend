@@ -75,7 +75,7 @@
                 {{ 'MAIN_PAGE.nearMe' | translate }}
               }
               @case ('picked') {
-                {{ pickedShortName() || ('MAIN_PAGE.pickedPlace' | translate) }}
+                {{ pickedPlace()?.name || ('MAIN_PAGE.pickedPlace' | translate) }}
               }
               @default {
                 {{ 'MAIN_PAGE.anywhere' | translate }}
@@ -87,6 +87,7 @@
               >· {{ 'MAIN_PAGE.km' | translate: { km: activeFilters().radiusKm } }}</span
             >
           }
+          <ng-icon class="place-btn__chevron" name="heroChevronDown" />
         </button>
         @if (!isMapView() && !isFeed()) {
           <div class="sort-wrapper">

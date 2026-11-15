@@ -949,20 +949,42 @@ describe('MainPage', () => {
       expect(option('Oliwa, Gdańsk').getAttribute('aria-pressed')).toBe('true');
     });
 
-    it('makes the map’s view the place, with the smallest radius that covers it, and names it', async () => {
+    it('makes the circle in the map’s view the place, with its own radius, and names it', async () => {
       await open();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
 
-      component.searchArea({ centre: { latitude: 54.35, longitude: 18.65 }, reachKm: 7.2 });
+      component.searchArea({ centre: { latitude: 54.35, longitude: 18.65 }, radiusKm: 7 });
       await settle();
 
       const feed = expectFeed();
       expect(param(feed, 'latitude')).toBe('54.35');
-      expect(param(feed, 'radiusKm')).toBe('10');
+      expect(param(feed, 'radiusKm')).toBe('7');
       feed.flush({ ...page(), mode: 'RANKED' });
       nameLookups('Wrzeszcz Górny');
       await settle();
-      expect(pill()).toBe('Wrzeszcz Górny · MAIN_PAGE.km');
+      expect(pill()).toBe('Wrzeszcz Górny, Gdańsk · MAIN_PAGE.km');
+      expect(router.url).toBe('/?radius=7&lat=54.35&lng=18.65');
+      await openPlace();
+      expect(radiusChips().map((c) => c.getAttribute('aria-pressed'))).toEqual([
+        'false',
+        'false',
+        'true',
+        'false',
+        'false',
+        'false',
+        'false',
+      ]);
+    });
+
+    it('keeps the largest radius for a view wider than it', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+
+      component.searchArea({ centre: { latitude: 54.35, longitude: 18.65 }, radiusKm: 140 });
+      await settle();
+
+      expect(param(expectFeed(), 'radiusKm')).toBe('100');
+      nameLookups(null);
     });
 
     it('keeps the place when Filtry is cleared', async () => {
@@ -1048,7 +1070,7 @@ describe('MainPage', () => {
     });
 
     it('clears a value it can’t use from the URL', async () => {
-      await router.navigateByUrl('/?sort=nope&radius=7');
+      await router.navigateByUrl('/?sort=nope&radius=7.5');
 
       await open();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
@@ -1082,7 +1104,7 @@ describe('MainPage', () => {
       nameLookups('Wrzeszcz Górny');
       await settle();
 
-      expect(pill()).toBe('Wrzeszcz Górny · MAIN_PAGE.km');
+      expect(pill()).toBe('Wrzeszcz Górny, Gdańsk · MAIN_PAGE.km');
       expect(router.url).toBe('/?radius=25&lat=54.35&lng=18.65');
     });
 

@@ -423,7 +423,7 @@
   }
 }
 
-// The place pill takes what the row has left, and its name gives way first.
+// The place pill: its name gives way before the radius does.
 .place-btn {
   flex: 0 1 auto;
   min-width: 0;
@@ -444,37 +444,19 @@
   }
 }
 
-// Phones: Filtry and Lista | Mapa show icons, and the place and the sort share what's left.
+// Phones: the place gets a row of its own, so its name fits, and the sort, Filtry (an icon) and Lista | Mapa (icons)
+// share the row below.
 @media (max-width: 639px) {
   .searchbar__row {
-    gap: 6px;
+    flex-wrap: wrap;
   }
 
-  .sort-btn {
-    padding: 0 10px;
-  }
+  .place-btn {
+    order: -1;
+    flex: 1 0 100%;
 
-  // The sort gives way first: its menu names the order anyway, while the place is only in the pill.
-  .sort-wrapper {
-    flex: 0 4 auto;
-    min-width: 92px;
-
-    .sort-btn {
-      width: 100%;
+    .place-btn__chevron {
+      margin-left: auto;
     }
-
-    span {
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    ng-icon {
-      display: none;
-    }
-  }
-
-  .filters-btn {
-    flex-shrink: 0;
   }
 }

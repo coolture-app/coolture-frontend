@@ -161,8 +161,6 @@ export class MainPage implements OnDestroy {
    */
   readonly pickedPlace = signal<NamedPlace | null>(null);
   readonly home = this.authService.home;
-  /** The pill has room for the place's own name only: "Oliwa", not "Oliwa, Gdańsk". The panel shows it whole. */
-  readonly pickedShortName = computed(() => this.pickedPlace()?.name.split(',')[0] ?? '');
 
   /** The applied search and filters, also what the map shows. Both tabs share them. */
   readonly activeFilters = signal<PostFilterParams>({});
@@ -308,13 +306,13 @@ export class MainPage implements OnDestroy {
   }
 
   /**
-   * The map's "Szukaj w tym obszarze": the view's centre becomes the picked place, named by a lookup, with the
-   * smallest radius that covers the view.
+   * The map's "Szukaj w tym obszarze": the circle in its view becomes the picked place, named by a lookup. A view
+   * wider than the largest radius gets that radius, and the map zooms in to it.
    */
-  searchArea({ centre, reachKm }: MapArea): void {
-    const radiusKm = RADII_KM.find((km) => km >= reachKm) ?? RADII_KM[RADII_KM.length - 1];
+  searchArea({ centre, radiusKm }: MapArea): void {
+    const radius = Math.min(radiusKm, RADII_KM[RADII_KM.length - 1]);
     this.pickedPlace.set({ name: '', coordinates: centre });
-    this.filtersForm.patchValue({ place: 'picked', radiusKm }, { emitEvent: false });
+    this.filtersForm.patchValue({ place: 'picked', radiusKm: radius }, { emitEvent: false });
     this.applyControls();
     void this.nameThePickedPlace();
   }

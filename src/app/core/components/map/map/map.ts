@@ -40,10 +40,11 @@ const HOME_ZOOM = 12;
 const POSITION_ZOOM = 13;
 const POSITION_WAIT_MS = 1500;
 
-/** What "Szukaj w tym obszarze" hands over: the view's centre, and how far its corners are from it. */
+/** What "Szukaj w tym obszarze" hands over: the circle inside the view, touching its nearer edges. */
 export interface MapArea {
   centre: GeoPoint;
-  reachKm: number;
+  /** Whole km, at least 1. */
+  radiusKm: number;
 }
 
 @Component({
@@ -86,6 +87,8 @@ export class Map implements OnDestroy {
   };
   /** The user moved the map since its last area was set, so a search in the new view is offered. */
   readonly moved = signal(false);
+  /** The area this map handed over itself. It's already in view, so the map doesn't fit to it. */
+  private handedOver: MapArea | null = null;
 
   /** The location filter's area, drawn over the map. */
   readonly radiusArea = computed(() => {
@@ -113,6 +116,9 @@ export class Map implements OnDestroy {
       // Re-fetch when filters change, if we have bounds. A new radius brings its whole area into view first.
       const map = this.mapComponent?.mapInstance;
       untracked(() => this.moved.set(false));
+      if (area && this.isHandedOver()) {
+        this.fittedArea = area;
+      }
       if (map && area && this.fittedArea !== area) {
         this.fitTo(map, area);
       } else if (map) {
@@ -155,13 +161,28 @@ export class Map implements OnDestroy {
   onSearchArea(): void {
     const map = this.mapComponent.mapInstance;
     const centre = map.getCenter();
-    const corner = map.getBounds().getNorthEast();
+    const bounds = map.getBounds();
     const at = { latitude: round(centre.lat), longitude: round(centre.lng) };
+    const toEdgeKm =
+      Math.min(
+        haversineMeters(at, { latitude: bounds.getNorth(), longitude: at.longitude }),
+        haversineMeters(at, { latitude: at.latitude, longitude: bounds.getEast() }),
+      ) / 1000;
+    const area = { centre: at, radiusKm: Math.max(1, Math.round(toEdgeKm)) };
     this.moved.set(false);
-    this.searchArea.emit({
-      centre: at,
-      reachKm: haversineMeters(at, { latitude: corner.lat, longitude: corner.lng }) / 1000,
-    });
+    this.handedOver = area;
+    this.searchArea.emit(area);
+  }
+
+  private isHandedOver(): boolean {
+    const { latitude, longitude, radiusKm } = this.filters();
+    const area = this.handedOver;
+    return (
+      !!area &&
+      area.centre.latitude === latitude &&
+      area.centre.longitude === longitude &&
+      area.radiusKm === radiusKm
+    );
   }
 
   private fittedArea: Feature<Polygon> | null = null;

@@ -83,13 +83,19 @@ describe('the home URL', () => {
       from: 'tomorrow',
       to: '2026-13',
       past: 'maybe',
-      radius: '7',
+      radius: '7.5',
       lat: '999',
       lng: 'east',
       q: ['two', 'values'],
     });
 
     expect(state).toEqual(DEFAULT);
+  });
+
+  it('takes a whole radius from the map’s area, up to the largest chip', () => {
+    expect(fromHomeParams({ radius: '7', lat: '54.35', lng: '18.65' }).filters.radiusKm).toBe(7);
+    expect(fromHomeParams({ radius: '0', lat: '54.35', lng: '18.65' }).filters.place).toBe('');
+    expect(fromHomeParams({ radius: '150', lat: '54.35', lng: '18.65' }).filters.place).toBe('');
   });
 
   it('needs both coordinates for a point', () => {

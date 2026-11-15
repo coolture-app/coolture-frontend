@@ -40,7 +40,11 @@ export class PlacePanel {
   /** Changes apply as they're made; this only closes the panel. */
   readonly done = output<void>();
 
-  readonly radii = RADII_KM;
+  /** The usual radii, and the one the map's area gave if it's none of them. */
+  get radii(): number[] {
+    const current = this.form().controls.radiusKm.value;
+    return RADII_KM.includes(current) ? RADII_KM : [...RADII_KM, current].sort((a, b) => a - b);
+  }
 
   setPlace(place: PlaceFilter): void {
     this.form().controls.place.setValue(place);

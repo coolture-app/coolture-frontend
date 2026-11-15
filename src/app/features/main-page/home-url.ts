@@ -50,7 +50,9 @@ export function fromHomeParams(params: Params): HomeUrlState {
 
   const point = readPoint(text('lat'), text('lng'));
   const radius = Number(text('radius'));
-  const hasRadius = RADII_KM.includes(radius);
+  // The chips, or a radius from the map's area: whole km up to the largest chip.
+  const hasRadius =
+    Number.isInteger(radius) && radius >= 1 && radius <= RADII_KM[RADII_KM.length - 1];
   const tab: HomeTab = text('tab') === 'all' ? 'all' : 'forYou';
   const sort = oneOf('sort', SORTS) as PostsSort | '';
 

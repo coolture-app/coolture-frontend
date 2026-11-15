@@ -95,7 +95,7 @@ describe('Map', () => {
     expect(fixture.nativeElement.querySelector('.map-search-area')).not.toBeNull();
   });
 
-  it('hands over the view’s centre, rounded, and how far its corners reach', async () => {
+  it('hands over the circle inside the view, touching its nearer edges', async () => {
     const map = await load();
     const areas: MapArea[] = [];
     component.searchArea.subscribe((area) => areas.push(area));
@@ -103,9 +103,24 @@ describe('Map', () => {
 
     component.onSearchArea();
 
-    expect(areas[0].centre).toEqual({ latitude: 54.351, longitude: 18.605 });
-    expect(areas[0].reachKm).toBeGreaterThan(7);
-    expect(areas[0].reachKm).toBeLessThan(9);
+    // 5.4 km to the north edge, 6.2 km to the east one.
+    expect(areas[0]).toEqual({ centre: { latitude: 54.351, longitude: 18.605 }, radiusKm: 5 });
     expect(component.moved()).toBeFalse();
+  });
+
+  it('keeps its view for the area it handed over, and fits to any other', async () => {
+    const map = await load();
+    component.onMoveEnd({ target: map, originalEvent: new MouseEvent('mouseup') });
+    component.searchArea.subscribe(({ centre, radiusKm }) =>
+      fixture.componentRef.setInput('filters', { ...centre, radiusKm }),
+    );
+
+    component.onSearchArea();
+    await fixture.whenStable();
+    expect(map.fitBounds).not.toHaveBeenCalled();
+
+    fixture.componentRef.setInput('filters', { latitude: 54.5, longitude: 18.5, radiusKm: 10 });
+    await fixture.whenStable();
+    expect(map.fitBounds).toHaveBeenCalledTimes(1);
   });
 });
