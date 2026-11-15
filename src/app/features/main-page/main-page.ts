@@ -2,6 +2,7 @@ import {
   afterNextRender,
   Component,
   computed,
+  linkedSignal,
   DestroyRef,
   ElementRef,
   effect,
@@ -241,20 +242,27 @@ export class MainPage implements OnDestroy {
     return radius === undefined ? null : (RADII_KM.find((km) => km > radius) ?? null);
   });
 
-  /** Dla Ciebie's first posts, which the map lights up. Null on Wszystkie, where no pin stands out. */
-  readonly mapPicks = computed<ReadonlySet<string> | null>(() => {
-    if (!this.isFeed()) {
-      return null;
-    }
-    const feed = this.list.query()?.kind === 'feed';
-    return new Set(
-      feed
-        ? this.list
-            .items()
-            .slice(0, MAP_PICKS)
-            .map((post) => post.id)
-        : [],
-    );
+  /**
+   * Dla Ciebie's first posts, which the map lights up. Null on Wszystkie, where no pin stands out. While a new list's
+   * first page loads, the last picks stay, so the stars don't blink off and on.
+   */
+  readonly mapPicks = linkedSignal<
+    { feed: boolean; ids: string[]; waiting: boolean },
+    ReadonlySet<string> | null
+  >({
+    source: () => ({
+      feed: this.isFeed(),
+      ids:
+        this.list.query()?.kind === 'feed'
+          ? this.list
+              .items()
+              .slice(0, MAP_PICKS)
+              .map((post) => post.id)
+          : [],
+      waiting: this.list.loading() && this.list.items().length === 0,
+    }),
+    computation: ({ feed, ids, waiting }, previous) =>
+      !feed ? null : waiting && previous?.value ? previous.value : new Set(ids),
   });
 
   /** False until the first render in the browser, so a prerendered page never holds a response. */

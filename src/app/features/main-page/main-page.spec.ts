@@ -492,6 +492,22 @@ describe('MainPage', () => {
       expect(component.mapPicks()).toBeNull();
     });
 
+    it('keeps the picks it lit while the next feed loads', async () => {
+      await open();
+      expectFeed().flush({ ...page(['a', 'b']), mode: 'RANKED' });
+      await settle();
+      // The map reads them as it draws.
+      expect([...component.mapPicks()!]).toEqual(['a', 'b']);
+
+      component.searchControl.setValue('jazz');
+      await debounce();
+      expect([...component.mapPicks()!]).toEqual(['a', 'b']);
+
+      expectFeed().flush({ ...page(['c']), mode: 'RANKED' });
+      await settle();
+      expect([...component.mapPicks()!]).toEqual(['c']);
+    });
+
     it('opens the map on a post whose place was tapped on its card', async () => {
       await open();
       expectFeed().flush({ ...page(['a']), mode: 'RANKED' });
