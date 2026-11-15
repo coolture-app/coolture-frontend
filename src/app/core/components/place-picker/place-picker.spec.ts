@@ -2,7 +2,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Observable, of, Subject, throwError } from 'rxjs';
 import type { Map as MapLibreMap, MapMouseEvent } from 'maplibre-gl';
 
-import { locationForm, LocationForm, PlacePicker } from './place-picker';
+import { PlacePicker } from './place-picker';
+import { locationForm, LocationForm } from './location-form';
 import { WITHOUT_MAPLIBRE } from '../map/map-stubs.testing';
 import { GeocodingService } from '../../services/geocoding/geocoding.service';
 import { LocationService } from '../../services/location/location.service';

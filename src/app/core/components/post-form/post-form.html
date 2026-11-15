@@ -79,7 +79,10 @@
       </div>
     </div>
     @if (isOffline) {
-      <app-place-picker [group]="locationGroup"></app-place-picker>
+      <!-- MapLibre loads with the place picker, not with the app. -->
+      @defer (on immediate) {
+        <app-place-picker #placePicker [group]="locationGroup"></app-place-picker>
+      }
     } @else {
       <p class="post-form__hint">{{ 'POST_FORM.online-hint' | translate }}</p>
     }

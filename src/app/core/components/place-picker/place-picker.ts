@@ -12,7 +12,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
 import { MapComponent, MarkerComponent } from '@maplibre/ngx-maplibre-gl';
 import type { LngLat, Map as MapLibreMap, MapMouseEvent, Marker } from 'maplibre-gl';
@@ -24,6 +24,7 @@ import { GeocodingService } from '../../services/geocoding/geocoding.service';
 import { LocationService } from '../../services/location/location.service';
 import { GeoPoint } from '../../models/common/geo.model';
 import { LOCATION_LIMITS } from '../../models/common/location-limits';
+import { LocationForm } from './location-form';
 import { PlaceSearch, PlaceSuggestion } from '../../models/common/place-suggestion.model';
 import {
   addressFound,
@@ -39,33 +40,10 @@ import {
   typed,
 } from './place-draft';
 
-const NOT_BLANK = Validators.pattern(/\S/);
 const PLACE_ZOOM = 16;
 const AREA_ZOOM = 11;
 /** How long the start point waits for a position the user already allowed. */
 const POSITION_WAIT_MS = 1_500;
-
-/** The place of an in-person post. Only the city and the pin are required. */
-export function locationForm() {
-  const text = (max: number, required = false) =>
-    new FormControl('', {
-      nonNullable: true,
-      validators: required
-        ? [Validators.required, NOT_BLANK, Validators.maxLength(max)]
-        : Validators.maxLength(max),
-    });
-  return new FormGroup({
-    venueName: text(LOCATION_LIMITS.venueName),
-    street: text(LOCATION_LIMITS.street),
-    buildingNum: text(LOCATION_LIMITS.buildingNum),
-    postalCode: text(LOCATION_LIMITS.postalCode),
-    city: text(LOCATION_LIMITS.city, true),
-    countryCode: new FormControl<string | null>(null),
-    coordinates: new FormControl<GeoPoint | null>(null, Validators.required),
-  });
-}
-
-export type LocationForm = ReturnType<typeof locationForm>;
 
 function lngLat(point: GeoPoint): [number, number] {
   return [point.longitude, point.latitude];
