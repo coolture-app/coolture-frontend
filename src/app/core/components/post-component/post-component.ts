@@ -17,6 +17,7 @@ import {
 } from '@angular/core';
 import { PostCard } from '../../models/posts/post-card.model';
 import { PostDetail } from '../../models/posts/post-detail.model';
+import { MapFocus } from '../map/map-focus';
 import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -51,9 +52,17 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { postPlace } from '../../models/posts/post-place';
 import { formatDistance } from '../../models/common/distance';
 import { LocationService } from '../../services/location/location.service';
-import { ParticipationType } from '../../models/common/enums';
+import { counted, ParticipationType } from '../../models/common/enums';
 import { Tooltip } from '../../directives/tooltip';
 import { CountedIcon } from './counted-icon';
+import {
+  participants,
+  viewerState,
+  ViewerState,
+  withLike,
+  withStance,
+} from '../../models/posts/viewer-state';
+import { ViewerStates } from '../../services/viewer-states/viewer-states';
 import { ToastService } from '../../services/toast/toast.service';
 
 /**
@@ -68,11 +77,6 @@ interface Undo {
   liked: boolean;
 }
 const undoable = new Map<string, Undo>();
-
-/** "Nie dla mnie" isn't taking part, so it isn't counted. */
-function counted(stance: ParticipationType | undefined): boolean {
-  return !!stance && stance !== 'NOT_INTERESTED';
-}
 
 /**
  * Which cards fold into one line with Cofnij: on Dla Ciebie a post marked "Nie dla mnie", on Ukryte posty one
@@ -142,6 +146,8 @@ export class PostComponent implements OnInit {
   private toast = inject(ToastService);
   private translate = inject(TranslateService);
   private location = inject(LocationService);
+  private mapFocus = inject(MapFocus);
+  private viewerStates = inject(ViewerStates);
 
   isMyPost = signal<boolean>(false);
   readonly dateFormats = this.dateFormatService.formats;
@@ -248,6 +254,12 @@ export class PostComponent implements OnInit {
     });
     observer.observe(text);
     this.destroyRef.onDestroy(() => observer.disconnect());
+  }
+
+  /** The place opens this post's pin on the home map. Directions are one tap further, in the pin's preview. */
+  showOnMap(event: Event): void {
+    event.stopPropagation();
+    this.mapFocus.show(this.data);
   }
 
   get place(): string {
@@ -364,13 +376,8 @@ export class PostComponent implements OnInit {
     );
   }
 
-  // `data` is what a card shows again after coming back to the list, so it has to stay in step.
   private applyReaction(liked: boolean): void {
-    if (this.isLiked() === liked) {
-      return;
-    }
-    this.data.positiveReactionCount += liked ? 1 : -1;
-    this.data.myReaction = liked ? 'LIKE' : undefined;
+    this.update(withLike(viewerState(this.data), liked));
     this.isLiked.set(liked);
   }
 
@@ -405,14 +412,17 @@ export class PostComponent implements OnInit {
   }
 
   private applyParticipation(type: ParticipationType | undefined): void {
-    const was = this.data.myParticipation;
-    const change = (stance: ParticipationType) =>
-      (type === stance ? 1 : 0) - (was === stance ? 1 : 0);
-    this.data.participantCount += (counted(type) ? 1 : 0) - (counted(was) ? 1 : 0);
-    this.data.interestedCount += change('INTERESTED');
-    this.data.goingCount += change('TAKES_PART');
-    this.data.myParticipation = type;
+    this.update(withStance(viewerState(this.data), type));
     this.stance.set(type);
+  }
+
+  /**
+   * `data` is what a card shows again after coming back to the list, so it changes in place. The map shows the same
+   * post from its own marks, so it learns of the change from `ViewerStates`.
+   */
+  private update(state: ViewerState): void {
+    Object.assign(this.data, state, { participantCount: participants(state) });
+    this.viewerStates.remember(this.data.id, state);
   }
 
   editPost(): void {

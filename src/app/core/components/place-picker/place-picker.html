@@ -1,6 +1,6 @@
 @let form = group();
 @let current = draft();
-<div class="place-picker">
+<div class="place-picker" [class.place-picker--full]="full()">
   <div class="place-picker__search">
     <svg
       class="place-picker__search-icon"
@@ -184,6 +184,18 @@
       </div>
     } @else if (inBrowser()) {
       <div class="place-picker__map">
+        <button
+          type="button"
+          class="place-picker__grow"
+          [attr.aria-label]="(full() ? 'PLACE_PICKER.collapse' : 'PLACE_PICKER.expand') | translate"
+          [title]="(full() ? 'PLACE_PICKER.collapse' : 'PLACE_PICKER.expand') | translate"
+          (click)="toggleFull()"
+        >
+          <ng-icon [name]="full() ? 'lucideMinimize2' : 'lucideMaximize2'" aria-hidden="true" />
+          @if (full()) {
+            {{ 'PLACE_PICKER.collapse' | translate }}
+          }
+        </button>
         <mgl-map
           [style]="mapStyle"
           [center]="view.center"

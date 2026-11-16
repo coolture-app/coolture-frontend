@@ -1,0 +1,149 @@
+<div class="preview" (mouseleave)="peek.set(null)">
+  <button
+    type="button"
+    class="preview__close"
+    [attr.aria-label]="'MAP.close' | translate"
+    (click)="closed.emit()"
+  >
+    <ng-icon name="lucideX" aria-hidden="true" />
+  </button>
+
+  @if (shown(); as post) {
+    @if (many()) {
+      <button type="button" class="preview__back" (click)="opened.set(null)">
+        <ng-icon name="lucideChevronLeft" aria-hidden="true" />
+        {{ 'MAP.back' | translate: { count: place().posts.length } }}
+      </button>
+    }
+    <ng-container *ngTemplateOutlet="mini; context: { $implicit: post }" />
+  } @else {
+    <div class="preview__head">
+      <ng-icon name="lucideMapPin" aria-hidden="true" />
+      <span class="preview__title">{{ placeName() }}</span>
+      <span class="preview__count">{{ place().posts.length }}</span>
+    </div>
+    <ul class="preview__list">
+      @for (post of place().posts; track post.id) {
+        <li>
+          <button
+            type="button"
+            class="preview__row"
+            [class.preview__row--peeked]="peek() === post"
+            (click)="open(post)"
+            (mouseenter)="onRowEnter(post, $event)"
+          >
+            <span class="preview__date">{{ when(post) }}</span>
+            <span class="preview__row-title">
+              @if (isPick(post)) {
+                <app-pick-star class="preview__star" />
+              }
+              {{ post.title }}
+            </span>
+          </button>
+        </li>
+      }
+    </ul>
+    <a class="preview__directions" [href]="directions()" target="_blank" rel="noopener">
+      <ng-icon name="lucideNavigation" aria-hidden="true" />
+      {{ 'MAP.directions' | translate }}
+    </a>
+    @if (peek(); as post) {
+      <div class="preview__peek" [class.preview__peek--left]="peekLeft()">
+        <div class="preview__peek-card">
+          <ng-container *ngTemplateOutlet="mini; context: { $implicit: post }" />
+        </div>
+      </div>
+    }
+  }
+</div>
+
+<ng-template #mini let-mark>
+  @let post = reactions.shown(mark);
+  <div class="mini">
+    <div class="mini__top">
+      @if (post.coverMediaUrl) {
+        <button
+          type="button"
+          class="mini__cover"
+          [attr.aria-label]="'MAP.enlargePhoto' | translate"
+          (click)="enlarge(post)"
+        >
+          <img [src]="post.coverMediaUrl" alt="" loading="lazy" />
+        </button>
+      }
+      <div class="mini__heading">
+        <a class="mini__title" [routerLink]="['/posts', post.id]">
+          @if (isPick(post)) {
+            <app-pick-star class="preview__star" />
+          }
+          {{ post.title }}
+        </a>
+        <span class="mini__meta">{{ when(post) }}</span>
+        @if (placeName()) {
+          <span class="mini__meta">{{ placeName() }}</span>
+        }
+      </div>
+    </div>
+    @if (post.excerpt) {
+      <p class="mini__text">{{ post.excerpt }}</p>
+    }
+    <!-- The card's three, without "Nie dla mnie", which would have to take the pin away. -->
+    <div class="mini__reactions">
+      <button
+        type="button"
+        class="mini__react"
+        [class.mini__react--on]="post.myReaction === 'LIKE'"
+        [attr.aria-pressed]="post.myReaction === 'LIKE'"
+        [attr.aria-label]="'MAP.likes' | translate: { count: post.positiveReactionCount }"
+        [appTooltip]="'POST.like' | translate"
+        (click)="reactions.like(mark)"
+      >
+        <ng-icon
+          name="lucideThumbsUp"
+          [class.icon--filled]="post.myReaction === 'LIKE'"
+          aria-hidden="true"
+        />
+        {{ post.positiveReactionCount }}
+      </button>
+      <button
+        type="button"
+        class="mini__react"
+        [class.mini__react--on]="post.myParticipation === 'INTERESTED'"
+        [attr.aria-pressed]="post.myParticipation === 'INTERESTED'"
+        [attr.aria-label]="'MAP.interested' | translate: { count: post.interestedCount }"
+        [appTooltip]="'POST.interested' | translate"
+        (click)="reactions.stance(mark, 'INTERESTED')"
+      >
+        <ng-icon
+          name="lucideBookmark"
+          [class.icon--filled]="post.myParticipation === 'INTERESTED'"
+          aria-hidden="true"
+        />
+        {{ post.interestedCount }}
+      </button>
+      <button
+        type="button"
+        class="mini__react"
+        [class.mini__react--on]="post.myParticipation === 'TAKES_PART'"
+        [attr.aria-pressed]="post.myParticipation === 'TAKES_PART'"
+        [attr.aria-label]="'MAP.going' | translate: { count: post.goingCount }"
+        [appTooltip]="'POST.takes_part' | translate"
+        (click)="reactions.stance(mark, 'TAKES_PART')"
+      >
+        <ng-icon
+          name="appTicket"
+          [class.icon--filled]="post.myParticipation === 'TAKES_PART'"
+          aria-hidden="true"
+        />
+        {{ post.goingCount }}
+      </button>
+    </div>
+    <div class="mini__actions">
+      <a class="mini__open" [routerLink]="['/posts', post.id]">{{ 'MAP.open' | translate }}</a>
+      <a class="preview__directions" [href]="directions()" target="_blank" rel="noopener">
+        <ng-icon name="lucideNavigation" aria-hidden="true" />
+        {{ 'MAP.directions' | translate }}
+      </a>
+    </div>
+  </div>
+</ng-template>

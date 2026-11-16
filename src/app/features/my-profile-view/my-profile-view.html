@@ -62,6 +62,15 @@
           <ng-icon name="heroPencil" />
           {{ 'PROFILE.interests' | translate }}
         </app-btn>
+        <app-btn
+          variant="secondary"
+          size="sm"
+          [label]="'PROFILE.homeHint' | translate"
+          (btnClick)="showHome.set(true)"
+        >
+          <ng-icon name="heroMapPin" />
+          {{ home()?.name ?? ('PROFILE.addHome' | translate) }}
+        </app-btn>
       </div>
     } @else {
       <div class="profile__actions">
@@ -135,6 +144,24 @@
           {{ 'PROFILE.save' | translate }}
         </app-btn>
       </form>
+    </div>
+  </div>
+}
+
+@if (showHome()) {
+  <div
+    class="profile__modal-overlay"
+    (click)="showHome.set(false)"
+    (keydown.escape)="showHome.set(false)"
+    tabindex="0"
+  >
+    <div
+      class="profile__modal"
+      (click)="$event.stopPropagation()"
+      (keydown.escape)="showHome.set(false)"
+      tabindex="0"
+    >
+      <app-home-area (done)="showHome.set(false)" />
     </div>
   </div>
 }

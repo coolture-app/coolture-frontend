@@ -29,7 +29,8 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { FormInput } from '../form-input/form-input';
 import { FormTextarea } from '../form-textarea/form-textarea';
 import { Btn } from '../btn/btn';
-import { locationForm, PlacePicker } from '../place-picker/place-picker';
+import { PlacePicker } from '../place-picker/place-picker';
+import { locationForm } from '../place-picker/location-form';
 import { PostPhotos } from '../post-photos/post-photos';
 
 import { PostFormData } from '../../models/posts/post-form-data.model';
@@ -93,7 +94,7 @@ export class PostForm implements OnInit, OnChanges, OnDestroy {
   private injector = inject(Injector);
   private host = inject(ElementRef);
 
-  private readonly placePicker = viewChild(PlacePicker);
+  private readonly placePicker = viewChild<PlacePicker>('placePicker');
   readonly photos = viewChild.required(PostPhotos);
 
   isSubmitting = false;

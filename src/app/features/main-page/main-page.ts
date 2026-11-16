@@ -2,13 +2,16 @@ import {
   afterNextRender,
   Component,
   computed,
+  linkedSignal,
   DestroyRef,
+  ElementRef,
   effect,
   inject,
   Injector,
   OnDestroy,
   signal,
   untracked,
+  viewChild,
 } from '@angular/core';
 import { ViewportScroller } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
@@ -21,6 +24,7 @@ import {
   heroMagnifyingGlass,
   heroXMark,
   heroChevronDown,
+  heroMapPin,
 } from '@ng-icons/heroicons/outline';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
@@ -31,7 +35,8 @@ import { InfiniteScroll } from '../../core/directives/infinite-scroll';
 import { PULL_THRESHOLD, PullToRefresh } from '../../core/directives/pull-to-refresh';
 import { lucideRefreshCw } from '@ng-icons/lucide';
 import { PostFilterParams } from '../../core/models/posts/post-filter-params.model';
-import { GeoPoint } from '../../core/models/common/geo.model';
+import { NamedPlace } from '../../core/models/common/geo.model';
+import { GeocodingService } from '../../core/services/geocoding/geocoding.service';
 import { PostService } from '../../core/services/post/post.service';
 import { AuthService } from '../../core/services/auth/auth.service';
 import { LocationService } from '../../core/services/location/location.service';
@@ -39,19 +44,27 @@ import { PostListStore } from '../../core/services/post-list/post-list.store';
 import { HomeTapService } from '../../core/services/home-tap/home-tap.service';
 import { Tooltip } from '../../core/directives/tooltip';
 import { PostType, PostStatus, PostVisibility, PostsSort } from '../../core/models/common/enums';
-import { Map } from '../../core/components/map/map/map';
+import { Map, type MapArea } from '../../core/components/map/map/map';
+import { MapFocus } from '../../core/components/map/map-focus';
+import { PostMark } from '../../core/models/posts/post-mark.model';
+import { backClosable } from '../../core/services/back-closable/back-closable';
 import { ToastService } from '../../core/services/toast/toast.service';
+import { mediaQuery, WIDE_FROM_PX } from '../../core/services/media-query/media-query';
 import { TranslateService } from '@ngx-translate/core';
 import {
   createFiltersForm,
   HomeTab,
   HomeViewMemory,
   NO_FILTERS,
+  PlaceFilter,
   RADII_KM,
   START_SORT,
 } from './home-view';
 import { fromHomeParams, sameHomeParams, toHomeParams } from './home-url';
 import { FeedFilters } from './feed-filters/feed-filters';
+import { HomePlace } from './home-place';
+import { PlacePanel } from './place-panel/place-panel';
+import { ViewSwitch } from './view-switch/view-switch';
 
 const LOCATION_WAIT_MS = 1500;
 /** How long the first page waits for an answer to the browser's location prompt. */
@@ -69,6 +82,8 @@ const SCROLL_STOP_MS = 1000;
  * by itself. A page took about 1.1 s locally, and a fast flick covers about 6000 px a second.
  */
 const CARDS_BEFORE_END = 15;
+/** How many of the feed's first posts the map lights up as top picks on Dla Ciebie. */
+const MAP_PICKS = 30;
 
 @Component({
   selector: 'app-main-page',
@@ -80,6 +95,8 @@ const CARDS_BEFORE_END = 15;
     Btn,
     Map,
     FeedFilters,
+    PlacePanel,
+    ViewSwitch,
     InfiniteScroll,
     PullToRefresh,
     PostSkeleton,
@@ -91,11 +108,12 @@ const CARDS_BEFORE_END = 15;
       heroMagnifyingGlass,
       heroXMark,
       heroChevronDown,
+      heroMapPin,
       lucideRefreshCw,
     }),
   ],
   templateUrl: './main-page.html',
-  styleUrl: './main-page.scss',
+  styleUrls: ['./main-page.scss', './main-page-toolbar.scss', './main-page-map.scss'],
   host: {
     '(document:click)': 'closeSortMenu($event)',
     '(document:keydown.escape)': 'closePopups()',
@@ -113,15 +131,31 @@ export class MainPage implements OnDestroy {
   private homeTap = inject(HomeTapService);
   private injector = inject(Injector);
   private toast = inject(ToastService);
+  private geocoding = inject(GeocodingService);
   private translate = inject(TranslateService);
+  private mapFocus = inject(MapFocus);
+  /** A place tapped on a card here opens the map in a history entry of its own, so Back returns to the card. */
+  private mapOverlay = backClosable('mapFocus', () => this.toggleMapView(false));
   authService = inject(AuthService);
   list = inject(PostListStore);
 
   searchControl = new FormControl('', { nonNullable: true });
 
   showFilters = signal(false);
+  showPlace = signal(false);
   showSortMenu = signal(false);
   isMapView = signal(false);
+  /** The map stays once opened, hidden under Lista, so its style and tiles load once a visit. */
+  readonly mapOpened = signal(false);
+  /** Back from a post: the map opens where it was left. */
+  readonly mapResumes = signal(false);
+  /** The post a card's place opened the map on. */
+  readonly mapFocusPost = signal<PostMark | null>(null);
+  private readonly searchbar = viewChild<ElementRef<HTMLElement>>('searchbar');
+  private readonly barHeight = signal(0);
+  private readonly phone = mediaQuery(`(max-width: ${WIDE_FROM_PX - 1}px)`);
+  /** On a phone's Mapa the bar floats over the map's top, so the map keeps its own buttons and middle below it. */
+  readonly mapTopInset = computed(() => (this.isMapView() && this.phone() ? this.barHeight() : 0));
   locationFailed = signal(false);
   locating = signal(false);
   /** While the page moves the bar is see-through, and it turns solid once scrolling stops. */
@@ -142,30 +176,36 @@ export class MainPage implements OnDestroy {
   ];
 
   filtersForm = createFiltersForm();
-  /** The user's position, for "Moja lokalizacja" and Najbliższe, once the browser gave it. */
-  private nearPosition = signal<GeoPoint | null>(null);
-  /** A place that isn't the user's, for "Wskazane miejsce". Comes from a link for now. */
-  readonly pickedPlace = signal<GeoPoint | null>(null);
+  readonly home = this.authService.home;
 
   /** The applied search and filters, also what the map shows. Both tabs share them. */
   readonly activeFilters = signal<PostFilterParams>({});
+  readonly place = new HomePlace(
+    this.home,
+    computed(() => {
+      const { latitude, longitude } = this.activeFilters();
+      return latitude !== undefined && longitude !== undefined ? { latitude, longitude } : null;
+    }),
+    (point) => this.geocoding.areaAt(point),
+  );
+  /** What the applied radius is centred on, for the place pill. */
+  readonly activePlace = signal<PlaceFilter>('');
   /** Dla Ciebie is the ranked feed of posts new to the user; Wszystkie is every post, in a chosen order. */
   readonly tab = signal<HomeTab>('forYou');
   /** Wszystkie's order. Kept while on Dla Ciebie, so going back finds it as it was. */
   readonly sort = signal<PostsSort>(START_SORT);
   readonly isFeed = computed(() => this.tab() === 'forYou');
-  /** Where Najbliższe measures from: the radius's centre if one is on, so the two can't disagree. */
-  private readonly sortPoint = computed<GeoPoint | null>(() => {
-    const { latitude, longitude } = this.activeFilters();
-    return latitude !== undefined && longitude !== undefined
-      ? { latitude, longitude }
-      : (this.nearPosition() ?? this.pickedPlace());
-  });
-  /** How many filters the panel has on, counting a date range and a place as one each. Not the search. */
+  /** The home's name while Najbliższe measures from it, so the list can say so. */
+  readonly nearestFromHome = computed(() =>
+    !this.isFeed() && this.sort() === 'NEAREST' && !this.place.own()
+      ? (this.home()?.name ?? null)
+      : null,
+  );
+  /** How many filters the panel has on, counting a date range as one. Not the search or the place. */
   readonly activeFilterCount = computed(() => {
-    const { type, tags, startsFrom, startsTo, visibility, status, includePast, latitude } =
+    const { type, tags, startsFrom, startsTo, visibility, status, includePast } =
       this.activeFilters();
-    const on = [type, tags, startsFrom || startsTo, visibility, status, includePast, latitude];
+    const on = [type, tags, startsFrom || startsTo, visibility, status, includePast];
     return on.filter((value) => value !== undefined && value !== false).length;
   });
   /** A screenful for the first page. After that one is enough, and the posts stay what's on screen. */
@@ -189,6 +229,29 @@ export class MainPage implements OnDestroy {
     return radius === undefined ? null : (RADII_KM.find((km) => km > radius) ?? null);
   });
 
+  /**
+   * Dla Ciebie's first posts, which the map lights up. Null on Wszystkie, where no pin stands out. While a new list's
+   * first page loads, the last picks stay, so the stars don't blink off and on.
+   */
+  readonly mapPicks = linkedSignal<
+    { feed: boolean; ids: string[]; waiting: boolean },
+    ReadonlySet<string> | null
+  >({
+    source: () => ({
+      feed: this.isFeed(),
+      ids:
+        this.list.query()?.kind === 'feed'
+          ? this.list
+              .items()
+              .slice(0, MAP_PICKS)
+              .map((post) => post.id)
+          : [],
+      waiting: this.list.loading() && this.list.items().length === 0,
+    }),
+    computation: ({ feed, ids, waiting }, previous) =>
+      !feed ? null : waiting && previous?.value ? previous.value : new Set(ids),
+  });
+
   /** False until the first render in the browser, so a prerendered page never holds a response. */
   private ready = signal(false);
   private loadRun = 0;
@@ -196,7 +259,31 @@ export class MainPage implements OnDestroy {
 
   constructor() {
     const restored = this.restoreView();
+    if (!restored) {
+      // Read now, not with the rest of the URL, so a reload on Mapa never starts Lista first.
+      this.isMapView.set(fromHomeParams(this.route.snapshot.queryParams).map);
+    }
     this.postService.clearActivePost();
+    this.mapOpened.set(this.isMapView());
+    this.mapResumes.set(restored && this.isMapView());
+    const focus = this.mapFocus.take();
+    if (focus) {
+      this.openOnMap(focus, false);
+    }
+    effect(() => {
+      if (this.mapFocus.requested()) {
+        untracked(() => this.openOnMap(this.mapFocus.take()!, true));
+      }
+    });
+
+    afterNextRender(() => {
+      const bar = this.searchbar()?.nativeElement;
+      const observer = new ResizeObserver(() => this.barHeight.set(bar?.offsetHeight ?? 0));
+      if (bar) {
+        observer.observe(bar);
+      }
+      this.destroyRef.onDestroy(() => observer.disconnect());
+    });
 
     // The page is prerendered with no query, so the URL applies only after hydration matched it.
     afterNextRender(() => {
@@ -211,7 +298,7 @@ export class MainPage implements OnDestroy {
     // it: the radius's centre, or Najbliższe's position. See LocationService.
     effect(() => {
       const { latitude, longitude, radiusKm } = this.activeFilters();
-      const nearest = !this.isFeed() && this.sort() === 'NEAREST' ? this.sortPoint() : null;
+      const nearest = !this.isFeed() && this.sort() === 'NEAREST' ? this.place.sortPoint() : null;
       const centre = radiusKm && latitude !== undefined && longitude !== undefined;
       this.location.measureFrom(centre ? { latitude, longitude } : nearest);
     });
@@ -231,7 +318,7 @@ export class MainPage implements OnDestroy {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((place) => {
         this.locationFailed.set(false);
-        if (place === 'mine' && !this.nearPosition()) {
+        if (place === 'mine' && !this.place.position()) {
           void this.locateForFilter();
         }
       });
@@ -254,12 +341,35 @@ export class MainPage implements OnDestroy {
   }
 
   applyControls(): void {
-    this.changeList(() => this.activeFilters.set(this.readFilters()));
+    this.changeList(() => this.applyFilters());
   }
 
   closePopups(): void {
     this.showFilters.set(false);
+    this.showPlace.set(false);
     this.showSortMenu.set(false);
+  }
+
+  togglePlace(): void {
+    this.showFilters.set(false);
+    this.showPlace.update((v) => !v);
+  }
+
+  /** A place from the search, or the home: the radius centres on it, with the radius as it was. */
+  pickPlace(place: NamedPlace): void {
+    this.place.pick(place);
+    this.filtersForm.controls.place.setValue('picked');
+  }
+
+  /**
+   * The map's "Szukaj w tym obszarze": the circle in its view becomes the picked place, named by a lookup. A view
+   * wider than the largest radius gets that radius, and the map zooms in to it.
+   */
+  searchArea({ centre, radiusKm }: MapArea): void {
+    const radius = Math.min(radiusKm, RADII_KM[RADII_KM.length - 1]);
+    this.place.pickPoint(centre);
+    this.filtersForm.patchValue({ place: 'picked', radiusKm: radius }, { emitEvent: false });
+    this.applyControls();
   }
 
   clearSearch(): void {
@@ -271,7 +381,7 @@ export class MainPage implements OnDestroy {
     const y = window.scrollY;
     const delta = y - this.lastScrollY;
     this.lastScrollY = y;
-    if (y < BAR_ALWAYS_SHOWN_PX || delta < 0 || this.showFilters()) {
+    if (y < BAR_ALWAYS_SHOWN_PX || delta < 0 || this.showFilters() || this.showPlace()) {
       this.barHidden.set(false);
     } else if (delta > 0) {
       this.barHidden.set(true);
@@ -283,11 +393,15 @@ export class MainPage implements OnDestroy {
   }
 
   toggleFilters(): void {
+    this.showPlace.set(false);
     this.showFilters.update((v) => !v);
   }
 
+  /** Filtry's "Wyczyść" leaves the place, which has its own panel. */
   clearFilters(): void {
-    this.resetControls();
+    const { place, radiusKm } = this.filtersForm.getRawValue();
+    this.filtersForm.reset({ ...NO_FILTERS, place, radiusKm }, { emitEvent: false });
+    this.searchControl.setValue('', { emitEvent: false });
     this.applyControls();
   }
 
@@ -319,22 +433,30 @@ export class MainPage implements OnDestroy {
     }
   }
 
-  /** Najbliższe needs the position. If the browser won't give it, the order stays and a note says why. */
+  /** Najbliższe needs a point: the user's position, else their home. With neither, the order stays and a note says why. */
   async setSortBy(sortBy: PostsSort): Promise<void> {
     this.showSortMenu.set(false);
-    if (sortBy === 'NEAREST' && !this.sortPoint()) {
+    if (sortBy === 'NEAREST' && !this.place.own()) {
       const position = await this.location.request();
-      if (!position) {
+      if (position) {
+        this.place.position.set(position);
+      } else if (!this.home()) {
         this.toast.show(this.translate.instant('MAIN_PAGE.nearestNeedsLocation'));
         return;
       }
-      this.nearPosition.set(position);
     }
     this.changeList(() => this.sort.set(sortBy));
   }
 
-  /** Search and filters stay, so the same question gets the other tab's answer. */
+  /**
+   * Search and filters stay, so the same question gets the other tab's answer. On Mapa, the tab already shown goes
+   * back to its Lista.
+   */
   setTab(tab: HomeTab): void {
+    if (tab === this.tab() && this.isMapView()) {
+      this.toggleMapView(false);
+      return;
+    }
     this.changeList(() => this.tab.set(tab));
   }
 
@@ -356,10 +478,17 @@ export class MainPage implements OnDestroy {
     if (isToggled === this.isMapView()) {
       return;
     }
+    if (!isToggled && this.mapOverlay.isOpen()) {
+      // Back to the card the map was opened from, through its history entry.
+      this.mapOverlay.close();
+      return;
+    }
     if (isToggled) {
       this.listScrollY = this.scroller.getScrollPosition()[1];
+      this.mapOpened.set(true);
     }
     this.isMapView.set(isToggled);
+    this.showInUrl();
     if (isToggled) {
       return;
     }
@@ -377,7 +506,7 @@ export class MainPage implements OnDestroy {
     this.resetControls();
     this.tab.set('forYou');
     this.sort.set(START_SORT);
-    this.activeFilters.set(this.readFilters());
+    this.applyFilters();
     this.isMapView.set(false);
     this.showInUrl();
     this.load();
@@ -397,17 +526,43 @@ export class MainPage implements OnDestroy {
     }
   }
 
-  private load(): void {
-    this.listOutdated = this.isMapView();
+  /** The map on a post: from its card on this page, in a history entry of its own; from another page, as it opens. */
+  private openOnMap(post: PostMark, fromThisPage: boolean): void {
+    this.mapFocusPost.set(post);
     if (this.isMapView()) {
       return;
+    }
+    if (fromThisPage) {
+      this.listScrollY = this.scroller.getScrollPosition()[1];
+      // Its entry says Mapa, so a reload there stays on the map, and Back returns to Lista's entry.
+      const queryParams = { ...this.urlParams(), view: 'map' };
+      this.mapOverlay.opened({
+        pageStaysLive: true,
+        url: this.router.serializeUrl(
+          this.router.createUrlTree([], { relativeTo: this.route, queryParams }),
+        ),
+      });
+    }
+    this.mapOpened.set(true);
+    this.isMapView.set(true);
+  }
+
+  /** Under the map, Wszystkie waits for Lista. Dla Ciebie loads, as its first posts are the map's top picks. */
+  private load(): void {
+    this.listOutdated = this.isMapView() && !this.isFeed();
+    if (this.listOutdated) {
+      return;
+    }
+    if (this.isMapView()) {
+      // A new list under the map opens at its top on Lista.
+      this.listScrollY = 0;
     }
     const run = ++this.loadRun;
     if (this.isFeed()) {
       void this.startFeed(run);
     } else {
       const sortBy = this.sort();
-      const position = sortBy === 'NEAREST' ? this.sortPoint() : null;
+      const position = sortBy === 'NEAREST' ? this.place.sortPoint() : null;
       this.list.start({
         kind: 'posts',
         filters: { ...this.activeFilters(), ...position, sortBy },
@@ -442,23 +597,31 @@ export class MainPage implements OnDestroy {
     this.filtersForm.setValue(filters, { emitEvent: false });
     this.tab.set(tab);
     this.sort.set(sort);
-    this.pickedPlace.set(point);
+    this.place.pickPoint(point);
 
     const needsPosition = filters.place === 'mine' || (sort === 'NEAREST' && !point);
     if (needsPosition) {
       const position = await this.location.currentOrAsk(LOCATION_WAIT_MS, LOCATION_ANSWER_MS);
-      this.nearPosition.set(position);
+      this.place.position.set(position);
       if (!position && filters.place === 'mine') {
         this.filtersForm.controls.place.setValue('', { emitEvent: false });
         this.locationFailed.set(true);
       }
-      if (!position && sort === 'NEAREST') {
+      if (!position && sort === 'NEAREST' && !this.home()) {
         this.sort.set(START_SORT);
         this.toast.show(this.translate.instant('MAIN_PAGE.nearestNeedsLocation'));
       }
     }
-    this.activeFilters.set(this.readFilters());
+    this.applyFilters();
     this.showInUrl();
+  }
+
+  /** The filters as the form has them, and what their radius is centred on. */
+  private applyFilters(): void {
+    this.activeFilters.set(this.readFilters());
+    this.activePlace.set(
+      this.activeFilters().radiusKm ? this.filtersForm.controls.place.value : '',
+    );
   }
 
   /** The current state as the URL's query string. */
@@ -471,7 +634,8 @@ export class MainPage implements OnDestroy {
       filters: this.filtersForm.getRawValue(),
       tab: this.tab(),
       sort: this.sort(),
-      point: inFilter || nearest ? this.sortPoint() : null,
+      point: inFilter || nearest ? this.place.sortPoint() : null,
+      map: this.isMapView(),
     });
   }
 
@@ -490,7 +654,7 @@ export class MainPage implements OnDestroy {
     const position = await this.location.request();
     this.locating.set(false);
     if (position) {
-      this.nearPosition.set(position);
+      this.place.position.set(position);
       this.applyControls();
     } else {
       this.filtersForm.controls.place.setValue('', { emitEvent: false });
@@ -501,20 +665,14 @@ export class MainPage implements OnDestroy {
   private resetControls(): void {
     this.filtersForm.reset(NO_FILTERS, { emitEvent: false });
     this.searchControl.setValue('', { emitEvent: false });
-    this.pickedPlace.set(null);
-  }
-
-  /** The radius filter's centre, if it's on. */
-  private filterCentre(): GeoPoint | null {
-    const place = this.filtersForm.controls.place.value;
-    return place === 'picked' ? this.pickedPlace() : place === 'mine' ? this.nearPosition() : null;
+    this.place.picked.set(null);
   }
 
   private readFilters(): PostFilterParams {
     const search = this.searchControl.value.trim();
     const { type, tags, startsFrom, startsTo, visibility, status, includePast, radiusKm } =
       this.filtersForm.getRawValue();
-    const position = this.filterCentre();
+    const position = this.place.centre(this.filtersForm.controls.place.value);
     const tagList = tags
       .split(',')
       .map((tag) => tag.trim())
@@ -541,8 +699,8 @@ export class MainPage implements OnDestroy {
       sort: this.sort(),
       isMapView: this.isMapView(),
       listScrollY: this.listScrollY,
-      nearPosition: this.nearPosition(),
-      pickedPlace: this.pickedPlace(),
+      nearPosition: this.place.position(),
+      pickedPlace: this.place.picked(),
       url: this.urlParams(),
     });
   }
@@ -564,11 +722,11 @@ export class MainPage implements OnDestroy {
     this.filtersForm.setValue(view.filters, { emitEvent: false });
     this.tab.set(view.tab);
     this.sort.set(view.sort);
-    this.nearPosition.set(view.nearPosition);
-    this.pickedPlace.set(view.pickedPlace);
+    this.place.position.set(view.nearPosition);
+    this.place.picked.set(view.pickedPlace);
     this.isMapView.set(view.isMapView);
     this.listScrollY = view.listScrollY;
-    this.activeFilters.set(this.readFilters());
+    this.applyFilters();
 
     const post = this.postService.activePost();
     if (post) {

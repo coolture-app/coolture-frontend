@@ -18,7 +18,17 @@
       </div>
     } @else if (place) {
       <div class="event-card__row">
-        <span class="event-card__author">{{ place }}</span>
+        <button
+          type="button"
+          class="event-card__place"
+          [attr.aria-label]="'POST.showOnMap' | translate: { place: place }"
+          (click)="showOnMap($event)"
+          (keydown)="$event.stopPropagation()"
+        >
+          <ng-icon name="heroMapPin" aria-hidden="true" />
+          {{ place }}
+          <ng-icon name="lucideChevronRight" aria-hidden="true" />
+        </button>
       </div>
     }
   </div>

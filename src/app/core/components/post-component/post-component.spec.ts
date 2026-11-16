@@ -10,6 +10,8 @@ import { UserProfile } from '../../models/users/user-profile.model';
 import { ToastService } from '../../services/toast/toast.service';
 import { PhotoViewerService } from '../../services/photo-viewer/photo-viewer.service';
 import { PostDetail } from '../../models/posts/post-detail.model';
+import { ViewerStates } from '../../services/viewer-states/viewer-states';
+import { mark } from '../map/map-stubs.testing';
 
 function card(overrides: Partial<PostCard> = {}): PostCard {
   return {
@@ -20,7 +22,7 @@ function card(overrides: Partial<PostCard> = {}): PostCard {
     tags: [],
     positiveReactionCount: 3,
     participantCount: 2,
-    interestedCount: 0,
+    interestedCount: 2,
     goingCount: 0,
     commentsCount: 0,
     type: 'OFFLINE',
@@ -87,7 +89,7 @@ describe('PostComponent', () => {
   });
 
   it('has five icon actions, each named and pressed when on, and no Share', () => {
-    render(card({ myParticipation: 'TAKES_PART', positiveReactionCount: 0, commentsCount: 0 }));
+    render(card({ myParticipation: 'TAKES_PART', positiveReactionCount: 0, interestedCount: 0 }));
 
     const actions = Array.from(element().querySelectorAll('.post__social button'));
     expect(actions.map((b) => b.getAttribute('aria-label'))).toEqual([
@@ -120,7 +122,7 @@ describe('PostComponent', () => {
 
   it('offers no "Nie dla mnie" on your own post', () => {
     TestBed.inject(AuthService).currentUser.set({ id: 'u1' } as UserProfile);
-    render(card());
+    render(card({ participantCount: 0, interestedCount: 0 }));
 
     const labels = Array.from(element().querySelectorAll('.post__stances button')).map((b) =>
       b.getAttribute('aria-label'),
@@ -164,6 +166,27 @@ describe('PostComponent', () => {
 
       expect(data.goingCount).toBe(1);
       expect(count('POST.takes_part')).toBe('1');
+      http.match(() => true).forEach((r) => r.flush({}));
+    });
+
+    it("tells the map's marks of a like and a stance set here, with the sum in step", () => {
+      TestBed.inject(AuthService).currentUser.set({ id: 'u2' } as UserProfile);
+      const data = card({ positiveReactionCount: 0, participantCount: 1, interestedCount: 1 });
+      render(data);
+
+      (element().querySelector('[aria-label^="POST.like"]') as HTMLButtonElement).click();
+      (element().querySelector('[aria-label^="POST.takes_part"]') as HTMLButtonElement).click();
+
+      expect(data.participantCount).toBe(2);
+      expect(TestBed.inject(ViewerStates).shown(mark('p1'))).toEqual(
+        jasmine.objectContaining({
+          myReaction: 'LIKE',
+          myParticipation: 'TAKES_PART',
+          positiveReactionCount: 1,
+          interestedCount: 1,
+          goingCount: 1,
+        }),
+      );
       http.match(() => true).forEach((r) => r.flush({}));
     });
   });

@@ -68,7 +68,15 @@
     "nearestNeedsLocation": "Nearest needs your location. Allow it in your browser settings.",
     "widenRadius": "Widen to {{km}} km",
     "seenBefore": "For you leaves out your own, liked and saved posts.",
-    "showInAll": "Show in All"
+    "showInAll": "Show in All",
+    "where": "Where?",
+    "close": "Close",
+    "placeSearchLabel": "Search for a place",
+    "placeSearchPlaceholder": "City, district, place",
+    "yourHome": "Your home",
+    "locating": "Locating…",
+    "nearMe": "Near me",
+    "nearestFromHome": "Distances from: {{place}}"
   },
   "FULL_POST": {
     "title": "Cool post",
@@ -101,7 +109,9 @@
     "stance": "Your choice",
     "hidden": "Hidden. We'll show fewer like this.",
     "restored": "Restored.",
-    "undo": "Undo"
+    "undo": "Undo",
+    "showOnMap": "{{place}}: show on the map",
+    "showOnMapHint": "Show on the map"
   },
   "NAVBAR": {
     "main-page": "Home",
@@ -156,7 +166,9 @@
     "no-following": "Not following anyone yet",
     "load-more": "Load More",
     "loading": "Loading...",
-    "hidden-posts": "Hidden posts"
+    "hidden-posts": "Hidden posts",
+    "addHome": "Add your area",
+    "homeHint": "Only you can see this"
   },
   "DISCOVER": {
     "title": "Discover",
@@ -299,6 +311,8 @@
     "use-address": "Use this address",
     "offer-name": "This is: {{name}}.",
     "use-name": "Use the name",
+    "expand": "Enlarge the map",
+    "collapse": "Collapse",
     "map-hint-place": "Click the map to drop a pin.",
     "map-hint-move": "Drag the pin or click the map to adjust the place.",
     "map-unavailable": "The map didn't load. Type the place's coordinates and the city.",
@@ -319,5 +333,48 @@
     "empty": "You haven't hidden any posts yet.",
     "load-error": "Couldn't load your hidden posts.",
     "retry": "Try again"
+  },
+  "MAP": {
+    "searchArea": "Search this area",
+    "today": "today",
+    "tomorrow": "tomorrow",
+    "now": "on now",
+    "from": "from",
+    "directions": "Directions",
+    "close": "Close",
+    "locate": "My location",
+    "locateFailed": "Couldn't get your location",
+    "loading": "Loading events on the map",
+    "legend": "Star: the best fit for you",
+    "back": "All here ({{count}})",
+    "open": "See the event",
+    "enlargePhoto": "Enlarge the photo",
+    "likes": "Likes: {{count}}",
+    "going": "Going: {{count}}",
+    "todayFrom": "today",
+    "tomorrowFrom": "tomorrow",
+    "events_one": "{{count}} event",
+    "events_few": "{{count}} events",
+    "events_many": "{{count}} events",
+    "interested": "Interested: {{count}}"
+  },
+  "PLACE_SEARCH": {
+    "unavailable": "Place search isn't working. Try again in a moment."
+  },
+  "HOME_AREA": {
+    "title": "Where do you live?",
+    "text": "We'll show what's near first, even without access to your location. We save only the city or district, and only you can see it.",
+    "searchLabel": "City, village or district",
+    "searchPlaceholder": "e.g. Oliwa, Gdynia, Banino",
+    "useMyLocation": "Use my location",
+    "locating": "Locating…",
+    "change": "Change",
+    "skip": "Skip",
+    "remove": "Remove",
+    "save": "Save",
+    "close": "Close",
+    "noPosition": "Couldn't get your location. Search for the place above.",
+    "nothingHere": "Couldn't tell where that is. Search for the place above.",
+    "saveError": "Couldn't save. Try again."
   }
 }

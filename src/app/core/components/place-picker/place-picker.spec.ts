@@ -2,7 +2,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Observable, of, Subject, throwError } from 'rxjs';
 import type { Map as MapLibreMap, MapMouseEvent } from 'maplibre-gl';
 
-import { locationForm, LocationForm, PlacePicker } from './place-picker';
+import { PlacePicker } from './place-picker';
+import { locationForm, LocationForm } from './location-form';
 import { WITHOUT_MAPLIBRE } from '../map/map-stubs.testing';
 import { GeocodingService } from '../../services/geocoding/geocoding.service';
 import { LocationService } from '../../services/location/location.service';
@@ -48,7 +49,11 @@ function click(at: GeoPoint): MapMouseEvent {
 }
 
 function fakeMap(): MapLibreMap {
-  return { getContainer: () => document.createElement('div') } as unknown as MapLibreMap;
+  return {
+    getContainer: () => document.createElement('div'),
+    getStyle: () => ({ layers: [] }),
+    on: jasmine.createSpy('on'),
+  } as unknown as MapLibreMap;
 }
 
 describe('PlacePicker', () => {
@@ -265,6 +270,30 @@ describe('PlacePicker', () => {
     await render();
 
     expect(fixture.nativeElement.querySelector('#place-latitude')).not.toBeNull();
+  });
+
+  it('opens the map over the whole screen, with one-finger gestures, and Escape closes it', async () => {
+    picker.pick(ERGO_ARENA);
+    await render();
+    const gestures = jasmine.createSpyObj('cooperativeGestures', ['enable', 'disable']);
+    picker.onMapLoad({
+      ...fakeMap(),
+      cooperativeGestures: gestures,
+      resize: jasmine.createSpy('resize'),
+    } as never);
+    const root = () => fixture.nativeElement.querySelector('.place-picker') as HTMLElement;
+
+    picker.toggleFull();
+    await render();
+    expect(root().classList).toContain('place-picker--full');
+    expect(gestures.disable).toHaveBeenCalled();
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    // The browser's Back, then the overlay's wait for the router's scroll.
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    await render();
+    expect(root().classList).not.toContain('place-picker--full');
+    expect(gestures.enable).toHaveBeenCalled();
   });
 
   it('clearing the place empties it and goes back to the search', async () => {

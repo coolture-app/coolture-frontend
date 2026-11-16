@@ -14,6 +14,8 @@ export const PULL_THRESHOLD = 72;
 /** The finger moves this much further than the indicator, so a pull feels like it has weight. */
 const RESISTANCE = 0.5;
 const MAX_PULL = 110;
+/** Lists on screen that turned the browser's own pull off. */
+let liveLists = 0;
 
 /**
  * Pull down at the top of the page to refresh, by touch only. While it's on, the browser's own pull,
@@ -42,9 +44,16 @@ export class PullToRefresh {
     // In the browser only, so a prerendered page doesn't carry it.
     afterNextRender(() => {
       const root = this.document.documentElement;
-      const before = root.style.overscrollBehaviorY;
-      root.style.overscrollBehaviorY = 'none';
-      destroyRef.onDestroy(() => (root.style.overscrollBehaviorY = before));
+      // Counted, because two lists can overlap while one page replaces another, and the first to go mustn't give
+      // the browser its pull back while the other is still there.
+      if (liveLists++ === 0) {
+        root.style.overscrollBehaviorY = 'none';
+      }
+      destroyRef.onDestroy(() => {
+        if (--liveLists === 0) {
+          root.style.overscrollBehaviorY = '';
+        }
+      });
     });
   }
 

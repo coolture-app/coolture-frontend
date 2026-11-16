@@ -40,10 +40,17 @@
                 {{ 'POST.online' | translate }}
               </span>
             } @else if (place) {
-              <span class="post__location">
+              <button
+                type="button"
+                class="post__location post__location--link"
+                [attr.aria-label]="'POST.showOnMap' | translate: { place: place }"
+                [appTooltip]="'POST.showOnMapHint' | translate"
+                (click)="showOnMap($event)"
+              >
                 <ng-icon name="heroMapPin" />
-                {{ place }}
-              </span>
+                <span class="post__location-name">{{ place }}</span>
+                <ng-icon class="post__location-chevron" name="lucideChevronRight" />
+              </button>
             }
             @if (distance; as away) {
               <span class="post__distance" [title]="'POST.distance' | translate">{{ away }}</span>

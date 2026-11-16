@@ -93,3 +93,18 @@ html.comments-docked app-main-page {
 ng-icon.icon--filled svg {
   fill: currentColor;
 }
+
+// Words on wide screens, an icon on phones, where a toolbar has room for less.
+.narrow-only {
+  display: none !important;
+}
+
+@media (max-width: 639px) {
+  .wide-only {
+    display: none !important;
+  }
+
+  .narrow-only {
+    display: inline-flex !important;
+  }
+}

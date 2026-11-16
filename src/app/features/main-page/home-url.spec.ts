@@ -7,6 +7,7 @@ const DEFAULT: HomeUrlState = {
   tab: 'forYou',
   sort: 'UPCOMING',
   point: null,
+  map: false,
 };
 
 describe('the home URL', () => {
@@ -21,6 +22,7 @@ describe('the home URL', () => {
       tab: 'all',
       sort: 'POPULAR',
       point: { latitude: 54.35, longitude: 18.65 },
+      map: true,
       filters: {
         ...NO_FILTERS,
         type: 'OFFLINE',
@@ -49,6 +51,7 @@ describe('the home URL', () => {
       radius: '25',
       lat: '54.35',
       lng: '18.65',
+      view: 'map',
     });
     expect(fromHomeParams(params)).toEqual(state);
   });
@@ -83,13 +86,19 @@ describe('the home URL', () => {
       from: 'tomorrow',
       to: '2026-13',
       past: 'maybe',
-      radius: '7',
+      radius: '7.5',
       lat: '999',
       lng: 'east',
       q: ['two', 'values'],
     });
 
     expect(state).toEqual(DEFAULT);
+  });
+
+  it('takes a whole radius from the map’s area, up to the largest chip', () => {
+    expect(fromHomeParams({ radius: '7', lat: '54.35', lng: '18.65' }).filters.radiusKm).toBe(7);
+    expect(fromHomeParams({ radius: '0', lat: '54.35', lng: '18.65' }).filters.place).toBe('');
+    expect(fromHomeParams({ radius: '150', lat: '54.35', lng: '18.65' }).filters.place).toBe('');
   });
 
   it('needs both coordinates for a point', () => {

@@ -6,7 +6,7 @@ const prettierConfig = require('eslint-config-prettier');
 const prettierPlugin = require('eslint-plugin-prettier');
 
 module.exports = tseslint.config(
-  { ignores: ['src/app/core/models/generated/feed-api.d.ts'] },
+  { ignores: ['src/app/core/models/generated/*-api.d.ts'] },
   {
     files: ['**/*.ts'],
     extends: [

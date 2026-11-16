@@ -4,6 +4,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { catchError, finalize, map, Observable, of, shareReplay, tap } from 'rxjs';
 import { ApiUrlService } from '../api-url.service';
 import { Me, UserProfile } from '../../models/users/user-profile.model';
+import { NamedPlace } from '../../models/common/geo.model';
 import { environment } from '../../../../environments/environment';
 import { DEV_IDENTITY } from '../../auth/dev-identity';
 
@@ -50,6 +51,10 @@ export class AuthService {
    * and a /auth/me response sent before a save cannot undo it.
    */
   readonly interestsSelected = signal<boolean | null>(null);
+  /** Where the signed-in user lives, if they said. Only `/auth/me` gives it. */
+  readonly home = signal<NamedPlace | null>(null);
+  /** Counts changes made here, so a `/auth/me` answer sent before a change can't undo it. */
+  private homeChanges = 0;
   readonly isAuthenticated = computed(() => this.currentUser() !== null);
   readonly userId = computed(() => this.currentUser()?.id ?? '');
 
@@ -58,10 +63,14 @@ export class AuthService {
       this.clearUser();
       return of(false);
     }
+    const changesBefore = this.homeChanges;
     this.sessionCheck ??= this.http.get<Me>(this.apiUrl.path('/auth/me')).pipe(
-      tap(({ interestsSelected, ...profile }) => {
+      tap(({ interestsSelected, home, ...profile }) => {
         this.currentUser.set(profile);
         this.interestsSelected.update((selected) => selected || interestsSelected);
+        if (this.homeChanges === changesBefore) {
+          this.home.set(home ?? null);
+        }
       }),
       map(() => true),
       catchError((error: HttpErrorResponse) => {
@@ -80,9 +89,16 @@ export class AuthService {
     this.interestsSelected.set(true);
   }
 
+  /** After the home was saved or removed. */
+  markHome(home: NamedPlace | null): void {
+    this.homeChanges++;
+    this.home.set(home);
+  }
+
   private clearUser(): void {
     this.currentUser.set(null);
     this.interestsSelected.set(null);
+    this.home.set(null);
   }
 
   async login(returnUrl?: string): Promise<void> {

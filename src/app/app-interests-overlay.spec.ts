@@ -35,7 +35,7 @@ describe('App interests overlay', () => {
     fixture.componentRef.instance['interestsDismissed'].set(true);
     await fixture.whenStable();
 
-    expect(element.querySelector('.app__interests')).toBeNull();
+    expect(element.querySelector('.app__onboarding')).toBeNull();
     expect(element.querySelector('.app__content')?.hasAttribute('inert')).toBeFalse();
   });
 
@@ -43,7 +43,7 @@ describe('App interests overlay', () => {
     interestsSelected.set(false);
     const element = await render();
 
-    expect(element.querySelector('.app__interests')).not.toBeNull();
+    expect(element.querySelector('.app__onboarding')).not.toBeNull();
     expect(element.querySelector('.app__content')?.hasAttribute('inert')).toBeTrue();
   });
 
@@ -55,8 +55,24 @@ describe('App interests overlay', () => {
       interestsSelected.set(selected);
       const element = await render();
 
-      expect(element.querySelector('.app__interests')).toBeNull();
+      expect(element.querySelector('.app__onboarding')).toBeNull();
       expect(element.querySelector('.app__content')?.hasAttribute('inert')).toBeFalse();
     });
   }
+
+  it('asks where the user lives once the interests are saved, until that step ends', async () => {
+    interestsSelected.set(false);
+    const element = await render();
+
+    fixture.componentRef.instance['homeStep'].set(true);
+    interestsSelected.set(true);
+    await fixture.whenStable();
+    expect(element.querySelector('.app__onboarding app-home-area')).not.toBeNull();
+    expect(element.querySelector('app-interests-view')).toBeNull();
+    expect(element.querySelector('.app__content')?.hasAttribute('inert')).toBeTrue();
+
+    fixture.componentRef.instance['homeStep'].set(false);
+    await fixture.whenStable();
+    expect(element.querySelector('.app__onboarding')).toBeNull();
+  });
 });

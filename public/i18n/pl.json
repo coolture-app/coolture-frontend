@@ -68,7 +68,15 @@
     "nearestNeedsLocation": "Najbliższe potrzebują Twojej lokalizacji. Zezwól na nią w ustawieniach przeglądarki.",
     "widenRadius": "Poszerz do {{km}} km",
     "seenBefore": "Dla Ciebie pomija Twoje posty oraz polubione i zapisane.",
-    "showInAll": "Pokaż we Wszystkich"
+    "showInAll": "Pokaż we Wszystkich",
+    "where": "Gdzie?",
+    "close": "Zamknij",
+    "placeSearchLabel": "Szukaj miejsca",
+    "placeSearchPlaceholder": "Miasto, dzielnica, miejsce",
+    "yourHome": "Tu mieszkasz",
+    "locating": "Ustalanie…",
+    "nearMe": "Przy mnie",
+    "nearestFromHome": "Odległości od: {{place}}"
   },
   "FULL_POST": {
     "title": "Fajny post",
@@ -101,7 +109,9 @@
     "stance": "Twój wybór",
     "hidden": "Ukryto. Pokażemy mniej takich.",
     "restored": "Przywrócono.",
-    "undo": "Cofnij"
+    "undo": "Cofnij",
+    "showOnMap": "{{place}}: pokaż na mapie",
+    "showOnMapHint": "Pokaż na mapie"
   },
   "NAVBAR": {
     "main-page": "Strona główna",
@@ -156,7 +166,9 @@
     "no-following": "Nie obserwujesz nikogo",
     "load-more": "Załaduj więcej",
     "loading": "Ładowanie...",
-    "hidden-posts": "Ukryte posty"
+    "hidden-posts": "Ukryte posty",
+    "addHome": "Dodaj miejsce",
+    "homeHint": "Widoczne tylko dla Ciebie"
   },
   "DISCOVER": {
     "title": "Odkrywaj",
@@ -299,6 +311,8 @@
     "use-address": "Użyj tego adresu",
     "offer-name": "Tu jest: {{name}}.",
     "use-name": "Użyj nazwy",
+    "expand": "Powiększ mapę",
+    "collapse": "Zwiń",
     "map-hint-place": "Kliknij mapę, aby postawić pinezkę.",
     "map-hint-move": "Przeciągnij pinezkę albo kliknij mapę, aby poprawić miejsce.",
     "map-unavailable": "Mapa się nie wczytała. Wpisz współrzędne miejsca i miasto.",
@@ -319,5 +333,48 @@
     "empty": "Nie ukryto jeszcze żadnego posta.",
     "load-error": "Nie udało się wczytać ukrytych postów.",
     "retry": "Spróbuj ponownie"
+  },
+  "MAP": {
+    "searchArea": "Szukaj w tym obszarze",
+    "today": "dziś",
+    "tomorrow": "jutro",
+    "now": "trwa",
+    "from": "od",
+    "directions": "Prowadź",
+    "close": "Zamknij",
+    "locate": "Moja lokalizacja",
+    "locateFailed": "Nie udało się ustalić Twojej lokalizacji",
+    "loading": "Ładowanie wydarzeń na mapie",
+    "legend": "Gwiazdka: najlepiej pasują do Ciebie",
+    "back": "Wszystkie tutaj ({{count}})",
+    "open": "Zobacz wydarzenie",
+    "enlargePhoto": "Powiększ zdjęcie",
+    "likes": "Polubienia: {{count}}",
+    "going": "Wezmą udział: {{count}}",
+    "todayFrom": "dziś",
+    "tomorrowFrom": "jutra",
+    "events_one": "{{count}} wydarzenie",
+    "events_few": "{{count}} wydarzenia",
+    "events_many": "{{count}} wydarzeń",
+    "interested": "Interesuje: {{count}}"
+  },
+  "PLACE_SEARCH": {
+    "unavailable": "Wyszukiwanie miejsc nie działa. Spróbuj za chwilę."
+  },
+  "HOME_AREA": {
+    "title": "Gdzie mieszkasz?",
+    "text": "Pokażemy najpierw to, co blisko, nawet bez dostępu do lokalizacji. Zapisujemy tylko miasto lub dzielnicę i widzisz je tylko Ty.",
+    "searchLabel": "Miasto, wieś lub dzielnica",
+    "searchPlaceholder": "np. Oliwa, Gdynia, Banino",
+    "useMyLocation": "Użyj mojej lokalizacji",
+    "locating": "Ustalanie lokalizacji…",
+    "change": "Zmień",
+    "skip": "Pomiń",
+    "remove": "Usuń",
+    "save": "Zapisz",
+    "close": "Zamknij",
+    "noPosition": "Nie udało się pobrać lokalizacji. Wyszukaj miejsce powyżej.",
+    "nothingHere": "Nie udało się ustalić miejscowości. Wyszukaj ją powyżej.",
+    "saveError": "Nie udało się zapisać. Spróbuj ponownie."
   }
 }

@@ -1,3 +1,4 @@
+import { PostMark } from '../../models/posts/post-mark.model';
 import { Component, input, output } from '@angular/core';
 import { MapComponent, MarkerComponent } from '@maplibre/ngx-maplibre-gl';
 
@@ -28,3 +29,17 @@ export const WITHOUT_MAPLIBRE = {
   remove: { imports: [MapComponent, MarkerComponent] },
   add: { imports: [MapStub, MarkerStub] },
 };
+
+/** A post's mark at (latitude, 18.6) in Gdańsk. */
+export function mark(id: string, latitude = 54.35): PostMark {
+  return {
+    id,
+    title: id,
+    startsAt: '2026-12-01T18:00:00Z',
+    positiveReactionCount: 0,
+    interestedCount: 0,
+    goingCount: 0,
+    coordinates: { latitude, longitude: 18.6 },
+    city: 'Gdańsk',
+  };
+}
