@@ -143,11 +143,11 @@ export class InterestsView implements OnInit {
     this.saving.set(true);
     this.errorKey.set(null);
     try {
-      await firstValueFrom(
+      const saved = await firstValueFrom(
         this.interestsService.replaceUserInterests(this.authService.userId(), [...this.selected()]),
       );
       this.savedInterests = this.interestsSnapshot();
-      this.authService.markInterestsSelected();
+      this.authService.markInterestsSelected(saved.interests);
       return true;
     } catch (error) {
       console.error('Error while saving interests', error);

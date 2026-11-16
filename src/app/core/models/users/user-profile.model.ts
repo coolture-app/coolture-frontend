@@ -7,6 +7,8 @@ export interface UserProfile extends UserSummary {
   createdAt?: string;
   isFollowing: boolean;
   isBlocked: boolean;
+  /** Interest keys, in the catalogue's order. */
+  interests: string[];
 }
 
 /** The `/auth/me` response: the caller's profile plus account state only the caller sees. */

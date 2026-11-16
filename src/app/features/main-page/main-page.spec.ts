@@ -1204,6 +1204,7 @@ describe('MainPage', () => {
         followingCount: 0,
         isFollowing: false,
         isBlocked: false,
+        interests: [],
       });
       session.next(true);
       await settle();

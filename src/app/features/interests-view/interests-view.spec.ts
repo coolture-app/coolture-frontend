@@ -344,7 +344,7 @@ describe('InterestsView', () => {
 
     await click(saveButton());
 
-    expect(authService.markInterestsSelected).toHaveBeenCalled();
+    expect(authService.markInterestsSelected).toHaveBeenCalledWith(['jazz', 'rock']);
     expect(fixture.componentInstance.confirmLeave()).toBeTrue();
   });
 });

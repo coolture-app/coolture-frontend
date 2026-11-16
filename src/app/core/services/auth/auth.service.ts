@@ -92,8 +92,10 @@ export class AuthService {
     return this.sessionCheck;
   }
 
-  markInterestsSelected(): void {
+  /** After the interests were saved, so the profile shows them without asking `/auth/me` again. */
+  markInterestsSelected(interests: string[]): void {
     this.interestsSelected.set(true);
+    this.currentUser.update((user) => user && { ...user, interests });
   }
 
   /** After the home was saved or removed. */

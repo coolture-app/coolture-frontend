@@ -20,6 +20,7 @@ const ME: UserProfile = {
   followingCount: 5,
   isFollowing: false,
   isBlocked: false,
+  interests: ['theatre', 'jazz'],
 };
 
 const JAN: UserProfile = {
@@ -29,6 +30,7 @@ const JAN: UserProfile = {
   firstName: 'Jan',
   lastName: 'Kowalski',
   bio: undefined,
+  interests: ['opera'],
 };
 
 const CATALOG: InterestCatalog = {
@@ -74,10 +76,8 @@ describe('UserProfileView', () => {
     element = harness.routeNativeElement!;
   }
 
-  async function flushInterests(userId: string, interests: string[]) {
+  async function flushCatalog() {
     http.expectOne((r) => r.url.endsWith('/dicts/interests')).flush(CATALOG);
-    await harness.fixture.whenStable();
-    http.expectOne((r) => r.url.endsWith(`/users/${userId}/interests`)).flush({ interests });
     await harness.fixture.whenStable();
     harness.detectChanges();
   }
@@ -111,7 +111,7 @@ describe('UserProfileView', () => {
     });
 
     it('lists the picks as chips, in the catalogue’s order', async () => {
-      await flushInterests('me-1', ['theatre', 'jazz']);
+      await flushCatalog();
 
       const chips = [...element.querySelectorAll('.profile__interest')].map((c) =>
         c.textContent?.trim(),
@@ -119,12 +119,10 @@ describe('UserProfileView', () => {
       expect(chips).toEqual(['Jazz', 'Teatr']);
     });
 
-    it('shows no chips when the picks can’t be read', async () => {
-      http.expectOne((r) => r.url.endsWith('/dicts/interests')).flush(CATALOG);
-      await harness.fixture.whenStable();
+    it('shows no chips when the catalogue can’t be read', async () => {
       http
-        .expectOne((r) => r.url.endsWith('/users/me-1/interests'))
-        .flush(null, { status: 403, statusText: 'Forbidden' });
+        .expectOne((r) => r.url.endsWith('/dicts/interests'))
+        .flush(null, { status: 500, statusText: 'Server Error' });
       await harness.fixture.whenStable();
       harness.detectChanges();
 
@@ -204,10 +202,11 @@ describe('UserProfileView', () => {
       expect(element.querySelector('.profile__bio-edit')).toBeNull();
     });
 
-    it('asks for their interests', async () => {
-      await flushInterests('jan-1', ['opera']);
+    it('takes their interests from the profile, with no request of their own', async () => {
+      await flushCatalog();
 
       expect(text('.profile__interests')).toBe('Opera');
+      http.expectNone((r) => r.url.endsWith('/users/jan-1/interests'));
     });
   });
 });

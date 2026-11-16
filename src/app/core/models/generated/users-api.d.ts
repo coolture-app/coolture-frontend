@@ -150,7 +150,10 @@ export interface paths {
       };
       cookie?: never;
     };
-    /** The caller's own picked interests */
+    /**
+     * Someone's picked interests
+     * @description Any signed-in user can read anyone's, for their profile. A block doesn't hide them, as it doesn't hide the profile.
+     */
     get: operations['getUserInterests'];
     /**
      * Replaces the caller's interests
@@ -279,6 +282,8 @@ export interface components {
       createdAt?: string;
       isFollowing: boolean;
       isBlocked: boolean;
+      /** @description The keys picked, in the catalogue's order, empty if none. In the profile so the page needs no second request. A guest gets them too: they're no more private than the rest of the profile. */
+      interests: string[];
     };
     /** @description UserProfile's fields, plus what only the caller sees. */
     Me: {
@@ -295,6 +300,7 @@ export interface components {
       createdAt?: string;
       isFollowing: boolean;
       isBlocked: boolean;
+      interests: string[];
       /** @description False until onboarding's interests are saved. */
       interestsSelected: boolean;
       /** @description Whether friends (mutual follows) see the caller's Interesuje mnie and Biorę udział. True until turned off. */
@@ -526,6 +532,25 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
+          /**
+           * @example {
+           *       "id": "00000000-0000-0000-0000-000000000003",
+           *       "username": "jan_demo",
+           *       "firstName": "Jan",
+           *       "lastName": "Demo",
+           *       "followersCount": 1,
+           *       "followingCount": 1,
+           *       "bio": "Teatr, stand-up i kino autorskie",
+           *       "createdAt": "2026-11-15T17:00:00Z",
+           *       "isFollowing": true,
+           *       "isBlocked": false,
+           *       "interests": [
+           *         "theatre",
+           *         "stand_up",
+           *         "cinema"
+           *       ]
+           *     }
+           */
           'application/json': components['schemas']['UserProfile'];
         };
       };
@@ -747,7 +772,7 @@ export interface operations {
         };
       };
       401: components['responses']['Unauthorized'];
-      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
     };
   };
   replaceUserInterests: {

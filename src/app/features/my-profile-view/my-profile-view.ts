@@ -11,7 +11,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { firstValueFrom, forkJoin, map } from 'rxjs';
+import { catchError, firstValueFrom, map, of } from 'rxjs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -100,11 +100,17 @@ export class UserProfileView {
   /** Private, so only shown on your own profile, from `/auth/me`. */
   readonly home = this.authService.home;
 
-  private interestCatalog = signal<Interest[]>([]);
-  private interestKeys = signal<string[]>([]);
+  /** Empty if the catalogue fails: the chips are optional. */
+  private interestCatalog = toSignal(
+    this.interestsService.getCatalog().pipe(
+      map((catalog) => catalog.categories.flatMap((category) => category.interests)),
+      catchError(() => of([] as Interest[])),
+    ),
+    { initialValue: [] as Interest[] },
+  );
   /** In the catalogue's order, so every profile lists them the same way. */
   readonly interests = computed(() => {
-    const picked = new Set(this.interestKeys());
+    const picked = new Set(this.user()?.interests ?? []);
     const en = this.lang() === 'en';
     return this.interestCatalog()
       .filter((interest) => picked.has(interest.key))
@@ -138,20 +144,21 @@ export class UserProfileView {
     this.showFollowing.set(false);
     this.menuOpen.set(false);
     this.editingBio.set(false);
-    this.interestKeys.set([]);
 
     const currentUser = this.authService.currentUser();
     if (username && currentUser && username !== currentUser.username) {
       await this.loadOtherUserProfile(username);
     } else {
-      this.authService.checkSession().subscribe();
       if (currentUser) {
         this.showUser(currentUser, true);
       }
-    }
-    const userId = this.user()?.id;
-    if (userId) {
-      await this.loadInterests(userId);
+      // Fresh counts and interests, changed elsewhere since the session started.
+      this.authService.checkSession().subscribe(() => {
+        const fresh = this.authService.currentUser();
+        if (fresh && this.isOwnProfile()) {
+          this.showUser(fresh, true);
+        }
+      });
     }
   }
 
@@ -171,23 +178,6 @@ export class UserProfileView {
     this.isOwnProfile.set(own);
     this.followersCount.set(user.followersCount);
     this.followingCount.set(user.followingCount);
-  }
-
-  /** Optional: when either request fails, the profile shows no interests. */
-  private async loadInterests(userId: string) {
-    try {
-      const { catalog, picks } = await firstValueFrom(
-        forkJoin({
-          catalog: this.interestsService.getCatalog(),
-          picks: this.interestsService.getUserInterests(userId),
-        }),
-      );
-      if (this.user()?.id !== userId) return;
-      this.interestCatalog.set(catalog.categories.flatMap((category) => category.interests));
-      this.interestKeys.set(picks.interests);
-    } catch {
-      this.interestKeys.set([]);
-    }
   }
 
   onFollowChanged(event: { deltaFollowers: number; deltaFollowing: number }) {
