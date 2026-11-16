@@ -13,7 +13,7 @@
   <h1 class="navbar__title">
     <a routerLink="/">COOLTURE</a>
   </h1>
-  <!-- One list of links: in the top bar on wider screens, a bar at the bottom on phones. -->
+  <!-- One list of places: in the top bar on wider screens, a bar at the bottom on phones. -->
   <div class="navbar__links">
     @for (link of links; track link.path) {
       @let isAccount = link.path === '/profile' && !!user;
@@ -30,6 +30,7 @@
       >
         @if (isAccount) {
           <ng-container [ngTemplateOutlet]="avatar" />
+          <span class="navbar__account-name">{{ user?.username }}</span>
         } @else {
           <ng-icon [name]="link.icon" />
         }
@@ -37,19 +38,6 @@
     }
   </div>
   <span class="navbar__actions">
-    @if (user) {
-      <!-- On wide screens the profile link is here, with the handle, instead of among the places. -->
-      <a
-        class="navbar__account"
-        routerLink="/profile"
-        routerLinkActive="navbar__account--active"
-        ariaCurrentWhenActive="page"
-        [appTooltip]="'NAVBAR.my-profile' | translate"
-      >
-        <ng-container [ngTemplateOutlet]="avatar" />
-        <span class="navbar__account-name">{{ user.username }}</span>
-      </a>
-    }
     <app-btn
       variant="secondary"
       size="sm"
