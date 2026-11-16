@@ -54,6 +54,7 @@ import { formatDistance } from '../../models/common/distance';
 import { LocationService } from '../../services/location/location.service';
 import { counted, ParticipationType } from '../../models/common/enums';
 import { Tooltip } from '../../directives/tooltip';
+import { CountedIcon } from './counted-icon';
 import { ToastService } from '../../services/toast/toast.service';
 
 /**
@@ -77,7 +78,7 @@ export type PostFold = 'marked' | 'unmarked' | null;
 
 @Component({
   selector: 'app-post-component',
-  imports: [NgIcon, TranslatePipe, DatePipe, ModalWindow, Btn, Tooltip],
+  imports: [NgIcon, CountedIcon, TranslatePipe, DatePipe, ModalWindow, Btn, Tooltip],
   viewProviders: [
     provideIcons({
       appTicket,
@@ -172,9 +173,9 @@ export class PostComponent implements OnInit {
     return counted(this.stance());
   }
 
-  /** A badge stays small. The exact number is in the button's name and tooltip. */
-  shownCount(count: number): string {
-    return count > 99 ? '99+' : String(count);
+  /** A counted button's name, with the exact number the badge may cut. */
+  withCount(word: string, count: number): string {
+    return count ? `${word} (${count})` : word;
   }
 
   /** Live while this post's comments are open, since the card can stay in view beside them. */
@@ -407,8 +408,12 @@ export class PostComponent implements OnInit {
   }
 
   private applyParticipation(type: ParticipationType | undefined): void {
-    this.data.participantCount +=
-      (counted(type) ? 1 : 0) - (counted(this.data.myParticipation) ? 1 : 0);
+    const was = this.data.myParticipation;
+    const change = (stance: ParticipationType) =>
+      (type === stance ? 1 : 0) - (was === stance ? 1 : 0);
+    this.data.participantCount += (counted(type) ? 1 : 0) - (counted(was) ? 1 : 0);
+    this.data.interestedCount += change('INTERESTED');
+    this.data.goingCount += change('TAKES_PART');
     this.data.myParticipation = type;
     this.stance.set(type);
   }

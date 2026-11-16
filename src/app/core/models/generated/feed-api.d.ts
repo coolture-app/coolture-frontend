@@ -99,6 +99,10 @@ export interface components {
       tags: string[];
       positiveReactionCount: number;
       participantCount: number;
+      /** @description People who marked it Interesuje mnie. */
+      interestedCount: number;
+      /** @description People who marked it Wezmę udział. */
+      goingCount: number;
       commentsCount: number;
       type: components['schemas']['PostType'];
       status: components['schemas']['PostStatus'];

@@ -21,7 +21,10 @@ export interface PostBase {
   endsAt?: string; // ISO-8601
   tags: string[];
   positiveReactionCount: number;
+  /** Interesuje mnie and Biorę udział together. */
   participantCount: number;
+  interestedCount: number;
+  goingCount: number;
   commentsCount: number;
   type: PostType;
   status: PostStatus;

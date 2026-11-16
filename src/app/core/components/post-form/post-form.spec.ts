@@ -24,6 +24,8 @@ function post(startsAt: string, endsAt?: string): PostDetail {
     tags: [],
     positiveReactionCount: 0,
     participantCount: 0,
+    interestedCount: 0,
+    goingCount: 0,
     commentsCount: 0,
     type: 'ONLINE',
     status: 'ACTIVE',
