@@ -140,7 +140,7 @@ describe('CommentsSheet', () => {
       history.back();
       await closing();
       expect(service.post()).toBeNull();
-      expect(location.pathname).toBe(startUrl);
+      expect(location.pathname + location.search).toBe(startUrl);
     });
 
     it('leaves the feed where it was scrolled to while open, on Back', async () => {
@@ -225,7 +225,7 @@ describe('CommentsSheet', () => {
     await closing();
 
     expect(service.post()).toBeNull();
-    expect(location.pathname).toBe(startUrl);
+    expect(location.pathname + location.search).toBe(startUrl);
     expect(document.documentElement.style.overflow).toBe('');
   });
 
