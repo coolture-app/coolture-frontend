@@ -7,6 +7,8 @@ export interface UserProfile extends UserSummary {
   createdAt?: string;
   isFollowing: boolean;
   isBlocked: boolean;
+  /** With isFollowing, both true means you're friends. */
+  followsYou: boolean;
   /** Interest keys, in the catalogue's order. */
   interests: string[];
 }

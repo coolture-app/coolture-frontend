@@ -282,6 +282,8 @@ export interface components {
       createdAt?: string;
       isFollowing: boolean;
       isBlocked: boolean;
+      /** @description Whether this user follows you. With isFollowing, both true means you're friends. */
+      followsYou: boolean;
       /** @description The keys picked, in the catalogue's order, empty if none. In the profile so the page needs no second request. A guest gets them too: they're no more private than the rest of the profile. */
       interests: string[];
     };
@@ -300,6 +302,8 @@ export interface components {
       createdAt?: string;
       isFollowing: boolean;
       isBlocked: boolean;
+      /** @description Always false, as you can't follow yourself. */
+      followsYou: boolean;
       interests: string[];
       /** @description False until onboarding's interests are saved. */
       interestsSelected: boolean;
@@ -331,6 +335,8 @@ export interface components {
       createdAt?: string;
       followersCount: number;
       followingCount: number;
+      /** @description Whether this user follows you. False for a guest. */
+      followsYou: boolean;
     };
     UserPage: {
       items: components['schemas']['UserSummary'][];
@@ -526,7 +532,7 @@ export interface operations {
     };
     requestBody?: never;
     responses: {
-      /** @description The profile. isFollowing and isBlocked are the caller's relation to it, false for a guest. */
+      /** @description The profile. isFollowing, isBlocked and followsYou are the relation between it and the caller, false for a guest. */
       200: {
         headers: {
           [name: string]: unknown;
@@ -544,6 +550,7 @@ export interface operations {
            *       "createdAt": "2026-11-15T17:00:00Z",
            *       "isFollowing": true,
            *       "isBlocked": false,
+           *       "followsYou": true,
            *       "interests": [
            *         "theatre",
            *         "stand_up",

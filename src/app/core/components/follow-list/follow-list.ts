@@ -18,17 +18,18 @@ import { heroXMark } from '@ng-icons/heroicons/outline';
 
 import { AuthService } from '../../services/auth/auth.service';
 import { RelationsService } from '../../services/relations/relations.service';
-import { UserSummary } from '../../models/users/user-summary.model';
+import { UserListItem } from '../../models/users/user-summary.model';
 import { PaginationInfo } from '../../models/common/paginated-response.model';
 import { Btn } from '../btn/btn';
 import { FollowBtn } from '../follow-btn/follow-btn';
+import { RelationPill } from '../relation-pill/relation-pill';
 
 export type FollowListType = 'followers' | 'following';
 
 @Component({
   selector: 'app-follow-list',
   standalone: true,
-  imports: [CommonModule, TranslatePipe, NgIcon, RouterModule, Btn, FollowBtn],
+  imports: [CommonModule, TranslatePipe, NgIcon, RouterModule, Btn, FollowBtn, RelationPill],
   viewProviders: [provideIcons({ heroXMark })],
   templateUrl: './follow-list.html',
   styleUrl: './follow-list.scss',
@@ -45,7 +46,7 @@ export class FollowListComponent implements OnInit {
   closeList = output<void>();
   followChanged = output<{ deltaFollowers: number; deltaFollowing: number }>();
 
-  users = signal<UserSummary[]>([]);
+  users = signal<UserListItem[]>([]);
   followingIds = signal<Set<string>>(new Set());
   isLoadingInitial = signal(false);
   isLoadingMore = signal(false);
@@ -75,13 +76,13 @@ export class FollowListComponent implements OnInit {
     }
   }
 
-  canFollow(user: UserSummary): boolean {
+  canFollow(user: UserListItem): boolean {
     const currentUserId = this.authService.currentUser()?.id;
     return !!currentUserId && user.id !== currentUserId;
   }
 
   /** The row stays after an unfollow, so a mistaken tap can be undone. */
-  async toggleFollow(user: UserSummary): Promise<void> {
+  async toggleFollow(user: UserListItem): Promise<void> {
     const following = this.followingIds().has(user.id);
     this.actionUserId.set(user.id);
     try {
@@ -135,7 +136,7 @@ export class FollowListComponent implements OnInit {
 
   private fetchPage(
     cursor: string | null,
-    onSuccess: (items: UserSummary[], hasMore: boolean, nextCursor: string | null) => void,
+    onSuccess: (items: UserListItem[], hasMore: boolean, nextCursor: string | null) => void,
   ): void {
     const pagination: PaginationInfo = { limit: 20, cursor: cursor ?? '' };
 

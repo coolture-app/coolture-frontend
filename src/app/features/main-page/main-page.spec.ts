@@ -1204,6 +1204,7 @@ describe('MainPage', () => {
         followingCount: 0,
         isFollowing: false,
         isBlocked: false,
+        followsYou: false,
         interests: [],
       });
       session.next(true);

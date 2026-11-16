@@ -47,7 +47,13 @@
               }
               <div class="follow-list__details">
                 <span class="follow-list__name">{{ user.firstName }} {{ user.lastName }}</span>
-                <span class="follow-list__username">&#64;{{ user.username }}</span>
+                <span class="follow-list__handle">
+                  <span class="follow-list__username">&#64;{{ user.username }}</span>
+                  <app-relation-pill
+                    [following]="followingIds().has(user.id)"
+                    [followsYou]="user.followsYou"
+                  />
+                </span>
                 <div class="follow-list__stats">
                   <span class="follow-list__stat">
                     <strong>{{ user.followersCount }}</strong>
