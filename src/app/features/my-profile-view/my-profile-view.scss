@@ -80,6 +80,27 @@
     gap: 0.5rem;
   }
 
+  &__share {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    margin-top: var(--space-md);
+    text-align: left;
+  }
+
+  &__share-text {
+    display: flex;
+    flex-direction: column;
+    font-size: var(--text-sm);
+    color: var(--color-text);
+  }
+
+  &__share-hint {
+    font-size: var(--text-xs);
+    color: var(--color-text-secondary);
+  }
+
   &__form {
     background: #f9fafb;
     padding: 1.5rem;

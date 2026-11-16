@@ -72,6 +72,17 @@
           {{ home()?.name ?? ('PROFILE.addHome' | translate) }}
         </app-btn>
       </div>
+      <div class="profile__share">
+        <app-switch
+          [checked]="shareStances()"
+          [label]="'PROFILE.shareStances' | translate"
+          (switchState)="setShareStances($event)"
+        ></app-switch>
+        <span class="profile__share-text">
+          <span>{{ 'PROFILE.shareStances' | translate }}</span>
+          <span class="profile__share-hint">{{ 'PROFILE.shareStancesHint' | translate }}</span>
+        </span>
+      </div>
     } @else {
       <div class="profile__actions">
         <app-btn

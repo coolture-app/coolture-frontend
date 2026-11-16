@@ -3,7 +3,7 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   heroCamera,
@@ -29,6 +29,8 @@ import { UserSummary } from '../../core/models/users/user-summary.model';
 import { UserProfileUpdateRequest } from '../../core/models/users/user-profile-update-request.model';
 import { FollowListComponent } from '../../core/components/follow-list/follow-list';
 import { Btn } from '../../core/components/btn/btn';
+import { Switch } from '../../core/components/switch/switch/switch';
+import { ToastService } from '../../core/services/toast/toast.service';
 import { HomeArea } from '../home-area/home-area';
 import { DateFormatService } from '../../core/services/date-format/date-format.service';
 
@@ -44,6 +46,7 @@ import { DateFormatService } from '../../core/services/date-format/date-format.s
     RouterModule,
     Btn,
     HomeArea,
+    Switch,
   ],
   viewProviders: [
     provideIcons({
@@ -72,6 +75,9 @@ export class UserProfileView implements OnInit {
   private fb = inject(FormBuilder);
   private route = inject(ActivatedRoute);
   private dateFormatService = inject(DateFormatService);
+  private toast = inject(ToastService);
+  private translate = inject(TranslateService);
+  readonly shareStances = this.authService.shareStances;
 
   user = signal<UserProfile | null>(null);
   readonly dateFormats = this.dateFormatService.formats;
@@ -171,6 +177,19 @@ export class UserProfileView implements OnInit {
     } catch (err) {
       console.error('Error updating profile', err);
       alert('Error updating profile');
+    }
+  }
+
+  /** Shown as switched at once; switched back if the save fails. */
+  async setShareStances(share: boolean) {
+    const userValue = this.user();
+    if (!userValue || !this.isOwnProfile()) return;
+    this.authService.markShareStances(share);
+    try {
+      await firstValueFrom(this.usersService.updateProfile(userValue.id, { shareStances: share }));
+    } catch {
+      this.authService.markShareStances(!share);
+      this.toast.show(this.translate.instant('PROFILE.shareStancesFailed'));
     }
   }
 
