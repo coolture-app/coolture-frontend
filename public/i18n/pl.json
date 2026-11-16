@@ -311,6 +311,8 @@
     "use-address": "Użyj tego adresu",
     "offer-name": "Tu jest: {{name}}.",
     "use-name": "Użyj nazwy",
+    "expand": "Powiększ mapę",
+    "collapse": "Zwiń",
     "map-hint-place": "Kliknij mapę, aby postawić pinezkę.",
     "map-hint-move": "Przeciągnij pinezkę albo kliknij mapę, aby poprawić miejsce.",
     "map-unavailable": "Mapa się nie wczytała. Wpisz współrzędne miejsca i miasto.",

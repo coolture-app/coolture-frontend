@@ -18,7 +18,10 @@ import { MapComponent, MarkerComponent } from '@maplibre/ngx-maplibre-gl';
 import type { LngLat, Map as MapLibreMap, MapMouseEvent, Marker } from 'maplibre-gl';
 import { catchError, map, of, Subject, switchMap } from 'rxjs';
 
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideMaximize2, lucideMinimize2 } from '@ng-icons/lucide';
 import { FormInput } from '../form-input/form-input';
+import { backClosable } from '../../services/back-closable/back-closable';
 import { collapseCredit, followLanguage, MAP_STYLE, TRICITY } from '../map/map-style';
 import { GeocodingService } from '../../services/geocoding/geocoding.service';
 import { LocationService } from '../../services/location/location.service';
@@ -62,7 +65,9 @@ function rounded(at: LngLat): GeoPoint {
  */
 @Component({
   selector: 'app-place-picker',
-  imports: [ReactiveFormsModule, TranslatePipe, FormInput, MapComponent, MarkerComponent],
+  imports: [ReactiveFormsModule, TranslatePipe, FormInput, MapComponent, MarkerComponent, NgIcon],
+  viewProviders: [provideIcons({ lucideMaximize2, lucideMinimize2 })],
+  host: { '(document:keydown.escape)': 'full() && toggleFull()' },
   templateUrl: './place-picker.html',
   styleUrl: './place-picker.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -108,6 +113,12 @@ export class PlacePicker implements OnInit {
 
   /** Opened by "Wskaż na mapie" before a place is set. */
   readonly mapRequested = signal(false);
+  /**
+   * The search, the place and the map over the whole screen, for picking with room. The same map grows, so the pin
+   * and the view stay. Back closes it.
+   */
+  readonly full = signal(false);
+  private fullScreen = backClosable('placeMap', () => this.setFull(false));
   readonly showMap = computed(() => this.hasPlace() || this.mapRequested());
   readonly fieldsOpen = signal(false);
   private readonly lookingUpAt = signal<GeoPoint | null>(null);
@@ -142,6 +153,8 @@ export class PlacePicker implements OnInit {
   private readonly pins = new Subject<GeoPoint>();
 
   constructor() {
+    // Leaving the form while full screen gives the page its scroll back.
+    this.destroyRef.onDestroy(() => this.fullScreen.abandon());
     afterNextRender(() => {
       this.inBrowser.set(true);
       void this.location.currentIfAllowed(POSITION_WAIT_MS).then((position) => {
@@ -284,6 +297,9 @@ export class PlacePicker implements OnInit {
     this.apply(EMPTY_DRAFT);
     this.group().markAsUntouched();
     // The map leaves the page with the place.
+    if (this.full()) {
+      this.fullScreen.close();
+    }
     this.mapInstance = null;
     this.mapRequested.set(false);
     this.fieldsOpen.set(false);
@@ -298,6 +314,29 @@ export class PlacePicker implements OnInit {
     collapseCredit(instance);
     const labels = followLanguage(instance, this.translate);
     this.destroyRef.onDestroy(() => labels.unsubscribe());
+  }
+
+  toggleFull(): void {
+    if (this.full()) {
+      this.fullScreen.close();
+    } else {
+      this.fullScreen.opened();
+      this.setFull(true);
+    }
+  }
+
+  /** Full screen, the map is all there is to scroll, so it moves with one finger or the wheel. */
+  private setFull(on: boolean): void {
+    this.full.set(on);
+    const map = this.mapInstance;
+    if (map) {
+      if (on) {
+        map.cooperativeGestures.disable();
+      } else {
+        map.cooperativeGestures.enable();
+      }
+      requestAnimationFrame(() => map.resize());
+    }
   }
 
   onMapError(): void {

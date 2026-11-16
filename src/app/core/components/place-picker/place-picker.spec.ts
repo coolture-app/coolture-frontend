@@ -271,6 +271,30 @@ describe('PlacePicker', () => {
     expect(fixture.nativeElement.querySelector('#place-latitude')).not.toBeNull();
   });
 
+  it('opens the map over the whole screen, with one-finger gestures, and Escape closes it', async () => {
+    picker.pick(ERGO_ARENA);
+    await render();
+    const gestures = jasmine.createSpyObj('cooperativeGestures', ['enable', 'disable']);
+    picker.onMapLoad({
+      ...fakeMap(),
+      cooperativeGestures: gestures,
+      resize: jasmine.createSpy('resize'),
+    } as never);
+    const root = () => fixture.nativeElement.querySelector('.place-picker') as HTMLElement;
+
+    picker.toggleFull();
+    await render();
+    expect(root().classList).toContain('place-picker--full');
+    expect(gestures.disable).toHaveBeenCalled();
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    // The browser's Back, then the overlay's wait for the router's scroll.
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    await render();
+    expect(root().classList).not.toContain('place-picker--full');
+    expect(gestures.enable).toHaveBeenCalled();
+  });
+
   it('clearing the place empties it and goes back to the search', async () => {
     picker.pick(ERGO_ARENA);
 

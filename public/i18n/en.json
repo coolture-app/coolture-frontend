@@ -311,6 +311,8 @@
     "use-address": "Use this address",
     "offer-name": "This is: {{name}}.",
     "use-name": "Use the name",
+    "expand": "Enlarge the map",
+    "collapse": "Collapse",
     "map-hint-place": "Click the map to drop a pin.",
     "map-hint-move": "Drag the pin or click the map to adjust the place.",
     "map-unavailable": "The map didn't load. Type the place's coordinates and the city.",
