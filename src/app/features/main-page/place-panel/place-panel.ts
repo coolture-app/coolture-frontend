@@ -1,7 +1,9 @@
 import { Component, input, output } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { TranslatePipe } from '@ngx-translate/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
+  heroCheck,
   heroGlobeEuropeAfrica,
   heroHome,
   heroMapPin,
@@ -17,9 +19,16 @@ import { FiltersForm, PlaceFilter, RADII_KM } from '../home-view';
 /** "Gdzie?": what the list's radius is centred on, and how far it reaches. The home page owns the form. */
 @Component({
   selector: 'app-place-panel',
-  imports: [TranslatePipe, NgIcon, Btn, PlaceSearch],
+  imports: [NgTemplateOutlet, TranslatePipe, NgIcon, Btn, PlaceSearch],
   viewProviders: [
-    provideIcons({ heroGlobeEuropeAfrica, heroHome, heroMapPin, heroXMark, lucideLocateFixed }),
+    provideIcons({
+      heroCheck,
+      heroGlobeEuropeAfrica,
+      heroHome,
+      heroMapPin,
+      heroXMark,
+      lucideLocateFixed,
+    }),
   ],
   templateUrl: './place-panel.html',
   styleUrl: './place-panel.scss',
@@ -54,8 +63,13 @@ export class PlacePanel {
     this.form().controls.radiusKm.setValue(km);
   }
 
+  /** The row with the check, and the radius under it: the home's when the radius is centred on it. */
+  protected chosen(): PlaceFilter | 'home' {
+    return this.isCentre(this.home()) ? 'home' : this.form().controls.place.value;
+  }
+
   /** Whether the radius is centred on this place now. */
-  protected isCentre(place: NamedPlace | null): boolean {
+  private isCentre(place: NamedPlace | null): boolean {
     const picked = this.picked();
     return (
       !!place &&

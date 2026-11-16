@@ -887,6 +887,28 @@ describe('MainPage', () => {
         expect(pill()).toBe('MAIN_PAGE.anywhere');
       });
 
+      it('stays open on a place with its radius, and closes on a radius or Anywhere', async () => {
+        askedLocation = { latitude: 54.35, longitude: 18.65 };
+        await openFilters();
+
+        chip('MAIN_PAGE.myLocation').click();
+        await debounce();
+        expectFeed().flush({ ...page(), mode: 'RANKED' });
+        expect(component.showPlace()).toBeTrue();
+        expect(radiusChips().length).toBeGreaterThan(0);
+
+        radiusChips()[0].click();
+        await debounce();
+        expectFeed().flush({ ...page(), mode: 'RANKED' });
+        expect(component.showPlace()).toBeFalse();
+
+        await openPlace();
+        chip('MAIN_PAGE.anywhere').click();
+        await debounce();
+        expectFeed().flush({ ...page(), mode: 'RANKED' });
+        expect(component.showPlace()).toBeFalse();
+      });
+
       it('lists posts within 5 km of the position by default', async () => {
         askedLocation = { latitude: 54.35, longitude: 18.65 };
         await openFilters();
