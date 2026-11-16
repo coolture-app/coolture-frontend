@@ -98,7 +98,12 @@ export interface components {
       endsAt?: string;
       tags: string[];
       positiveReactionCount: number;
+      /** @description interestedCount and goingCount together. */
       participantCount: number;
+      /** @description People who marked it Interesuje mnie. */
+      interestedCount: number;
+      /** @description People who marked it Biorę udział. */
+      goingCount: number;
       commentsCount: number;
       type: components['schemas']['PostType'];
       status: components['schemas']['PostStatus'];
