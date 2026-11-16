@@ -2,14 +2,12 @@
 
 .edit-post-container {
   @include container;
+  max-width: 800px;
   padding: var(--space-xl) var(--space-md);
-  @include center-flex;
 }
 
 .edit-post-card {
   @include card;
-  width: 100%;
-  max-width: 800px;
   padding: var(--space-xl);
   display: flex;
   flex-direction: column;

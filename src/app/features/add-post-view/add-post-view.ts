@@ -30,7 +30,6 @@ export class AddPostView {
         endsAt: data.endsAt,
         description: data.description,
         eventUrl: data.eventUrl,
-        visibility: data.visibility,
         location: data.location,
         mediaIds: data.mediaIds.length > 0 ? data.mediaIds : undefined,
       };

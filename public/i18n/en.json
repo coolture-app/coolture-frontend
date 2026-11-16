@@ -16,11 +16,9 @@
     "type": "Type",
     "tags": "Tags",
     "tagsPlaceholder": "music, art, theater",
-    "visibility": "Visibility",
     "startsFrom": "From day",
     "startsTo": "To day",
     "allTypes": "All Types",
-    "allVisibility": "All",
     "sortCreatedAt": "Created Date",
     "sortStartsAt": "Event Date",
     "sortLikes": "Likes",
@@ -33,9 +31,6 @@
     "orderAsc": "Ascending",
     "offline": "Offline",
     "online": "Online",
-    "public": "Public",
-    "private": "Private",
-    "friends": "Friends",
     "recommended": "Recommended",
     "loading": "Loading...",
     "endOfList": "That's everything",
@@ -44,6 +39,7 @@
     "refreshing": "Refreshing",
     "refreshFailed": "Couldn't refresh",
     "locationFailed": "Could not get your location. Allow it in your browser settings.",
+    "followed": "From people I follow and friends",
     "includePast": "Show past events",
     "searchPast": "Search past events too",
     "clearSearch": "Clear search",
@@ -79,8 +75,14 @@
     "nearestFromHome": "Distances from: {{place}}"
   },
   "FULL_POST": {
-    "title": "Cool post",
-    "back": "Back"
+    "title": "Cool post"
+  },
+  "BACK": {
+    "to": "Back to: {{page}}",
+    "post": "Event",
+    "newPost": "New event",
+    "editPost": "Editing event",
+    "previous": "Previous page"
   },
   "POST": {
     "starts": "Event start",
@@ -111,7 +113,10 @@
     "restored": "Restored.",
     "undo": "Undo",
     "showOnMap": "{{place}}: show on the map",
-    "showOnMapHint": "Show on the map"
+    "showOnMapHint": "Show on the map",
+    "friendsGoing": "Going: {{names}}",
+    "friendsInterested": "Interested: {{names}}",
+    "friendsSee": "Friends will see it"
   },
   "NAVBAR": {
     "main-page": "Home",
@@ -145,7 +150,7 @@
     "editDescription": "Edit Description",
     "interests": "Interests",
     "cancel": "Cancel",
-    "save": "Save Changes",
+    "save": "Save",
     "firstName": "First Name",
     "lastName": "Last Name",
     "username": "Username",
@@ -154,10 +159,7 @@
     "followers-subtitle": "People who follow this account",
     "following-subtitle": "People this account follows",
     "following": "Following",
-    "joined": "Joined",
     "follow": "Follow",
-    "unfollow": "Unfollow",
-    "followBack": "Follow Back",
     "block": "Block",
     "unblock": "Unblock",
     "blocked": "Blocked",
@@ -168,7 +170,29 @@
     "loading": "Loading...",
     "hidden-posts": "Hidden posts",
     "addHome": "Add your area",
-    "homeHint": "Only you can see this"
+    "homeHint": "Only you can see this",
+    "shareStances": "Show friends what I’m interested in and where I go",
+    "shareStancesHint": "Friends are people you follow who follow you back.",
+    "saveFailed": "Couldn’t save. Try again.",
+    "more": "More",
+    "followingThem": "Following",
+    "friends": "Friends",
+    "followsYou": "Follows you",
+    "changeAvatar": "Change photo",
+    "addAvatar": "Add photo",
+    "showAvatar": "View photo",
+    "removeAvatar": "Remove photo",
+    "removeAvatarConfirm": "Remove your profile photo?",
+    "blockConfirm": "Block this person?",
+    "unblockConfirm": "Unblock this person?",
+    "bioPlaceholder": "Add a few words about yourself",
+    "since": "On Coolture since {{date}}",
+    "blockedLoadError": "Couldn’t load blocked people.",
+    "retry": "Try again"
+  },
+  "SETTINGS": {
+    "title": "Settings",
+    "privacy": "Privacy"
   },
   "DISCOVER": {
     "title": "Discover",
@@ -193,10 +217,6 @@
     "title-error-maxlength": "The title can be at most 128 characters.",
     "type-online": "Online",
     "type-offline": "In person",
-    "visibility": "Who can see it",
-    "visibility-public": "Everyone",
-    "visibility-private": "Only me",
-    "visibility-friends": "Friends",
     "starts-at": "Start",
     "starts-at-error": "Say when it starts.",
     "ends-at": "End",
@@ -266,6 +286,15 @@
     "modal-delete-title": "Are you sure you want to delete your comment?",
     "modal-delete-body": "This can't be undone.",
     "deleted-comment": "Comment deleted"
+  },
+  "FRIENDS": {
+    "title": "Friends",
+    "close": "Close the friends list",
+    "going": "Going",
+    "interested": "Interested",
+    "loading": "Loading friends…",
+    "load-error": "Couldn’t load friends.",
+    "empty": "None of your friends marked this event."
   },
   "EVENT_CARD": {
     "by": "by"
@@ -376,5 +405,11 @@
     "noPosition": "Couldn't get your location. Search for the place above.",
     "nothingHere": "Couldn't tell where that is. Search for the place above.",
     "saveError": "Couldn't save. Try again."
+  },
+  "AVATAR_CROP": {
+    "title": "Position your photo",
+    "hint": "Drag to move. Zoom with the slider, the mouse wheel or two fingers.",
+    "zoom": "Zoom",
+    "loadError": "This file couldn't be opened. Choose a JPG, PNG or WebP photo."
   }
 }

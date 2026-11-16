@@ -40,6 +40,7 @@ import { catchError, concatMap, EMPTY, Observable, Subject, tap } from 'rxjs';
 import { frameShape, Photo, toPhoto } from '../../models/media/photo';
 import { PhotoViewerService } from '../../services/photo-viewer/photo-viewer.service';
 import { appTicket } from '../../icons/ticket';
+import { FriendsLine } from '../friends-line/friends-line';
 import { DatePipe } from '@angular/common';
 import { InteractionsService } from '../../services/interactions/interactions.service';
 import { AuthService } from '../../services/auth/auth.service';
@@ -86,7 +87,7 @@ export type PostFold = 'marked' | 'unmarked' | null;
 
 @Component({
   selector: 'app-post-component',
-  imports: [NgIcon, CountedIcon, TranslatePipe, DatePipe, ModalWindow, Btn, Tooltip],
+  imports: [NgIcon, CountedIcon, TranslatePipe, DatePipe, ModalWindow, Btn, Tooltip, FriendsLine],
   viewProviders: [
     provideIcons({
       appTicket,
@@ -134,6 +135,10 @@ export class PostComponent implements OnInit {
   private router = inject(Router);
   private interactions = inject(InteractionsService);
   private authService = inject(AuthService);
+  /** Friends see the viewer's Interesuje mnie and Biorę udział, so the buttons say so. */
+  readonly sharesStances = computed(
+    () => this.authService.isAuthenticated() && this.authService.shareStances(),
+  );
   private postService = inject(PostService);
   private destroyRef = inject(DestroyRef);
   private injector = inject(Injector);
@@ -189,7 +194,7 @@ export class PostComponent implements OnInit {
 
   /** Live while this post's comments are open, since the card can stay in view beside them. */
   commentCount(): number {
-    const open = this.commentsSheet.post();
+    const open = this.commentsSheet.commentsOf();
     return open?.id === this.data.id ? this.commentsSheet.count() : (this.data.commentsCount ?? 0);
   }
 
@@ -202,6 +207,11 @@ export class PostComponent implements OnInit {
     } else {
       this.commentsSheet.show(this.data);
     }
+  }
+
+  /** Also on the post page, where the comments under the post leave the panel free for this. */
+  openFriends(): void {
+    this.commentsSheet.showFriends(this.data);
   }
 
   toggleExpanded(): void {

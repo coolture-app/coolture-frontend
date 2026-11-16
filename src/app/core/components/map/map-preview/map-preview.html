@@ -60,6 +60,13 @@
 <ng-template #mini let-mark>
   @let post = reactions.shown(mark);
   <div class="mini">
+    @if (post.friendStances; as friends) {
+      <app-friends-line
+        class="mini__friends"
+        [stances]="friends"
+        (opened)="sheet.showFriends(post)"
+      />
+    }
     <div class="mini__top">
       @if (post.coverMediaUrl) {
         <button
@@ -111,7 +118,10 @@
         [class.mini__react--on]="post.myParticipation === 'INTERESTED'"
         [attr.aria-pressed]="post.myParticipation === 'INTERESTED'"
         [attr.aria-label]="'MAP.interested' | translate: { count: post.interestedCount }"
-        [appTooltip]="'POST.interested' | translate"
+        [appTooltip]="
+          ('POST.interested' | translate) +
+          (sharesStances() ? ' · ' + ('POST.friendsSee' | translate) : '')
+        "
         (click)="reactions.stance(mark, 'INTERESTED')"
       >
         <ng-icon
@@ -127,7 +137,10 @@
         [class.mini__react--on]="post.myParticipation === 'TAKES_PART'"
         [attr.aria-pressed]="post.myParticipation === 'TAKES_PART'"
         [attr.aria-label]="'MAP.going' | translate: { count: post.goingCount }"
-        [appTooltip]="'POST.takes_part' | translate"
+        [appTooltip]="
+          ('POST.takes_part' | translate) +
+          (sharesStances() ? ' · ' + ('POST.friendsSee' | translate) : '')
+        "
         (click)="reactions.stance(mark, 'TAKES_PART')"
       >
         <ng-icon

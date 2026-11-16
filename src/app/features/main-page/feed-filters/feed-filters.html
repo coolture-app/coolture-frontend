@@ -26,16 +26,6 @@
         placeholder="{{ 'MAIN_PAGE.tagsPlaceholder' | translate }}"
       />
     </div>
-
-    <div class="filters__field">
-      <label for="visibility">{{ 'MAIN_PAGE.visibility' | translate }}</label>
-      <select id="visibility" [formControl]="f.controls.visibility">
-        <option value="">{{ 'MAIN_PAGE.allVisibility' | translate }}</option>
-        <option value="PUBLIC">{{ 'MAIN_PAGE.public' | translate }}</option>
-        <option value="PRIVATE">{{ 'MAIN_PAGE.private' | translate }}</option>
-        <option value="FRIENDS">{{ 'MAIN_PAGE.friends' | translate }}</option>
-      </select>
-    </div>
   </div>
 
   <div class="filters__row">
@@ -50,12 +40,23 @@
     </div>
   </div>
 
-  <div class="filters__past">
-    <app-switch
-      [formControl]="f.controls.includePast"
-      [label]="'MAIN_PAGE.includePast' | translate"
-    ></app-switch>
-    <span>{{ 'MAIN_PAGE.includePast' | translate }}</span>
+  <div class="filters__switches">
+    @if (signedIn()) {
+      <div class="filters__switch">
+        <span aria-hidden="true">{{ 'MAIN_PAGE.followed' | translate }}</span>
+        <app-switch
+          [formControl]="f.controls.followed"
+          [label]="'MAIN_PAGE.followed' | translate"
+        ></app-switch>
+      </div>
+    }
+    <div class="filters__switch">
+      <span aria-hidden="true">{{ 'MAIN_PAGE.includePast' | translate }}</span>
+      <app-switch
+        [formControl]="f.controls.includePast"
+        [label]="'MAIN_PAGE.includePast' | translate"
+      ></app-switch>
+    </div>
   </div>
 
   <div class="filters__footer">

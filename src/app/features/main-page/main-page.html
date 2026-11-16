@@ -152,6 +152,7 @@
         <app-feed-filters
           class="filters-popover"
           [form]="filtersForm"
+          [signedIn]="authService.isAuthenticated()"
           (clear)="clearFilters()"
           (done)="showFilters.set(false)"
         />

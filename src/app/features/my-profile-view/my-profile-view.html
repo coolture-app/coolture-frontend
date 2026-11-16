@@ -1,152 +1,223 @@
-<div class="profile">
-  <div class="profile__header">
-    @if (!isOwnProfile()) {
-      <app-btn variant="icon" routerLink="/profile">
-        <ng-icon name="heroArrowLeft" />
-      </app-btn>
-    }
-    <div class="profile__avatar-wrapper">
-      @if (user()?.avatar; as avatar) {
-        <img [src]="avatar.url" [alt]="user()?.username" class="profile__avatar" />
-      } @else {
-        <div class="profile__avatar profile__avatar--placeholder">
-          {{ user()?.firstName?.charAt(0) }}{{ user()?.lastName?.charAt(0) }}
-        </div>
+<div class="page">
+  <div class="profile">
+    <section class="profile__header">
+      @if (!isOwnProfile()) {
+        <app-back-link fallback="/people" />
       }
-      @if (isOwnProfile()) {
-        <label class="profile__avatar-upload">
-          <ng-icon name="heroCamera" />
-          <input
-            type="file"
-            accept="image/*"
-            (change)="onFileSelected($event)"
-            [disabled]="isUploadingAvatar()"
-          />
-        </label>
-        @if (user()?.avatar) {
-          <app-btn
-            variant="icon"
-            size="sm"
-            (btnClick)="onRemoveAvatar()"
-            [disabled]="isUploadingAvatar()"
+
+      <div class="profile__corner">
+        @if (isOwnProfile()) {
+          <a
+            class="profile__icon-btn"
+            routerLink="/profile/settings"
+            [attr.aria-label]="'SETTINGS.title' | translate"
+            [appTooltip]="'SETTINGS.title' | translate"
           >
-            <ng-icon name="heroXMark" />
-          </app-btn>
-        }
-      }
-    </div>
-
-    <div class="profile__info">
-      <h1 class="profile__name">{{ user()?.firstName }} {{ user()?.lastName }}</h1>
-      <span class="profile__username">&#64;{{ user()?.username }}</span>
-      @if (user()?.bio) {
-        <p class="profile__bio">{{ user()?.bio }}</p>
-      }
-    </div>
-
-    @if (isOwnProfile()) {
-      <div class="profile__actions">
-        <app-btn variant="secondary" size="sm" (btnClick)="toggleEdit()">
-          <ng-icon [name]="isEditing() ? 'heroXMark' : 'heroPencil'" />
-          {{ (isEditing() ? 'PROFILE.cancel' : 'PROFILE.editDescription') | translate }}
-        </app-btn>
-        <app-btn variant="secondary" size="sm" (btnClick)="toggleBlocked()">
-          <ng-icon name="heroNoSymbol" />
-          {{ 'PROFILE.blocked' | translate }}
-        </app-btn>
-        <app-btn variant="secondary" size="sm" routerLink="/profile/hidden" tabindex="-1">
-          <ng-icon name="heroEyeSlash" />
-          {{ 'PROFILE.hidden-posts' | translate }}
-        </app-btn>
-        <app-btn variant="secondary" size="sm" routerLink="/profile/interests" tabindex="-1">
-          <ng-icon name="heroPencil" />
-          {{ 'PROFILE.interests' | translate }}
-        </app-btn>
-        <app-btn
-          variant="secondary"
-          size="sm"
-          [label]="'PROFILE.homeHint' | translate"
-          (btnClick)="showHome.set(true)"
-        >
-          <ng-icon name="heroMapPin" />
-          {{ home()?.name ?? ('PROFILE.addHome' | translate) }}
-        </app-btn>
-      </div>
-    } @else {
-      <div class="profile__actions">
-        <app-btn
-          [variant]="user()?.isFollowing ? 'secondary' : 'primary'"
-          size="sm"
-          (btnClick)="toggleFollow()"
-        >
-          <ng-icon [name]="user()?.isFollowing ? 'heroUserMinus' : 'heroUserPlus'" />
-          {{ (user()?.isFollowing ? 'PROFILE.unfollow' : 'PROFILE.follow') | translate }}
-        </app-btn>
-        @if (user()?.isBlocked) {
-          <app-btn variant="secondary" size="sm" (btnClick)="onBlock()">
-            <ng-icon name="heroNoSymbol" />
-            {{ 'PROFILE.unblock' | translate }}
-          </app-btn>
-        } @else {
-          <app-btn variant="danger" size="sm" (btnClick)="onBlock()">
-            <ng-icon name="heroNoSymbol" />
-            {{ 'PROFILE.block' | translate }}
-          </app-btn>
+            <ng-icon name="lucideSettings" aria-hidden="true" />
+          </a>
+        } @else if (user()) {
+          <button
+            type="button"
+            class="profile__icon-btn"
+            aria-haspopup="true"
+            [attr.aria-expanded]="menuOpen()"
+            [attr.aria-label]="'PROFILE.more' | translate"
+            [appTooltip]="'PROFILE.more' | translate"
+            (click)="toggleMenu()"
+            (keydown.escape)="closeMenu($event)"
+          >
+            <ng-icon name="lucideEllipsis" aria-hidden="true" />
+          </button>
+          @if (menuOpen()) {
+            <div class="profile__menu">
+              <button
+                type="button"
+                class="profile__menu-item"
+                [class.profile__menu-item--danger]="!user()?.isBlocked"
+                (click)="onBlock()"
+                (keydown.escape)="closeMenu($event)"
+              >
+                {{ (user()?.isBlocked ? 'PROFILE.unblock' : 'PROFILE.block') | translate }}
+              </button>
+            </div>
+          }
         }
       </div>
-    }
-  </div>
 
-  <div class="profile__stats">
-    <button class="profile__stat" (click)="toggleFollowers()">
-      <span class="profile__stat-value">{{ followersCount() }}</span>
-      <span class="profile__stat-label">{{ 'PROFILE.followers' | translate }}</span>
-    </button>
-    <button class="profile__stat" (click)="toggleFollowing()">
-      <span class="profile__stat-value">{{ followingCount() }}</span>
-      <span class="profile__stat-label">{{ 'PROFILE.following' | translate }}</span>
-    </button>
-  </div>
-
-  @if (user()?.createdAt) {
-    <p class="profile__joined">
-      {{ 'PROFILE.joined' | translate }}: {{ user()?.createdAt | date: dateFormats().mediumDate }}
-    </p>
-  }
-</div>
-
-@if (isEditing()) {
-  <div
-    class="profile__modal-overlay"
-    (click)="toggleEdit()"
-    (keydown.escape)="toggleEdit()"
-    tabindex="0"
-  >
-    <div
-      class="profile__modal"
-      (click)="$event.stopPropagation()"
-      (keydown.escape)="toggleEdit()"
-      tabindex="0"
-    >
-      <div class="profile__modal-header">
-        <h2>{{ 'PROFILE.editDescription' | translate }}</h2>
-        <app-btn variant="icon" (btnClick)="toggleEdit()">
-          <ng-icon name="heroXMark" />
-        </app-btn>
-      </div>
-      <form [formGroup]="editForm" (ngSubmit)="onSave()">
-        <div class="profile__field">
-          <label class="profile__label" for="bio">{{ 'PROFILE.bio' | translate }}</label>
-          <textarea id="bio" formControlName="bio" class="profile__textarea" rows="4"></textarea>
+      <div class="profile__top" [class.profile__top--own]="isOwnProfile()">
+        <div class="profile__avatar-wrapper">
+          @if (user()?.avatar; as avatar) {
+            <button
+              type="button"
+              class="profile__avatar-view"
+              [attr.aria-label]="'PROFILE.showAvatar' | translate"
+              (click)="showAvatar()"
+            >
+              <img [src]="avatar.url" [alt]="user()?.username" class="profile__avatar" />
+            </button>
+          } @else {
+            <div class="profile__avatar profile__avatar--placeholder">
+              {{ user()?.firstName?.charAt(0) }}{{ user()?.lastName?.charAt(0) }}
+            </div>
+          }
+          @if (isOwnProfile()) {
+            @let hasPhoto = !!user()?.avatar;
+            <button
+              type="button"
+              class="profile__avatar-badge"
+              [attr.aria-label]="
+                (hasPhoto ? 'PROFILE.changeAvatar' : 'PROFILE.addAvatar') | translate
+              "
+              [attr.aria-haspopup]="hasPhoto ? 'menu' : null"
+              [attr.aria-expanded]="hasPhoto ? avatarMenuOpen() : null"
+              [appTooltip]="(hasPhoto ? 'PROFILE.changeAvatar' : 'PROFILE.addAvatar') | translate"
+              [disabled]="isUploadingAvatar()"
+              (click)="onAvatarTap()"
+            >
+              <ng-icon [name]="hasPhoto ? 'lucideCamera' : 'lucidePlus'" aria-hidden="true" />
+            </button>
+            <input
+              #avatarInput
+              class="profile__avatar-input"
+              type="file"
+              accept="image/*"
+              tabindex="-1"
+              aria-hidden="true"
+              (change)="onFileSelected($event)"
+            />
+            @if (avatarMenuOpen()) {
+              <div class="profile__menu profile__menu--avatar" role="menu">
+                <button
+                  type="button"
+                  role="menuitem"
+                  class="profile__menu-item"
+                  (click)="avatarInput.click()"
+                  (keydown.escape)="closeAvatarMenu($event)"
+                >
+                  {{ 'PROFILE.changeAvatar' | translate }}
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  class="profile__menu-item profile__menu-item--danger"
+                  (click)="onRemoveAvatar()"
+                  (keydown.escape)="closeAvatarMenu($event)"
+                >
+                  {{ 'PROFILE.removeAvatar' | translate }}
+                </button>
+              </div>
+            }
+          }
         </div>
-        <app-btn variant="primary" type="submit">
-          <ng-icon name="heroCheck" />
-          {{ 'PROFILE.save' | translate }}
-        </app-btn>
-      </form>
-    </div>
+
+        <div class="profile__stats">
+          <button type="button" class="profile__stat" (click)="toggleFollowers()">
+            <span class="profile__stat-value">{{ followersCount() }}</span>
+            <span class="profile__stat-label">{{ 'PROFILE.followers' | translate }}</span>
+          </button>
+          <button type="button" class="profile__stat" (click)="toggleFollowing()">
+            <span class="profile__stat-value">{{ followingCount() }}</span>
+            <span class="profile__stat-label">{{ 'PROFILE.following' | translate }}</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="profile__names">
+        <h1 class="profile__name">{{ user()?.firstName }} {{ user()?.lastName }}</h1>
+        <span class="profile__handle">
+          <span class="profile__username">&#64;{{ user()?.username }}</span>
+          @if (!isOwnProfile()) {
+            <app-relation-pill
+              [following]="!!user()?.isFollowing"
+              [followsYou]="!!user()?.followsYou"
+            />
+          }
+        </span>
+      </div>
+
+      @if (isOwnProfile()) {
+        <div class="profile__actions">
+          <app-btn variant="secondary" size="sm" routerLink="/profile/interests" tabindex="-1">
+            <ng-icon name="lucideHeart" aria-hidden="true" />
+            {{ 'PROFILE.interests' | translate }}
+          </app-btn>
+          <app-btn
+            variant="secondary"
+            size="sm"
+            [label]="'PROFILE.homeHint' | translate"
+            (btnClick)="showHome.set(true)"
+          >
+            <ng-icon name="lucideMapPin" aria-hidden="true" />
+            {{ home()?.name ?? ('PROFILE.addHome' | translate) }}
+          </app-btn>
+        </div>
+      } @else if (user()) {
+        <div class="profile__actions">
+          <app-follow-btn [following]="!!user()?.isFollowing" (toggled)="toggleFollow()" />
+        </div>
+      }
+
+      @if (interests().length) {
+        <ul class="profile__interests" [attr.aria-label]="'PROFILE.interests' | translate">
+          @for (interest of interests(); track interest.key) {
+            <li class="profile__interest">{{ interest.label }}</li>
+          }
+        </ul>
+      }
+
+      @if (editingBio()) {
+        <form
+          class="profile__bio profile__bio--editing"
+          (submit)="$event.preventDefault(); saveBio()"
+        >
+          <textarea
+            #bioInput
+            class="profile__textarea"
+            rows="4"
+            maxlength="512"
+            [attr.aria-label]="'PROFILE.bio' | translate"
+            [value]="bioDraft()"
+            (input)="bioDraft.set($any($event.target).value)"
+            (keydown.escape)="cancelEditingBio()"
+          ></textarea>
+          <div class="profile__bio-buttons">
+            <app-btn variant="secondary" size="sm" (btnClick)="cancelEditingBio()">
+              {{ 'PROFILE.cancel' | translate }}
+            </app-btn>
+            <app-btn variant="primary" size="sm" type="submit" [disabled]="savingBio()">
+              {{ 'PROFILE.save' | translate }}
+            </app-btn>
+          </div>
+        </form>
+      } @else if (user()?.bio) {
+        <div class="profile__bio">
+          <p class="profile__bio-text">{{ user()?.bio }}</p>
+          @if (isOwnProfile()) {
+            <button
+              type="button"
+              class="profile__bio-edit"
+              [attr.aria-label]="'PROFILE.editDescription' | translate"
+              [appTooltip]="'PROFILE.editDescription' | translate"
+              (click)="startEditingBio()"
+            >
+              <ng-icon name="lucidePencil" aria-hidden="true" />
+            </button>
+          }
+        </div>
+      } @else if (isOwnProfile() && user()) {
+        <button type="button" class="profile__bio profile__bio--empty" (click)="startEditingBio()">
+          {{ 'PROFILE.bioPlaceholder' | translate }}
+        </button>
+      }
+
+      @if (since()) {
+        <p class="profile__since">{{ 'PROFILE.since' | translate: { date: since() } }}</p>
+      }
+    </section>
+
+    <!-- The user's own posts go here, as a section after the header. -->
   </div>
-}
+</div>
 
 @if (showHome()) {
   <div
@@ -176,40 +247,10 @@
   />
 }
 
-@if (showBlocked()) {
-  <div
-    class="profile__modal-overlay"
-    (click)="toggleBlocked()"
-    (keydown.escape)="toggleBlocked()"
-    tabindex="0"
-  >
-    <div
-      class="profile__modal"
-      (click)="$event.stopPropagation()"
-      (keydown.escape)="toggleBlocked()"
-      tabindex="0"
-    >
-      <div class="profile__modal-header">
-        <h2>{{ 'PROFILE.blocked' | translate }}</h2>
-        <app-btn variant="icon" (btnClick)="toggleBlocked()">
-          <ng-icon name="heroXMark" />
-        </app-btn>
-      </div>
-      <div class="profile__blocked-list">
-        @for (user of blockedUsers(); track user.id) {
-          <div class="profile__blocked-user">
-            <div class="profile__blocked-info">
-              <span class="profile__blocked-name">{{ user.firstName }} {{ user.lastName }}</span>
-              <span class="profile__blocked-username">&#64;{{ user.username }}</span>
-            </div>
-            <app-btn variant="secondary" size="sm" (btnClick)="onUnblock(user.id)">
-              {{ 'PROFILE.unblock' | translate }}
-            </app-btn>
-          </div>
-        } @empty {
-          <p class="profile__empty">{{ 'PROFILE.no-blocked' | translate }}</p>
-        }
-      </div>
-    </div>
-  </div>
+@if (pickedFile(); as file) {
+  <app-avatar-cropper
+    [file]="file"
+    (saved)="uploadAvatar($event)"
+    (cancelled)="pickedFile.set(null)"
+  />
 }

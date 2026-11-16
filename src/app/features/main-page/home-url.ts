@@ -17,7 +17,6 @@ export interface HomeUrlState {
 
 const SORTS: readonly PostsSort[] = ['UPCOMING', 'NEAREST', 'POPULAR', 'RECENT'];
 const TYPES: readonly string[] = ['OFFLINE', 'ONLINE'];
-const VISIBILITIES: readonly string[] = ['PUBLIC', 'PRIVATE', 'FRIENDS'];
 /** What a `datetime-local` input holds. Anything else would throw when it's turned into a date. */
 const LOCAL_TIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/;
 
@@ -33,7 +32,7 @@ export function toHomeParams({ search, filters, tab, sort, point, map }: HomeUrl
     ...(filters.tags.trim() && { tags: filters.tags.trim() }),
     ...(filters.startsFrom && { from: filters.startsFrom }),
     ...(filters.startsTo && { to: filters.startsTo }),
-    ...(filters.visibility && { visibility: filters.visibility.toLowerCase() }),
+    ...(filters.followed && { followed: 'true' }),
     ...(filters.includePast && { past: 'true' }),
     ...(filters.place && point && { radius: String(filters.radiusKm) }),
     ...(point && { lat: String(point.latitude), lng: String(point.longitude) }),
@@ -71,7 +70,7 @@ export function fromHomeParams(params: Params): HomeUrlState {
       tags: text('tags'),
       startsFrom: localTime('from'),
       startsTo: localTime('to'),
-      visibility: oneOf('visibility', VISIBILITIES),
+      followed: text('followed') === 'true',
       includePast: text('past') === 'true',
       // A radius with no point asks for the reader's own position.
       place: hasRadius ? (point ? 'picked' : 'mine') : '',

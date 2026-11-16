@@ -11,6 +11,7 @@ import { PostFilterParams } from '../../models/posts/post-filter-params.model';
 import { FeedPage } from '../../models/posts/feed-page.model';
 import { GeoPoint } from '../../models/common/geo.model';
 import { PostMark } from '../../models/posts/post-mark.model';
+import { PostFriends } from '../../models/posts/friend-stances.model';
 
 /**
  * The first page may send a location for proximity, which the cursor then holds. The filters go with
@@ -29,7 +30,7 @@ function filterParams(filters: PostFilterParams): HttpParams {
   if (filters.q) params = params.set('q', filters.q);
   if (filters.authorId) params = params.set('authorId', filters.authorId);
   if (filters.status) params = params.set('status', filters.status);
-  if (filters.visibility) params = params.set('visibility', filters.visibility);
+  if (filters.followed) params = params.set('followed', true);
   if (filters.type) params = params.set('type', filters.type);
   if (filters.startsFrom) params = params.set('startsFrom', filters.startsFrom);
   if (filters.startsTo) params = params.set('startsTo', filters.startsTo);
@@ -111,6 +112,10 @@ export class PostService {
 
   getPost(id: string): Observable<PostDetail> {
     return this.http.get<PostDetail>(this.apiUrl.path(`/posts/${id}`));
+  }
+
+  getFriends(id: string): Observable<PostFriends> {
+    return this.http.get<PostFriends>(this.apiUrl.path(`/posts/${id}/friends`));
   }
 
   addPost(payload: PostCreateRequest): Observable<PostDetail> {

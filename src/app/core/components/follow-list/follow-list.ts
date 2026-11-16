@@ -14,21 +14,23 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { heroUserPlus, heroUserMinus, heroNoSymbol, heroXMark } from '@ng-icons/heroicons/outline';
+import { heroXMark } from '@ng-icons/heroicons/outline';
 
 import { AuthService } from '../../services/auth/auth.service';
 import { RelationsService } from '../../services/relations/relations.service';
-import { UserSummary } from '../../models/users/user-summary.model';
+import { UserListItem } from '../../models/users/user-summary.model';
 import { PaginationInfo } from '../../models/common/paginated-response.model';
 import { Btn } from '../btn/btn';
+import { FollowBtn } from '../follow-btn/follow-btn';
+import { RelationPill } from '../relation-pill/relation-pill';
 
 export type FollowListType = 'followers' | 'following';
 
 @Component({
   selector: 'app-follow-list',
   standalone: true,
-  imports: [CommonModule, TranslatePipe, NgIcon, RouterModule, Btn],
-  viewProviders: [provideIcons({ heroUserPlus, heroUserMinus, heroNoSymbol, heroXMark })],
+  imports: [CommonModule, TranslatePipe, NgIcon, RouterModule, Btn, FollowBtn, RelationPill],
+  viewProviders: [provideIcons({ heroXMark })],
   templateUrl: './follow-list.html',
   styleUrl: './follow-list.scss',
 })
@@ -44,7 +46,7 @@ export class FollowListComponent implements OnInit {
   closeList = output<void>();
   followChanged = output<{ deltaFollowers: number; deltaFollowing: number }>();
 
-  users = signal<UserSummary[]>([]);
+  users = signal<UserListItem[]>([]);
   followingIds = signal<Set<string>>(new Set());
   isLoadingInitial = signal(false);
   isLoadingMore = signal(false);
@@ -74,23 +76,35 @@ export class FollowListComponent implements OnInit {
     }
   }
 
-  canFollow(user: UserSummary): boolean {
+  canFollow(user: UserListItem): boolean {
     const currentUserId = this.authService.currentUser()?.id;
-    return !!currentUserId && user.id !== currentUserId && !this.followingIds().has(user.id);
+    return !!currentUserId && user.id !== currentUserId;
   }
 
-  async onFollow(user: UserSummary): Promise<void> {
+  /** The row stays after an unfollow, so a mistaken tap can be undone. */
+  async toggleFollow(user: UserListItem): Promise<void> {
+    const following = this.followingIds().has(user.id);
     this.actionUserId.set(user.id);
     try {
-      await firstValueFrom(this.relationsService.follow(user.id));
+      await firstValueFrom(
+        following ? this.relationsService.unfollow(user.id) : this.relationsService.follow(user.id),
+      );
       this.followingIds.update((set) => {
-        const newSet = new Set(set);
-        newSet.add(user.id);
-        return newSet;
+        const next = new Set(set);
+        if (following) {
+          next.delete(user.id);
+        } else {
+          next.add(user.id);
+        }
+        return next;
       });
-      this.followChanged.emit({ deltaFollowers: 0, deltaFollowing: 1 });
+      this.updateUserFollowState(user.id, !following);
+      // Only your own counts are on screen; someone else's following count doesn't change.
+      if (this.isOwnProfile()) {
+        this.followChanged.emit({ deltaFollowers: 0, deltaFollowing: following ? -1 : 1 });
+      }
     } catch (err) {
-      console.error('Error following user', err);
+      console.error('Error toggling follow', err);
     } finally {
       this.actionUserId.set(null);
     }
@@ -122,7 +136,7 @@ export class FollowListComponent implements OnInit {
 
   private fetchPage(
     cursor: string | null,
-    onSuccess: (items: UserSummary[], hasMore: boolean, nextCursor: string | null) => void,
+    onSuccess: (items: UserListItem[], hasMore: boolean, nextCursor: string | null) => void,
   ): void {
     const pagination: PaginationInfo = { limit: 20, cursor: cursor ?? '' };
 
@@ -140,61 +154,6 @@ export class FollowListComponent implements OnInit {
     });
   }
 
-  async onToggleFollow(user: UserSummary, isCurrentlyFollowing: boolean): Promise<void> {
-    this.actionUserId.set(user.id);
-    try {
-      if (isCurrentlyFollowing) {
-        await firstValueFrom(this.relationsService.unfollow(user.id));
-        if (!this.isFollowersPanel()) {
-          this.users.update((list) => list.filter((u) => u.id !== user.id));
-        } else {
-          this.updateUserFollowState(user.id, false);
-        }
-        this.followChanged.emit({ deltaFollowers: 0, deltaFollowing: -1 });
-      } else {
-        await firstValueFrom(this.relationsService.follow(user.id));
-        this.updateUserFollowState(user.id, true);
-        this.followChanged.emit({ deltaFollowers: 0, deltaFollowing: 1 });
-      }
-    } catch (err) {
-      console.error('Error toggling follow', err);
-    } finally {
-      this.actionUserId.set(null);
-    }
-  }
-
-  async onRemoveFollower(user: UserSummary): Promise<void> {
-    if (!confirm('Block this follower?')) return;
-    this.actionUserId.set(user.id);
-    try {
-      await firstValueFrom(this.relationsService.block(user.id));
-      this.users.update((list) => list.filter((u) => u.id !== user.id));
-    } catch (err) {
-      console.error('Error removing follower', err);
-    } finally {
-      this.actionUserId.set(null);
-    }
-  }
-
-  async onToggleBlock(user: UserSummary, isCurrentlyBlocked: boolean): Promise<void> {
-    if (!confirm(isCurrentlyBlocked ? 'Unblock this user?' : 'Block this user?')) return;
-    this.actionUserId.set(user.id);
-    try {
-      if (isCurrentlyBlocked) {
-        await firstValueFrom(this.relationsService.unblock(user.id));
-      } else {
-        await firstValueFrom(this.relationsService.block(user.id));
-      }
-      this.users.update((list) =>
-        list.map((u) => (u.id === user.id ? { ...u, isBlocked: !isCurrentlyBlocked } : u)),
-      );
-    } catch (err) {
-      console.error('Error toggling block', err);
-    } finally {
-      this.actionUserId.set(null);
-    }
-  }
-
   onClose(): void {
     this.closeList.emit();
   }
@@ -202,9 +161,7 @@ export class FollowListComponent implements OnInit {
   private updateUserFollowState(userId: string, isFollowing: boolean): void {
     this.users.update((list) =>
       list.map((u) =>
-        u.id === userId
-          ? { ...u, isFollowing, followersCount: u.followersCount + (isFollowing ? 1 : -1) }
-          : u,
+        u.id === userId ? { ...u, followersCount: u.followersCount + (isFollowing ? 1 : -1) } : u,
       ),
     );
   }

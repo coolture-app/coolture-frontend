@@ -1,13 +1,8 @@
 import { UserSummary } from '../users/user-summary.model';
 import { EventLocation } from '../common/geo.model';
 import { MediaResource } from '../media/media-resource.model';
-import {
-  PostType,
-  PostStatus,
-  PostVisibility,
-  ReactionType,
-  ParticipationType,
-} from '../common/enums';
+import { PostType, PostStatus, ReactionType, ParticipationType } from '../common/enums';
+import { FriendStances } from './friend-stances.model';
 
 // Fields without a value are left out of the JSON, not sent as null.
 export interface PostBase {
@@ -28,11 +23,12 @@ export interface PostBase {
   commentsCount: number;
   type: PostType;
   status: PostStatus;
-  visibility: PostVisibility;
   createdAt: string; // ISO-8601
   lastModifiedAt?: string; // ISO-8601
   deletedAt?: string; // ISO-8601
   myReaction?: ReactionType;
   myParticipation?: ParticipationType;
   coverMedia?: MediaResource;
+  /** Left out for a guest, or when no friend took a stance. */
+  friendStances?: FriendStances;
 }

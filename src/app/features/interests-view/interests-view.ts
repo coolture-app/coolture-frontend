@@ -13,6 +13,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { CanDeactivateFn, Router } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { firstValueFrom, forkJoin, map, of } from 'rxjs';
+import { BackLink } from '../../core/components/back-link/back-link';
 import { Btn } from '../../core/components/btn/btn';
 import { ModalWindow } from '../../core/components/modal/modal-window/modal-window';
 import {
@@ -28,7 +29,7 @@ export const unsavedInterestsGuard: CanDeactivateFn<InterestsView> = (component)
 
 @Component({
   selector: 'app-interests-view',
-  imports: [TranslatePipe, Btn, ModalWindow],
+  imports: [TranslatePipe, BackLink, Btn, ModalWindow],
   templateUrl: './interests-view.html',
   styleUrl: './interests-view.scss',
 })
@@ -143,11 +144,11 @@ export class InterestsView implements OnInit {
     this.saving.set(true);
     this.errorKey.set(null);
     try {
-      await firstValueFrom(
+      const saved = await firstValueFrom(
         this.interestsService.replaceUserInterests(this.authService.userId(), [...this.selected()]),
       );
       this.savedInterests = this.interestsSnapshot();
-      this.authService.markInterestsSelected();
+      this.authService.markInterestsSelected(saved.interests);
       return true;
     } catch (error) {
       console.error('Error while saving interests', error);

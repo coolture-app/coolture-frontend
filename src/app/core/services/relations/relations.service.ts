@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ApiUrlService } from '../api-url.service';
 import { PaginatedResponse, PaginationInfo } from '../../models/common/paginated-response.model';
-import { UserSummary } from '../../models/users/user-summary.model';
+import { UserListItem } from '../../models/users/user-summary.model';
 
 @Injectable({
   providedIn: 'root',
@@ -15,8 +15,8 @@ export class RelationsService {
   getFollowers(
     userId: string,
     pagination?: PaginationInfo,
-  ): Observable<PaginatedResponse<UserSummary>> {
-    return this.http.get<PaginatedResponse<UserSummary>>(
+  ): Observable<PaginatedResponse<UserListItem>> {
+    return this.http.get<PaginatedResponse<UserListItem>>(
       this.apiUrl.path(`/users/${userId}/followers`),
       { params: this.paginationParams(pagination) },
     );
@@ -25,8 +25,8 @@ export class RelationsService {
   getFollowing(
     userId: string,
     pagination?: PaginationInfo,
-  ): Observable<PaginatedResponse<UserSummary>> {
-    return this.http.get<PaginatedResponse<UserSummary>>(
+  ): Observable<PaginatedResponse<UserListItem>> {
+    return this.http.get<PaginatedResponse<UserListItem>>(
       this.apiUrl.path(`/users/${userId}/following`),
       { params: this.paginationParams(pagination) },
     );
@@ -35,8 +35,8 @@ export class RelationsService {
   getBlocking(
     userId: string,
     pagination?: PaginationInfo,
-  ): Observable<PaginatedResponse<UserSummary>> {
-    return this.http.get<PaginatedResponse<UserSummary>>(
+  ): Observable<PaginatedResponse<UserListItem>> {
+    return this.http.get<PaginatedResponse<UserListItem>>(
       this.apiUrl.path(`/users/${userId}/blocking`),
       { params: this.paginationParams(pagination) },
     );

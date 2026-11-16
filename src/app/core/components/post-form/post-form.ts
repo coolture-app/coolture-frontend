@@ -35,7 +35,7 @@ import { PostPhotos } from '../post-photos/post-photos';
 
 import { PostFormData } from '../../models/posts/post-form-data.model';
 import { PostDetail, PostMedia } from '../../models/posts/post-detail.model';
-import { PostType, PostVisibility } from '../../models/common/enums';
+import { PostType } from '../../models/common/enums';
 import { EventLocationRequest } from '../../models/common/geo.model';
 
 /**
@@ -59,12 +59,6 @@ function endAfterStart(form: AbstractControl): ValidationErrors | null {
   }
   return null;
 }
-
-const VISIBILITY_LABELS: Record<PostVisibility, string> = {
-  PUBLIC: 'POST_FORM.visibility-public',
-  FRIENDS: 'POST_FORM.visibility-friends',
-  PRIVATE: 'POST_FORM.visibility-private',
-};
 
 @Component({
   selector: 'app-post-form',
@@ -101,15 +95,6 @@ export class PostForm implements OnInit, OnChanges, OnDestroy {
   /** Most events have no end, so its field waits for "Dodaj zakończenie". */
   showEnd = false;
 
-  /** Prywatne left the form. A post saved as private keeps it while being edited. */
-  get visibilityOptions(): { value: PostVisibility; labelKey: string }[] {
-    const values: PostVisibility[] =
-      this.initialData?.visibility === 'PRIVATE'
-        ? ['PUBLIC', 'FRIENDS', 'PRIVATE']
-        : ['PUBLIC', 'FRIENDS'];
-    return values.map((value) => ({ value, labelKey: VISIBILITY_LABELS[value] }));
-  }
-
   readonly locationGroup = locationForm();
 
   postForm = this.fb.group(
@@ -120,7 +105,6 @@ export class PostForm implements OnInit, OnChanges, OnDestroy {
       endsAt: [''],
       description: ['', [Validators.required, Validators.maxLength(1024)]],
       eventUrl: [''],
-      visibility: ['PUBLIC' as PostVisibility, Validators.required],
       location: this.locationGroup,
     },
     { validators: endAfterStart },
@@ -176,7 +160,6 @@ export class PostForm implements OnInit, OnChanges, OnDestroy {
       endsAt: toLocalInputValue(post.endsAt),
       description: post.description ?? '',
       eventUrl: post.eventUrl ?? '',
-      visibility: post.visibility ?? 'PUBLIC',
       location: {
         venueName: location?.venueName ?? '',
         street: location?.street ?? '',
@@ -232,7 +215,6 @@ export class PostForm implements OnInit, OnChanges, OnDestroy {
       endsAt: this.showEnd && form.endsAt ? new Date(form.endsAt).toISOString() : null,
       description: form.description ?? '',
       eventUrl: form.eventUrl?.trim() || null,
-      visibility: form.visibility ?? 'PUBLIC',
       location: form.type === 'OFFLINE' ? this.locationRequest() : null,
       mediaIds: photos.mediaIds(),
       removedMediaIds: photos.removedMediaIds,
@@ -275,7 +257,7 @@ export class PostForm implements OnInit, OnChanges, OnDestroy {
   }
 
   resetForm(): void {
-    this.postForm.reset({ type: 'OFFLINE', visibility: 'PUBLIC' });
+    this.postForm.reset({ type: 'OFFLINE' });
     this.matchLocationTo('OFFLINE');
     this.showEnd = false;
     this.photos().reset();

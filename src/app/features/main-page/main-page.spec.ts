@@ -15,6 +15,7 @@ import { InfiniteScroll } from '../../core/directives/infinite-scroll';
 import { HomeTapService } from '../../core/services/home-tap/home-tap.service';
 import { ToastService } from '../../core/services/toast/toast.service';
 import { AuthService } from '../../core/services/auth/auth.service';
+import { of, Subject } from 'rxjs';
 
 @Component({ template: '' })
 class OtherPage {}
@@ -33,7 +34,6 @@ function card(id: string): PostCard {
     commentsCount: 0,
     type: 'ONLINE',
     status: 'ACTIVE',
-    visibility: 'PUBLIC',
     createdAt: '2026-11-01T00:00:00Z',
   };
 }
@@ -1187,6 +1187,45 @@ describe('MainPage', () => {
       expect(component.searchControl.value).toBe('jazz');
       expect(component.activeFilterCount()).toBe(2);
       posts.flush(page());
+    });
+
+    it('waits for /auth/me before a linked Od obserwowanych, as a reload starts before it answers', async () => {
+      const auth = TestBed.inject(AuthService);
+      const session = new Subject<boolean>();
+      spyOn(auth, 'checkSession').and.returnValue(session);
+      await router.navigateByUrl('/?followed=true');
+
+      await open();
+      http.expectNone((r) => r.url.endsWith('/feed'));
+      auth.currentUser.set({
+        id: 'me',
+        username: 'jan',
+        followersCount: 0,
+        followingCount: 0,
+        isFollowing: false,
+        isBlocked: false,
+        followsYou: false,
+        interests: [],
+      });
+      session.next(true);
+      await settle();
+
+      const feed = expectFeed();
+      expect(param(feed, 'followed')).toBe('true');
+      expect(component.filtersForm.controls.followed.value).toBeTrue();
+      feed.flush({ ...page(), mode: 'RANKED' });
+    });
+
+    it('drops a linked Od obserwowanych for a guest, from the switch and the URL too', async () => {
+      spyOn(TestBed.inject(AuthService), 'checkSession').and.returnValue(of(false));
+      await router.navigateByUrl('/?followed=true&past=true');
+
+      await open();
+
+      expect(param(expectFeed(), 'followed')).toBeNull();
+      expect(component.filtersForm.controls.followed.value).toBeFalse();
+      await settle();
+      expect(router.url).toBe('/?past=true');
     });
 
     it('clears a value it can’t use from the URL', async () => {

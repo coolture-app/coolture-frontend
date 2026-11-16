@@ -1,5 +1,10 @@
 <main class="interests">
-  <h1>{{ 'INTERESTS.title' | translate }}</h1>
+  <div class="interests__head">
+    @if (!onboarding()) {
+      <app-back-link fallback="/profile" />
+    }
+    <h1>{{ 'INTERESTS.title' | translate }}</h1>
+  </div>
 
   @if (catalog(); as catalog) {
     <p class="interests__subtitle">

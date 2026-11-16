@@ -1,5 +1,6 @@
 import { ParticipationType, ReactionType } from '../common/enums';
 import { GeoPoint } from '../common/geo.model';
+import { FriendStances } from './friend-stances.model';
 
 export interface PostMark {
   id: string;
@@ -18,4 +19,5 @@ export interface PostMark {
   /** The viewer's own; left out for a guest. */
   myReaction?: ReactionType;
   myParticipation?: ParticipationType;
+  friendStances?: FriendStances;
 }

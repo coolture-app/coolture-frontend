@@ -7,11 +7,17 @@ export interface UserProfile extends UserSummary {
   createdAt?: string;
   isFollowing: boolean;
   isBlocked: boolean;
+  /** With isFollowing, both true means you're friends. */
+  followsYou: boolean;
+  /** Interest keys, in the catalogue's order. */
+  interests: string[];
 }
 
 /** The `/auth/me` response: the caller's profile plus account state only the caller sees. */
 export interface Me extends UserProfile {
   interestsSelected: boolean;
+  /** Whether friends see the caller's Interesuje mnie and Biorę udział. */
+  shareStances: boolean;
   /** Where the caller lives, if they said. Nobody else can read it. */
   home?: NamedPlace;
 }

@@ -27,7 +27,6 @@ function card(overrides: Partial<PostCard> = {}): PostCard {
     commentsCount: 0,
     type: 'OFFLINE',
     status: 'ACTIVE',
-    visibility: 'PUBLIC',
     createdAt: '2026-11-01T00:00:00Z',
     ...overrides,
   };
@@ -127,7 +126,65 @@ describe('PostComponent', () => {
     const labels = Array.from(element().querySelectorAll('.post__stances button')).map((b) =>
       b.getAttribute('aria-label'),
     );
+    expect(labels).toEqual([
+      'POST.interested · POST.friendsSee',
+      'POST.takes_part · POST.friendsSee',
+    ]);
+  });
+
+  it('says friends see a stance only while the viewer shares them', () => {
+    const auth = TestBed.inject(AuthService);
+    auth.currentUser.set({ id: 'u1' } as UserProfile);
+    auth.markShareStances(false);
+    render(card({ participantCount: 0, interestedCount: 0 }));
+
+    const labels = Array.from(element().querySelectorAll('.post__stances button')).map((b) =>
+      b.getAttribute('aria-label'),
+    );
     expect(labels).toEqual(['POST.interested', 'POST.takes_part']);
+  });
+
+  it('names the friends who go or are interested, above the author', () => {
+    render(
+      card({
+        friendStances: {
+          going: {
+            count: 3,
+            people: [
+              { id: 'f1', username: 'anna_demo', firstName: 'Anna' },
+              { id: 'f2', username: 'jan_demo' },
+            ],
+          },
+          interested: { count: 1, people: [{ id: 'f3', username: 'ola', firstName: 'Ola' }] },
+        },
+      }),
+    );
+
+    const line = element().querySelector('.post__friends .friends');
+    expect(line?.getAttribute('aria-label')).toBe('POST.friendsGoing · POST.friendsInterested');
+    expect(
+      Array.from(line!.querySelectorAll('.friends__names')).map((n) => n.textContent?.trim()),
+    ).toEqual(['Anna, jan_demo +1', 'Ola']);
+    expect(line!.querySelectorAll('.friends__face').length).toBe(3);
+  });
+
+  it('opens the friends list from the friends line', () => {
+    const data = card({
+      friendStances: { going: { count: 1, people: [{ id: 'f1', username: 'anna_demo' }] } },
+    });
+    render(data);
+
+    (element().querySelector('.post__friends .friends') as HTMLButtonElement).click();
+
+    const sheet = TestBed.inject(CommentsSheetService);
+    expect(sheet.content()).toBe('friends');
+    expect(sheet.post()).toBe(data);
+  });
+
+  it('shows no friends line when no friend took a stance', () => {
+    render(card());
+
+    expect(element().querySelector('app-friends-line')).toBeNull();
   });
 
   describe('the like count', () => {
@@ -158,7 +215,9 @@ describe('PostComponent', () => {
         element().querySelector(`[aria-label^="${label}"] .post__count`)?.textContent?.trim();
 
       expect(count('POST.interested')).toBe('3');
-      expect(element().querySelector('[aria-label="POST.interested (3)"]')).not.toBeNull();
+      expect(
+        element().querySelector('[aria-label="POST.interested (3) · POST.friendsSee"]'),
+      ).not.toBeNull();
       expect(count('POST.takes_part')).toBeUndefined();
 
       (element().querySelector('[aria-label^="POST.takes_part"]') as HTMLButtonElement).click();

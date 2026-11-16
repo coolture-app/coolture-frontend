@@ -12,11 +12,12 @@ import { PostFormData } from '../../core/models/posts/post-form-data.model';
 import { PostDetail, PostMedia } from '../../core/models/posts/post-detail.model';
 import { PostUpdateRequest } from '../../core/models/posts/post-update-request.model';
 import { BackService } from '../../core/services/back/back.service';
+import { BackLink } from '../../core/components/back-link/back-link';
 
 @Component({
   selector: 'app-edit-post-view',
   standalone: true,
-  imports: [CommonModule, TranslatePipe, PostForm],
+  imports: [CommonModule, TranslatePipe, PostForm, BackLink],
   templateUrl: './edit-post-view.html',
   styleUrl: './edit-post-view.scss',
 })
@@ -30,18 +31,19 @@ export class EditPostView implements OnInit {
 
   @ViewChild(PostForm) postFormComponent!: PostForm;
 
+  readonly postId = this.route.snapshot.paramMap.get('id') ?? '';
   currentPost = signal<PostDetail | null>(null);
   existingMedia = signal<PostMedia[]>([]);
 
   ngOnInit(): void {
-    const id = this.route.snapshot.paramMap.get('id');
-    if (id) {
+    if (this.postId) {
       this.postService
-        .getPost(id)
+        .getPost(this.postId)
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           next: (post) => {
             this.currentPost.set(post);
+            this.backService.rememberPostTitle(post.id, post.title);
             this.existingMedia.set(post.media || []);
           },
           error: (err) => {
@@ -63,7 +65,6 @@ export class EditPostView implements OnInit {
       endsAt: data.endsAt,
       description: data.description,
       eventUrl: data.eventUrl,
-      visibility: data.visibility,
       location: data.location,
       mediaIds: data.mediaIds,
     };

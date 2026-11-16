@@ -17,13 +17,14 @@ import { heroMagnifyingGlass } from '@ng-icons/heroicons/outline';
 import { AuthService } from '../../core/services/auth/auth.service';
 import { Users } from '../../core/services/users/users.service';
 import { RelationsService } from '../../core/services/relations/relations.service';
-import { UserSummary } from '../../core/models/users/user-summary.model';
+import { UserListItem } from '../../core/models/users/user-summary.model';
 import { PaginatedResponse } from '../../core/models/common/paginated-response.model';
-import { Btn } from '../../core/components/btn/btn';
+import { FollowBtn } from '../../core/components/follow-btn/follow-btn';
+import { RelationPill } from '../../core/components/relation-pill/relation-pill';
 
 @Component({
   selector: 'app-discover-view',
-  imports: [TranslatePipe, NgIcon, ReactiveFormsModule, RouterModule, Btn],
+  imports: [TranslatePipe, NgIcon, ReactiveFormsModule, RouterModule, FollowBtn, RelationPill],
   viewProviders: [provideIcons({ heroMagnifyingGlass })],
   templateUrl: './discover-view.html',
   styleUrl: './discover-view.scss',
@@ -37,7 +38,7 @@ export class DiscoverView implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   followingIds = signal<Set<string>>(new Set());
 
-  users = signal<PaginatedResponse<UserSummary>>({
+  users = signal<PaginatedResponse<UserListItem>>({
     items: [],
     page: { limit: 20, hasMore: false },
   });
@@ -77,7 +78,7 @@ export class DiscoverView implements OnInit, OnDestroy {
     }
   }
 
-  async toggleFollow(user: UserSummary) {
+  async toggleFollow(user: UserListItem) {
     const isCurrentlyFollowing = this.followingIds().has(user.id);
     try {
       if (isCurrentlyFollowing) {

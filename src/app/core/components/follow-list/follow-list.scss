@@ -126,8 +126,6 @@
 
     &--placeholder {
       @include avatar-placeholder(48px);
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      color: #fff;
     }
   }
 
@@ -145,10 +143,17 @@
     text-overflow: ellipsis;
   }
 
+  &__handle {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-xs) var(--space-sm);
+    margin-bottom: var(--space-xs);
+  }
+
   &__username {
-    color: #6b7280;
-    font-size: 0.875rem;
-    margin-bottom: 0.25rem;
+    color: var(--color-text-secondary);
+    font-size: var(--text-sm);
   }
 
   &__stats {

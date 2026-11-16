@@ -1,0 +1,50 @@
+@if (friends(); as friends) {
+  @for (
+    section of [
+      { people: friends.going, icon: 'appTicket', title: 'FRIENDS.going' },
+      { people: friends.interested, icon: 'lucideBookmark', title: 'FRIENDS.interested' },
+    ];
+    track section.icon
+  ) {
+    @if (section.people.length > 0) {
+      <section class="friends__section">
+        <h3 class="friends__heading">
+          <ng-icon [name]="section.icon" aria-hidden="true" />
+          {{ section.title | translate }} · {{ section.people.length }}
+        </h3>
+        <ul class="friends__list">
+          @for (friend of section.people; track friend.id) {
+            <li>
+              <a
+                class="friends__row"
+                [routerLink]="['/users', friend.username]"
+                [replaceUrl]="true"
+              >
+                @if (friend.avatarUrl) {
+                  <img class="friends__avatar" [src]="friend.avatarUrl" alt="" loading="lazy" />
+                } @else {
+                  <span class="friends__avatar friends__avatar--initial" aria-hidden="true">{{
+                    initial(friend)
+                  }}</span>
+                }
+                <span class="friends__name">{{ fullName(friend) }}</span>
+              </a>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+  }
+  @if (friends.going.length === 0 && friends.interested.length === 0) {
+    <p class="friends__note">{{ 'FRIENDS.empty' | translate }}</p>
+  }
+} @else if (failed()) {
+  <p class="friends__note" role="alert">
+    {{ 'FRIENDS.load-error' | translate }}
+    <button type="button" class="friends__retry" (click)="load()">
+      {{ 'COMMENT.retry' | translate }}
+    </button>
+  </p>
+} @else {
+  <p class="friends__note" role="status">{{ 'FRIENDS.loading' | translate }}</p>
+}

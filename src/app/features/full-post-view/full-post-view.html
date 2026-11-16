@@ -1,7 +1,5 @@
 <div class="page">
-  <app-btn variant="secondary" (btnClick)="goBack()">
-    {{ 'FULL_POST.back' | translate }}
-  </app-btn>
+  <app-back-link fallback="/" />
   @if (post()) {
     <app-post-component
       (deleteRequest)="removeChild($event)"

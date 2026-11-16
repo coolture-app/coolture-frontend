@@ -1,0 +1,60 @@
+<dialog
+  #dialog
+  class="cropper"
+  [attr.aria-label]="'AVATAR_CROP.title' | translate"
+  (cancel)="$event.preventDefault(); cancel()"
+>
+  <h2 class="cropper__title">{{ 'AVATAR_CROP.title' | translate }}</h2>
+
+  @if (failed()) {
+    <p class="cropper__error" role="alert">{{ 'AVATAR_CROP.loadError' | translate }}</p>
+  } @else {
+    <div
+      class="cropper__frame"
+      tabindex="0"
+      role="application"
+      [attr.aria-label]="'AVATAR_CROP.hint' | translate"
+      [style.width.px]="viewport"
+      [style.height.px]="viewport"
+      (pointerdown)="onPointerDown($event)"
+      (pointermove)="onPointerMove($event)"
+      (pointerup)="onPointerUp($event)"
+      (pointercancel)="onPointerUp($event)"
+      (wheel)="onWheel($event)"
+      (keydown)="onKey($event)"
+    >
+      <img
+        #image
+        class="cropper__image"
+        [src]="url()"
+        alt=""
+        draggable="false"
+        [style.visibility]="view() ? 'visible' : 'hidden'"
+        [style.transform]="transform()"
+        (load)="onLoad()"
+        (error)="failed.set(true)"
+      />
+      <div class="cropper__mask" aria-hidden="true"></div>
+    </div>
+    <p class="cropper__hint">{{ 'AVATAR_CROP.hint' | translate }}</p>
+    <label class="cropper__zoom">
+      <span>{{ 'AVATAR_CROP.zoom' | translate }}</span>
+      <input
+        type="range"
+        min="1"
+        [max]="maxZoom"
+        step="0.01"
+        [value]="zoom()"
+        [disabled]="!view()"
+        (input)="setZoom(+$any($event.target).value)"
+      />
+    </label>
+  }
+
+  <div class="cropper__buttons">
+    <app-btn variant="secondary" (btnClick)="cancel()">{{ 'PROFILE.cancel' | translate }}</app-btn>
+    <app-btn variant="primary" [disabled]="!view() || failed() || saving()" (btnClick)="save()">
+      {{ 'PROFILE.save' | translate }}
+    </app-btn>
+  </div>
+</dialog>

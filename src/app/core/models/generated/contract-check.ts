@@ -5,10 +5,11 @@ import type { components as Users } from './users-api';
 import type { FeedPage } from '../posts/feed-page.model';
 import type { PostCard } from '../posts/post-card.model';
 import type { PostMark } from '../posts/post-mark.model';
+import type { PostFriends } from '../posts/friend-stances.model';
 import type { PaginatedResponse } from '../common/paginated-response.model';
 import type { NamedPlace } from '../common/geo.model';
 import type { Me, UserProfile } from '../users/user-profile.model';
-import type { UserSummary } from '../users/user-summary.model';
+import type { UserListItem } from '../users/user-summary.model';
 import type { UserProfileUpdateRequest } from '../users/user-profile-update-request.model';
 import type { InterestCatalog, UserInterests } from '../interests/interest.model';
 
@@ -21,9 +22,10 @@ export type ContractCheck = [
   Accepts<PaginatedResponse<PostCard>, FeedSchemas['PostPage']>,
   Accepts<FeedPage, FeedSchemas['FeedPage']>,
   Accepts<PostMark, FeedSchemas['PostMark']>,
+  Accepts<PostFriends, FeedSchemas['PostFriends']>,
   Accepts<Me, UserSchemas['Me']>,
   Accepts<UserProfile, UserSchemas['UserProfile']>,
-  Accepts<PaginatedResponse<UserSummary>, UserSchemas['UserPage']>,
+  Accepts<PaginatedResponse<UserListItem>, UserSchemas['UserPage']>,
   Accepts<NamedPlace, UserSchemas['Home']>,
   Accepts<InterestCatalog, UserSchemas['InterestCatalog']>,
   Accepts<UserInterests, UserSchemas['UserInterests']>,

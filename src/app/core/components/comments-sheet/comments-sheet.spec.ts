@@ -11,6 +11,7 @@ import {
 } from '../../services/comments-sheet/comments-sheet.service';
 import { CommentsService } from '../../services/comments/comments.service';
 import { AuthService } from '../../services/auth/auth.service';
+import { HttpTestingController } from '@angular/common/http/testing';
 
 @Component({ template: '' })
 class OtherPage {}
@@ -167,6 +168,27 @@ describe('CommentsSheet', () => {
       expect(service.post()).not.toBeNull();
     });
 
+    it('switches from comments to a post’s friends, in the same history entry', async () => {
+      await opened();
+      const entries = history.length;
+
+      service.showFriends({ id: 'p2', title: 'Teatr' });
+      await fixture.whenStable();
+
+      expect(history.length).toBe(entries);
+      expect(location.pathname + location.hash).toBe('/posts/p2#friends');
+      expect(element().querySelector('.sheet__title')?.textContent).toContain('FRIENDS.title');
+      expect(element().querySelector('.sheet__post-title')?.textContent).toContain('Teatr');
+      expect(element().querySelector('.sheet__author')).toBeNull();
+      expect(element().querySelector('app-post-friends')).not.toBeNull();
+      expect(element().querySelector('app-comment-thread')).toBeNull();
+
+      history.back();
+      await closing();
+      expect(service.post()).toBeNull();
+      expect(location.pathname + location.search).toBe(startUrl);
+    });
+
     it('can’t be dragged', async () => {
       await opened();
       const header = element().querySelector('.sheet__header') as HTMLElement;
@@ -216,6 +238,25 @@ describe('CommentsSheet', () => {
     await opened();
 
     expect(document.activeElement).toBe(element().querySelector('.sheet'));
+  });
+
+  it('shows a post’s friends in the comments’ place, with their own link', async () => {
+    service.showFriends(post);
+    await fixture.whenStable();
+
+    expect(location.pathname + location.hash).toBe('/posts/p1#friends');
+    expect(element().querySelector('.sheet')?.getAttribute('aria-modal')).toBe('true');
+    expect(element().querySelector('.sheet__title')?.textContent).toContain('FRIENDS.title');
+    expect(element().querySelector('app-post-friends')).not.toBeNull();
+    expect(TestBed.inject(CommentsService).getCommentsOfPost).not.toHaveBeenCalled();
+    TestBed.inject(HttpTestingController)
+      .expectOne((r) => r.url.endsWith('/posts/p1/friends'))
+      .flush({ going: [], interested: [] });
+
+    history.back();
+    await closing();
+    expect(service.post()).toBeNull();
+    expect(location.pathname + location.search).toBe(startUrl);
   });
 
   it('closes on the browser’s Back, and restores the address', async () => {

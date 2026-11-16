@@ -67,6 +67,12 @@ html.comments-docked app-main-page {
   padding-right: max(0px, calc(1432px - 100vw));
 }
 
+// The same for the post page's 680 px column, which the friends list docks beside.
+html.comments-docked app-full-post-view {
+  display: block;
+  padding-right: max(0px, calc(1552px - 100vw));
+}
+
 // The one tooltip style, from the appTooltip directive.
 .app-tooltip {
   position: fixed;

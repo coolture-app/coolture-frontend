@@ -1,0 +1,92 @@
+.cropper {
+  width: min(340px, calc(100vw - 2 * var(--space-md)));
+  padding: var(--space-lg);
+  border: none;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-lg);
+
+  &::backdrop {
+    background: rgba(0, 0, 0, 0.5);
+  }
+}
+
+.cropper__title {
+  margin: 0 0 var(--space-md);
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+}
+
+.cropper__frame {
+  position: relative;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  background: var(--color-text);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+}
+
+.cropper__image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  max-width: none;
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+
+// Darkens the corners outside the circle, which the avatar won't show.
+.cropper__mask {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow: 0 0 0 200px rgba(0, 0, 0, 0.55);
+  outline: 2px solid rgba(255, 255, 255, 0.8);
+  pointer-events: none;
+}
+
+.cropper__hint {
+  margin: var(--space-sm) 0 0;
+  font-size: var(--text-xs);
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+
+.cropper__zoom {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+
+  input {
+    flex: 1;
+    min-height: 44px;
+    accent-color: var(--color-accent);
+  }
+}
+
+.cropper__error {
+  margin: 0;
+  color: var(--color-danger);
+}
+
+.cropper__buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+}

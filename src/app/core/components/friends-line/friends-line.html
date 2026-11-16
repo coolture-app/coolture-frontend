@@ -1,0 +1,34 @@
+@if (stances(); as friends) {
+  @let going =
+    friends.going ? ('POST.friendsGoing' | translate: { names: names(friends.going) }) : '';
+  @let interested =
+    friends.interested
+      ? ('POST.friendsInterested' | translate: { names: names(friends.interested) })
+      : '';
+  <button
+    type="button"
+    class="friends"
+    aria-haspopup="dialog"
+    [attr.aria-label]="going && interested ? going + ' · ' + interested : going || interested"
+    (click)="opened.emit()"
+  >
+    @for (group of groups(); track group.name) {
+      @if (!$first) {
+        <span class="friends__dot" aria-hidden="true">·</span>
+      }
+      <span class="friends__group" [class]="'friends__group--' + group.name" aria-hidden="true">
+        <ng-icon class="friends__icon" [name]="group.icon" />
+        <span class="friends__faces">
+          @for (friend of group.faces; track friend.id) {
+            @if (friend.avatarUrl) {
+              <img class="friends__face" [src]="friend.avatarUrl" alt="" loading="lazy" />
+            } @else {
+              <span class="friends__face friends__face--initials">{{ initial(friend) }}</span>
+            }
+          }
+        </span>
+        <span class="friends__names">{{ names(group.stance) }}</span>
+      </span>
+    }
+  </button>
+}

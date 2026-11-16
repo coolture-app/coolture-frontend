@@ -16,11 +16,9 @@
     "type": "Typ",
     "tags": "Tagi",
     "tagsPlaceholder": "muzyka, sztuka, teatr",
-    "visibility": "Widoczność",
     "startsFrom": "Od dnia",
     "startsTo": "Do dnia",
     "allTypes": "Wszystkie typy",
-    "allVisibility": "Wszystkie",
     "sortCreatedAt": "Data utworzenia",
     "sortStartsAt": "Data wydarzenia",
     "sortLikes": "Polubienia",
@@ -33,9 +31,6 @@
     "orderAsc": "Rosnąco",
     "offline": "Offline",
     "online": "Online",
-    "public": "Publiczne",
-    "private": "Prywatne",
-    "friends": "Znajomi",
     "recommended": "Rekomendowane",
     "loading": "Ładowanie...",
     "endOfList": "To już wszystko",
@@ -44,6 +39,7 @@
     "refreshing": "Odświeżanie",
     "refreshFailed": "Nie udało się odświeżyć",
     "locationFailed": "Nie udało się pobrać lokalizacji. Zezwól na nią w ustawieniach przeglądarki.",
+    "followed": "Od obserwowanych i znajomych",
     "includePast": "Pokaż minione wydarzenia",
     "searchPast": "Szukaj też w minionych",
     "clearSearch": "Wyczyść wyszukiwanie",
@@ -79,8 +75,14 @@
     "nearestFromHome": "Odległości od: {{place}}"
   },
   "FULL_POST": {
-    "title": "Fajny post",
-    "back": "Wróć"
+    "title": "Fajny post"
+  },
+  "BACK": {
+    "to": "Wróć do: {{page}}",
+    "post": "Wydarzenie",
+    "newPost": "Nowe wydarzenie",
+    "editPost": "Edycja wydarzenia",
+    "previous": "Poprzednia strona"
   },
   "POST": {
     "starts": "Początek wydarzenia",
@@ -111,7 +113,10 @@
     "restored": "Przywrócono.",
     "undo": "Cofnij",
     "showOnMap": "{{place}}: pokaż na mapie",
-    "showOnMapHint": "Pokaż na mapie"
+    "showOnMapHint": "Pokaż na mapie",
+    "friendsGoing": "Biorą udział: {{names}}",
+    "friendsInterested": "Interesuje: {{names}}",
+    "friendsSee": "Znajomi zobaczą"
   },
   "NAVBAR": {
     "main-page": "Strona główna",
@@ -145,7 +150,7 @@
     "editDescription": "Edytuj opis",
     "interests": "Zainteresowania",
     "cancel": "Anuluj",
-    "save": "Zapisz Zmiany",
+    "save": "Zapisz",
     "firstName": "Imię",
     "lastName": "Nazwisko",
     "username": "Nazwa użytkownika",
@@ -154,10 +159,7 @@
     "followers-subtitle": "Osoby obserwujące to konto",
     "following-subtitle": "Osoby obserwowane przez to konto",
     "following": "Obserwowani",
-    "joined": "Dołączył",
     "follow": "Obserwuj",
-    "unfollow": "Przestań obserwować",
-    "followBack": "Obserwuj",
     "block": "Zablokuj",
     "unblock": "Odblokuj",
     "blocked": "Zablokowani",
@@ -168,7 +170,29 @@
     "loading": "Ładowanie...",
     "hidden-posts": "Ukryte posty",
     "addHome": "Dodaj miejsce",
-    "homeHint": "Widoczne tylko dla Ciebie"
+    "homeHint": "Widoczne tylko dla Ciebie",
+    "shareStances": "Pokazuj znajomym, co mnie interesuje i gdzie idę",
+    "shareStancesHint": "Znajomi to osoby, które obserwujesz i które obserwują Ciebie.",
+    "saveFailed": "Nie udało się zapisać. Spróbuj ponownie.",
+    "more": "Więcej",
+    "followingThem": "Obserwujesz",
+    "friends": "Znajomi",
+    "followsYou": "Obserwuje Cię",
+    "changeAvatar": "Zmień zdjęcie",
+    "addAvatar": "Dodaj zdjęcie",
+    "showAvatar": "Powiększ zdjęcie",
+    "removeAvatar": "Usuń zdjęcie",
+    "removeAvatarConfirm": "Usunąć zdjęcie profilowe?",
+    "blockConfirm": "Zablokować tę osobę?",
+    "unblockConfirm": "Odblokować tę osobę?",
+    "bioPlaceholder": "Dodaj kilka słów o sobie",
+    "since": "Na Coolture od {{date}}",
+    "blockedLoadError": "Nie udało się wczytać zablokowanych.",
+    "retry": "Spróbuj ponownie"
+  },
+  "SETTINGS": {
+    "title": "Ustawienia",
+    "privacy": "Prywatność"
   },
   "DISCOVER": {
     "title": "Odkrywaj",
@@ -193,10 +217,6 @@
     "title-error-maxlength": "Tytuł może mieć najwyżej 128 znaków.",
     "type-online": "Online",
     "type-offline": "Na miejscu",
-    "visibility": "Kto zobaczy",
-    "visibility-public": "Wszyscy",
-    "visibility-private": "Tylko ja",
-    "visibility-friends": "Znajomi",
     "starts-at": "Początek",
     "starts-at-error": "Podaj, kiedy się zaczyna.",
     "ends-at": "Koniec",
@@ -266,6 +286,15 @@
     "modal-delete-title": "Czy na pewno chcesz usunąć swój komentarz?",
     "modal-delete-body": "Tej akcji nie da się cofnąć.",
     "deleted-comment": "Komentarz usunięty"
+  },
+  "FRIENDS": {
+    "title": "Znajomi",
+    "close": "Zamknij listę znajomych",
+    "going": "Biorą udział",
+    "interested": "Interesuje",
+    "loading": "Wczytywanie znajomych…",
+    "load-error": "Nie udało się wczytać znajomych.",
+    "empty": "Żaden znajomy nie zaznaczył tego wydarzenia."
   },
   "EVENT_CARD": {
     "by": "przez"
@@ -376,5 +405,11 @@
     "noPosition": "Nie udało się pobrać lokalizacji. Wyszukaj miejsce powyżej.",
     "nothingHere": "Nie udało się ustalić miejscowości. Wyszukaj ją powyżej.",
     "saveError": "Nie udało się zapisać. Spróbuj ponownie."
+  },
+  "AVATAR_CROP": {
+    "title": "Ustaw zdjęcie",
+    "hint": "Przeciągnij, aby przesunąć. Przybliż suwakiem, kółkiem myszy lub dwoma palcami.",
+    "zoom": "Przybliżenie",
+    "loadError": "Nie udało się otworzyć tego pliku. Wybierz zdjęcie JPG, PNG lub WebP."
   }
 }

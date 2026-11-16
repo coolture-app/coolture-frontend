@@ -34,13 +34,17 @@ export class DevIdentityService implements DevIdentity {
     return this.current.headers;
   }
 
-  /** Saves the choice and reloads, so nothing fetched as the previous user stays on screen. */
+  /**
+   * Saves the choice and reloads, so nothing fetched as the previous user stays on screen. The query string goes too:
+   * the home page's filters were the previous user's, and Od obserwowanych i znajomych means someone else's friends.
+   */
   switchTo(user: DevUser): void {
     if (!isPlatformBrowser(this.platformId)) {
       return;
     }
     this.document.cookie = `${DEV_USER_COOKIE}=${user.id}; path=/; max-age=${ONE_YEAR_S}; SameSite=Lax`;
-    this.document.defaultView?.location.reload();
+    const location = this.document.defaultView?.location;
+    location?.replace(location.pathname);
   }
 
   private read(): DevUser {

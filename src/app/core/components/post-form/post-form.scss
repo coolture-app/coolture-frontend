@@ -149,32 +149,4 @@
       font-size: var(--text-base);
     }
   }
-
-  &__audience {
-    display: flex;
-    align-items: center;
-    gap: var(--space-xs);
-    font-size: var(--text-sm);
-    color: var(--color-text-secondary);
-  }
-
-  &__audience-select {
-    padding: 6px 28px 6px 10px;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-full);
-    background: var(--color-surface)
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5' stroke-linecap='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")
-      no-repeat right 10px center;
-    font-family: inherit;
-    font-size: var(--text-sm);
-    font-weight: var(--font-medium);
-    color: var(--color-text);
-    appearance: none;
-    cursor: pointer;
-
-    &:focus-visible {
-      outline: 2px solid var(--color-accent);
-      outline-offset: 1px;
-    }
-  }
 }

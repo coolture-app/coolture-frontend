@@ -18,6 +18,8 @@ import { FiltersForm } from '../home-view';
 })
 export class FeedFilters {
   readonly form = input.required<FiltersForm>();
+  /** "Od obserwowanych i znajomych" needs someone to follow, so a guest doesn't see it. */
+  readonly signedIn = input(false);
   readonly clear = output<void>();
   /** Filters apply as they change; this only closes the panel. */
   readonly done = output<void>();

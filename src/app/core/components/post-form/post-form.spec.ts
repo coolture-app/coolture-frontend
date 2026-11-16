@@ -29,7 +29,6 @@ function post(startsAt: string, endsAt?: string): PostDetail {
     commentsCount: 0,
     type: 'ONLINE',
     status: 'ACTIVE',
-    visibility: 'PUBLIC',
     createdAt: '2026-01-01T00:00:00Z',
     media: [],
   };
@@ -302,16 +301,5 @@ describe('PostForm fields', () => {
     component.removeEnd();
 
     expect(submit()!.endsAt).toBeNull();
-  });
-
-  it('offers no Prywatne, except on a post saved as private', () => {
-    expect(component.visibilityOptions.map((option) => option.value)).toEqual([
-      'PUBLIC',
-      'FRIENDS',
-    ]);
-
-    fixture.componentRef.setInput('initialData', { ...post(SUMMER_START), visibility: 'PRIVATE' });
-
-    expect(component.visibilityOptions.map((option) => option.value)).toContain('PRIVATE');
   });
 });

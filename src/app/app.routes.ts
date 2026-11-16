@@ -13,6 +13,8 @@ import { MyEventsView } from './features/my-events-view/my-events-view';
 import { AuthCallbackView } from './features/auth-callback-view/auth-callback-view';
 import { HiddenPostsView } from './features/hidden-posts-view/hidden-posts-view';
 import { InterestsView, unsavedInterestsGuard } from './features/interests-view/interests-view';
+import { SettingsView } from './features/settings-view/settings-view';
+import { BlockedUsersView } from './features/blocked-users-view/blocked-users-view';
 
 /**
  * Sends a moved path to its new one, with `:name` filled from the old path. A function because a
@@ -101,6 +103,24 @@ export const routes: Routes = [
     title: () => {
       const translate = inject(TranslateService);
       return translate.get('HIDDEN.title');
+    },
+  },
+  {
+    path: 'profile/settings',
+    component: SettingsView,
+    canActivate: [authGuard],
+    title: () => {
+      const translate = inject(TranslateService);
+      return translate.get('SETTINGS.title');
+    },
+  },
+  {
+    path: 'profile/blocked',
+    component: BlockedUsersView,
+    canActivate: [authGuard],
+    title: () => {
+      const translate = inject(TranslateService);
+      return translate.get('PROFILE.blocked');
     },
   },
   {

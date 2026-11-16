@@ -1,133 +1,195 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
-import { ActivatedRoute, RouterModule } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
-import { CommonModule } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { TranslatePipe } from '@ngx-translate/core';
+import {
+  afterNextRender,
+  Component,
+  computed,
+  DOCUMENT,
+  ElementRef,
+  inject,
+  Injector,
+  signal,
+  viewChild,
+  WritableSignal,
+} from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { catchError, firstValueFrom, map, of } from 'rxjs';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
-  heroCamera,
-  heroPencil,
-  heroCheck,
-  heroXMark,
-  heroUserPlus,
-  heroUserMinus,
-  heroNoSymbol,
-  heroEyeSlash,
-  heroArrowDownOnSquare,
-  heroArrowUpOnSquare,
-  heroArrowLeft,
-  heroMapPin,
-} from '@ng-icons/heroicons/outline';
+  lucideCamera,
+  lucideEllipsis,
+  lucideHeart,
+  lucideMapPin,
+  lucidePencil,
+  lucidePlus,
+  lucideSettings,
+} from '@ng-icons/lucide';
 
 import { AuthService } from '../../core/services/auth/auth.service';
 import { Users } from '../../core/services/users/users.service';
 import { RelationsService } from '../../core/services/relations/relations.service';
 import { MediaService } from '../../core/services/media/media.service';
+import { InterestsService } from '../../core/services/interests/interests.service';
 import { UserProfile } from '../../core/models/users/user-profile.model';
-import { UserSummary } from '../../core/models/users/user-summary.model';
-import { UserProfileUpdateRequest } from '../../core/models/users/user-profile-update-request.model';
+import { Interest } from '../../core/models/interests/interest.model';
 import { FollowListComponent } from '../../core/components/follow-list/follow-list';
+import { BackLink } from '../../core/components/back-link/back-link';
 import { Btn } from '../../core/components/btn/btn';
+import { FollowBtn } from '../../core/components/follow-btn/follow-btn';
+import { RelationPill } from '../../core/components/relation-pill/relation-pill';
+import { Tooltip } from '../../core/directives/tooltip';
+import { ToastService } from '../../core/services/toast/toast.service';
 import { HomeArea } from '../home-area/home-area';
-import { DateFormatService } from '../../core/services/date-format/date-format.service';
+import { PhotoViewerService } from '../../core/services/photo-viewer/photo-viewer.service';
+import { AvatarCropper } from '../../core/components/avatar-cropper/avatar-cropper';
 
+/** Your own profile at `/profile`, and anyone's at `/users/:username`. */
 @Component({
   selector: 'app-user-profile-view',
-  standalone: true,
   imports: [
-    CommonModule,
-    ReactiveFormsModule,
     TranslatePipe,
     NgIcon,
+    AvatarCropper,
     FollowListComponent,
-    RouterModule,
+    RouterLink,
+    BackLink,
     Btn,
+    FollowBtn,
+    RelationPill,
+    Tooltip,
     HomeArea,
   ],
   viewProviders: [
     provideIcons({
-      heroCamera,
-      heroPencil,
-      heroCheck,
-      heroXMark,
-      heroUserPlus,
-      heroUserMinus,
-      heroNoSymbol,
-      heroEyeSlash,
-      heroArrowDownOnSquare,
-      heroArrowUpOnSquare,
-      heroArrowLeft,
-      heroMapPin,
+      lucideCamera,
+      lucideEllipsis,
+      lucideHeart,
+      lucideMapPin,
+      lucidePencil,
+      lucidePlus,
+      lucideSettings,
     }),
   ],
   templateUrl: './my-profile-view.html',
   styleUrl: './my-profile-view.scss',
 })
-export class UserProfileView implements OnInit {
+export class UserProfileView {
   private authService = inject(AuthService);
+  private photoViewer = inject(PhotoViewerService);
   private usersService = inject(Users);
   private relationsService = inject(RelationsService);
   private mediaService = inject(MediaService);
-  private fb = inject(FormBuilder);
-  private route = inject(ActivatedRoute);
-  private dateFormatService = inject(DateFormatService);
+  private interestsService = inject(InterestsService);
+  private toast = inject(ToastService);
+  private translate = inject(TranslateService);
+  private document = inject(DOCUMENT);
+  private injector = inject(Injector);
+  private bioInput = viewChild<ElementRef<HTMLTextAreaElement>>('bioInput');
+
+  private lang = toSignal(this.translate.onLangChange.pipe(map((event) => event.lang)), {
+    initialValue: this.translate.getCurrentLang(),
+  });
 
   user = signal<UserProfile | null>(null);
-  readonly dateFormats = this.dateFormatService.formats;
   isOwnProfile = signal(true);
   followersCount = signal(0);
   followingCount = signal(0);
-  isEditing = signal(false);
   isUploadingAvatar = signal(false);
 
-  editForm = this.fb.group({
-    bio: [''],
-  });
+  editingBio = signal(false);
+  savingBio = signal(false);
+  bioDraft = signal('');
 
+  menuOpen = signal(false);
+  avatarMenuOpen = signal(false);
+  /** A photo picked and being placed in the circle, not uploaded yet. */
+  pickedFile = signal<File | null>(null);
+  private avatarInput = viewChild<ElementRef<HTMLInputElement>>('avatarInput');
   showFollowers = signal(false);
   showFollowing = signal(false);
-  showBlocked = signal(false);
   showHome = signal(false);
   /** Private, so only shown on your own profile, from `/auth/me`. */
   readonly home = this.authService.home;
-  blockedUsers = signal<UserSummary[]>([]);
 
-  async ngOnInit() {
-    const username = this.route.snapshot.paramMap.get('username');
+  /** Empty if the catalogue fails: the chips are optional. */
+  private interestCatalog = toSignal(
+    this.interestsService.getCatalog().pipe(
+      map((catalog) => catalog.categories.flatMap((category) => category.interests)),
+      catchError(() => of([] as Interest[])),
+    ),
+    { initialValue: [] as Interest[] },
+  );
+  /** In the catalogue's order, so every profile lists them the same way. */
+  readonly interests = computed(() => {
+    const picked = new Set(this.user()?.interests ?? []);
+    const en = this.lang() === 'en';
+    return this.interestCatalog()
+      .filter((interest) => picked.has(interest.key))
+      .map((interest) => ({ key: interest.key, label: en ? interest.labelEn : interest.labelPl }));
+  });
+
+  /** Month and year only. The parts of a full date, because Polish needs the month's genitive. */
+  readonly since = computed(() => {
+    const createdAt = this.user()?.createdAt;
+    if (!createdAt) return '';
+    const parts = new Intl.DateTimeFormat(this.lang() || 'pl', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    }).formatToParts(new Date(createdAt));
+    return parts
+      .filter((part) => part.type === 'month' || part.type === 'year')
+      .map((part) => part.value)
+      .join(' ');
+  });
+
+  constructor() {
+    // The component stays when a follow list leads to another user's profile.
+    inject(ActivatedRoute)
+      .paramMap.pipe(takeUntilDestroyed())
+      .subscribe((params) => void this.load(params.get('username')));
+  }
+
+  private async load(username: string | null) {
+    this.showFollowers.set(false);
+    this.showFollowing.set(false);
+    this.menuOpen.set(false);
+    this.avatarMenuOpen.set(false);
+    this.editingBio.set(false);
+
     const currentUser = this.authService.currentUser();
-
     if (username && currentUser && username !== currentUser.username) {
       await this.loadOtherUserProfile(username);
     } else {
-      this.authService.checkSession().subscribe();
       if (currentUser) {
-        this.user.set(currentUser);
-        this.isOwnProfile.set(true);
-        this.initForm();
-        this.updateCounts();
+        this.showUser(currentUser, true);
       }
+      // Fresh counts and interests, changed elsewhere since the session started.
+      this.authService.checkSession().subscribe(() => {
+        const fresh = this.authService.currentUser();
+        if (fresh && this.isOwnProfile()) {
+          this.showUser(fresh, true);
+        }
+      });
     }
   }
 
   private async loadOtherUserProfile(username: string) {
+    this.user.set(null);
+    this.isOwnProfile.set(false);
     try {
       const userProfile = await firstValueFrom(this.usersService.getUserByUsername(username));
-      this.user.set(userProfile);
-      this.isOwnProfile.set(false);
-      this.followersCount.set(userProfile.followersCount);
-      this.followingCount.set(userProfile.followingCount);
+      this.showUser(userProfile, false);
     } catch (err) {
       console.error('Error loading user profile', err);
     }
   }
 
-  private updateCounts() {
-    const u = this.user();
-    if (u) {
-      this.followersCount.set(u.followersCount);
-      this.followingCount.set(u.followingCount);
-    }
+  private showUser(user: UserProfile, own: boolean) {
+    this.user.set(user);
+    this.isOwnProfile.set(own);
+    this.followersCount.set(user.followersCount);
+    this.followingCount.set(user.followingCount);
   }
 
   onFollowChanged(event: { deltaFollowers: number; deltaFollowing: number }) {
@@ -135,42 +197,42 @@ export class UserProfileView implements OnInit {
     this.followingCount.update((c) => c + event.deltaFollowing);
   }
 
-  private initForm() {
-    const u = this.user();
-    if (!u) return;
-    this.editForm.patchValue({
-      bio: u.bio ?? '',
-    });
+  startEditingBio() {
+    this.bioDraft.set(this.user()?.bio ?? '');
+    this.editingBio.set(true);
+    afterNextRender(
+      () => {
+        const textarea = this.bioInput()?.nativeElement;
+        textarea?.focus();
+        textarea?.setSelectionRange(textarea.value.length, textarea.value.length);
+      },
+      { injector: this.injector },
+    );
   }
 
-  toggleEdit() {
-    const editing = this.isEditing();
-    if (!editing) {
-      this.initForm();
-    }
-    this.isEditing.set(!editing);
+  cancelEditingBio() {
+    this.editingBio.set(false);
   }
 
-  async onSave() {
+  async saveBio() {
     const userValue = this.user();
-    if (!userValue || !this.isOwnProfile()) return;
+    if (!userValue || !this.isOwnProfile() || this.savingBio()) return;
 
-    const { bio } = this.editForm.getRawValue();
-    const payload: UserProfileUpdateRequest = {
-      bio: bio || null,
-    };
-
+    this.savingBio.set(true);
     try {
-      const updated = await firstValueFrom(this.usersService.updateProfile(userValue.id, payload));
+      const updated = await firstValueFrom(
+        this.usersService.updateProfile(userValue.id, { bio: this.bioDraft().trim() || null }),
+      );
       if (updated) {
         this.authService.currentUser.set(updated);
         this.user.set(updated);
-        this.isEditing.set(false);
-        this.editForm.patchValue({ bio: updated.bio ?? '' });
+        this.editingBio.set(false);
       }
     } catch (err) {
       console.error('Error updating profile', err);
-      alert('Error updating profile');
+      this.toast.show(this.translate.instant('PROFILE.saveFailed'));
+    } finally {
+      this.savingBio.set(false);
     }
   }
 
@@ -193,12 +255,55 @@ export class UserProfileView implements OnInit {
     }
   }
 
+  toggleMenu() {
+    this.toggle(this.menuOpen);
+  }
+
+  showAvatar() {
+    const avatar = this.user()?.avatar;
+    if (avatar?.url) {
+      this.photoViewer.show([{ url: avatar.url, width: avatar.width, height: avatar.height }], 0);
+    }
+  }
+
+  /** Without a photo there's nothing to choose between, so the file picker opens at once. */
+  onAvatarTap() {
+    if (this.user()?.avatar) {
+      this.toggle(this.avatarMenuOpen);
+    } else {
+      this.avatarInput()?.nativeElement.click();
+    }
+  }
+
+  closeAvatarMenu(event: Event) {
+    event.stopPropagation();
+    this.avatarMenuOpen.set(false);
+  }
+
+  /** The next click anywhere closes the menu, including on one of its items. */
+  private toggle(open: WritableSignal<boolean>) {
+    const opening = !open();
+    open.set(opening);
+    if (opening) {
+      // After this click has finished, so that it doesn't count as the next one.
+      setTimeout(() =>
+        this.document.addEventListener('click', () => open.set(false), { once: true }),
+      );
+    }
+  }
+
+  closeMenu(event: Event) {
+    event.stopPropagation();
+    this.menuOpen.set(false);
+  }
+
   async onBlock() {
     const u = this.user();
     if (!u || this.isOwnProfile()) return;
 
     const isCurrentlyBlocked = u.isBlocked;
-    if (!confirm(isCurrentlyBlocked ? 'Unblock this user?' : 'Block this user?')) return;
+    const question = isCurrentlyBlocked ? 'PROFILE.unblockConfirm' : 'PROFILE.blockConfirm';
+    if (!confirm(this.translate.instant(question))) return;
 
     try {
       if (isCurrentlyBlocked) {
@@ -213,13 +318,20 @@ export class UserProfileView implements OnInit {
     }
   }
 
-  async onFileSelected(event: Event) {
+  onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
-    if (!file) return;
+    input.value = '';
+    if (file) {
+      this.pickedFile.set(file);
+    }
+  }
 
+  async uploadAvatar(cropped: Blob) {
+    this.pickedFile.set(null);
     const userId = this.user()?.id;
     if (!userId || !this.isOwnProfile()) return;
+    const file = new File([cropped], 'avatar.jpg', { type: cropped.type });
 
     this.isUploadingAvatar.set(true);
 
@@ -254,10 +366,9 @@ export class UserProfileView implements OnInit {
       }
     } catch (err) {
       console.error('Error uploading avatar', err);
-      alert('Error uploading avatar');
+      this.toast.show(this.translate.instant('PROFILE.saveFailed'));
     } finally {
       this.isUploadingAvatar.set(false);
-      input.value = '';
     }
   }
 
@@ -265,7 +376,7 @@ export class UserProfileView implements OnInit {
     const userId = this.user()?.id;
     if (!userId || !this.isOwnProfile()) return;
 
-    if (!confirm('Remove profile picture?')) return;
+    if (!confirm(this.translate.instant('PROFILE.removeAvatarConfirm'))) return;
 
     try {
       await firstValueFrom(this.usersService.deleteProfileImage(userId));
@@ -276,7 +387,7 @@ export class UserProfileView implements OnInit {
       }
     } catch (err) {
       console.error('Error removing avatar', err);
-      alert('Error removing avatar');
+      this.toast.show(this.translate.instant('PROFILE.saveFailed'));
     }
   }
 
@@ -288,33 +399,5 @@ export class UserProfileView implements OnInit {
   toggleFollowing() {
     this.showFollowing.set(!this.showFollowing());
     this.showFollowers.set(false);
-  }
-
-  async toggleBlocked() {
-    if (this.showBlocked()) {
-      this.showBlocked.set(false);
-      return;
-    }
-    this.showBlocked.set(true);
-    try {
-      const currentUserId = this.authService.currentUser()?.id;
-      if (!currentUserId) return;
-      const res = await firstValueFrom(
-        this.relationsService.getBlocking(currentUserId, { limit: 100, cursor: '' }),
-      );
-      this.blockedUsers.set(res.items);
-    } catch (err) {
-      console.error('Error loading blocked users', err);
-    }
-  }
-
-  async onUnblock(userId: string) {
-    if (!confirm('Unblock this user?')) return;
-    try {
-      await firstValueFrom(this.relationsService.unblock(userId));
-      this.blockedUsers.update((list) => list.filter((u) => u.id !== userId));
-    } catch (err) {
-      console.error('Error unblocking user', err);
-    }
   }
 }

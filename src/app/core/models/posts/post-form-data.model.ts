@@ -1,4 +1,4 @@
-import { PostType, PostVisibility } from '../common/enums';
+import { PostType } from '../common/enums';
 import { EventLocationRequest } from '../common/geo.model';
 
 export interface PostFormData {
@@ -8,7 +8,6 @@ export interface PostFormData {
   endsAt: string | null;
   description: string;
   eventUrl: string | null;
-  visibility: PostVisibility;
   location: EventLocationRequest | null;
   /** In the order the post shows them. The first is the cover. */
   mediaIds: string[];
