@@ -124,7 +124,7 @@ describe('Navbar', () => {
     }
 
     function account(): HTMLAnchorElement | null {
-      return fixture.nativeElement.querySelector('.navbar__account');
+      return fixture.nativeElement.querySelector('.navbar__link--account');
     }
 
     it('shows a guest the person icon and no account', () => {
@@ -132,21 +132,21 @@ describe('Navbar', () => {
       expect(links()[4].querySelector('ng-icon')).not.toBeNull();
     });
 
-    it('shows the handle and photo, linking to the profile', () => {
+    it('makes the last place the photo and handle, linking to the profile, with + in the middle', () => {
       signIn({ avatar: { id: 'a1', url: 'http://x/a.png' } });
 
+      expect(links()[4]).toBe(account()!);
+      expect(links()[2].classList).toContain('navbar__link--add');
       expect(account()!.getAttribute('href')).toBe('/profile');
-      expect(account()!.textContent).toContain('kacper');
+      expect(account()!.querySelector('.navbar__account-name')!.textContent).toContain('kacper');
       expect(account()!.querySelector('img')!.getAttribute('src')).toBe('http://x/a.png');
+      expect(account()!.querySelector('ng-icon')).toBeNull();
     });
 
-    it('turns the profile place into the photo, for the phone bar', () => {
+    it('shows the first letter of the handle when there is no photo', () => {
       signIn({});
 
-      const profile = links()[4];
-      expect(profile.classList).toContain('navbar__link--account');
-      expect(profile.querySelector('ng-icon')).toBeNull();
-      expect(profile.querySelector('.navbar__avatar')!.textContent!.trim()).toBe('k');
+      expect(account()!.querySelector('.navbar__avatar')!.textContent!.trim()).toBe('k');
     });
   });
 });
