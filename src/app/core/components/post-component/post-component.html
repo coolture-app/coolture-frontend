@@ -7,6 +7,9 @@
       }}</app-btn>
     </div>
   } @else if (data) {
+    @if (data.friendStances; as friends) {
+      <app-friends-line class="post__friends" [stances]="friends" />
+    }
     <div class="post__header">
       <div
         class="post__author-wrapper"
@@ -217,7 +220,10 @@
           [fullWidth]="true"
           [class]="isInterested() ? 'segment interested' : 'segment'"
           [pressed]="isInterested()"
-          [label]="withCount('POST.interested' | translate, data.interestedCount)"
+          [label]="
+            withCount('POST.interested' | translate, data.interestedCount) +
+            (sharesStances() ? ' · ' + ('POST.friendsSee' | translate) : '')
+          "
           (btnClick)="setInterested()"
         >
           <app-counted-icon
@@ -231,7 +237,10 @@
           [fullWidth]="true"
           [class]="isTakesPart() ? 'segment takes-part' : 'segment'"
           [pressed]="isTakesPart()"
-          [label]="withCount('POST.takes_part' | translate, data.goingCount)"
+          [label]="
+            withCount('POST.takes_part' | translate, data.goingCount) +
+            (sharesStances() ? ' · ' + ('POST.friendsSee' | translate) : '')
+          "
           (btnClick)="setTakesPart()"
         >
           <app-counted-icon icon="appTicket" [count]="data.goingCount" [filled]="isTakesPart()" />

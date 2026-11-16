@@ -19,6 +19,10 @@
   }
 }
 
+.post__friends {
+  padding: var(--space-sm) var(--space-md) 0;
+}
+
 .post__header {
   @include flex-between;
   gap: var(--space-sm);

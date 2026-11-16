@@ -1,0 +1,32 @@
+@if (stances(); as friends) {
+  @let going =
+    friends.going ? ('POST.friendsGoing' | translate: { names: names(friends.going) }) : '';
+  @let interested =
+    friends.interested
+      ? ('POST.friendsInterested' | translate: { names: names(friends.interested) })
+      : '';
+  @let said = going && interested ? going + ' · ' + interested : going || interested;
+  <div class="friends" role="note" tabindex="0" [appTooltip]="said">
+    <span class="friends__faces" aria-hidden="true">
+      @for (friend of faces(); track friend.id) {
+        @if (friend.avatarUrl) {
+          <img class="friends__face" [src]="friend.avatarUrl" alt="" loading="lazy" />
+        } @else {
+          <span class="friends__face friends__face--initials">{{ initials(friend) }}</span>
+        }
+      }
+    </span>
+    @if (friends.going; as group) {
+      <span class="friends__group" aria-hidden="true">
+        <ng-icon name="appTicket" />
+        <span class="friends__names">{{ names(group) }}</span>
+      </span>
+    }
+    @if (friends.interested; as group) {
+      <span class="friends__group" aria-hidden="true">
+        <ng-icon name="lucideBookmark" />
+        <span class="friends__names">{{ names(group) }}</span>
+      </span>
+    }
+  </div>
+}

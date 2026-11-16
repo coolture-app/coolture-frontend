@@ -33,6 +33,8 @@ import { PickStar } from '../pick-star/pick-star';
 import { MapReactions } from '../map-reactions';
 import { PhotoViewerService } from '../../../services/photo-viewer/photo-viewer.service';
 import { mediaQuery } from '../../../services/media-query/media-query';
+import { FriendsLine } from '../../friends-line/friends-line';
+import { AuthService } from '../../../services/auth/auth.service';
 
 /**
  * What a pin opens: a mini view of its post, or the posts at its place, soonest first. A row opens its post's mini
@@ -40,7 +42,7 @@ import { mediaQuery } from '../../../services/media-query/media-query';
  */
 @Component({
   selector: 'app-map-preview',
-  imports: [NgTemplateOutlet, RouterLink, TranslatePipe, NgIcon, Tooltip, PickStar],
+  imports: [NgTemplateOutlet, RouterLink, TranslatePipe, NgIcon, Tooltip, PickStar, FriendsLine],
   viewProviders: [
     provideIcons({
       appTicket,
@@ -59,6 +61,8 @@ export class MapPreview {
   private translate = inject(TranslateService);
   private photoViewer = inject(PhotoViewerService);
   readonly reactions = inject(MapReactions);
+  private auth = inject(AuthService);
+  readonly sharesStances = computed(() => this.auth.isAuthenticated() && this.auth.shareStances());
   private readonly lang = toSignal(this.translate.onLangChange.pipe(map((change) => change.lang)), {
     initialValue: this.translate.getCurrentLang() || 'pl',
   });
