@@ -17,6 +17,10 @@
     gap: var(--space-sm);
   }
 
+  &__back ng-icon {
+    --ng-icon__size: 20px;
+  }
+
   &__corner {
     position: absolute;
     top: 0;

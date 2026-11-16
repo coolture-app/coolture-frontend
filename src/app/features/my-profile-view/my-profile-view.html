@@ -2,7 +2,12 @@
   <div class="profile">
     <section class="profile__header">
       @if (!isOwnProfile()) {
-        <app-btn variant="icon" routerLink="/profile" [label]="'PROFILE.back' | translate">
+        <app-btn
+          class="profile__back"
+          variant="icon"
+          routerLink="/profile"
+          [label]="'PROFILE.back' | translate"
+        >
           <ng-icon name="lucideArrowLeft" aria-hidden="true" />
         </app-btn>
       }

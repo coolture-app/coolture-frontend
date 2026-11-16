@@ -18,6 +18,10 @@
     gap: var(--space-sm);
   }
 
+  &__back ng-icon {
+    --ng-icon__size: 20px;
+  }
+
   &__title {
     font-size: var(--text-xl);
     font-weight: var(--font-semibold);

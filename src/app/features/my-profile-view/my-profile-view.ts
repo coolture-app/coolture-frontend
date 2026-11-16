@@ -146,6 +146,8 @@ export class UserProfileView {
   }
 
   private async loadOtherUserProfile(username: string) {
+    this.user.set(null);
+    this.isOwnProfile.set(false);
     try {
       const userProfile = await firstValueFrom(this.usersService.getUserByUsername(username));
       this.showUser(userProfile, false);
