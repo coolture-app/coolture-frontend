@@ -61,7 +61,11 @@
   @let post = reactions.shown(mark);
   <div class="mini">
     @if (post.friendStances; as friends) {
-      <app-friends-line class="mini__friends" [stances]="friends" />
+      <app-friends-line
+        class="mini__friends"
+        [stances]="friends"
+        (opened)="sheet.showFriends(post)"
+      />
     }
     <div class="mini__top">
       @if (post.coverMediaUrl) {

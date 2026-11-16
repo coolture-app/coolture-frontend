@@ -8,7 +8,7 @@
     </div>
   } @else if (data) {
     @if (data.friendStances; as friends) {
-      <app-friends-line class="post__friends" [stances]="friends" />
+      <app-friends-line class="post__friends" [stances]="friends" (opened)="openFriends()" />
     }
     <div class="post__header">
       <div

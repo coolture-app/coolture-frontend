@@ -165,7 +165,20 @@ describe('PostComponent', () => {
     expect(
       Array.from(line!.querySelectorAll('.friends__names')).map((n) => n.textContent?.trim()),
     ).toEqual(['Anna, jan_demo +1', 'Ola']);
-    expect(line!.querySelectorAll('.friends__face').length).toBe(2);
+    expect(line!.querySelectorAll('.friends__face').length).toBe(3);
+  });
+
+  it('opens the friends list from the friends line', () => {
+    const data = card({
+      friendStances: { going: { count: 1, people: [{ id: 'f1', username: 'anna_demo' }] } },
+    });
+    render(data);
+
+    (element().querySelector('.post__friends .friends') as HTMLButtonElement).click();
+
+    const sheet = TestBed.inject(CommentsSheetService);
+    expect(sheet.content()).toBe('friends');
+    expect(sheet.post()).toBe(data);
   });
 
   it('shows no friends line when no friend took a stance', () => {

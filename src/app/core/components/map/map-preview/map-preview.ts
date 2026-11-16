@@ -35,6 +35,7 @@ import { PhotoViewerService } from '../../../services/photo-viewer/photo-viewer.
 import { mediaQuery } from '../../../services/media-query/media-query';
 import { FriendsLine } from '../../friends-line/friends-line';
 import { AuthService } from '../../../services/auth/auth.service';
+import { CommentsSheetService } from '../../../services/comments-sheet/comments-sheet.service';
 
 /**
  * What a pin opens: a mini view of its post, or the posts at its place, soonest first. A row opens its post's mini
@@ -62,6 +63,7 @@ export class MapPreview {
   private photoViewer = inject(PhotoViewerService);
   readonly reactions = inject(MapReactions);
   private auth = inject(AuthService);
+  readonly sheet = inject(CommentsSheetService);
   readonly sharesStances = computed(() => this.auth.isAuthenticated() && this.auth.shareStances());
   private readonly lang = toSignal(this.translate.onLangChange.pipe(map((change) => change.lang)), {
     initialValue: this.translate.getCurrentLang() || 'pl',

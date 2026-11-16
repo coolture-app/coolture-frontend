@@ -194,7 +194,7 @@ export class PostComponent implements OnInit {
 
   /** Live while this post's comments are open, since the card can stay in view beside them. */
   commentCount(): number {
-    const open = this.commentsSheet.post();
+    const open = this.commentsSheet.commentsOf();
     return open?.id === this.data.id ? this.commentsSheet.count() : (this.data.commentsCount ?? 0);
   }
 
@@ -207,6 +207,11 @@ export class PostComponent implements OnInit {
     } else {
       this.commentsSheet.show(this.data);
     }
+  }
+
+  /** Also on the post page, where the comments under the post leave the panel free for this. */
+  openFriends(): void {
+    this.commentsSheet.showFriends(this.data);
   }
 
   toggleExpanded(): void {
