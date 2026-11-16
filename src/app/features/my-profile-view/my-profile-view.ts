@@ -1,138 +1,180 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
-import { ActivatedRoute, RouterModule } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
-import { CommonModule } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import {
+  afterNextRender,
+  Component,
+  computed,
+  DOCUMENT,
+  ElementRef,
+  inject,
+  Injector,
+  signal,
+  viewChild,
+} from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { firstValueFrom, forkJoin, map } from 'rxjs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
-  heroCamera,
-  heroPencil,
-  heroCheck,
-  heroXMark,
-  heroUserPlus,
-  heroUserMinus,
-  heroNoSymbol,
-  heroEyeSlash,
-  heroArrowDownOnSquare,
-  heroArrowUpOnSquare,
-  heroArrowLeft,
-  heroMapPin,
-} from '@ng-icons/heroicons/outline';
+  lucideArrowLeft,
+  lucideCamera,
+  lucideEllipsis,
+  lucideHeart,
+  lucideMapPin,
+  lucidePencil,
+  lucideSettings,
+  lucideX,
+} from '@ng-icons/lucide';
 
 import { AuthService } from '../../core/services/auth/auth.service';
 import { Users } from '../../core/services/users/users.service';
 import { RelationsService } from '../../core/services/relations/relations.service';
 import { MediaService } from '../../core/services/media/media.service';
+import { InterestsService } from '../../core/services/interests/interests.service';
 import { UserProfile } from '../../core/models/users/user-profile.model';
-import { UserSummary } from '../../core/models/users/user-summary.model';
-import { UserProfileUpdateRequest } from '../../core/models/users/user-profile-update-request.model';
+import { Interest } from '../../core/models/interests/interest.model';
 import { FollowListComponent } from '../../core/components/follow-list/follow-list';
 import { Btn } from '../../core/components/btn/btn';
-import { Switch } from '../../core/components/switch/switch/switch';
+import { Tooltip } from '../../core/directives/tooltip';
 import { ToastService } from '../../core/services/toast/toast.service';
 import { HomeArea } from '../home-area/home-area';
-import { DateFormatService } from '../../core/services/date-format/date-format.service';
 
+/** Your own profile at `/profile`, and anyone's at `/users/:username`. */
 @Component({
   selector: 'app-user-profile-view',
-  standalone: true,
-  imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    TranslatePipe,
-    NgIcon,
-    FollowListComponent,
-    RouterModule,
-    Btn,
-    HomeArea,
-    Switch,
-  ],
+  imports: [TranslatePipe, NgIcon, FollowListComponent, RouterLink, Btn, Tooltip, HomeArea],
   viewProviders: [
     provideIcons({
-      heroCamera,
-      heroPencil,
-      heroCheck,
-      heroXMark,
-      heroUserPlus,
-      heroUserMinus,
-      heroNoSymbol,
-      heroEyeSlash,
-      heroArrowDownOnSquare,
-      heroArrowUpOnSquare,
-      heroArrowLeft,
-      heroMapPin,
+      lucideArrowLeft,
+      lucideCamera,
+      lucideEllipsis,
+      lucideHeart,
+      lucideMapPin,
+      lucidePencil,
+      lucideSettings,
+      lucideX,
     }),
   ],
   templateUrl: './my-profile-view.html',
   styleUrl: './my-profile-view.scss',
 })
-export class UserProfileView implements OnInit {
+export class UserProfileView {
   private authService = inject(AuthService);
   private usersService = inject(Users);
   private relationsService = inject(RelationsService);
   private mediaService = inject(MediaService);
-  private fb = inject(FormBuilder);
-  private route = inject(ActivatedRoute);
-  private dateFormatService = inject(DateFormatService);
+  private interestsService = inject(InterestsService);
   private toast = inject(ToastService);
   private translate = inject(TranslateService);
-  readonly shareStances = this.authService.shareStances;
+  private document = inject(DOCUMENT);
+  private injector = inject(Injector);
+  private bioInput = viewChild<ElementRef<HTMLTextAreaElement>>('bioInput');
+
+  private lang = toSignal(this.translate.onLangChange.pipe(map((event) => event.lang)), {
+    initialValue: this.translate.getCurrentLang(),
+  });
 
   user = signal<UserProfile | null>(null);
-  readonly dateFormats = this.dateFormatService.formats;
   isOwnProfile = signal(true);
   followersCount = signal(0);
   followingCount = signal(0);
-  isEditing = signal(false);
   isUploadingAvatar = signal(false);
 
-  editForm = this.fb.group({
-    bio: [''],
-  });
+  editingBio = signal(false);
+  savingBio = signal(false);
+  bioDraft = signal('');
 
+  menuOpen = signal(false);
   showFollowers = signal(false);
   showFollowing = signal(false);
-  showBlocked = signal(false);
   showHome = signal(false);
   /** Private, so only shown on your own profile, from `/auth/me`. */
   readonly home = this.authService.home;
-  blockedUsers = signal<UserSummary[]>([]);
 
-  async ngOnInit() {
-    const username = this.route.snapshot.paramMap.get('username');
+  private interestCatalog = signal<Interest[]>([]);
+  private interestKeys = signal<string[]>([]);
+  /** In the catalogue's order, so every profile lists them the same way. */
+  readonly interests = computed(() => {
+    const picked = new Set(this.interestKeys());
+    const en = this.lang() === 'en';
+    return this.interestCatalog()
+      .filter((interest) => picked.has(interest.key))
+      .map((interest) => ({ key: interest.key, label: en ? interest.labelEn : interest.labelPl }));
+  });
+
+  /** Month and year only. The parts of a full date, because Polish needs the month's genitive. */
+  readonly since = computed(() => {
+    const createdAt = this.user()?.createdAt;
+    if (!createdAt) return '';
+    const parts = new Intl.DateTimeFormat(this.lang() || 'pl', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    }).formatToParts(new Date(createdAt));
+    return parts
+      .filter((part) => part.type === 'month' || part.type === 'year')
+      .map((part) => part.value)
+      .join(' ');
+  });
+
+  constructor() {
+    // The component stays when a follow list leads to another user's profile.
+    inject(ActivatedRoute)
+      .paramMap.pipe(takeUntilDestroyed())
+      .subscribe((params) => void this.load(params.get('username')));
+  }
+
+  private async load(username: string | null) {
+    this.showFollowers.set(false);
+    this.showFollowing.set(false);
+    this.menuOpen.set(false);
+    this.editingBio.set(false);
+    this.interestKeys.set([]);
+
     const currentUser = this.authService.currentUser();
-
     if (username && currentUser && username !== currentUser.username) {
       await this.loadOtherUserProfile(username);
     } else {
       this.authService.checkSession().subscribe();
       if (currentUser) {
-        this.user.set(currentUser);
-        this.isOwnProfile.set(true);
-        this.initForm();
-        this.updateCounts();
+        this.showUser(currentUser, true);
       }
+    }
+    const userId = this.user()?.id;
+    if (userId) {
+      await this.loadInterests(userId);
     }
   }
 
   private async loadOtherUserProfile(username: string) {
     try {
       const userProfile = await firstValueFrom(this.usersService.getUserByUsername(username));
-      this.user.set(userProfile);
-      this.isOwnProfile.set(false);
-      this.followersCount.set(userProfile.followersCount);
-      this.followingCount.set(userProfile.followingCount);
+      this.showUser(userProfile, false);
     } catch (err) {
       console.error('Error loading user profile', err);
     }
   }
 
-  private updateCounts() {
-    const u = this.user();
-    if (u) {
-      this.followersCount.set(u.followersCount);
-      this.followingCount.set(u.followingCount);
+  private showUser(user: UserProfile, own: boolean) {
+    this.user.set(user);
+    this.isOwnProfile.set(own);
+    this.followersCount.set(user.followersCount);
+    this.followingCount.set(user.followingCount);
+  }
+
+  /** Optional: when either request fails, the profile shows no interests. */
+  private async loadInterests(userId: string) {
+    try {
+      const { catalog, picks } = await firstValueFrom(
+        forkJoin({
+          catalog: this.interestsService.getCatalog(),
+          picks: this.interestsService.getUserInterests(userId),
+        }),
+      );
+      if (this.user()?.id !== userId) return;
+      this.interestCatalog.set(catalog.categories.flatMap((category) => category.interests));
+      this.interestKeys.set(picks.interests);
+    } catch {
+      this.interestKeys.set([]);
     }
   }
 
@@ -141,55 +183,42 @@ export class UserProfileView implements OnInit {
     this.followingCount.update((c) => c + event.deltaFollowing);
   }
 
-  private initForm() {
-    const u = this.user();
-    if (!u) return;
-    this.editForm.patchValue({
-      bio: u.bio ?? '',
-    });
+  startEditingBio() {
+    this.bioDraft.set(this.user()?.bio ?? '');
+    this.editingBio.set(true);
+    afterNextRender(
+      () => {
+        const textarea = this.bioInput()?.nativeElement;
+        textarea?.focus();
+        textarea?.setSelectionRange(textarea.value.length, textarea.value.length);
+      },
+      { injector: this.injector },
+    );
   }
 
-  toggleEdit() {
-    const editing = this.isEditing();
-    if (!editing) {
-      this.initForm();
-    }
-    this.isEditing.set(!editing);
+  cancelEditingBio() {
+    this.editingBio.set(false);
   }
 
-  async onSave() {
+  async saveBio() {
     const userValue = this.user();
-    if (!userValue || !this.isOwnProfile()) return;
+    if (!userValue || !this.isOwnProfile() || this.savingBio()) return;
 
-    const { bio } = this.editForm.getRawValue();
-    const payload: UserProfileUpdateRequest = {
-      bio: bio || null,
-    };
-
+    this.savingBio.set(true);
     try {
-      const updated = await firstValueFrom(this.usersService.updateProfile(userValue.id, payload));
+      const updated = await firstValueFrom(
+        this.usersService.updateProfile(userValue.id, { bio: this.bioDraft().trim() || null }),
+      );
       if (updated) {
         this.authService.currentUser.set(updated);
         this.user.set(updated);
-        this.isEditing.set(false);
-        this.editForm.patchValue({ bio: updated.bio ?? '' });
+        this.editingBio.set(false);
       }
     } catch (err) {
       console.error('Error updating profile', err);
-      alert('Error updating profile');
-    }
-  }
-
-  /** Shown as switched at once; switched back if the save fails. */
-  async setShareStances(share: boolean) {
-    const userValue = this.user();
-    if (!userValue || !this.isOwnProfile()) return;
-    this.authService.markShareStances(share);
-    try {
-      await firstValueFrom(this.usersService.updateProfile(userValue.id, { shareStances: share }));
-    } catch {
-      this.authService.markShareStances(!share);
-      this.toast.show(this.translate.instant('PROFILE.shareStancesFailed'));
+      this.toast.show(this.translate.instant('PROFILE.saveFailed'));
+    } finally {
+      this.savingBio.set(false);
     }
   }
 
@@ -212,12 +241,30 @@ export class UserProfileView implements OnInit {
     }
   }
 
+  /** The next click anywhere closes the menu, including on one of its items. */
+  toggleMenu() {
+    const opening = !this.menuOpen();
+    this.menuOpen.set(opening);
+    if (opening) {
+      // After this click has finished, so that it doesn't count as the next one.
+      setTimeout(() =>
+        this.document.addEventListener('click', () => this.menuOpen.set(false), { once: true }),
+      );
+    }
+  }
+
+  closeMenu(event: Event) {
+    event.stopPropagation();
+    this.menuOpen.set(false);
+  }
+
   async onBlock() {
     const u = this.user();
     if (!u || this.isOwnProfile()) return;
 
     const isCurrentlyBlocked = u.isBlocked;
-    if (!confirm(isCurrentlyBlocked ? 'Unblock this user?' : 'Block this user?')) return;
+    const question = isCurrentlyBlocked ? 'PROFILE.unblockConfirm' : 'PROFILE.blockConfirm';
+    if (!confirm(this.translate.instant(question))) return;
 
     try {
       if (isCurrentlyBlocked) {
@@ -273,7 +320,7 @@ export class UserProfileView implements OnInit {
       }
     } catch (err) {
       console.error('Error uploading avatar', err);
-      alert('Error uploading avatar');
+      this.toast.show(this.translate.instant('PROFILE.saveFailed'));
     } finally {
       this.isUploadingAvatar.set(false);
       input.value = '';
@@ -284,7 +331,7 @@ export class UserProfileView implements OnInit {
     const userId = this.user()?.id;
     if (!userId || !this.isOwnProfile()) return;
 
-    if (!confirm('Remove profile picture?')) return;
+    if (!confirm(this.translate.instant('PROFILE.removeAvatarConfirm'))) return;
 
     try {
       await firstValueFrom(this.usersService.deleteProfileImage(userId));
@@ -295,7 +342,7 @@ export class UserProfileView implements OnInit {
       }
     } catch (err) {
       console.error('Error removing avatar', err);
-      alert('Error removing avatar');
+      this.toast.show(this.translate.instant('PROFILE.saveFailed'));
     }
   }
 
@@ -307,33 +354,5 @@ export class UserProfileView implements OnInit {
   toggleFollowing() {
     this.showFollowing.set(!this.showFollowing());
     this.showFollowers.set(false);
-  }
-
-  async toggleBlocked() {
-    if (this.showBlocked()) {
-      this.showBlocked.set(false);
-      return;
-    }
-    this.showBlocked.set(true);
-    try {
-      const currentUserId = this.authService.currentUser()?.id;
-      if (!currentUserId) return;
-      const res = await firstValueFrom(
-        this.relationsService.getBlocking(currentUserId, { limit: 100, cursor: '' }),
-      );
-      this.blockedUsers.set(res.items);
-    } catch (err) {
-      console.error('Error loading blocked users', err);
-    }
-  }
-
-  async onUnblock(userId: string) {
-    if (!confirm('Unblock this user?')) return;
-    try {
-      await firstValueFrom(this.relationsService.unblock(userId));
-      this.blockedUsers.update((list) => list.filter((u) => u.id !== userId));
-    } catch (err) {
-      console.error('Error unblocking user', err);
-    }
   }
 }
