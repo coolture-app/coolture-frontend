@@ -161,6 +161,11 @@ mgl-map {
 }
 
 // MapLibre's popups are outside this component's view, so their look is set globally from here.
+// A card opened under "Szukaj w tym obszarze" is drawn over it, like the phone's sheet.
+:host ::ng-deep .maplibregl-popup.map-card {
+  z-index: 3;
+}
+
 :host ::ng-deep .maplibregl-popup.map-card .maplibregl-popup-content {
   width: 340px;
   padding: var(--space-md);
