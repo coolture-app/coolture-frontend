@@ -169,7 +169,7 @@
         }
       </div>
     }
-    <div class="post__social">
+    <div class="post__social" [class.post__social--own]="isMyPost()">
       <app-btn
         variant="social"
         [fullWidth]="true"
@@ -212,6 +212,7 @@
         @if (!isMyPost()) {
           <app-btn
             variant="social"
+            [fullWidth]="true"
             [class]="isNotForMe() ? 'segment not-for-me' : 'segment'"
             [pressed]="isNotForMe()"
             [label]="'POST.not-for-me' | translate"
@@ -222,6 +223,7 @@
         }
         <app-btn
           variant="social"
+          [fullWidth]="true"
           [class]="isInterested() ? 'segment interested' : 'segment'"
           [pressed]="isInterested()"
           [label]="'POST.interested' | translate"
@@ -231,6 +233,7 @@
         </app-btn>
         <app-btn
           variant="social"
+          [fullWidth]="true"
           [class]="isTakesPart() ? 'segment takes-part' : 'segment'"
           [pressed]="isTakesPart()"
           [label]="'POST.takes_part' | translate"

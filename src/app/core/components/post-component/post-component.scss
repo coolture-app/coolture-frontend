@@ -306,15 +306,21 @@
 
 // Like and comment share what's left; the stances keep their size.
 .post__social {
-  display: flex;
+  // One column per icon, so all of them are evenly spaced; the stances' pill spans the last ones.
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   align-items: center;
-  gap: var(--space-xs);
+  column-gap: var(--space-xs);
   margin: 0 var(--space-sm);
   padding: var(--space-xs) 0;
   border-top: 1px solid var(--color-border-light);
 
+  // Your own post has no "Nie dla mnie".
+  &--own {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
   > app-btn {
-    flex: 1;
     min-width: 0;
   }
 
@@ -324,11 +330,16 @@
 }
 
 .post__stances {
-  display: flex;
-  gap: 2px;
+  display: grid;
+  grid-column: 3 / -1;
+  grid-template-columns: subgrid;
   padding: 2px;
   border-radius: var(--radius-full);
   background: var(--color-border-light);
+
+  > app-btn {
+    min-width: 0;
+  }
 }
 
 .post__folded {
