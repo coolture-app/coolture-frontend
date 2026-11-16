@@ -16,7 +16,7 @@ const LOCAL_DEV = '00000000-0000-0000-0000-000000000001';
 
 describe('Dev identity', () => {
   let cookie: string;
-  let reloads: number;
+  let reloads: string[];
 
   // A document whose cookie and reload the specs can see, instead of the test runner's own.
   const fakeDocument = () => ({
@@ -26,7 +26,12 @@ describe('Dev identity', () => {
     set cookie(value: string) {
       cookie = value.split(';')[0];
     },
-    defaultView: { location: { reload: () => reloads++ } },
+    defaultView: {
+      location: {
+        pathname: '/posts/p1',
+        replace: (url: string) => reloads.push(url),
+      },
+    },
   });
 
   const setUp = (platform = 'browser', request: Request | null = null) => {
@@ -53,7 +58,7 @@ describe('Dev identity', () => {
 
   beforeEach(() => {
     cookie = '';
-    reloads = 0;
+    reloads = [];
   });
 
   it('is a guest in a fresh browser, and tells the API so', () => {
@@ -94,13 +99,13 @@ describe('Dev identity', () => {
     expect(setUp().isGuest()).toBeTrue();
   });
 
-  it('saves a switch in the cookie and reloads the page', () => {
+  it('saves a switch in the cookie and reloads the page, without the previous user’s filters', () => {
     const identity = setUp();
 
     identity.switchTo(identity.users.find((user) => user.id === JAN)!);
 
     expect(cookie).toBe(`${DEV_USER_COOKIE}=${JAN}`);
-    expect(reloads).toBe(1);
+    expect(reloads).toEqual(['/posts/p1']);
   });
 
   it('signs out to a guest', () => {
@@ -111,7 +116,7 @@ describe('Dev identity', () => {
 
     expect(cookie).toBe(`${DEV_USER_COOKIE}=guest`);
     expect(identity.current.id).toBe(ANNA);
-    expect(reloads).toBe(1);
+    expect(reloads).toEqual(['/posts/p1']);
   });
 
   it('makes the login button open the menu and a guest skip the session check', async () => {

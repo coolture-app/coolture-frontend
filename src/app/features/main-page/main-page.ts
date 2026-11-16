@@ -16,7 +16,7 @@ import {
 import { ViewportScroller } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, NavigationStart, Params, Router } from '@angular/router';
-import { debounceTime, filter, merge } from 'rxjs';
+import { debounceTime, filter, firstValueFrom, merge } from 'rxjs';
 import { TranslatePipe } from '@ngx-translate/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -599,6 +599,11 @@ export class MainPage implements OnDestroy {
     this.sort.set(sort);
     this.place.pickPoint(point);
 
+    // On a reload /auth/me may not have answered yet, and the filter means nothing for a guest.
+    if (filters.followed && !(await this.signedIn())) {
+      this.filtersForm.controls.followed.setValue(false, { emitEvent: false });
+    }
+
     const needsPosition = filters.place === 'mine' || (sort === 'NEAREST' && !point);
     if (needsPosition) {
       const position = await this.location.currentOrAsk(LOCATION_WAIT_MS, LOCATION_ANSWER_MS);
@@ -614,6 +619,10 @@ export class MainPage implements OnDestroy {
     }
     this.applyFilters();
     this.showInUrl();
+  }
+
+  private async signedIn(): Promise<boolean> {
+    return this.authService.isAuthenticated() || firstValueFrom(this.authService.checkSession());
   }
 
   /** The filters as the form has them, and what their radius is centred on. */
