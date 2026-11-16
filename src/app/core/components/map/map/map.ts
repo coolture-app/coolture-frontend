@@ -30,13 +30,7 @@ import {
 import { FeatureCollection, Feature, Point, Polygon } from 'geojson';
 import { PostFilterParams } from '../../../models/posts/post-filter-params.model';
 import { PostMark } from '../../../models/posts/post-mark.model';
-import {
-  collapseCredit,
-  followLanguage,
-  MAP_STYLE,
-  quietMissingIcons,
-  TRICITY,
-} from '../map-style';
+import { collapseCredit, followLanguage, MAP_STYLE, quietMissingIcons } from '../map-style';
 import {
   boundsOf,
   circle,
@@ -55,9 +49,10 @@ import * as layers from '../map-layers';
 import { MapMemory } from '../map-memory';
 import { MapPreview } from '../map-preview/map-preview';
 import { PickStar } from '../pick-star/pick-star';
-import { GeoPoint } from '../../../models/common/geo.model';
+import { GeoPoint, TRICITY } from '../../../models/common/geo.model';
 import { haversineMeters, LocationService } from '../../../services/location/location.service';
 import { ToastService } from '../../../services/toast/toast.service';
+import { mediaQuery, WIDE_FROM_PX } from '../../../services/media-query/media-query';
 
 /** Gdynia to Gdańsk in view, so the first look at an unknown user's map shows the whole release area. */
 const TRICITY_ZOOM = 10;
@@ -149,8 +144,8 @@ export class Map implements OnDestroy {
   /** The precise position after "Moja lokalizacja", drawn as a dot. It never leaves the browser. */
   readonly here = signal<GeoPoint | null>(null);
   /** Wide screens open a pin's preview by the pin and show a title on hover; phones use a sheet at the bottom. */
-  readonly wide = signal(matches('(min-width: 640px)'));
-  readonly hoverable = matches('(hover: hover)');
+  readonly wide = mediaQuery(`(min-width: ${WIDE_FROM_PX}px)`);
+  readonly hoverable = mediaQuery('(hover: hover)');
 
   /** The post the map was opened on, shown even when the filters leave it out. */
   private readonly focused = signal<PostMark | null>(null);
@@ -213,7 +208,10 @@ export class Map implements OnDestroy {
     return area ? outside(area) : null;
   });
 
-  /** Set once MapLibre has loaded; nothing on the map is touched before. */
+  /**
+   * Set once MapLibre has loaded; nothing on the map is touched before. Not a signal on purpose: the effects act on
+   * changes after load, and `onMapLoad` applies the first values in an order Back from a post depends on.
+   */
   private map: MapLibreMap | null = null;
   /** The area this map handed over itself. It's already in view, so the map doesn't fit to it. */
   private handedOver: MapArea | null = null;
@@ -297,13 +295,6 @@ export class Map implements OnDestroy {
       this.searching.set(false);
       this.easeOutIfEmpty();
     });
-
-    if (typeof window !== 'undefined') {
-      const query = window.matchMedia('(min-width: 640px)');
-      const onChange = () => this.wide.set(query.matches);
-      query.addEventListener('change', onChange);
-      this.destroy$.subscribe(() => query.removeEventListener('change', onChange));
-    }
   }
 
   ngOnDestroy(): void {
@@ -513,7 +504,7 @@ export class Map implements OnDestroy {
     if (this.map) {
       this.map.getCanvas().style.cursor = 'pointer';
     }
-    if (this.hoverable) {
+    if (this.hoverable()) {
       const id = event.features?.[0]?.properties?.['id'];
       this.hovered.set(this.places().find((p) => p.id === id) ?? null);
     }
@@ -630,8 +621,4 @@ export class Map implements OnDestroy {
     this.fittedArea = area;
     map.fitBounds(boundsOf(ringPoints(area)), { padding: 32, duration: 0 });
   }
-}
-
-function matches(query: string): boolean {
-  return typeof window !== 'undefined' && window.matchMedia(query).matches;
 }

@@ -16,7 +16,7 @@ import {
 import { ViewportScroller } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, NavigationStart, Params, Router } from '@angular/router';
-import { debounceTime, filter, firstValueFrom, merge } from 'rxjs';
+import { debounceTime, filter, merge } from 'rxjs';
 import { TranslatePipe } from '@ngx-translate/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -35,9 +35,8 @@ import { InfiniteScroll } from '../../core/directives/infinite-scroll';
 import { PULL_THRESHOLD, PullToRefresh } from '../../core/directives/pull-to-refresh';
 import { lucideRefreshCw } from '@ng-icons/lucide';
 import { PostFilterParams } from '../../core/models/posts/post-filter-params.model';
-import { GeoPoint, NamedPlace } from '../../core/models/common/geo.model';
+import { NamedPlace } from '../../core/models/common/geo.model';
 import { GeocodingService } from '../../core/services/geocoding/geocoding.service';
-import { TRICITY } from '../../core/components/map/map-style';
 import { PostService } from '../../core/services/post/post.service';
 import { AuthService } from '../../core/services/auth/auth.service';
 import { LocationService } from '../../core/services/location/location.service';
@@ -50,6 +49,7 @@ import { MapFocus } from '../../core/components/map/map-focus';
 import { PostMark } from '../../core/models/posts/post-mark.model';
 import { backClosable } from '../../core/services/back-closable/back-closable';
 import { ToastService } from '../../core/services/toast/toast.service';
+import { mediaQuery, WIDE_FROM_PX } from '../../core/services/media-query/media-query';
 import { TranslateService } from '@ngx-translate/core';
 import {
   createFiltersForm,
@@ -62,6 +62,7 @@ import {
 } from './home-view';
 import { fromHomeParams, sameHomeParams, toHomeParams } from './home-url';
 import { FeedFilters } from './feed-filters/feed-filters';
+import { HomePlace } from './home-place';
 import { PlacePanel } from './place-panel/place-panel';
 import { ViewSwitch } from './view-switch/view-switch';
 
@@ -112,7 +113,7 @@ const MAP_PICKS = 30;
     }),
   ],
   templateUrl: './main-page.html',
-  styleUrls: ['./main-page.scss', './main-page-map.scss'],
+  styleUrls: ['./main-page.scss', './main-page-toolbar.scss', './main-page-map.scss'],
   host: {
     '(document:click)': 'closeSortMenu($event)',
     '(document:keydown.escape)': 'closePopups()',
@@ -152,7 +153,7 @@ export class MainPage implements OnDestroy {
   readonly mapFocusPost = signal<PostMark | null>(null);
   private readonly searchbar = viewChild<ElementRef<HTMLElement>>('searchbar');
   private readonly barHeight = signal(0);
-  private readonly phone = signal(false);
+  private readonly phone = mediaQuery(`(max-width: ${WIDE_FROM_PX - 1}px)`);
   /** On a phone's Mapa the bar floats over the map's top, so the map keeps its own buttons and middle below it. */
   readonly mapTopInset = computed(() => (this.isMapView() && this.phone() ? this.barHeight() : 0));
   locationFailed = signal(false);
@@ -175,17 +176,18 @@ export class MainPage implements OnDestroy {
   ];
 
   filtersForm = createFiltersForm();
-  /** The user's position, for "Moja lokalizacja" and Najbliższe, once the browser gave it. */
-  private nearPosition = signal<GeoPoint | null>(null);
-  /**
-   * A place that isn't the user's position, for "Wskazane miejsce": searched for, the home, the map's area or a
-   * link's point. Its name is empty until a lookup names a point that came without one.
-   */
-  readonly pickedPlace = signal<NamedPlace | null>(null);
   readonly home = this.authService.home;
 
   /** The applied search and filters, also what the map shows. Both tabs share them. */
   readonly activeFilters = signal<PostFilterParams>({});
+  readonly place = new HomePlace(
+    this.home,
+    computed(() => {
+      const { latitude, longitude } = this.activeFilters();
+      return latitude !== undefined && longitude !== undefined ? { latitude, longitude } : null;
+    }),
+    (point) => this.geocoding.areaAt(point),
+  );
   /** What the applied radius is centred on, for the place pill. */
   readonly activePlace = signal<PlaceFilter>('');
   /** Dla Ciebie is the ranked feed of posts new to the user; Wszystkie is every post, in a chosen order. */
@@ -193,20 +195,9 @@ export class MainPage implements OnDestroy {
   /** Wszystkie's order. Kept while on Dla Ciebie, so going back finds it as it was. */
   readonly sort = signal<PostsSort>(START_SORT);
   readonly isFeed = computed(() => this.tab() === 'forYou');
-  /** A point the user chose or gave: the radius's centre if one is on, so Najbliższe and the radius agree. */
-  private readonly ownPoint = computed<GeoPoint | null>(() => {
-    const { latitude, longitude } = this.activeFilters();
-    return latitude !== undefined && longitude !== undefined
-      ? { latitude, longitude }
-      : (this.nearPosition() ?? this.pickedPlace()?.coordinates ?? null);
-  });
-  /** Where Najbliższe measures from: a point the user chose or gave, else their home. */
-  private readonly sortPoint = computed<GeoPoint | null>(
-    () => this.ownPoint() ?? this.home()?.coordinates ?? null,
-  );
   /** The home's name while Najbliższe measures from it, so the list can say so. */
   readonly nearestFromHome = computed(() =>
-    !this.isFeed() && this.sort() === 'NEAREST' && !this.ownPoint()
+    !this.isFeed() && this.sort() === 'NEAREST' && !this.place.own()
       ? (this.home()?.name ?? null)
       : null,
   );
@@ -217,10 +208,6 @@ export class MainPage implements OnDestroy {
     const on = [type, tags, startsFrom || startsTo, visibility, status, includePast];
     return on.filter((value) => value !== undefined && value !== false).length;
   });
-  /** Where suggestions in the place search come from first. */
-  readonly searchNear = computed<GeoPoint>(
-    () => this.ownPoint() ?? this.home()?.coordinates ?? TRICITY,
-  );
   /** A screenful for the first page. After that one is enough, and the posts stay what's on screen. */
   readonly skeletons = computed(() => Array(this.list.items().length > 0 ? 1 : 3));
   readonly pullThreshold = PULL_THRESHOLD;
@@ -291,18 +278,11 @@ export class MainPage implements OnDestroy {
 
     afterNextRender(() => {
       const bar = this.searchbar()?.nativeElement;
-      const phone = window.matchMedia('(max-width: 639px)');
-      const onPhone = () => this.phone.set(phone.matches);
-      onPhone();
-      phone.addEventListener('change', onPhone);
       const observer = new ResizeObserver(() => this.barHeight.set(bar?.offsetHeight ?? 0));
       if (bar) {
         observer.observe(bar);
       }
-      this.destroyRef.onDestroy(() => {
-        observer.disconnect();
-        phone.removeEventListener('change', onPhone);
-      });
+      this.destroyRef.onDestroy(() => observer.disconnect());
     });
 
     // The page is prerendered with no query, so the URL applies only after hydration matched it.
@@ -318,7 +298,7 @@ export class MainPage implements OnDestroy {
     // it: the radius's centre, or Najbliższe's position. See LocationService.
     effect(() => {
       const { latitude, longitude, radiusKm } = this.activeFilters();
-      const nearest = !this.isFeed() && this.sort() === 'NEAREST' ? this.sortPoint() : null;
+      const nearest = !this.isFeed() && this.sort() === 'NEAREST' ? this.place.sortPoint() : null;
       const centre = radiusKm && latitude !== undefined && longitude !== undefined;
       this.location.measureFrom(centre ? { latitude, longitude } : nearest);
     });
@@ -338,7 +318,7 @@ export class MainPage implements OnDestroy {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((place) => {
         this.locationFailed.set(false);
-        if (place === 'mine' && !this.nearPosition()) {
+        if (place === 'mine' && !this.place.position()) {
           void this.locateForFilter();
         }
       });
@@ -377,7 +357,7 @@ export class MainPage implements OnDestroy {
 
   /** A place from the search, or the home: the radius centres on it, with the radius as it was. */
   pickPlace(place: NamedPlace): void {
-    this.pickedPlace.set({ name: place.name, coordinates: place.coordinates });
+    this.place.pick(place);
     this.filtersForm.controls.place.setValue('picked');
   }
 
@@ -387,10 +367,9 @@ export class MainPage implements OnDestroy {
    */
   searchArea({ centre, radiusKm }: MapArea): void {
     const radius = Math.min(radiusKm, RADII_KM[RADII_KM.length - 1]);
-    this.pickedPlace.set({ name: '', coordinates: centre });
+    this.place.pickPoint(centre);
     this.filtersForm.patchValue({ place: 'picked', radiusKm: radius }, { emitEvent: false });
     this.applyControls();
-    void this.nameThePickedPlace();
   }
 
   clearSearch(): void {
@@ -457,10 +436,10 @@ export class MainPage implements OnDestroy {
   /** Najbliższe needs a point: the user's position, else their home. With neither, the order stays and a note says why. */
   async setSortBy(sortBy: PostsSort): Promise<void> {
     this.showSortMenu.set(false);
-    if (sortBy === 'NEAREST' && !this.ownPoint()) {
+    if (sortBy === 'NEAREST' && !this.place.own()) {
       const position = await this.location.request();
       if (position) {
-        this.nearPosition.set(position);
+        this.place.position.set(position);
       } else if (!this.home()) {
         this.toast.show(this.translate.instant('MAIN_PAGE.nearestNeedsLocation'));
         return;
@@ -469,8 +448,10 @@ export class MainPage implements OnDestroy {
     this.changeList(() => this.sort.set(sortBy));
   }
 
-  /** Search and filters stay, so the same question gets the other tab's answer. */
-  /** On Mapa, the tab already shown goes back to its Lista. */
+  /**
+   * Search and filters stay, so the same question gets the other tab's answer. On Mapa, the tab already shown goes
+   * back to its Lista.
+   */
   setTab(tab: HomeTab): void {
     if (tab === this.tab() && this.isMapView()) {
       this.toggleMapView(false);
@@ -581,7 +562,7 @@ export class MainPage implements OnDestroy {
       void this.startFeed(run);
     } else {
       const sortBy = this.sort();
-      const position = sortBy === 'NEAREST' ? this.sortPoint() : null;
+      const position = sortBy === 'NEAREST' ? this.place.sortPoint() : null;
       this.list.start({
         kind: 'posts',
         filters: { ...this.activeFilters(), ...position, sortBy },
@@ -616,12 +597,12 @@ export class MainPage implements OnDestroy {
     this.filtersForm.setValue(filters, { emitEvent: false });
     this.tab.set(tab);
     this.sort.set(sort);
-    this.pickedPlace.set(point && { name: '', coordinates: point });
+    this.place.pickPoint(point);
 
     const needsPosition = filters.place === 'mine' || (sort === 'NEAREST' && !point);
     if (needsPosition) {
       const position = await this.location.currentOrAsk(LOCATION_WAIT_MS, LOCATION_ANSWER_MS);
-      this.nearPosition.set(position);
+      this.place.position.set(position);
       if (!position && filters.place === 'mine') {
         this.filtersForm.controls.place.setValue('', { emitEvent: false });
         this.locationFailed.set(true);
@@ -633,28 +614,6 @@ export class MainPage implements OnDestroy {
     }
     this.applyFilters();
     this.showInUrl();
-    if (point) {
-      void this.nameThePickedPlace();
-    }
-  }
-
-  /**
-   * A point from the map or a link has no name, so the pill would say only "Wskazane miejsce". The district or city
-   * around it names it, if the geocoder answers before the place changes.
-   */
-  private async nameThePickedPlace(): Promise<void> {
-    const place = this.pickedPlace();
-    if (!place || place.name) {
-      return;
-    }
-    try {
-      const area = await firstValueFrom(this.geocoding.areaAt(place.coordinates));
-      if (area && this.pickedPlace() === place) {
-        this.pickedPlace.set({ ...place, name: area.name });
-      }
-    } catch {
-      // The pill keeps saying "Wskazane miejsce".
-    }
   }
 
   /** The filters as the form has them, and what their radius is centred on. */
@@ -675,7 +634,7 @@ export class MainPage implements OnDestroy {
       filters: this.filtersForm.getRawValue(),
       tab: this.tab(),
       sort: this.sort(),
-      point: inFilter || nearest ? this.sortPoint() : null,
+      point: inFilter || nearest ? this.place.sortPoint() : null,
       map: this.isMapView(),
     });
   }
@@ -695,7 +654,7 @@ export class MainPage implements OnDestroy {
     const position = await this.location.request();
     this.locating.set(false);
     if (position) {
-      this.nearPosition.set(position);
+      this.place.position.set(position);
       this.applyControls();
     } else {
       this.filtersForm.controls.place.setValue('', { emitEvent: false });
@@ -706,23 +665,14 @@ export class MainPage implements OnDestroy {
   private resetControls(): void {
     this.filtersForm.reset(NO_FILTERS, { emitEvent: false });
     this.searchControl.setValue('', { emitEvent: false });
-    this.pickedPlace.set(null);
-  }
-
-  /** The radius filter's centre, if it's on. */
-  private filterCentre(): GeoPoint | null {
-    const place = this.filtersForm.controls.place.value;
-    if (place === 'picked') {
-      return this.pickedPlace()?.coordinates ?? null;
-    }
-    return place === 'mine' ? this.nearPosition() : null;
+    this.place.picked.set(null);
   }
 
   private readFilters(): PostFilterParams {
     const search = this.searchControl.value.trim();
     const { type, tags, startsFrom, startsTo, visibility, status, includePast, radiusKm } =
       this.filtersForm.getRawValue();
-    const position = this.filterCentre();
+    const position = this.place.centre(this.filtersForm.controls.place.value);
     const tagList = tags
       .split(',')
       .map((tag) => tag.trim())
@@ -749,8 +699,8 @@ export class MainPage implements OnDestroy {
       sort: this.sort(),
       isMapView: this.isMapView(),
       listScrollY: this.listScrollY,
-      nearPosition: this.nearPosition(),
-      pickedPlace: this.pickedPlace(),
+      nearPosition: this.place.position(),
+      pickedPlace: this.place.picked(),
       url: this.urlParams(),
     });
   }
@@ -772,8 +722,8 @@ export class MainPage implements OnDestroy {
     this.filtersForm.setValue(view.filters, { emitEvent: false });
     this.tab.set(view.tab);
     this.sort.set(view.sort);
-    this.nearPosition.set(view.nearPosition);
-    this.pickedPlace.set(view.pickedPlace);
+    this.place.position.set(view.nearPosition);
+    this.place.picked.set(view.pickedPlace);
     this.isMapView.set(view.isMapView);
     this.listScrollY = view.listScrollY;
     this.applyFilters();

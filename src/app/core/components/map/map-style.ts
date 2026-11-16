@@ -26,9 +26,6 @@ export function quietMissingIcons(map: MapLibreMap): void {
   });
 }
 
-/** The middle of Trójmiasto, where the release starts. */
-export const TRICITY = { latitude: 54.44, longitude: 18.57 };
-
 /** Each map's labels as Liberty wrote them, to go back to in English. */
 const libertyLabels = new WeakMap<MapLibreMap, Map<string, unknown>>();
 

@@ -14,8 +14,7 @@ import { heroMapPin, heroXMark } from '@ng-icons/heroicons/outline';
 
 import { Btn } from '../../core/components/btn/btn';
 import { PlaceSearch } from '../../core/components/place-search/place-search';
-import { TRICITY } from '../../core/components/map/map-style';
-import { NamedPlace } from '../../core/models/common/geo.model';
+import { NamedPlace, TRICITY } from '../../core/models/common/geo.model';
 import { AuthService } from '../../core/services/auth/auth.service';
 import { GeocodingService } from '../../core/services/geocoding/geocoding.service';
 import { LocationService } from '../../core/services/location/location.service';

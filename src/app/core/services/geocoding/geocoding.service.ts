@@ -103,31 +103,16 @@ function toOption({ geometry, properties: p }: PhotonFeature): PlaceOption | nul
   return { name, coordinates: { latitude, longitude }, ...(detail && { detail }) };
 }
 
-function withoutRepeatedOptions(options: (PlaceOption | null)[]): PlaceOption[] {
-  const seen = new Set<string>();
-  return options.filter((option): option is PlaceOption => {
-    const text = option
-      ? `${option.name}
-${option.detail ?? ''}`
-      : '';
-    if (!option || seen.has(text)) {
-      return false;
-    }
-    seen.add(text);
-    return true;
-  });
-}
-
 /**
  * Photon lists an OSM object once per tag it indexes, so Opera Leśna came as a theatre and as bleachers, and the two
  * rows read the same. Photon's order stays.
  */
-function withoutRepeats(places: PlaceSuggestion[]): PlaceSuggestion[] {
+function distinct<T>(items: readonly T[], parts: (item: T) => (string | undefined)[]): T[] {
   const seen = new Set<string>();
-  return places.filter((place) => {
-    const text = [place.venueName, place.street, place.buildingNum, place.postalCode, place.city]
+  return items.filter((item) => {
+    const text = parts(item)
       .map((part) => part ?? '')
-      .join('\n');
+      .join('|');
     if (seen.has(text)) {
       return false;
     }
@@ -178,7 +163,12 @@ export class GeocodingService {
       params = params.append('countrycode', code);
     }
     return this.get('/api', params).pipe(
-      map((features) => withoutRepeatedOptions(features.map(toOption))),
+      map((features) =>
+        distinct(
+          features.map(toOption).filter((option): option is PlaceOption => !!option),
+          (option) => [option.name, option.detail],
+        ),
+      ),
     );
   }
 
@@ -228,7 +218,18 @@ export class GeocodingService {
       params = params.append('countrycode', code);
     }
     return this.get('/api', params).pipe(
-      map((features) => withoutRepeats(features.map((f) => toPlace(f, 'search')))),
+      map((features) =>
+        distinct(
+          features.map((f) => toPlace(f, 'search')),
+          (place) => [
+            place.venueName,
+            place.street,
+            place.buildingNum,
+            place.postalCode,
+            place.city,
+          ],
+        ),
+      ),
     );
   }
 

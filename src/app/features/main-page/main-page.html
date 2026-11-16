@@ -77,7 +77,7 @@
                 {{ 'MAIN_PAGE.nearMe' | translate }}
               }
               @case ('picked') {
-                {{ pickedPlace()?.name || ('MAIN_PAGE.pickedPlace' | translate) }}
+                {{ place.picked()?.name || ('MAIN_PAGE.pickedPlace' | translate) }}
               }
               @default {
                 {{ 'MAIN_PAGE.anywhere' | translate }}
@@ -162,8 +162,8 @@
           class="filters-popover"
           [form]="filtersForm"
           [home]="home()"
-          [picked]="pickedPlace()"
-          [near]="searchNear()"
+          [picked]="place.picked()"
+          [near]="place.searchNear()"
           [locating]="locating()"
           [locationFailed]="locationFailed()"
           (pick)="pickPlace($event)"

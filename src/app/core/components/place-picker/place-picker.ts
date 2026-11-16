@@ -22,16 +22,10 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideMaximize2, lucideMinimize2 } from '@ng-icons/lucide';
 import { FormInput } from '../form-input/form-input';
 import { backClosable } from '../../services/back-closable/back-closable';
-import {
-  collapseCredit,
-  followLanguage,
-  MAP_STYLE,
-  quietMissingIcons,
-  TRICITY,
-} from '../map/map-style';
+import { collapseCredit, followLanguage, MAP_STYLE, quietMissingIcons } from '../map/map-style';
 import { GeocodingService } from '../../services/geocoding/geocoding.service';
 import { LocationService } from '../../services/location/location.service';
-import { GeoPoint } from '../../models/common/geo.model';
+import { GeoPoint, TRICITY } from '../../models/common/geo.model';
 import { LOCATION_LIMITS } from '../../models/common/location-limits';
 import { LocationForm } from './location-form';
 import { PlaceSearch, PlaceSuggestion } from '../../models/common/place-suggestion.model';

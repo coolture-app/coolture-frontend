@@ -32,6 +32,7 @@ import { Tooltip } from '../../../directives/tooltip';
 import { PickStar } from '../pick-star/pick-star';
 import { MapReactions } from '../map-reactions';
 import { PhotoViewerService } from '../../../services/photo-viewer/photo-viewer.service';
+import { mediaQuery } from '../../../services/media-query/media-query';
 
 /**
  * What a pin opens: a mini view of its post, or the posts at its place, soonest first. A row opens its post's mini
@@ -61,7 +62,7 @@ export class MapPreview {
   private readonly lang = toSignal(this.translate.onLangChange.pipe(map((change) => change.lang)), {
     initialValue: this.translate.getCurrentLang() || 'pl',
   });
-  readonly hoverable = typeof window !== 'undefined' && window.matchMedia('(hover: hover)').matches;
+  readonly hoverable = mediaQuery('(hover: hover)');
 
   readonly place = input.required<Place>();
   /** The feed's top picks, starred as on the pins. */
@@ -119,7 +120,7 @@ export class MapPreview {
   }
 
   onRowEnter(post: PostMark, event: MouseEvent): void {
-    if (!this.hoverable) {
+    if (!this.hoverable()) {
       return;
     }
     const card = (event.currentTarget as HTMLElement).closest('.preview')?.getBoundingClientRect();

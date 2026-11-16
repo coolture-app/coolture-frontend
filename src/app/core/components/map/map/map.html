@@ -34,14 +34,14 @@
           id="radius-outside"
           type="fill"
           source="radius-outside"
-          [paint]="{ 'fill-color': '#000000', 'fill-opacity': 0.06 }"
+          [paint]="layers.RADIUS_OUTSIDE_PAINT"
         ></mgl-layer>
       }
       <mgl-layer
         id="radius-line"
         type="line"
         source="radius"
-        [paint]="{ 'line-color': '#2563eb', 'line-opacity': 0.35, 'line-width': 1.5 }"
+        [paint]="layers.RADIUS_LINE_PAINT"
       ></mgl-layer>
     }
     <mgl-geojson-source

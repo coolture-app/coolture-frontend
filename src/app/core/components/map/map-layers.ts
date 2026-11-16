@@ -12,6 +12,8 @@ type AnyPaint = NonNullable<ReturnType<LayerComponent['paint']>>;
 type SymbolLayout = Extract<AnyLayout, { 'text-field'?: unknown }>;
 type SymbolPaint = Extract<AnyPaint, { 'text-color'?: unknown }>;
 type CirclePaint = Extract<AnyPaint, { 'circle-color'?: unknown }>;
+type LinePaint = Extract<AnyPaint, { 'line-color'?: unknown }>;
+type FillPaint = Extract<AnyPaint, { 'fill-color'?: unknown }>;
 
 /** The fonts OpenFreeMap's Liberty style serves glyphs for. They have no star, so the star is drawn. */
 const REGULAR = ['Noto Sans Regular'];
@@ -212,6 +214,14 @@ export const CLUSTER_STAR_LAYOUT: SymbolLayout = {
 };
 
 /** The user's own position, after "Moja lokalizacja". */
+/** The searched area: a thin line, and the world outside it dimmed, so the area reads as the bright part. */
+export const RADIUS_LINE_PAINT: LinePaint = {
+  'line-color': ACCENT,
+  'line-opacity': 0.35,
+  'line-width': 1.5,
+};
+export const RADIUS_OUTSIDE_PAINT: FillPaint = { 'fill-color': '#000000', 'fill-opacity': 0.06 };
+
 export const HERE_PAINT: CirclePaint = {
   'circle-color': ACCENT,
   'circle-radius': 7,
