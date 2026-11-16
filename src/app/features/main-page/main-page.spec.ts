@@ -3,7 +3,7 @@ import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpTestingController, TestRequest } from '@angular/common/http/testing';
 import { Navigation, provideRouter, Router } from '@angular/router';
-import { MapFocus } from '../../core/components/map/map-memory';
+import { MapFocus } from '../../core/components/map/map-focus';
 
 import { MainPage } from './main-page';
 import { LocationService } from '../../core/services/location/location.service';
@@ -519,6 +519,8 @@ describe('MainPage', () => {
         title: 'a',
         startsAt: '2026-12-01T18:00:00Z',
         positiveReactionCount: 0,
+        interestedCount: 0,
+        goingCount: 0,
         coordinates: { latitude: 54.35, longitude: 18.6 },
       };
 

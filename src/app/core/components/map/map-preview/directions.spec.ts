@@ -1,4 +1,4 @@
-import { directionsUrl } from './map-memory';
+import { directionsUrl } from './directions';
 
 describe('directionsUrl', () => {
   const at = { latitude: 54.5165, longitude: 18.5455 };

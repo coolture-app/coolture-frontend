@@ -110,11 +110,7 @@
         class="mini__react"
         [class.mini__react--on]="post.myParticipation === 'INTERESTED'"
         [attr.aria-pressed]="post.myParticipation === 'INTERESTED'"
-        [attr.aria-label]="
-          post.interestedCount === undefined
-            ? ('POST.interested' | translate)
-            : ('MAP.interested' | translate: { count: post.interestedCount })
-        "
+        [attr.aria-label]="'MAP.interested' | translate: { count: post.interestedCount }"
         [appTooltip]="'POST.interested' | translate"
         (click)="reactions.stance(mark, 'INTERESTED')"
       >
@@ -130,11 +126,7 @@
         class="mini__react"
         [class.mini__react--on]="post.myParticipation === 'TAKES_PART'"
         [attr.aria-pressed]="post.myParticipation === 'TAKES_PART'"
-        [attr.aria-label]="
-          post.goingCount === undefined
-            ? ('POST.takes_part' | translate)
-            : ('MAP.going' | translate: { count: post.goingCount })
-        "
+        [attr.aria-label]="'MAP.going' | translate: { count: post.goingCount }"
         [appTooltip]="'POST.takes_part' | translate"
         (click)="reactions.stance(mark, 'TAKES_PART')"
       >

@@ -46,7 +46,7 @@ import { HomeTapService } from '../../core/services/home-tap/home-tap.service';
 import { Tooltip } from '../../core/directives/tooltip';
 import { PostType, PostStatus, PostVisibility, PostsSort } from '../../core/models/common/enums';
 import { Map, type MapArea } from '../../core/components/map/map/map';
-import { MapFocus } from '../../core/components/map/map-memory';
+import { MapFocus } from '../../core/components/map/map-focus';
 import { PostMark } from '../../core/models/posts/post-mark.model';
 import { backClosable } from '../../core/services/back-closable/back-closable';
 import { ToastService } from '../../core/services/toast/toast.service';

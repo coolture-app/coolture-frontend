@@ -7,7 +7,7 @@ import { postPlace } from '../../models/posts/post-place';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { heroMapPin } from '@ng-icons/heroicons/outline';
 import { lucideChevronRight } from '@ng-icons/lucide';
-import { MapFocus } from '../map/map-memory';
+import { MapFocus } from '../map/map-focus';
 
 @Component({
   selector: 'app-event-card',

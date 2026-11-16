@@ -37,6 +37,8 @@ export function mark(id: string, latitude = 54.35): PostMark {
     title: id,
     startsAt: '2026-12-01T18:00:00Z',
     positiveReactionCount: 0,
+    interestedCount: 0,
+    goingCount: 0,
     coordinates: { latitude, longitude: 18.6 },
     city: 'Gdańsk',
   };

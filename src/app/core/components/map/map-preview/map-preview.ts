@@ -27,7 +27,7 @@ import { appTicket } from '../../../icons/ticket';
 import { placeLine } from '../../../models/posts/post-place';
 import { PostMark } from '../../../models/posts/post-mark.model';
 import { cardDate, Place } from '../map-pins';
-import { directionsUrl } from '../map-memory';
+import { directionsUrl } from './directions';
 import { Tooltip } from '../../../directives/tooltip';
 import { PickStar } from '../pick-star/pick-star';
 import { MapReactions } from '../map-reactions';

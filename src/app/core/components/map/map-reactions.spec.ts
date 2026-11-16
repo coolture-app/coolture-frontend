@@ -6,20 +6,23 @@ import { MapReactions } from './map-reactions';
 import { mark } from './map-stubs.testing';
 import { AuthService } from '../../services/auth/auth.service';
 import { PostListStore } from '../../services/post-list/post-list.store';
+import { ViewerStates } from '../../services/viewer-states/viewer-states';
 import { PostCard } from '../../models/posts/post-card.model';
 
 describe('MapReactions', () => {
   let reactions: MapReactions;
   let http: HttpTestingController;
   const signedIn = signal(true);
+  const userId = signal('u1');
   const login = jasmine.createSpy('login');
   const post = { ...mark('a'), interestedCount: 2, goingCount: 1 };
 
   beforeEach(() => {
     signedIn.set(true);
+    userId.set('u1');
     login.calls.reset();
     TestBed.configureTestingModule({
-      providers: [{ provide: AuthService, useValue: { isAuthenticated: signedIn, login } }],
+      providers: [{ provide: AuthService, useValue: { isAuthenticated: signedIn, userId, login } }],
     });
     reactions = TestBed.inject(MapReactions);
     http = TestBed.inject(HttpTestingController);
@@ -53,7 +56,7 @@ describe('MapReactions', () => {
     http.match(() => true).forEach((r) => r.flush(null));
   });
 
-  it("changes the list's card of the same post too", () => {
+  it("changes the list's card of the same post too, its two counts and their sum", () => {
     const list = TestBed.inject(PostListStore);
     list.items.set([
       { id: 'a', positiveReactionCount: 0, participantCount: 3 } as PostCard,
@@ -68,11 +71,39 @@ describe('MapReactions', () => {
         myReaction: 'LIKE',
         myParticipation: 'INTERESTED',
         positiveReactionCount: 1,
+        interestedCount: 3,
+        goingCount: 1,
         participantCount: 4,
       }),
     );
     expect(list.items()[1].positiveReactionCount).toBe(0);
     http.match(() => true).forEach((r) => r.flush(null));
+  });
+
+  it('shows a like made on a card, and the next tap takes it back', () => {
+    TestBed.inject(ViewerStates).remember('a', {
+      ...post,
+      myReaction: 'LIKE',
+      positiveReactionCount: 1,
+    });
+
+    expect(reactions.shown(post).myReaction).toBe('LIKE');
+
+    reactions.like(post);
+
+    expect(reactions.shown(post)).toEqual(
+      jasmine.objectContaining({ myReaction: undefined, positiveReactionCount: 0 }),
+    );
+    http.expectOne((r) => r.method === 'DELETE' && r.url.endsWith('/posts/a/reaction')).flush(null);
+  });
+
+  it("forgets one user's changes for the next", () => {
+    reactions.like(post);
+    http.match(() => true).forEach((r) => r.flush(null));
+
+    userId.set('u2');
+
+    expect(reactions.shown(post)).toBe(post);
   });
 
   it('signs a guest in instead', () => {
