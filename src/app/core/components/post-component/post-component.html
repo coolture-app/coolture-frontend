@@ -175,38 +175,22 @@
         [fullWidth]="true"
         [class]="isLiked() ? 'liked' : ''"
         [pressed]="isLiked()"
-        [label]="
-          data.positiveReactionCount
-            ? ('POST.like' | translate) + ' (' + data.positiveReactionCount + ')'
-            : ('POST.like' | translate)
-        "
+        [label]="withCount('POST.like' | translate, data.positiveReactionCount)"
         (btnClick)="likePost()"
       >
-        <span class="post__counted">
-          <ng-icon name="lucideThumbsUp" [class.icon--filled]="isLiked()" />
-          @if (data.positiveReactionCount) {
-            <span class="post__count" aria-hidden="true">{{
-              shownCount(data.positiveReactionCount)
-            }}</span>
-          }
-        </span>
+        <app-counted-icon
+          icon="lucideThumbsUp"
+          [count]="data.positiveReactionCount"
+          [filled]="isLiked()"
+        />
       </app-btn>
       <app-btn
         variant="social"
         [fullWidth]="true"
-        [label]="
-          commentCount()
-            ? ('POST.comments' | translate) + ' (' + commentCount() + ')'
-            : ('POST.comments' | translate)
-        "
+        [label]="withCount('POST.comments' | translate, commentCount())"
         (btnClick)="openComments()"
       >
-        <span class="post__counted">
-          <ng-icon name="lucideMessageCircle" />
-          @if (commentCount(); as count) {
-            <span class="post__count" aria-hidden="true">{{ shownCount(count) }}</span>
-          }
-        </span>
+        <app-counted-icon icon="lucideMessageCircle" [count]="commentCount()" />
       </app-btn>
       <div class="post__stances" role="group" [attr.aria-label]="'POST.stance' | translate">
         @if (!isMyPost()) {
@@ -226,40 +210,24 @@
           [fullWidth]="true"
           [class]="isInterested() ? 'segment interested' : 'segment'"
           [pressed]="isInterested()"
-          [label]="
-            data.interestedCount
-              ? ('POST.interested' | translate) + ' (' + data.interestedCount + ')'
-              : ('POST.interested' | translate)
-          "
+          [label]="withCount('POST.interested' | translate, data.interestedCount)"
           (btnClick)="setInterested()"
         >
-          <span class="post__counted">
-            <ng-icon name="lucideBookmark" [class.icon--filled]="isInterested()" />
-            @if (data.interestedCount) {
-              <span class="post__count" aria-hidden="true">{{
-                shownCount(data.interestedCount)
-              }}</span>
-            }
-          </span>
+          <app-counted-icon
+            icon="lucideBookmark"
+            [count]="data.interestedCount"
+            [filled]="isInterested()"
+          />
         </app-btn>
         <app-btn
           variant="social"
           [fullWidth]="true"
           [class]="isTakesPart() ? 'segment takes-part' : 'segment'"
           [pressed]="isTakesPart()"
-          [label]="
-            data.goingCount
-              ? ('POST.takes_part' | translate) + ' (' + data.goingCount + ')'
-              : ('POST.takes_part' | translate)
-          "
+          [label]="withCount('POST.takes_part' | translate, data.goingCount)"
           (btnClick)="setTakesPart()"
         >
-          <span class="post__counted">
-            <ng-icon name="appTicket" [class.icon--filled]="isTakesPart()" />
-            @if (data.goingCount) {
-              <span class="post__count" aria-hidden="true">{{ shownCount(data.goingCount) }}</span>
-            }
-          </span>
+          <app-counted-icon icon="appTicket" [count]="data.goingCount" [filled]="isTakesPart()" />
         </app-btn>
       </div>
     </div>
