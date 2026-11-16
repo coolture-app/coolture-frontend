@@ -124,13 +124,7 @@
         </div>
       } @else if (user()) {
         <div class="profile__actions">
-          <app-btn
-            [variant]="user()?.isFollowing ? 'secondary' : 'primary'"
-            size="sm"
-            (btnClick)="toggleFollow()"
-          >
-            {{ (user()?.isFollowing ? 'PROFILE.followingThem' : 'PROFILE.follow') | translate }}
-          </app-btn>
+          <app-follow-btn [following]="!!user()?.isFollowing" (toggled)="toggleFollow()" />
         </div>
       }
 

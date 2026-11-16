@@ -27,17 +27,7 @@
         <span class="user-card__name">{{ item.firstName }} {{ item.lastName }}</span>
         <span class="user-card__username">&#64;{{ item.username }}</span>
       </div>
-      <app-btn
-        [variant]="followingIds().has(item.id) ? 'secondary' : 'primary'"
-        size="sm"
-        (btnClick)="toggleFollow(item)"
-      >
-        {{
-          followingIds().has(item.id)
-            ? ('PROFILE.unfollow' | translate)
-            : ('PROFILE.follow' | translate)
-        }}
-      </app-btn>
+      <app-follow-btn [following]="followingIds().has(item.id)" (toggled)="toggleFollow(item)" />
     </div>
   } @empty {
     <p class="empty">{{ 'DISCOVER.no-users' | translate }}</p>

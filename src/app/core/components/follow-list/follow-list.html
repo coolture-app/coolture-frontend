@@ -61,26 +61,15 @@
               </div>
             </div>
 
-            <div class="follow-list__actions">
-              @if (isOwnProfile() && isFollowersPanel()) {
-                @if (canFollow(user)) {
-                  <app-btn variant="primary" size="sm" (btnClick)="onFollow(user)">
-                    <ng-icon name="heroUserPlus" />
-                    {{ 'PROFILE.follow' | translate }}
-                  </app-btn>
-                }
-                <app-btn variant="danger" size="sm" (btnClick)="onRemoveFollower(user)">
-                  <ng-icon name="heroUserMinus" />
-                  {{ 'PROFILE.block' | translate }}
-                </app-btn>
-              }
-              @if (isOwnProfile() && !isFollowersPanel()) {
-                <app-btn variant="secondary" size="sm" (btnClick)="onToggleFollow(user, true)">
-                  <ng-icon name="heroUserMinus" />
-                  {{ 'PROFILE.unfollow' | translate }}
-                </app-btn>
-              }
-            </div>
+            @if (canFollow(user)) {
+              <div class="follow-list__actions">
+                <app-follow-btn
+                  [following]="followingIds().has(user.id)"
+                  [busy]="actionUserId() === user.id"
+                  (toggled)="toggleFollow(user)"
+                />
+              </div>
+            }
           </div>
         } @empty {
           <p class="follow-list__empty">

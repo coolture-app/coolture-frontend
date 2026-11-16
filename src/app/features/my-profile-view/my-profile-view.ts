@@ -34,6 +34,7 @@ import { UserProfile } from '../../core/models/users/user-profile.model';
 import { Interest } from '../../core/models/interests/interest.model';
 import { FollowListComponent } from '../../core/components/follow-list/follow-list';
 import { Btn } from '../../core/components/btn/btn';
+import { FollowBtn } from '../../core/components/follow-btn/follow-btn';
 import { Tooltip } from '../../core/directives/tooltip';
 import { ToastService } from '../../core/services/toast/toast.service';
 import { HomeArea } from '../home-area/home-area';
@@ -41,7 +42,16 @@ import { HomeArea } from '../home-area/home-area';
 /** Your own profile at `/profile`, and anyone's at `/users/:username`. */
 @Component({
   selector: 'app-user-profile-view',
-  imports: [TranslatePipe, NgIcon, FollowListComponent, RouterLink, Btn, Tooltip, HomeArea],
+  imports: [
+    TranslatePipe,
+    NgIcon,
+    FollowListComponent,
+    RouterLink,
+    Btn,
+    FollowBtn,
+    Tooltip,
+    HomeArea,
+  ],
   viewProviders: [
     provideIcons({
       lucideArrowLeft,
