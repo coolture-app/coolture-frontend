@@ -144,7 +144,7 @@
     "editDescription": "Edit Description",
     "interests": "Interests",
     "cancel": "Cancel",
-    "save": "Save Changes",
+    "save": "Save",
     "firstName": "First Name",
     "lastName": "Last Name",
     "username": "Username",
@@ -153,7 +153,6 @@
     "followers-subtitle": "People who follow this account",
     "following-subtitle": "People this account follows",
     "following": "Following",
-    "joined": "Joined",
     "follow": "Follow",
     "unfollow": "Unfollow",
     "followBack": "Follow Back",
@@ -170,7 +169,23 @@
     "homeHint": "Only you can see this",
     "shareStances": "Show friends what I’m interested in and where I go",
     "shareStancesHint": "Friends are people you follow who follow you back.",
-    "shareStancesFailed": "Couldn’t save. Try again."
+    "saveFailed": "Couldn’t save. Try again.",
+    "back": "Back",
+    "more": "More",
+    "followingThem": "Following",
+    "changeAvatar": "Change photo",
+    "removeAvatar": "Remove photo",
+    "removeAvatarConfirm": "Remove your profile photo?",
+    "blockConfirm": "Block this person?",
+    "unblockConfirm": "Unblock this person?",
+    "bioPlaceholder": "Add a few words about yourself",
+    "since": "On Coolture since {{date}}",
+    "blockedLoadError": "Couldn’t load blocked people.",
+    "retry": "Try again"
+  },
+  "SETTINGS": {
+    "title": "Settings",
+    "privacy": "Privacy"
   },
   "DISCOVER": {
     "title": "Discover",

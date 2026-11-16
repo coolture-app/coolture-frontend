@@ -144,7 +144,7 @@
     "editDescription": "Edytuj opis",
     "interests": "Zainteresowania",
     "cancel": "Anuluj",
-    "save": "Zapisz Zmiany",
+    "save": "Zapisz",
     "firstName": "Imię",
     "lastName": "Nazwisko",
     "username": "Nazwa użytkownika",
@@ -153,7 +153,6 @@
     "followers-subtitle": "Osoby obserwujące to konto",
     "following-subtitle": "Osoby obserwowane przez to konto",
     "following": "Obserwowani",
-    "joined": "Dołączył",
     "follow": "Obserwuj",
     "unfollow": "Przestań obserwować",
     "followBack": "Obserwuj",
@@ -170,7 +169,23 @@
     "homeHint": "Widoczne tylko dla Ciebie",
     "shareStances": "Pokazuj znajomym, co mnie interesuje i gdzie idę",
     "shareStancesHint": "Znajomi to osoby, które obserwujesz i które obserwują Ciebie.",
-    "shareStancesFailed": "Nie udało się zapisać. Spróbuj ponownie."
+    "saveFailed": "Nie udało się zapisać. Spróbuj ponownie.",
+    "back": "Wróć",
+    "more": "Więcej",
+    "followingThem": "Obserwujesz",
+    "changeAvatar": "Zmień zdjęcie",
+    "removeAvatar": "Usuń zdjęcie",
+    "removeAvatarConfirm": "Usunąć zdjęcie profilowe?",
+    "blockConfirm": "Zablokować tę osobę?",
+    "unblockConfirm": "Odblokować tę osobę?",
+    "bioPlaceholder": "Dodaj kilka słów o sobie",
+    "since": "Na Coolture od {{date}}",
+    "blockedLoadError": "Nie udało się wczytać zablokowanych.",
+    "retry": "Spróbuj ponownie"
+  },
+  "SETTINGS": {
+    "title": "Ustawienia",
+    "privacy": "Prywatność"
   },
   "DISCOVER": {
     "title": "Odkrywaj",

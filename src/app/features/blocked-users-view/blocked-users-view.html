@@ -1,0 +1,37 @@
+<div class="page">
+  <div class="blocked">
+    <div class="blocked__head">
+      <app-btn variant="icon" [label]="'PROFILE.back' | translate" (btnClick)="back()">
+        <ng-icon name="lucideArrowLeft" aria-hidden="true" />
+      </app-btn>
+      <h1 class="blocked__title">{{ 'PROFILE.blocked' | translate }}</h1>
+    </div>
+
+    @if (failed()) {
+      <div class="blocked__empty" role="alert">
+        <span>{{ 'PROFILE.blockedLoadError' | translate }}</span>
+        <app-btn variant="secondary" size="sm" (btnClick)="load()">
+          {{ 'PROFILE.retry' | translate }}
+        </app-btn>
+      </div>
+    } @else if (loading()) {
+      <p class="blocked__empty">{{ 'PROFILE.loading' | translate }}</p>
+    } @else {
+      <ul class="blocked__list">
+        @for (user of users(); track user.id) {
+          <li class="blocked__user">
+            <span class="blocked__info">
+              <span class="blocked__name">{{ user.firstName }} {{ user.lastName }}</span>
+              <span class="blocked__username">&#64;{{ user.username }}</span>
+            </span>
+            <app-btn variant="secondary" size="sm" (btnClick)="unblock(user.id)">
+              {{ 'PROFILE.unblock' | translate }}
+            </app-btn>
+          </li>
+        } @empty {
+          <li class="blocked__empty">{{ 'PROFILE.no-blocked' | translate }}</li>
+        }
+      </ul>
+    }
+  </div>
+</div>

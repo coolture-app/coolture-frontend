@@ -1,0 +1,35 @@
+<div class="page">
+  <div class="settings">
+    <div class="settings__head">
+      <app-btn variant="icon" [label]="'PROFILE.back' | translate" (btnClick)="back()">
+        <ng-icon name="lucideArrowLeft" aria-hidden="true" />
+      </app-btn>
+      <h1 class="settings__title">{{ 'SETTINGS.title' | translate }}</h1>
+    </div>
+
+    <section class="settings__section">
+      <h2 class="settings__section-title">{{ 'SETTINGS.privacy' | translate }}</h2>
+      <div class="settings__card">
+        <div class="settings__row">
+          <span class="settings__text">
+            <span>{{ 'PROFILE.shareStances' | translate }}</span>
+            <span class="settings__hint">{{ 'PROFILE.shareStancesHint' | translate }}</span>
+          </span>
+          <app-switch
+            [checked]="shareStances()"
+            [label]="'PROFILE.shareStances' | translate"
+            (switchState)="setShareStances($event)"
+          ></app-switch>
+        </div>
+        <a class="settings__row settings__row--link" routerLink="/profile/blocked">
+          <span class="settings__text">{{ 'PROFILE.blocked' | translate }}</span>
+          <ng-icon name="lucideChevronRight" aria-hidden="true" />
+        </a>
+        <a class="settings__row settings__row--link" routerLink="/profile/hidden">
+          <span class="settings__text">{{ 'PROFILE.hidden-posts' | translate }}</span>
+          <ng-icon name="lucideChevronRight" aria-hidden="true" />
+        </a>
+      </div>
+    </section>
+  </div>
+</div>
