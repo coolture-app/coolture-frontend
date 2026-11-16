@@ -63,7 +63,6 @@ export class EditPostView implements OnInit {
       endsAt: data.endsAt,
       description: data.description,
       eventUrl: data.eventUrl,
-      visibility: data.visibility,
       location: data.location,
       mediaIds: data.mediaIds,
     };

@@ -29,7 +29,7 @@ function filterParams(filters: PostFilterParams): HttpParams {
   if (filters.q) params = params.set('q', filters.q);
   if (filters.authorId) params = params.set('authorId', filters.authorId);
   if (filters.status) params = params.set('status', filters.status);
-  if (filters.visibility) params = params.set('visibility', filters.visibility);
+  if (filters.followed) params = params.set('followed', true);
   if (filters.type) params = params.set('type', filters.type);
   if (filters.startsFrom) params = params.set('startsFrom', filters.startsFrom);
   if (filters.startsTo) params = params.set('startsTo', filters.startsTo);

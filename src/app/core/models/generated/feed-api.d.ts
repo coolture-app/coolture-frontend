@@ -107,7 +107,6 @@ export interface components {
       commentsCount: number;
       type: components['schemas']['PostType'];
       status: components['schemas']['PostStatus'];
-      visibility: components['schemas']['PostVisibility'];
       /** Format: date-time */
       createdAt: string;
       /** Format: date-time */
@@ -119,6 +118,7 @@ export interface components {
       myParticipation?: components['schemas']['ParticipationType'];
       /** @description Every photo of the post, cover first, then in the post's order. At most 8, the limit a post can have (PostLimits.MAX_PHOTOS). Left out when the post has none. */
       photos?: components['schemas']['MediaResource'][];
+      friendStances?: components['schemas']['FriendStances'];
     };
     /** @description What a pin and its preview need. Only the description's start: the map loads every post in view at once, and whole descriptions were over half of the answer. The viewer's own reaction and stance are left out for a guest or when there's none. */
     PostMark: {
@@ -142,6 +142,26 @@ export interface components {
       city?: string;
       myReaction?: components['schemas']['ReactionType'];
       myParticipation?: components['schemas']['ParticipationType'];
+      friendStances?: components['schemas']['FriendStances'];
+    };
+    /** @description The viewer's friends (mutual follows) who marked the post Biorę udział (going) or Interesuje mnie (interested) and share their stances. Left out for a guest or when there are none; a stance nobody took is left out too. */
+    FriendStances: {
+      going?: components['schemas']['FriendGroup'];
+      interested?: components['schemas']['FriendGroup'];
+    };
+    FriendGroup: {
+      /** @description All friends with this stance. */
+      count: number;
+      /** @description The newest of them, at most 2 (Friends.NAMES_PER_STANCE). */
+      people: components['schemas']['Friend'][];
+    };
+    Friend: {
+      /** Format: uuid */
+      id: string;
+      username: string;
+      firstName?: string;
+      lastName?: string;
+      avatarUrl?: string;
     };
     UserSummary: {
       /** Format: uuid */
@@ -196,8 +216,6 @@ export interface components {
     /** @enum {string} */
     PostStatus: 'ACTIVE' | 'EDITED' | 'DELETED';
     /** @enum {string} */
-    PostVisibility: 'PUBLIC' | 'PRIVATE' | 'FRIENDS';
-    /** @enum {string} */
     ReactionType: 'LIKE';
     /**
      * @description NOT_INTERESTED is "Nie dla mnie", private to the viewer. It hides the post from /feed, pushes similar posts down, and isn't counted in participantCount.
@@ -245,7 +263,8 @@ export interface components {
     Tags: string[];
     AuthorId: string;
     Status: components['schemas']['PostStatus'];
-    Visibility: components['schemas']['PostVisibility'];
+    /** @description Only posts by people the viewer follows, and posts a friend (a mutual follow) marked Interesuje mnie or Biorę udział, unless that friend stopped sharing their stances. Nothing for a guest. Every post is public, so there's no visibility filter; an older client's visibility parameter is ignored. */
+    Followed: boolean;
     Type: components['schemas']['PostType'];
     /** @description Setting this turns the past-events window off. */
     StartsFrom: string;
@@ -279,7 +298,8 @@ export interface operations {
         tags?: components['parameters']['Tags'];
         authorId?: components['parameters']['AuthorId'];
         status?: components['parameters']['Status'];
-        visibility?: components['parameters']['Visibility'];
+        /** @description Only posts by people the viewer follows, and posts a friend (a mutual follow) marked Interesuje mnie or Biorę udział, unless that friend stopped sharing their stances. Nothing for a guest. Every post is public, so there's no visibility filter; an older client's visibility parameter is ignored. */
+        followed?: components['parameters']['Followed'];
         type?: components['parameters']['Type'];
         /** @description Setting this turns the past-events window off. */
         startsFrom?: components['parameters']['StartsFrom'];
@@ -324,7 +344,8 @@ export interface operations {
         tags?: components['parameters']['Tags'];
         authorId?: components['parameters']['AuthorId'];
         status?: components['parameters']['Status'];
-        visibility?: components['parameters']['Visibility'];
+        /** @description Only posts by people the viewer follows, and posts a friend (a mutual follow) marked Interesuje mnie or Biorę udział, unless that friend stopped sharing their stances. Nothing for a guest. Every post is public, so there's no visibility filter; an older client's visibility parameter is ignored. */
+        followed?: components['parameters']['Followed'];
         type?: components['parameters']['Type'];
         /** @description Setting this turns the past-events window off. */
         startsFrom?: components['parameters']['StartsFrom'];
@@ -375,6 +396,8 @@ export interface operations {
         includePast?: components['parameters']['IncludePast'];
         /** @description Only posts with a place within this many km of latitude and longitude. Ignored without them. */
         radiusKm?: components['parameters']['RadiusKm'];
+        /** @description Only posts by people the viewer follows, and posts a friend (a mutual follow) marked Interesuje mnie or Biorę udział, unless that friend stopped sharing their stances. Nothing for a guest. Every post is public, so there's no visibility filter; an older client's visibility parameter is ignored. */
+        followed?: components['parameters']['Followed'];
         /** @description Signed-in only. Leaves out what the feed leaves out for this viewer: their own posts, and posts they reacted to or take part in, so the map of the feed's tab matches its list. */
         excludeMine?: boolean;
       };

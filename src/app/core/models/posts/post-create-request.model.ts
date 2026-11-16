@@ -1,4 +1,4 @@
-import { PostType, PostVisibility } from '../common/enums';
+import { PostType } from '../common/enums';
 import { EventLocationRequest } from '../common/geo.model';
 
 export interface PostCreateRequest {
@@ -9,7 +9,6 @@ export interface PostCreateRequest {
   endsAt?: string | null; // ISO-8601
   tags?: string[];
   type: PostType;
-  visibility?: PostVisibility;
   location?: EventLocationRequest | null;
 
   // List of ids from S3

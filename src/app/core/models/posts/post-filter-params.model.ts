@@ -1,11 +1,4 @@
-import {
-  PostType,
-  PostStatus,
-  PostVisibility,
-  ParticipationType,
-  ReactionType,
-  PostsSort,
-} from '../common/enums';
+import { PostType, PostStatus, ParticipationType, ReactionType, PostsSort } from '../common/enums';
 
 export interface PostFilterParams {
   cursor?: string;
@@ -14,7 +7,8 @@ export interface PostFilterParams {
   tags?: string[];
   authorId?: string; // UUID
   status?: PostStatus;
-  visibility?: PostVisibility;
+  /** Posts by people the viewer follows, and posts friends are interested in or go to. */
+  followed?: boolean;
   type?: PostType;
   startsFrom?: string; // ISO-8601
   startsTo?: string; // ISO-8601

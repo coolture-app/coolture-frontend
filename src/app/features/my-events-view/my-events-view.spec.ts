@@ -17,7 +17,6 @@ function card(id: string): PostCard {
     commentsCount: 0,
     type: 'ONLINE',
     status: 'ACTIVE',
-    visibility: 'PUBLIC',
     createdAt: '2026-11-01T00:00:00Z',
   };
 }

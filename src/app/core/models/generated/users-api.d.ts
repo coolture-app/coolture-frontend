@@ -297,6 +297,8 @@ export interface components {
       isBlocked: boolean;
       /** @description False until onboarding's interests are saved. */
       interestsSelected: boolean;
+      /** @description Whether friends (mutual follows) see the caller's Interesuje mnie and Biorę udział. True until turned off. */
+      shareStances: boolean;
       home?: components['schemas']['Home'];
     };
     /** @description Where someone lives, left out when they haven't said. */
@@ -310,6 +312,7 @@ export interface components {
       firstName?: string;
       lastName?: string;
       bio?: string | null;
+      shareStances?: boolean;
     };
     UserSummary: {
       /** Format: uuid */

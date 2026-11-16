@@ -1,6 +1,5 @@
 export type PostType = 'OFFLINE' | 'ONLINE';
 export type PostStatus = 'ACTIVE' | 'EDITED' | 'DELETED';
-export type PostVisibility = 'PUBLIC' | 'PRIVATE' | 'FRIENDS';
 export type ReactionType = 'LIKE';
 /** NOT_INTERESTED is "Nie dla mnie": private, never counted, and it hides the post from Dla Ciebie. */
 export type ParticipationType = 'INTERESTED' | 'TAKES_PART' | 'NOT_INTERESTED';

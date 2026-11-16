@@ -53,8 +53,11 @@ export class AuthService {
   readonly interestsSelected = signal<boolean | null>(null);
   /** Where the signed-in user lives, if they said. Only `/auth/me` gives it. */
   readonly home = signal<NamedPlace | null>(null);
+  /** Whether friends see the signed-in user's stances. Only `/auth/me` gives it. */
+  readonly shareStances = signal(true);
   /** Counts changes made here, so a `/auth/me` answer sent before a change can't undo it. */
   private homeChanges = 0;
+  private shareChanges = 0;
   readonly isAuthenticated = computed(() => this.currentUser() !== null);
   readonly userId = computed(() => this.currentUser()?.id ?? '');
 
@@ -64,12 +67,16 @@ export class AuthService {
       return of(false);
     }
     const changesBefore = this.homeChanges;
+    const shareChangesBefore = this.shareChanges;
     this.sessionCheck ??= this.http.get<Me>(this.apiUrl.path('/auth/me')).pipe(
-      tap(({ interestsSelected, home, ...profile }) => {
+      tap(({ interestsSelected, home, shareStances, ...profile }) => {
         this.currentUser.set(profile);
         this.interestsSelected.update((selected) => selected || interestsSelected);
         if (this.homeChanges === changesBefore) {
           this.home.set(home ?? null);
+        }
+        if (this.shareChanges === shareChangesBefore) {
+          this.shareStances.set(shareStances);
         }
       }),
       map(() => true),
@@ -95,10 +102,17 @@ export class AuthService {
     this.home.set(home);
   }
 
+  /** After the sharing switch was saved. */
+  markShareStances(share: boolean): void {
+    this.shareChanges++;
+    this.shareStances.set(share);
+  }
+
   private clearUser(): void {
     this.currentUser.set(null);
     this.interestsSelected.set(null);
     this.home.set(null);
+    this.shareStances.set(true);
   }
 
   async login(returnUrl?: string): Promise<void> {

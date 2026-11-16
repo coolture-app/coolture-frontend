@@ -113,14 +113,6 @@
   ></app-form-input>
 
   <div class="post-form__actions">
-    <label class="post-form__audience">
-      <span>{{ 'POST_FORM.visibility' | translate }}</span>
-      <select class="post-form__audience-select" formControlName="visibility">
-        @for (option of visibilityOptions; track option.value) {
-          <option [value]="option.value">{{ option.labelKey | translate }}</option>
-        }
-      </select>
-    </label>
     <app-btn variant="primary" type="submit" [disabled]="isSubmitting || photos().hasUploading">
       {{
         isSubmitting
