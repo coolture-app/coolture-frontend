@@ -46,20 +46,25 @@
 
       <div class="profile__top" [class.profile__top--own]="isOwnProfile()">
         <div class="profile__avatar-wrapper">
-          <ng-template #avatarImage>
-            @if (user()?.avatar; as avatar) {
+          @if (user()?.avatar; as avatar) {
+            <button
+              type="button"
+              class="profile__avatar-view"
+              [attr.aria-label]="'PROFILE.showAvatar' | translate"
+              (click)="showAvatar()"
+            >
               <img [src]="avatar.url" [alt]="user()?.username" class="profile__avatar" />
-            } @else {
-              <div class="profile__avatar profile__avatar--placeholder">
-                {{ user()?.firstName?.charAt(0) }}{{ user()?.lastName?.charAt(0) }}
-              </div>
-            }
-          </ng-template>
+            </button>
+          } @else {
+            <div class="profile__avatar profile__avatar--placeholder">
+              {{ user()?.firstName?.charAt(0) }}{{ user()?.lastName?.charAt(0) }}
+            </div>
+          }
           @if (isOwnProfile()) {
             @let hasPhoto = !!user()?.avatar;
             <button
               type="button"
-              class="profile__avatar-btn"
+              class="profile__avatar-badge"
               [attr.aria-label]="
                 (hasPhoto ? 'PROFILE.changeAvatar' : 'PROFILE.addAvatar') | translate
               "
@@ -69,10 +74,7 @@
               [disabled]="isUploadingAvatar()"
               (click)="onAvatarTap()"
             >
-              <ng-container *ngTemplateOutlet="avatarImage" />
-              <span class="profile__avatar-badge" aria-hidden="true">
-                <ng-icon [name]="hasPhoto ? 'lucideCamera' : 'lucidePlus'" />
-              </span>
+              <ng-icon [name]="hasPhoto ? 'lucideCamera' : 'lucidePlus'" aria-hidden="true" />
             </button>
             <input
               #avatarInput
@@ -105,8 +107,6 @@
                 </button>
               </div>
             }
-          } @else {
-            <ng-container *ngTemplateOutlet="avatarImage" />
           }
         </div>
 

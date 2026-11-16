@@ -6,6 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
 
 import { UserProfileView } from './my-profile-view';
 import { AuthService } from '../../core/services/auth/auth.service';
+import { PhotoViewerService } from '../../core/services/photo-viewer/photo-viewer.service';
 import { UserProfile } from '../../core/models/users/user-profile.model';
 import { InterestCatalog } from '../../core/models/interests/interest.model';
 
@@ -178,7 +179,7 @@ describe('UserProfileView', () => {
       const input = element.querySelector<HTMLInputElement>('.profile__avatar-input')!;
       const pick = spyOn(input, 'click');
 
-      element.querySelector<HTMLButtonElement>('.profile__avatar-btn')!.click();
+      element.querySelector<HTMLButtonElement>('.profile__avatar-badge')!.click();
       harness.detectChanges();
 
       expect(pick).toHaveBeenCalled();
@@ -188,13 +189,22 @@ describe('UserProfileView', () => {
     it('offers to change or remove it once there is one', async () => {
       await open('/profile', { ...ME, avatar: { id: 'm-1', url: 'photo.jpg' } });
 
-      element.querySelector<HTMLButtonElement>('.profile__avatar-btn')!.click();
+      element.querySelector<HTMLButtonElement>('.profile__avatar-badge')!.click();
       harness.detectChanges();
 
       const items = [...element.querySelectorAll('.profile__menu--avatar button')].map((b) =>
         b.textContent?.trim(),
       );
       expect(items).toEqual(['PROFILE.changeAvatar', 'PROFILE.removeAvatar']);
+    });
+
+    it('enlarges the photo on a tap, apart from the badge', async () => {
+      await open('/profile', { ...ME, avatar: { id: 'm-1', url: 'photo.jpg' } });
+
+      element.querySelector<HTMLButtonElement>('.profile__avatar-view')!.click();
+
+      expect(TestBed.inject(PhotoViewerService).open()?.photos[0].url).toBe('photo.jpg');
+      expect(element.querySelector('.profile__menu--avatar')).toBeNull();
     });
 
     it('places a picked photo in the circle before anything is uploaded', async () => {
@@ -259,6 +269,10 @@ describe('UserProfileView', () => {
 
     it('has no friend mark while only you follow them', () => {
       expect(element.querySelector('app-relation-pill')?.textContent?.trim()).toBe('');
+    });
+
+    it('has no photo badge', () => {
+      expect(element.querySelector('.profile__avatar-badge')).toBeNull();
     });
 
     it('leaves an empty bio out and has no pencil', () => {

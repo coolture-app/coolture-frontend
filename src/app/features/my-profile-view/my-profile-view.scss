@@ -107,8 +107,7 @@
     }
   }
 
-  &__avatar-btn {
-    position: relative;
+  &__avatar-view {
     display: block;
     width: 100%;
     height: 100%;
@@ -116,20 +115,11 @@
     border: none;
     border-radius: var(--radius-full);
     background: none;
-    cursor: pointer;
+    cursor: zoom-in;
 
     &:focus-visible {
       outline: 2px solid var(--color-accent);
       outline-offset: 2px;
-    }
-
-    &:hover .profile__avatar-badge {
-      background: var(--color-accent-hover);
-    }
-
-    &:disabled {
-      cursor: progress;
-      opacity: 0.6;
     }
   }
 
@@ -140,10 +130,12 @@
     @include center-flex;
     width: 32px;
     height: 32px;
+    padding: 0;
     border: 3px solid var(--color-background);
     border-radius: var(--radius-full);
     background: var(--color-accent);
     color: var(--color-text-inverse);
+    cursor: pointer;
     --ng-icon__size: 16px;
 
     // A 44 px target for a finger, though the badge looks smaller.
@@ -151,6 +143,20 @@
       content: '';
       position: absolute;
       inset: -9px;
+    }
+
+    &:hover {
+      background: var(--color-accent-hover);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-accent);
+      outline-offset: 2px;
+    }
+
+    &:disabled {
+      cursor: progress;
+      opacity: 0.6;
     }
   }
 

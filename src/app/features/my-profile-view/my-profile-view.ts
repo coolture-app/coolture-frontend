@@ -11,7 +11,6 @@ import {
   WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { NgTemplateOutlet } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { catchError, firstValueFrom, map, of } from 'rxjs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -41,13 +40,13 @@ import { RelationPill } from '../../core/components/relation-pill/relation-pill'
 import { Tooltip } from '../../core/directives/tooltip';
 import { ToastService } from '../../core/services/toast/toast.service';
 import { HomeArea } from '../home-area/home-area';
+import { PhotoViewerService } from '../../core/services/photo-viewer/photo-viewer.service';
 import { AvatarCropper } from '../../core/components/avatar-cropper/avatar-cropper';
 
 /** Your own profile at `/profile`, and anyone's at `/users/:username`. */
 @Component({
   selector: 'app-user-profile-view',
   imports: [
-    NgTemplateOutlet,
     TranslatePipe,
     NgIcon,
     AvatarCropper,
@@ -76,6 +75,7 @@ import { AvatarCropper } from '../../core/components/avatar-cropper/avatar-cropp
 })
 export class UserProfileView {
   private authService = inject(AuthService);
+  private photoViewer = inject(PhotoViewerService);
   private usersService = inject(Users);
   private relationsService = inject(RelationsService);
   private mediaService = inject(MediaService);
@@ -257,6 +257,13 @@ export class UserProfileView {
 
   toggleMenu() {
     this.toggle(this.menuOpen);
+  }
+
+  showAvatar() {
+    const avatar = this.user()?.avatar;
+    if (avatar?.url) {
+      this.photoViewer.show([{ url: avatar.url, width: avatar.width, height: avatar.height }], 0);
+    }
   }
 
   /** Without a photo there's nothing to choose between, so the file picker opens at once. */
