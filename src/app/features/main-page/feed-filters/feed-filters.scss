@@ -63,13 +63,21 @@
     }
   }
 
-  &__past {
+  &__switches {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  &__switch {
     display: flex;
     align-items: center;
-    gap: var(--space-sm);
+    justify-content: space-between;
+    gap: var(--space-md);
+    min-height: 44px;
     font-size: var(--text-sm);
     color: var(--color-text-secondary);
-    font-weight: 500;
+    font-weight: var(--font-medium);
   }
 }
 
