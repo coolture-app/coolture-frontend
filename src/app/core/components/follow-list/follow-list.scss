@@ -126,8 +126,6 @@
 
     &--placeholder {
       @include avatar-placeholder(48px);
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      color: #fff;
     }
   }
 
