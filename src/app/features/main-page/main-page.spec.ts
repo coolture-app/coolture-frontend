@@ -528,6 +528,25 @@ describe('MainPage', () => {
       expect(TestBed.inject(MapFocus).requested()).toBeNull();
     });
 
+    it('goes back to Lista when the shown tab is tapped on Mapa, and switches the pins on the other', async () => {
+      await open();
+      expectFeed().flush({ ...page(['a']), mode: 'RANKED' });
+      await settle();
+      component.toggleMapView(true);
+      await settle();
+
+      component.setTab('all');
+      await settle();
+      expect(component.isMapView()).toBeTrue();
+      expect(component.tab()).toBe('all');
+
+      component.setTab('all');
+      await settle();
+      expect(component.isMapView()).toBeFalse();
+      http.match((r) => r.url.endsWith('/posts/map'));
+      expectPosts().flush(page());
+    });
+
     it('is there on the feed too', async () => {
       await open();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
@@ -1100,6 +1119,32 @@ describe('MainPage', () => {
 
       expect(router.url).toBe('/?tab=all&sort=popular&q=jazz');
       navigate.calls.allArgs().forEach(([, extras]) => expect(extras?.replaceUrl).toBeTrue());
+    });
+
+    it('keeps Mapa in the URL, so a reload opens the map', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      await settle();
+
+      component.toggleMapView(true);
+      await settle();
+      expect(router.url).toBe('/?view=map');
+
+      component.toggleMapView(false);
+      await settle();
+      expect(router.url).toBe('/');
+      http.match((r) => r.url.endsWith('/posts/map'));
+    });
+
+    it('opens on Mapa when the URL says so', async () => {
+      await router.navigateByUrl('/?tab=all&view=map');
+
+      await open();
+
+      expect(component.isMapView()).toBeTrue();
+      expect(component.mapOpened()).toBeTrue();
+      http.expectNone((r) => r.url.endsWith('/posts'));
+      http.match((r) => r.url.endsWith('/posts/map'));
     });
 
     it('opens with what the URL holds', async () => {

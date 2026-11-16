@@ -11,6 +11,8 @@ export interface HomeUrlState {
   sort: PostsSort;
   /** The rounded point the list depends on: the radius's centre, or Najbliższe's. */
   point: GeoPoint | null;
+  /** Mapa rather than Lista. */
+  map: boolean;
 }
 
 const SORTS: readonly PostsSort[] = ['UPCOMING', 'NEAREST', 'POPULAR', 'RECENT'];
@@ -20,7 +22,7 @@ const VISIBILITIES: readonly string[] = ['PUBLIC', 'PRIVATE', 'FRIENDS'];
 const LOCAL_TIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/;
 
 /** The query string for a state. Defaults are left out, so the default feed is a plain `/`. */
-export function toHomeParams({ search, filters, tab, sort, point }: HomeUrlState): Params {
+export function toHomeParams({ search, filters, tab, sort, point, map }: HomeUrlState): Params {
   const query = search.trim();
   const inAll = tab === 'all';
   const params: Params = {
@@ -35,6 +37,7 @@ export function toHomeParams({ search, filters, tab, sort, point }: HomeUrlState
     ...(filters.includePast && { past: 'true' }),
     ...(filters.place && point && { radius: String(filters.radiusKm) }),
     ...(point && { lat: String(point.latitude), lng: String(point.longitude) }),
+    ...(map && { view: 'map' }),
   };
   return params;
 }
@@ -61,6 +64,7 @@ export function fromHomeParams(params: Params): HomeUrlState {
     tab,
     sort: tab === 'all' && sort ? sort : START_SORT,
     point,
+    map: text('view') === 'map',
     filters: {
       ...NO_FILTERS,
       type: oneOf('type', TYPES),

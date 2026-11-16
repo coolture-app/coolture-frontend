@@ -272,6 +272,10 @@ export class MainPage implements OnDestroy {
 
   constructor() {
     const restored = this.restoreView();
+    if (!restored) {
+      // Read now, not with the rest of the URL, so a reload on Mapa never starts Lista first.
+      this.isMapView.set(fromHomeParams(this.route.snapshot.queryParams).map);
+    }
     this.postService.clearActivePost();
     this.mapOpened.set(this.isMapView());
     this.mapResumes.set(restored && this.isMapView());
@@ -466,7 +470,12 @@ export class MainPage implements OnDestroy {
   }
 
   /** Search and filters stay, so the same question gets the other tab's answer. */
+  /** On Mapa, the tab already shown goes back to its Lista. */
   setTab(tab: HomeTab): void {
+    if (tab === this.tab() && this.isMapView()) {
+      this.toggleMapView(false);
+      return;
+    }
     this.changeList(() => this.tab.set(tab));
   }
 
@@ -498,6 +507,7 @@ export class MainPage implements OnDestroy {
       this.mapOpened.set(true);
     }
     this.isMapView.set(isToggled);
+    this.showInUrl();
     if (isToggled) {
       return;
     }
@@ -543,7 +553,14 @@ export class MainPage implements OnDestroy {
     }
     if (fromThisPage) {
       this.listScrollY = this.scroller.getScrollPosition()[1];
-      this.mapOverlay.opened({ pageStaysLive: true });
+      // Its entry says Mapa, so a reload there stays on the map, and Back returns to Lista's entry.
+      const queryParams = { ...this.urlParams(), view: 'map' };
+      this.mapOverlay.opened({
+        pageStaysLive: true,
+        url: this.router.serializeUrl(
+          this.router.createUrlTree([], { relativeTo: this.route, queryParams }),
+        ),
+      });
     }
     this.mapOpened.set(true);
     this.isMapView.set(true);
@@ -659,6 +676,7 @@ export class MainPage implements OnDestroy {
       tab: this.tab(),
       sort: this.sort(),
       point: inFilter || nearest ? this.sortPoint() : null,
+      map: this.isMapView(),
     });
   }
 

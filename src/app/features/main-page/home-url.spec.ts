@@ -7,6 +7,7 @@ const DEFAULT: HomeUrlState = {
   tab: 'forYou',
   sort: 'UPCOMING',
   point: null,
+  map: false,
 };
 
 describe('the home URL', () => {
@@ -21,6 +22,7 @@ describe('the home URL', () => {
       tab: 'all',
       sort: 'POPULAR',
       point: { latitude: 54.35, longitude: 18.65 },
+      map: true,
       filters: {
         ...NO_FILTERS,
         type: 'OFFLINE',
@@ -49,6 +51,7 @@ describe('the home URL', () => {
       radius: '25',
       lat: '54.35',
       lng: '18.65',
+      view: 'map',
     });
     expect(fromHomeParams(params)).toEqual(state);
   });
