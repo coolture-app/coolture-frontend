@@ -25,12 +25,13 @@ describe('labelLanguage', () => {
     return { map, fields };
   }
 
-  it('reads Polish names first in Polish, and English again in English', () => {
+  it('reads Polish names first in Polish, and Liberty’s again in English', () => {
     const { map, fields } = fakeMap({ water_name: liberty, shield: ['to-string', ['get', 'ref']] });
     labelLanguage(map as unknown as MapLibreMap, 'pl');
     expect(fields['water_name']).toEqual([
-      ...liberty.slice(0, 3),
-      ['coalesce', ['get', 'name:pl'], ['get', 'name']],
+      'coalesce',
+      ['get', 'name:pl'],
+      [...liberty.slice(0, 3), ['coalesce', ['get', 'name'], ['get', 'name']]],
     ]);
     expect(fields['shield']).toEqual(['to-string', ['get', 'ref']]);
 

@@ -16,24 +16,33 @@ export function collapseCredit(map: MapLibreMap): void {
 /** The middle of Trójmiasto, where the release starts. */
 export const TRICITY = { latitude: 54.44, longitude: 18.57 };
 
-/** The name field each language's labels read first; anything else falls back to the local name. */
-const LABEL_FIELDS: Record<string, string> = { pl: 'name:pl', en: 'name_en' };
+/** Each map's labels as Liberty wrote them, to go back to in English. */
+const libertyLabels = new WeakMap<MapLibreMap, Map<string, unknown>>();
 
 /**
- * Labels in the app's language. Liberty reads `name_en` before the local name, so a Polish app said "Bay of Puck".
- * Its labels pick the name with `["coalesce", ["get", <field>], ["get", "name"]]`, and only that field is swapped.
+ * Labels in the app's language. Liberty reads English first (`name_en`), and Latin with Cyrillic where a place has
+ * both, so a Polish app said "Bay of Puck" and "Gulf of Gdansk Гданьская бухта". In Polish the Polish name comes
+ * first, then Liberty's choice with the local name in place of the English one; in English, Liberty's own.
  */
 export function labelLanguage(map: MapLibreMap, lang: string): void {
-  const field = LABEL_FIELDS[lang.slice(0, 2)] ?? 'name_en';
-  for (const layer of map.getStyle().layers) {
-    if (layer.type !== 'symbol') {
-      continue;
+  let labels = libertyLabels.get(map);
+  if (!labels) {
+    labels = new Map();
+    for (const layer of map.getStyle().layers) {
+      const text = layer.type === 'symbol' && map.getLayoutProperty(layer.id, 'text-field');
+      if (JSON.stringify(text ?? null).includes('"name_en"')) {
+        labels.set(layer.id, text);
+      }
     }
-    const text = map.getLayoutProperty(layer.id, 'text-field');
-    const swapped = swapNameField(text, field);
-    if (swapped !== text) {
-      map.setLayoutProperty(layer.id, 'text-field', swapped);
-    }
+    libertyLabels.set(map, labels);
+  }
+  const polish = lang.startsWith('pl');
+  for (const [id, text] of labels) {
+    map.setLayoutProperty(
+      id,
+      'text-field',
+      polish ? ['coalesce', ['get', 'name:pl'], localName(text)] : text,
+    );
   }
 }
 
@@ -43,20 +52,11 @@ export function followLanguage(map: MapLibreMap, translate: TranslateService): S
   return translate.onLangChange.subscribe(({ lang }) => labelLanguage(map, lang));
 }
 
-function swapNameField(expression: unknown, field: string): unknown {
+function localName(expression: unknown): unknown {
   if (!Array.isArray(expression)) {
     return expression;
   }
-  const [op, first, second] = expression;
-  if (
-    op === 'coalesce' &&
-    Array.isArray(first) &&
-    first[0] === 'get' &&
-    Object.values(LABEL_FIELDS).includes(first[1]) &&
-    JSON.stringify(second) === '["get","name"]'
-  ) {
-    return first[1] === field ? expression : ['coalesce', ['get', field], second];
-  }
-  const parts = expression.map((part) => swapNameField(part, field));
-  return parts.some((part, i) => part !== expression[i]) ? parts : expression;
+  return expression[0] === 'get' && expression[1] === 'name_en'
+    ? ['get', 'name']
+    : expression.map(localName);
 }

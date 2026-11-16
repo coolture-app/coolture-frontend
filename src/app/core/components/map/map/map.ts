@@ -443,7 +443,7 @@ export class Map implements OnDestroy {
         const width = container.clientWidth;
         const height = container.clientHeight;
         const card = container.querySelector('.map-card .maplibregl-popup-content');
-        const sheet = container.parentElement?.querySelector('.map-sheet');
+        const sheet = container.closest('.map-wrapper')?.querySelector('.map-sheet');
         const bottom = sheet
           ? sheet.getBoundingClientRect().top - container.getBoundingClientRect().top
           : height;
