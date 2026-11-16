@@ -4,6 +4,11 @@ export type PostVisibility = 'PUBLIC' | 'PRIVATE' | 'FRIENDS';
 export type ReactionType = 'LIKE';
 /** NOT_INTERESTED is "Nie dla mnie": private, never counted, and it hides the post from Dla Ciebie. */
 export type ParticipationType = 'INTERESTED' | 'TAKES_PART' | 'NOT_INTERESTED';
+
+/** Whether a stance counts in a post's participants. */
+export function counted(stance: ParticipationType | undefined): boolean {
+  return !!stance && stance !== 'NOT_INTERESTED';
+}
 /**
  * The orders of `/posts`. NEAREST needs a position, and shows only posts with a place. STANCE_NEWEST needs
  * participationTypes, and puts the viewer's newest of those stances first.

@@ -52,7 +52,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { postPlace } from '../../models/posts/post-place';
 import { formatDistance } from '../../models/common/distance';
 import { LocationService } from '../../services/location/location.service';
-import { ParticipationType } from '../../models/common/enums';
+import { counted, ParticipationType } from '../../models/common/enums';
 import { Tooltip } from '../../directives/tooltip';
 import { ToastService } from '../../services/toast/toast.service';
 
@@ -68,11 +68,6 @@ interface Undo {
   liked: boolean;
 }
 const undoable = new Map<string, Undo>();
-
-/** "Nie dla mnie" isn't taking part, so it isn't counted. */
-function counted(stance: ParticipationType | undefined): boolean {
-  return !!stance && stance !== 'NOT_INTERESTED';
-}
 
 /**
  * Which cards fold into one line with Cofnij: on Dla Ciebie a post marked "Nie dla mnie", on Ukryte posty one

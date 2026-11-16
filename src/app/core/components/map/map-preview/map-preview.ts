@@ -30,6 +30,8 @@ import { cardDate, Place } from '../map-pins';
 import { directionsUrl } from '../map-memory';
 import { Tooltip } from '../../../directives/tooltip';
 import { PickStar } from '../pick-star/pick-star';
+import { MapReactions } from '../map-reactions';
+import { PhotoViewerService } from '../../../services/photo-viewer/photo-viewer.service';
 
 /**
  * What a pin opens: a mini view of its post, or the posts at its place, soonest first. A row opens its post's mini
@@ -54,6 +56,8 @@ import { PickStar } from '../pick-star/pick-star';
 })
 export class MapPreview {
   private translate = inject(TranslateService);
+  private photoViewer = inject(PhotoViewerService);
+  readonly reactions = inject(MapReactions);
   private readonly lang = toSignal(this.translate.onLangChange.pipe(map((change) => change.lang)), {
     initialValue: this.translate.getCurrentLang() || 'pl',
   });
@@ -92,6 +96,13 @@ export class MapPreview {
       this.placeId();
       untracked(() => this.peek.set(null));
     });
+  }
+
+  /** The cover is all the map has of a post's photos. */
+  enlarge(post: PostMark): void {
+    if (post.coverMediaUrl) {
+      this.photoViewer.show([{ url: post.coverMediaUrl }], 0);
+    }
   }
 
   isPick(post: PostMark): boolean {

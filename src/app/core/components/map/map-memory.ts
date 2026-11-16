@@ -62,6 +62,8 @@ function toMark(post: PostCard): PostMark | null {
     coordinates: location.coordinates,
     venueName: location.venueName,
     city: location.city,
+    myReaction: post.myReaction,
+    myParticipation: post.myParticipation,
   };
 }
 

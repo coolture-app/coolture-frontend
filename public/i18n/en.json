@@ -348,6 +348,7 @@
     "legend": "Star: the best fit for you",
     "back": "All here ({{count}})",
     "open": "See the event",
+    "enlargePhoto": "Enlarge the photo",
     "likes": "Likes: {{count}}",
     "going": "Going: {{count}}",
     "todayFrom": "today",

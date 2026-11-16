@@ -115,7 +115,7 @@ export interface components {
       /** @description Every photo of the post, cover first, then in the post's order. At most 8, the limit a post can have (PostLimits.MAX_PHOTOS). Left out when the post has none. */
       photos?: components['schemas']['MediaResource'][];
     };
-    /** @description What a pin and its preview need. Only the description's start: the map loads every post in view at once, and whole descriptions were over half of the answer. */
+    /** @description What a pin and its preview need. Only the description's start: the map loads every post in view at once, and whole descriptions were over half of the answer. The viewer's own reaction and stance are left out for a guest or when there's none. */
     PostMark: {
       /** Format: uuid */
       id: string;
@@ -135,6 +135,8 @@ export interface components {
       coordinates: components['schemas']['GeoPoint'];
       venueName?: string;
       city?: string;
+      myReaction?: components['schemas']['ReactionType'];
+      myParticipation?: components['schemas']['ParticipationType'];
     };
     UserSummary: {
       /** Format: uuid */
