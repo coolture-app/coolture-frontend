@@ -172,6 +172,47 @@ describe('UserProfileView', () => {
     });
   });
 
+  describe('your photo', () => {
+    it('opens the file picker at once while there is none', async () => {
+      await open('/profile');
+      const input = element.querySelector<HTMLInputElement>('.profile__avatar-input')!;
+      const pick = spyOn(input, 'click');
+
+      element.querySelector<HTMLButtonElement>('.profile__avatar-btn')!.click();
+      harness.detectChanges();
+
+      expect(pick).toHaveBeenCalled();
+      expect(element.querySelector('.profile__menu--avatar')).toBeNull();
+    });
+
+    it('offers to change or remove it once there is one', async () => {
+      await open('/profile', { ...ME, avatar: { id: 'm-1', url: 'photo.jpg' } });
+
+      element.querySelector<HTMLButtonElement>('.profile__avatar-btn')!.click();
+      harness.detectChanges();
+
+      const items = [...element.querySelectorAll('.profile__menu--avatar button')].map((b) =>
+        b.textContent?.trim(),
+      );
+      expect(items).toEqual(['PROFILE.changeAvatar', 'PROFILE.removeAvatar']);
+    });
+
+    it('places a picked photo in the circle before anything is uploaded', async () => {
+      await open('/profile');
+      const input = element.querySelector<HTMLInputElement>('.profile__avatar-input')!;
+      const files = new DataTransfer();
+      files.items.add(new File(['x'], 'me.png', { type: 'image/png' }));
+      input.files = files.files;
+
+      input.dispatchEvent(new Event('change'));
+      harness.detectChanges();
+
+      expect(element.querySelector('app-avatar-cropper')).not.toBeNull();
+      http.expectNone((r) => r.url.includes('/media'));
+      element.querySelector('dialog')?.close();
+    });
+  });
+
   it('offers to write a bio when yours is empty', async () => {
     await open('/profile', { ...ME, bio: undefined });
 

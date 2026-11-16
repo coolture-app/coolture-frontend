@@ -8,8 +8,10 @@ import {
   Injector,
   signal,
   viewChild,
+  WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { NgTemplateOutlet } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { catchError, firstValueFrom, map, of } from 'rxjs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -20,8 +22,8 @@ import {
   lucideHeart,
   lucideMapPin,
   lucidePencil,
+  lucidePlus,
   lucideSettings,
-  lucideX,
 } from '@ng-icons/lucide';
 
 import { AuthService } from '../../core/services/auth/auth.service';
@@ -39,13 +41,16 @@ import { RelationPill } from '../../core/components/relation-pill/relation-pill'
 import { Tooltip } from '../../core/directives/tooltip';
 import { ToastService } from '../../core/services/toast/toast.service';
 import { HomeArea } from '../home-area/home-area';
+import { AvatarCropper } from '../../core/components/avatar-cropper/avatar-cropper';
 
 /** Your own profile at `/profile`, and anyone's at `/users/:username`. */
 @Component({
   selector: 'app-user-profile-view',
   imports: [
+    NgTemplateOutlet,
     TranslatePipe,
     NgIcon,
+    AvatarCropper,
     FollowListComponent,
     RouterLink,
     BackLink,
@@ -62,8 +67,8 @@ import { HomeArea } from '../home-area/home-area';
       lucideHeart,
       lucideMapPin,
       lucidePencil,
+      lucidePlus,
       lucideSettings,
-      lucideX,
     }),
   ],
   templateUrl: './my-profile-view.html',
@@ -96,6 +101,10 @@ export class UserProfileView {
   bioDraft = signal('');
 
   menuOpen = signal(false);
+  avatarMenuOpen = signal(false);
+  /** A photo picked and being placed in the circle, not uploaded yet. */
+  pickedFile = signal<File | null>(null);
+  private avatarInput = viewChild<ElementRef<HTMLInputElement>>('avatarInput');
   showFollowers = signal(false);
   showFollowing = signal(false);
   showHome = signal(false);
@@ -145,6 +154,7 @@ export class UserProfileView {
     this.showFollowers.set(false);
     this.showFollowing.set(false);
     this.menuOpen.set(false);
+    this.avatarMenuOpen.set(false);
     this.editingBio.set(false);
 
     const currentUser = this.authService.currentUser();
@@ -245,14 +255,32 @@ export class UserProfileView {
     }
   }
 
-  /** The next click anywhere closes the menu, including on one of its items. */
   toggleMenu() {
-    const opening = !this.menuOpen();
-    this.menuOpen.set(opening);
+    this.toggle(this.menuOpen);
+  }
+
+  /** Without a photo there's nothing to choose between, so the file picker opens at once. */
+  onAvatarTap() {
+    if (this.user()?.avatar) {
+      this.toggle(this.avatarMenuOpen);
+    } else {
+      this.avatarInput()?.nativeElement.click();
+    }
+  }
+
+  closeAvatarMenu(event: Event) {
+    event.stopPropagation();
+    this.avatarMenuOpen.set(false);
+  }
+
+  /** The next click anywhere closes the menu, including on one of its items. */
+  private toggle(open: WritableSignal<boolean>) {
+    const opening = !open();
+    open.set(opening);
     if (opening) {
       // After this click has finished, so that it doesn't count as the next one.
       setTimeout(() =>
-        this.document.addEventListener('click', () => this.menuOpen.set(false), { once: true }),
+        this.document.addEventListener('click', () => open.set(false), { once: true }),
       );
     }
   }
@@ -283,13 +311,20 @@ export class UserProfileView {
     }
   }
 
-  async onFileSelected(event: Event) {
+  onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
-    if (!file) return;
+    input.value = '';
+    if (file) {
+      this.pickedFile.set(file);
+    }
+  }
 
+  async uploadAvatar(cropped: Blob) {
+    this.pickedFile.set(null);
     const userId = this.user()?.id;
     if (!userId || !this.isOwnProfile()) return;
+    const file = new File([cropped], 'avatar.jpg', { type: cropped.type });
 
     this.isUploadingAvatar.set(true);
 
@@ -327,7 +362,6 @@ export class UserProfileView {
       this.toast.show(this.translate.instant('PROFILE.saveFailed'));
     } finally {
       this.isUploadingAvatar.set(false);
-      input.value = '';
     }
   }
 

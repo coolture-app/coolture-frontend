@@ -179,6 +179,7 @@
     "friends": "Friends",
     "followsYou": "Follows you",
     "changeAvatar": "Change photo",
+    "addAvatar": "Add photo",
     "removeAvatar": "Remove photo",
     "removeAvatarConfirm": "Remove your profile photo?",
     "blockConfirm": "Block this person?",
@@ -403,5 +404,11 @@
     "noPosition": "Couldn't get your location. Search for the place above.",
     "nothingHere": "Couldn't tell where that is. Search for the place above.",
     "saveError": "Couldn't save. Try again."
+  },
+  "AVATAR_CROP": {
+    "title": "Position your photo",
+    "hint": "Drag to move. Zoom with the slider, the mouse wheel or two fingers.",
+    "zoom": "Zoom",
+    "loadError": "This file couldn't be opened. Choose a JPG, PNG or WebP photo."
   }
 }

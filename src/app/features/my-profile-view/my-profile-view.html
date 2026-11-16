@@ -46,39 +46,67 @@
 
       <div class="profile__top" [class.profile__top--own]="isOwnProfile()">
         <div class="profile__avatar-wrapper">
-          @if (user()?.avatar; as avatar) {
-            <img [src]="avatar.url" [alt]="user()?.username" class="profile__avatar" />
-          } @else {
-            <div class="profile__avatar profile__avatar--placeholder">
-              {{ user()?.firstName?.charAt(0) }}{{ user()?.lastName?.charAt(0) }}
-            </div>
-          }
-          @if (isOwnProfile()) {
-            <label
-              class="profile__avatar-upload"
-              [attr.aria-label]="'PROFILE.changeAvatar' | translate"
-              [appTooltip]="'PROFILE.changeAvatar' | translate"
-            >
-              <ng-icon name="lucideCamera" aria-hidden="true" />
-              <input
-                type="file"
-                accept="image/*"
-                (change)="onFileSelected($event)"
-                [disabled]="isUploadingAvatar()"
-              />
-            </label>
-            @if (user()?.avatar) {
-              <button
-                type="button"
-                class="profile__avatar-remove"
-                [attr.aria-label]="'PROFILE.removeAvatar' | translate"
-                [appTooltip]="'PROFILE.removeAvatar' | translate"
-                [disabled]="isUploadingAvatar()"
-                (click)="onRemoveAvatar()"
-              >
-                <ng-icon name="lucideX" aria-hidden="true" />
-              </button>
+          <ng-template #avatarImage>
+            @if (user()?.avatar; as avatar) {
+              <img [src]="avatar.url" [alt]="user()?.username" class="profile__avatar" />
+            } @else {
+              <div class="profile__avatar profile__avatar--placeholder">
+                {{ user()?.firstName?.charAt(0) }}{{ user()?.lastName?.charAt(0) }}
+              </div>
             }
+          </ng-template>
+          @if (isOwnProfile()) {
+            @let hasPhoto = !!user()?.avatar;
+            <button
+              type="button"
+              class="profile__avatar-btn"
+              [attr.aria-label]="
+                (hasPhoto ? 'PROFILE.changeAvatar' : 'PROFILE.addAvatar') | translate
+              "
+              [attr.aria-haspopup]="hasPhoto ? 'menu' : null"
+              [attr.aria-expanded]="hasPhoto ? avatarMenuOpen() : null"
+              [appTooltip]="(hasPhoto ? 'PROFILE.changeAvatar' : 'PROFILE.addAvatar') | translate"
+              [disabled]="isUploadingAvatar()"
+              (click)="onAvatarTap()"
+            >
+              <ng-container *ngTemplateOutlet="avatarImage" />
+              <span class="profile__avatar-badge" aria-hidden="true">
+                <ng-icon [name]="hasPhoto ? 'lucideCamera' : 'lucidePlus'" />
+              </span>
+            </button>
+            <input
+              #avatarInput
+              class="profile__avatar-input"
+              type="file"
+              accept="image/*"
+              tabindex="-1"
+              aria-hidden="true"
+              (change)="onFileSelected($event)"
+            />
+            @if (avatarMenuOpen()) {
+              <div class="profile__menu profile__menu--avatar" role="menu">
+                <button
+                  type="button"
+                  role="menuitem"
+                  class="profile__menu-item"
+                  (click)="avatarInput.click()"
+                  (keydown.escape)="closeAvatarMenu($event)"
+                >
+                  {{ 'PROFILE.changeAvatar' | translate }}
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  class="profile__menu-item profile__menu-item--danger"
+                  (click)="onRemoveAvatar()"
+                  (keydown.escape)="closeAvatarMenu($event)"
+                >
+                  {{ 'PROFILE.removeAvatar' | translate }}
+                </button>
+              </div>
+            }
+          } @else {
+            <ng-container *ngTemplateOutlet="avatarImage" />
           }
         </div>
 
@@ -216,5 +244,13 @@
     [isOwnProfile]="isOwnProfile()"
     (closeList)="showFollowers.set(false); showFollowing.set(false)"
     (followChanged)="onFollowChanged($event)"
+  />
+}
+
+@if (pickedFile(); as file) {
+  <app-avatar-cropper
+    [file]="file"
+    (saved)="uploadAvatar($event)"
+    (cancelled)="pickedFile.set(null)"
   />
 }

@@ -179,6 +179,7 @@
     "friends": "Znajomi",
     "followsYou": "Obserwuje Cię",
     "changeAvatar": "Zmień zdjęcie",
+    "addAvatar": "Dodaj zdjęcie",
     "removeAvatar": "Usuń zdjęcie",
     "removeAvatarConfirm": "Usunąć zdjęcie profilowe?",
     "blockConfirm": "Zablokować tę osobę?",
@@ -403,5 +404,11 @@
     "noPosition": "Nie udało się pobrać lokalizacji. Wyszukaj miejsce powyżej.",
     "nothingHere": "Nie udało się ustalić miejscowości. Wyszukaj ją powyżej.",
     "saveError": "Nie udało się zapisać. Spróbuj ponownie."
+  },
+  "AVATAR_CROP": {
+    "title": "Ustaw zdjęcie",
+    "hint": "Przeciągnij, aby przesunąć. Przybliż suwakiem, kółkiem myszy lub dwoma palcami.",
+    "zoom": "Przybliżenie",
+    "loadError": "Nie udało się otworzyć tego pliku. Wybierz zdjęcie JPG, PNG lub WebP."
   }
 }
