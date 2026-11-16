@@ -19,3 +19,21 @@ export interface FriendStances {
   going?: FriendGroup;
   interested?: FriendGroup;
 }
+
+/** All of them, for the friends list. Both empty for a guest. */
+export interface PostFriends {
+  going: Friend[];
+  interested: Friend[];
+}
+
+/** First and last name, or the username when there's no first name. */
+export function fullName(friend: Friend): string {
+  return friend.firstName
+    ? [friend.firstName, friend.lastName].filter(Boolean).join(' ')
+    : friend.username;
+}
+
+/** One letter, for a friend with no photo. */
+export function initial(friend: Friend): string {
+  return (friend.firstName?.charAt(0) || friend.username.charAt(0)).toUpperCase();
+}

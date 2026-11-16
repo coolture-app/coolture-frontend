@@ -58,6 +58,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/posts/{postId}/friends': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Every friend of the viewer who marked this post, for the list behind a card's friends line
+     * @description The same friends as the post's friendStances, without the limit on names: mutual follows who marked the post Biorę udział (going) or Interesuje mnie (interested) and share their stances. Newest stance first. Empty lists for a guest.
+     */
+    get: operations['getPostFriends'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -155,6 +175,10 @@ export interface components {
       /** @description The newest of them, at most 2 (Friends.NAMES_PER_STANCE). */
       people: components['schemas']['Friend'][];
     };
+    PostFriends: {
+      going: components['schemas']['Friend'][];
+      interested: components['schemas']['Friend'][];
+    };
     Friend: {
       /** Format: uuid */
       id: string;
@@ -229,6 +253,15 @@ export interface components {
   responses: {
     /** @description Invalid input, including an unreadable cursor. The frontend restarts the list once. */
     BadRequest: {
+      headers: {
+        [name: string]: unknown;
+      };
+      content: {
+        'application/json': components['schemas']['Error'];
+      };
+    };
+    /** @description No such post, or it was deleted. */
+    NotFound: {
       headers: {
         [name: string]: unknown;
       };
@@ -417,6 +450,44 @@ export interface operations {
         };
       };
       400: components['responses']['BadRequest'];
+    };
+  };
+  getPostFriends: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        postId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Both lists, each possibly empty. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          /**
+           * @example {
+           *       "going": [
+           *         {
+           *           "id": "00000000-0000-0000-0000-000000000002",
+           *           "username": "anna_demo",
+           *           "firstName": "Anna",
+           *           "lastName": "Demo"
+           *         }
+           *       ],
+           *       "interested": []
+           *     }
+           */
+          'application/json': components['schemas']['PostFriends'];
+        };
+      };
+      400: components['responses']['BadRequest'];
+      404: components['responses']['NotFound'];
+      500: components['responses']['ServerError'];
     };
   };
 }

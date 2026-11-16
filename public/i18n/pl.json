@@ -280,6 +280,15 @@
     "modal-delete-body": "Tej akcji nie da się cofnąć.",
     "deleted-comment": "Komentarz usunięty"
   },
+  "FRIENDS": {
+    "title": "Znajomi",
+    "close": "Zamknij listę znajomych",
+    "going": "Biorą udział",
+    "interested": "Interesuje",
+    "loading": "Wczytywanie znajomych…",
+    "load-error": "Nie udało się wczytać znajomych.",
+    "empty": "Żaden znajomy nie zaznaczył tego wydarzenia."
+  },
   "EVENT_CARD": {
     "by": "przez"
   },

@@ -280,6 +280,15 @@
     "modal-delete-body": "This can't be undone.",
     "deleted-comment": "Comment deleted"
   },
+  "FRIENDS": {
+    "title": "Friends",
+    "close": "Close the friends list",
+    "going": "Going",
+    "interested": "Interested",
+    "loading": "Loading friends…",
+    "load-error": "Couldn’t load friends.",
+    "empty": "None of your friends marked this event."
+  },
   "EVENT_CARD": {
     "by": "by"
   },

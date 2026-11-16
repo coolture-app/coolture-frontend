@@ -5,6 +5,7 @@ import type { components as Users } from './users-api';
 import type { FeedPage } from '../posts/feed-page.model';
 import type { PostCard } from '../posts/post-card.model';
 import type { PostMark } from '../posts/post-mark.model';
+import type { PostFriends } from '../posts/friend-stances.model';
 import type { PaginatedResponse } from '../common/paginated-response.model';
 import type { NamedPlace } from '../common/geo.model';
 import type { Me, UserProfile } from '../users/user-profile.model';
@@ -21,6 +22,7 @@ export type ContractCheck = [
   Accepts<PaginatedResponse<PostCard>, FeedSchemas['PostPage']>,
   Accepts<FeedPage, FeedSchemas['FeedPage']>,
   Accepts<PostMark, FeedSchemas['PostMark']>,
+  Accepts<PostFriends, FeedSchemas['PostFriends']>,
   Accepts<Me, UserSchemas['Me']>,
   Accepts<UserProfile, UserSchemas['UserProfile']>,
   Accepts<PaginatedResponse<UserSummary>, UserSchemas['UserPage']>,

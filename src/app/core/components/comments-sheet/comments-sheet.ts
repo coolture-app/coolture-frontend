@@ -17,10 +17,14 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideX } from '@ng-icons/lucide';
 import { filter } from 'rxjs';
 
-import { CommentsSheetService } from '../../services/comments-sheet/comments-sheet.service';
+import {
+  CommentsSheetService,
+  SheetContent,
+} from '../../services/comments-sheet/comments-sheet.service';
 import { backClosable } from '../../services/back-closable/back-closable';
 import { Tooltip } from '../../directives/tooltip';
 import { CommentThread } from '../comment-thread/comment-thread';
+import { PostFriendsList } from '../post-friends/post-friends';
 
 export type SheetSize = 'half' | 'full';
 
@@ -60,15 +64,15 @@ export function settleDrag(
 }
 
 /**
- * The comments of a post in the feed. On a wide screen, a panel docked beside the feed, which stays
- * bright and scrolls by itself, so another card's comment button just switches the panel to that post.
- * On anything narrower, a sheet over the feed, which opens at half the screen and drags up to full. The
- * address bar shows the post's comments link while it's open, and X, Esc and the browser's Back close
- * either one, as does a tap outside the sheet.
+ * The comments of a post in the feed, or its friends list. On a wide screen, a panel docked beside the feed, which
+ * stays bright and scrolls by itself, so another card's comment button or friends line just switches the panel. On
+ * anything narrower, a sheet over the feed, which opens at half the screen and drags up to full. The address bar shows
+ * the post's link, with #comments or #friends, while it's open, and X, Esc and the browser's Back close either one, as
+ * does a tap outside the sheet.
  */
 @Component({
   selector: 'app-comments-sheet',
-  imports: [A11yModule, RouterLink, TranslatePipe, NgIcon, Tooltip, CommentThread],
+  imports: [A11yModule, RouterLink, TranslatePipe, NgIcon, Tooltip, CommentThread, PostFriendsList],
   viewProviders: [provideIcons({ lucideX })],
   templateUrl: './comments-sheet.html',
   styleUrl: './comments-sheet.scss',
@@ -80,7 +84,8 @@ export class CommentsSheet {
   private location = inject(Location);
   private panel = viewChild<ElementRef<HTMLElement>>('panel');
   private overlay = backClosable('commentsSheet', () => this.closed());
-  private shownPostId: string | null = null;
+  /** The content and the post shown, as in the URL's fragment and path. */
+  private shown: string | null = null;
 
   /** Beside the feed, rather than over it. Decided on opening, for as long as it stays open. */
   readonly docked = signal(false);
@@ -94,7 +99,8 @@ export class CommentsSheet {
   constructor() {
     afterRenderEffect(() => {
       const post = this.sheet.post();
-      untracked(() => post && this.opened(post.id));
+      const content = this.sheet.content();
+      untracked(() => post && this.opened(post.id, content));
     });
 
     // Following a profile link: the sheet goes, and the link takes over its history entry.
@@ -168,12 +174,12 @@ export class CommentsSheet {
     }
   }
 
-  private opened(postId: string): void {
-    const url = this.location.prepareExternalUrl(`/posts/${postId}#comments`);
+  private opened(postId: string, content: SheetContent): void {
+    const url = this.location.prepareExternalUrl(`/posts/${postId}#${content}`);
     if (this.overlay.isOpen()) {
       // Another card's button, with the panel docked beside the feed. Still one Back to close.
-      if (postId !== this.shownPostId) {
-        this.shownPostId = postId;
+      if (url !== this.shown) {
+        this.shown = url;
         this.overlay.showUrl(url);
       }
       return;
@@ -183,7 +189,7 @@ export class CommentsSheet {
     this.docked.set(docked);
     this.document.documentElement.classList.toggle(DOCKED_CLASS, docked);
     this.size.set('half');
-    this.shownPostId = postId;
+    this.shown = url;
     this.overlay.opened({ url, pageStaysLive: docked });
     // The panel itself. The text box would bring up a phone's keyboard for someone who came to read,
     // and the close button would show its tooltip each time.
@@ -192,7 +198,7 @@ export class CommentsSheet {
 
   private closed(): void {
     this.sheet.close();
-    this.shownPostId = null;
+    this.shown = null;
     this.docked.set(false);
     this.document.documentElement.classList.remove(DOCKED_CLASS);
   }
