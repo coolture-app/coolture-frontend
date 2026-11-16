@@ -43,7 +43,7 @@ import { LocationService } from '../../core/services/location/location.service';
 import { PostListStore } from '../../core/services/post-list/post-list.store';
 import { HomeTapService } from '../../core/services/home-tap/home-tap.service';
 import { Tooltip } from '../../core/directives/tooltip';
-import { PostType, PostStatus, PostVisibility, PostsSort } from '../../core/models/common/enums';
+import { PostType, PostStatus, PostsSort } from '../../core/models/common/enums';
 import { Map, type MapArea } from '../../core/components/map/map/map';
 import { MapFocus } from '../../core/components/map/map-focus';
 import { PostMark } from '../../core/models/posts/post-mark.model';
@@ -203,9 +203,9 @@ export class MainPage implements OnDestroy {
   );
   /** How many filters the panel has on, counting a date range as one. Not the search or the place. */
   readonly activeFilterCount = computed(() => {
-    const { type, tags, startsFrom, startsTo, visibility, status, includePast } =
+    const { type, tags, startsFrom, startsTo, followed, status, includePast } =
       this.activeFilters();
-    const on = [type, tags, startsFrom || startsTo, visibility, status, includePast];
+    const on = [type, tags, startsFrom || startsTo, followed, status, includePast];
     return on.filter((value) => value !== undefined && value !== false).length;
   });
   /** A screenful for the first page. After that one is enough, and the posts stay what's on screen. */
@@ -670,7 +670,7 @@ export class MainPage implements OnDestroy {
 
   private readFilters(): PostFilterParams {
     const search = this.searchControl.value.trim();
-    const { type, tags, startsFrom, startsTo, visibility, status, includePast, radiusKm } =
+    const { type, tags, startsFrom, startsTo, followed, status, includePast, radiusKm } =
       this.filtersForm.getRawValue();
     const position = this.place.centre(this.filtersForm.controls.place.value);
     const tagList = tags
@@ -684,7 +684,7 @@ export class MainPage implements OnDestroy {
       ...(tagList.length > 0 && { tags: tagList }),
       ...(startsFrom && { startsFrom: new Date(startsFrom).toISOString() }),
       ...(startsTo && { startsTo: new Date(startsTo).toISOString() }),
-      ...(visibility && { visibility: visibility as PostVisibility }),
+      ...(followed && this.authService.isAuthenticated() && { followed }),
       ...(status && { status: status as PostStatus }),
       ...(includePast && { includePast }),
       ...(position && { ...position, radiusKm }),

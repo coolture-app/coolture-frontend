@@ -16,7 +16,8 @@ export const NO_FILTERS = {
   tags: '',
   startsFrom: '',
   startsTo: '',
-  visibility: '',
+  /** Only people I follow, and what friends are interested in or go to. */
+  followed: false,
   status: '',
   includePast: false,
   /** The radius filter's centre, as a place from `PlaceFilter`, or '' for "Wszędzie". */
@@ -40,7 +41,7 @@ export function createFiltersForm() {
     tags: new FormControl(NO_FILTERS.tags, { nonNullable: true }),
     startsFrom: new FormControl(NO_FILTERS.startsFrom, { nonNullable: true }),
     startsTo: new FormControl(NO_FILTERS.startsTo, { nonNullable: true }),
-    visibility: new FormControl(NO_FILTERS.visibility, { nonNullable: true }),
+    followed: new FormControl(NO_FILTERS.followed, { nonNullable: true }),
     status: new FormControl(NO_FILTERS.status, { nonNullable: true }),
     includePast: new FormControl(NO_FILTERS.includePast, { nonNullable: true }),
     place: new FormControl(NO_FILTERS.place, { nonNullable: true }),

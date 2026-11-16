@@ -26,16 +26,6 @@
         placeholder="{{ 'MAIN_PAGE.tagsPlaceholder' | translate }}"
       />
     </div>
-
-    <div class="filters__field">
-      <label for="visibility">{{ 'MAIN_PAGE.visibility' | translate }}</label>
-      <select id="visibility" [formControl]="f.controls.visibility">
-        <option value="">{{ 'MAIN_PAGE.allVisibility' | translate }}</option>
-        <option value="PUBLIC">{{ 'MAIN_PAGE.public' | translate }}</option>
-        <option value="PRIVATE">{{ 'MAIN_PAGE.private' | translate }}</option>
-        <option value="FRIENDS">{{ 'MAIN_PAGE.friends' | translate }}</option>
-      </select>
-    </div>
   </div>
 
   <div class="filters__row">
@@ -49,6 +39,16 @@
       <input id="startsTo" type="datetime-local" [formControl]="f.controls.startsTo" />
     </div>
   </div>
+
+  @if (signedIn()) {
+    <div class="filters__past">
+      <app-switch
+        [formControl]="f.controls.followed"
+        [label]="'MAIN_PAGE.followed' | translate"
+      ></app-switch>
+      <span>{{ 'MAIN_PAGE.followed' | translate }}</span>
+    </div>
+  }
 
   <div class="filters__past">
     <app-switch
