@@ -20,6 +20,8 @@ function card(overrides: Partial<PostCard> = {}): PostCard {
     tags: [],
     positiveReactionCount: 3,
     participantCount: 2,
+    interestedCount: 0,
+    goingCount: 0,
     commentsCount: 0,
     type: 'OFFLINE',
     status: 'ACTIVE',
@@ -146,11 +148,23 @@ describe('PostComponent', () => {
       expect(badge()).toBe('99+');
     });
 
-    it('has no count on the bookmark or the ticket, as the API sends only their sum', () => {
-      render(card({ participantCount: 5 }));
+    it('counts the bookmark and the ticket apart, as the like, and moves a count with the stance', () => {
+      TestBed.inject(AuthService).currentUser.set({ id: 'u2' } as UserProfile);
+      const data = card({ participantCount: 3, interestedCount: 3, goingCount: 0 });
+      render(data);
+      const count = (label: string) =>
+        element().querySelector(`[aria-label^="${label}"] .post__count`)?.textContent?.trim();
 
-      expect(element().querySelector('[aria-label="POST.interested"] .post__count')).toBeNull();
-      expect(element().querySelector('[aria-label="POST.takes_part"] .post__count')).toBeNull();
+      expect(count('POST.interested')).toBe('3');
+      expect(element().querySelector('[aria-label="POST.interested (3)"]')).not.toBeNull();
+      expect(count('POST.takes_part')).toBeUndefined();
+
+      (element().querySelector('[aria-label^="POST.takes_part"]') as HTMLButtonElement).click();
+      fixture.detectChanges();
+
+      expect(data.goingCount).toBe(1);
+      expect(count('POST.takes_part')).toBe('1');
+      http.match(() => true).forEach((r) => r.flush({}));
     });
   });
 

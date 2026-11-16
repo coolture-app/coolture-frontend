@@ -404,8 +404,12 @@ export class PostComponent implements OnInit {
   }
 
   private applyParticipation(type: ParticipationType | undefined): void {
-    this.data.participantCount +=
-      (counted(type) ? 1 : 0) - (counted(this.data.myParticipation) ? 1 : 0);
+    const was = this.data.myParticipation;
+    const change = (stance: ParticipationType) =>
+      (type === stance ? 1 : 0) - (was === stance ? 1 : 0);
+    this.data.participantCount += (counted(type) ? 1 : 0) - (counted(was) ? 1 : 0);
+    this.data.interestedCount += change('INTERESTED');
+    this.data.goingCount += change('TAKES_PART');
     this.data.myParticipation = type;
     this.stance.set(type);
   }
