@@ -75,8 +75,14 @@
     "nearestFromHome": "Odległości od: {{place}}"
   },
   "FULL_POST": {
-    "title": "Fajny post",
-    "back": "Wróć"
+    "title": "Fajny post"
+  },
+  "BACK": {
+    "to": "Wróć do: {{page}}",
+    "post": "Wydarzenie",
+    "newPost": "Nowe wydarzenie",
+    "editPost": "Edycja wydarzenia",
+    "previous": "Poprzednia strona"
   },
   "POST": {
     "starts": "Początek wydarzenia",
@@ -168,9 +174,10 @@
     "shareStances": "Pokazuj znajomym, co mnie interesuje i gdzie idę",
     "shareStancesHint": "Znajomi to osoby, które obserwujesz i które obserwują Ciebie.",
     "saveFailed": "Nie udało się zapisać. Spróbuj ponownie.",
-    "back": "Wróć",
     "more": "Więcej",
     "followingThem": "Obserwujesz",
+    "friends": "Znajomi",
+    "followsYou": "Obserwuje Cię",
     "changeAvatar": "Zmień zdjęcie",
     "removeAvatar": "Usuń zdjęcie",
     "removeAvatarConfirm": "Usunąć zdjęcie profilowe?",

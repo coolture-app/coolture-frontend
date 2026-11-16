@@ -26,9 +26,9 @@ describe('SettingsView', () => {
     fixture.detectChanges();
   };
 
-  it('links to the blocked people and the hidden posts', () => {
+  it('links back to the profile, and to the blocked people and the hidden posts', () => {
     const links = [...element.querySelectorAll('a')].map((a) => a.getAttribute('href'));
-    expect(links).toEqual(['/profile/blocked', '/profile/hidden']);
+    expect(links).toEqual(['/profile', '/profile/blocked', '/profile/hidden']);
   });
 
   it('saves the sharing switch', () => {

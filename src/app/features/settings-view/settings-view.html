@@ -1,14 +1,7 @@
 <div class="page">
   <div class="settings">
     <div class="settings__head">
-      <app-btn
-        class="settings__back"
-        variant="icon"
-        [label]="'PROFILE.back' | translate"
-        (btnClick)="back()"
-      >
-        <ng-icon name="lucideArrowLeft" aria-hidden="true" />
-      </app-btn>
+      <app-back-link fallback="/profile" />
       <h1 class="settings__title">{{ 'SETTINGS.title' | translate }}</h1>
     </div>
 

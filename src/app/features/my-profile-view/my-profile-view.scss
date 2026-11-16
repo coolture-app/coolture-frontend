@@ -16,10 +16,6 @@
     gap: var(--space-sm);
   }
 
-  &__back ng-icon {
-    --ng-icon__size: 20px;
-  }
-
   &__corner {
     position: absolute;
     top: 0;
@@ -204,6 +200,13 @@
     margin: 0;
     font-size: var(--text-lg);
     font-weight: var(--font-bold);
+  }
+
+  &__handle {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-xs) var(--space-sm);
   }
 
   &__username {

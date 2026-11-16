@@ -6,10 +6,11 @@ import {
   OnInit,
   viewChild,
   DestroyRef,
+  effect,
 } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { PostComponent } from '../../core/components/post-component/post-component';
-import { Btn } from '../../core/components/btn/btn';
+import { BackLink } from '../../core/components/back-link/back-link';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommentThread } from '../../core/components/comment-thread/comment-thread';
 import { PostService } from '../../core/services/post/post.service';
@@ -20,7 +21,7 @@ import { PostListStore } from '../../core/services/post-list/post-list.store';
 
 @Component({
   selector: 'app-full-post-view',
-  imports: [PostComponent, CommentThread, TranslatePipe, Btn],
+  imports: [PostComponent, CommentThread, TranslatePipe, BackLink],
   templateUrl: './full-post-view.html',
   styleUrl: './full-post-view.scss',
 })
@@ -39,6 +40,13 @@ export class FullPostView implements OnInit {
   post = this.postService.activePost;
 
   constructor() {
+    effect(() => {
+      const post = this.post();
+      if (post) {
+        this.backService.rememberPostTitle(post.id, post.title);
+      }
+    });
+
     // Once the comments are on the page, which can wait for the post to load. A frame and a task
     // later, so it comes after the router's own scroll to the top.
     afterRenderEffect(() => {
@@ -74,11 +82,6 @@ export class FullPostView implements OnInit {
     } else {
       console.error('NO ID IN URL ERRRR');
     }
-  }
-
-  /** As the browser's Back, so the list comes back where it was left. */
-  goBack() {
-    this.backService.back('/');
   }
 
   changeCount(by: number): void {

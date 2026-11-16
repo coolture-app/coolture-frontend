@@ -1,6 +1,9 @@
 <div class="page">
   <div class="hidden-posts">
-    <h1 class="hidden-posts__title">{{ 'HIDDEN.title' | translate }}</h1>
+    <div class="hidden-posts__head">
+      <app-back-link fallback="/profile/settings" />
+      <h1 class="hidden-posts__title">{{ 'HIDDEN.title' | translate }}</h1>
+    </div>
     <p class="hidden-posts__intro">{{ 'HIDDEN.intro' | translate }}</p>
 
     @for (item of list.items(); track item.id) {

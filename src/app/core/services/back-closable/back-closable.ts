@@ -1,5 +1,8 @@
 import { DestroyRef, DOCUMENT, inject } from '@angular/core';
 
+/** In the state of every overlay's entry, which copies its page's state and so looks like the page. */
+export const OVERLAY_ENTRY = 'overlay';
+
 export interface BackClosableOptions {
   /** Shows in the address bar while the overlay is open. */
   url?: string;
@@ -72,7 +75,11 @@ export function backClosable(key: string, closed: () => void): BackClosable {
       pageY = view?.scrollY ?? 0;
       returnFocus = document.activeElement as HTMLElement | null;
       // The same router state, so Back only leaves this entry and stays on the page.
-      view?.history.pushState({ ...view.history.state, [key]: true }, '', url);
+      view?.history.pushState(
+        { ...view.history.state, [key]: true, [OVERLAY_ENTRY]: true },
+        '',
+        url,
+      );
       if (!live) {
         document.documentElement.style.overflow = 'hidden';
       }

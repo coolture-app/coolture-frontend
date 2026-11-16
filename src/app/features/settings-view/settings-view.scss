@@ -13,12 +13,8 @@
 
   &__head {
     display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-  }
-
-  &__back ng-icon {
-    --ng-icon__size: 20px;
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   &__title {

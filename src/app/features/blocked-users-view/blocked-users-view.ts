@@ -1,38 +1,30 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideArrowLeft } from '@ng-icons/lucide';
 
+import { BackLink } from '../../core/components/back-link/back-link';
 import { Btn } from '../../core/components/btn/btn';
-import { UserSummary } from '../../core/models/users/user-summary.model';
+import { UserListItem } from '../../core/models/users/user-summary.model';
 import { AuthService } from '../../core/services/auth/auth.service';
-import { BackService } from '../../core/services/back/back.service';
 import { RelationsService } from '../../core/services/relations/relations.service';
 
 @Component({
   selector: 'app-blocked-users-view',
-  imports: [TranslatePipe, NgIcon, Btn],
-  viewProviders: [provideIcons({ lucideArrowLeft })],
+  imports: [TranslatePipe, BackLink, Btn],
   templateUrl: './blocked-users-view.html',
   styleUrl: './blocked-users-view.scss',
 })
 export class BlockedUsersView implements OnInit {
   private authService = inject(AuthService);
   private relationsService = inject(RelationsService);
-  private backService = inject(BackService);
   private translate = inject(TranslateService);
 
-  readonly users = signal<UserSummary[]>([]);
+  readonly users = signal<UserListItem[]>([]);
   readonly loading = signal(true);
   readonly failed = signal(false);
 
   ngOnInit(): void {
     void this.load();
-  }
-
-  back(): void {
-    this.backService.back('/profile/settings');
   }
 
   async load(): Promise<void> {

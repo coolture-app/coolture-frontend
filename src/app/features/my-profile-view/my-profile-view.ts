@@ -15,7 +15,6 @@ import { catchError, firstValueFrom, map, of } from 'rxjs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
-  lucideArrowLeft,
   lucideCamera,
   lucideEllipsis,
   lucideHeart,
@@ -33,8 +32,10 @@ import { InterestsService } from '../../core/services/interests/interests.servic
 import { UserProfile } from '../../core/models/users/user-profile.model';
 import { Interest } from '../../core/models/interests/interest.model';
 import { FollowListComponent } from '../../core/components/follow-list/follow-list';
+import { BackLink } from '../../core/components/back-link/back-link';
 import { Btn } from '../../core/components/btn/btn';
 import { FollowBtn } from '../../core/components/follow-btn/follow-btn';
+import { RelationPill } from '../../core/components/relation-pill/relation-pill';
 import { Tooltip } from '../../core/directives/tooltip';
 import { ToastService } from '../../core/services/toast/toast.service';
 import { HomeArea } from '../home-area/home-area';
@@ -47,14 +48,15 @@ import { HomeArea } from '../home-area/home-area';
     NgIcon,
     FollowListComponent,
     RouterLink,
+    BackLink,
     Btn,
     FollowBtn,
+    RelationPill,
     Tooltip,
     HomeArea,
   ],
   viewProviders: [
     provideIcons({
-      lucideArrowLeft,
       lucideCamera,
       lucideEllipsis,
       lucideHeart,

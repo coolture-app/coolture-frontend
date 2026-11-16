@@ -2,14 +2,7 @@
   <div class="profile">
     <section class="profile__header">
       @if (!isOwnProfile()) {
-        <app-btn
-          class="profile__back"
-          variant="icon"
-          routerLink="/profile"
-          [label]="'PROFILE.back' | translate"
-        >
-          <ng-icon name="lucideArrowLeft" aria-hidden="true" />
-        </app-btn>
+        <app-back-link fallback="/people" />
       }
 
       <div class="profile__corner">
@@ -103,7 +96,15 @@
 
       <div class="profile__names">
         <h1 class="profile__name">{{ user()?.firstName }} {{ user()?.lastName }}</h1>
-        <span class="profile__username">&#64;{{ user()?.username }}</span>
+        <span class="profile__handle">
+          <span class="profile__username">&#64;{{ user()?.username }}</span>
+          @if (!isOwnProfile()) {
+            <app-relation-pill
+              [following]="!!user()?.isFollowing"
+              [followsYou]="!!user()?.followsYou"
+            />
+          }
+        </span>
       </div>
 
       @if (isOwnProfile()) {

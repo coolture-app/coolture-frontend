@@ -198,6 +198,14 @@ describe('InterestsView', () => {
     pending.complete();
   });
 
+  it('links back to the profile, but not during the first selection', async () => {
+    await render(['jazz']);
+    expect(element.querySelector('app-back-link a')?.getAttribute('href')).toBe('/profile');
+
+    await render([], true);
+    expect(element.querySelector('app-back-link')).toBeNull();
+  });
+
   it('does not ask for a saved selection during the first selection', async () => {
     interestsService.getUserInterests.calls.reset();
 

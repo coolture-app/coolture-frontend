@@ -20,6 +20,7 @@ const ME: UserProfile = {
   followingCount: 5,
   isFollowing: false,
   isBlocked: false,
+  followsYou: false,
   interests: ['theatre', 'jazz'],
 };
 
@@ -99,6 +100,7 @@ describe('UserProfileView', () => {
       expect(element.textContent).not.toContain('PROFILE.blocked');
       expect(element.textContent).not.toContain('PROFILE.hidden-posts');
       expect(element.querySelector('app-switch')).toBeNull();
+      expect(element.querySelector('app-back-link')).toBeNull();
     });
 
     it('shows the two counts and the interests and home buttons', () => {
@@ -180,12 +182,29 @@ describe('UserProfileView', () => {
     expect(element.querySelector('.profile__textarea')).not.toBeNull();
   });
 
+  it('marks a friend, who follows you back', async () => {
+    await open('/users/jan');
+    http
+      .expectOne((r) => r.url.endsWith('/users/by-username/jan'))
+      .flush({ ...JAN, isFollowing: true, followsYou: true });
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+
+    expect(text('.profile__handle app-relation-pill')).toBe('PROFILE.friends');
+  });
+
   describe('someone else’s', () => {
     beforeEach(async () => {
       await open('/users/jan');
       http.expectOne((r) => r.url.endsWith('/users/by-username/jan')).flush(JAN);
       await harness.fixture.whenStable();
       harness.detectChanges();
+    });
+
+    it('links back to Ludzie when the tab came straight here', () => {
+      const back = element.querySelector('app-back-link a');
+      expect(back?.getAttribute('href')).toBe('/people');
+      expect(back?.textContent?.trim()).toBe('NAVBAR.friends');
     });
 
     it('has Obserwuj as its only button and Zablokuj in the ⋯ menu', () => {
@@ -195,6 +214,10 @@ describe('UserProfileView', () => {
       element.querySelector<HTMLButtonElement>('.profile__corner button')!.click();
       harness.detectChanges();
       expect(text('.profile__menu')).toBe('PROFILE.block');
+    });
+
+    it('has no friend mark while only you follow them', () => {
+      expect(element.querySelector('app-relation-pill')?.textContent?.trim()).toBe('');
     });
 
     it('leaves an empty bio out and has no pencil', () => {

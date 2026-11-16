@@ -1,14 +1,7 @@
 <div class="page">
   <div class="blocked">
     <div class="blocked__head">
-      <app-btn
-        class="blocked__back"
-        variant="icon"
-        [label]="'PROFILE.back' | translate"
-        (btnClick)="back()"
-      >
-        <ng-icon name="lucideArrowLeft" aria-hidden="true" />
-      </app-btn>
+      <app-back-link fallback="/profile/settings" />
       <h1 class="blocked__title">{{ 'PROFILE.blocked' | translate }}</h1>
     </div>
 

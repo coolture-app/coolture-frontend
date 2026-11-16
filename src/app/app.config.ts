@@ -1,5 +1,7 @@
 import {
   ApplicationConfig,
+  inject,
+  provideAppInitializer,
   provideBrowserGlobalErrorListeners,
   provideZonelessChangeDetection,
 } from '@angular/core';
@@ -15,17 +17,21 @@ import { errorInterceptor } from './core/auth/auth.interceptor';
 import { authTokenInterceptor } from './core/auth/auth-token.interceptor';
 import { originVerifyInterceptor } from './core/auth/origin-verify.interceptor';
 import { devTools } from '../environments/dev-tools';
+import { BackService } from './core/services/back/back.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideZonelessChangeDetection(),
     // Forward navigations open at the top, and Back and Forward put the scroll back, after rendering.
+    // 'computed' writes the page id that BackService tells a push from a replace by.
     provideRouter(
       routes,
       withRouterConfig({ canceledNavigationResolution: 'computed' }),
       withInMemoryScrolling({ scrollPositionRestoration: 'enabled' }),
     ),
+    // Before the first navigation, so the back link knows every page this tab opened.
+    provideAppInitializer(() => void inject(BackService)),
     provideClientHydration(withEventReplay()),
     provideHttpClient(
       withFetch(),

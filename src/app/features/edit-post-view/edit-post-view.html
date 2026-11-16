@@ -1,5 +1,6 @@
-<div class="edit-post-container" *ngIf="currentPost()">
-  <div class="edit-post-card">
+<div class="edit-post-container">
+  <app-back-link [fallback]="'/posts/' + postId" />
+  <div class="edit-post-card" *ngIf="currentPost()">
     <header class="card-header">
       <h2>{{ 'EDIT_POST.header-title' | translate }}</h2>
       <p>{{ 'EDIT_POST.header-desc' | translate }}</p>

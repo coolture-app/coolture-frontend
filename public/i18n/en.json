@@ -75,8 +75,14 @@
     "nearestFromHome": "Distances from: {{place}}"
   },
   "FULL_POST": {
-    "title": "Cool post",
-    "back": "Back"
+    "title": "Cool post"
+  },
+  "BACK": {
+    "to": "Back to: {{page}}",
+    "post": "Event",
+    "newPost": "New event",
+    "editPost": "Editing event",
+    "previous": "Previous page"
   },
   "POST": {
     "starts": "Event start",
@@ -168,9 +174,10 @@
     "shareStances": "Show friends what I’m interested in and where I go",
     "shareStancesHint": "Friends are people you follow who follow you back.",
     "saveFailed": "Couldn’t save. Try again.",
-    "back": "Back",
     "more": "More",
     "followingThem": "Following",
+    "friends": "Friends",
+    "followsYou": "Follows you",
     "changeAvatar": "Change photo",
     "removeAvatar": "Remove photo",
     "removeAvatarConfirm": "Remove your profile photo?",
