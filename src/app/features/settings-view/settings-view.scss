@@ -4,12 +4,11 @@
   padding: var(--space-md);
 }
 
-// The home feed's column.
 .settings {
   display: flex;
   flex-direction: column;
   gap: var(--space-lg);
-  max-width: 560px;
+  max-width: var(--feed-column);
   margin: 0 auto;
 
   &__head {
