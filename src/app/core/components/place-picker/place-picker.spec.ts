@@ -52,6 +52,7 @@ function fakeMap(): MapLibreMap {
   return {
     getContainer: () => document.createElement('div'),
     getStyle: () => ({ layers: [] }),
+    on: jasmine.createSpy('on'),
   } as unknown as MapLibreMap;
 }
 

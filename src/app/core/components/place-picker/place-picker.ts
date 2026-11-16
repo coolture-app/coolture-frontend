@@ -22,7 +22,13 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideMaximize2, lucideMinimize2 } from '@ng-icons/lucide';
 import { FormInput } from '../form-input/form-input';
 import { backClosable } from '../../services/back-closable/back-closable';
-import { collapseCredit, followLanguage, MAP_STYLE, TRICITY } from '../map/map-style';
+import {
+  collapseCredit,
+  followLanguage,
+  MAP_STYLE,
+  quietMissingIcons,
+  TRICITY,
+} from '../map/map-style';
 import { GeocodingService } from '../../services/geocoding/geocoding.service';
 import { LocationService } from '../../services/location/location.service';
 import { GeoPoint } from '../../models/common/geo.model';
@@ -312,6 +318,7 @@ export class PlacePicker implements OnInit {
   onMapLoad(instance: MapLibreMap): void {
     this.mapInstance = instance;
     collapseCredit(instance);
+    quietMissingIcons(instance);
     const labels = followLanguage(instance, this.translate);
     this.destroyRef.onDestroy(() => labels.unsubscribe());
   }

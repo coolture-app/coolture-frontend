@@ -13,6 +13,19 @@ export function collapseCredit(map: MapLibreMap): void {
     ?.classList.remove('maplibregl-compact-show');
 }
 
+/**
+ * Liberty's layers name a few icons its sprite lacks (gates, bollards, recycling), and MapLibre warns about each in
+ * the console, again on every tile. An empty image hides them as they'd be hidden anyway. Listeners added before this
+ * one, such as the home map's own pills, draw first.
+ */
+export function quietMissingIcons(map: MapLibreMap): void {
+  map.on('styleimagemissing', ({ id }: { id: string }) => {
+    if (!map.hasImage(id)) {
+      map.addImage(id, { width: 1, height: 1, data: new Uint8Array(4) });
+    }
+  });
+}
+
 /** The middle of Trójmiasto, where the release starts. */
 export const TRICITY = { latitude: 54.44, longitude: 18.57 };
 

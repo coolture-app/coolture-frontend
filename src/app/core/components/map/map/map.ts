@@ -30,7 +30,13 @@ import {
 import { FeatureCollection, Feature, Point, Polygon } from 'geojson';
 import { PostFilterParams } from '../../../models/posts/post-filter-params.model';
 import { PostMark } from '../../../models/posts/post-mark.model';
-import { collapseCredit, followLanguage, MAP_STYLE, TRICITY } from '../map-style';
+import {
+  collapseCredit,
+  followLanguage,
+  MAP_STYLE,
+  quietMissingIcons,
+  TRICITY,
+} from '../map-style';
 import {
   boundsOf,
   circle,
@@ -315,6 +321,7 @@ export class Map implements OnDestroy {
     map.setPadding({ top: this.topInset(), right: 0, bottom: 0, left: 0 });
     map.on('move', () => this.moving$.next());
     collapseCredit(map);
+    quietMissingIcons(map);
     const labels = followLanguage(map, this.translate);
     this.destroy$.subscribe(() => labels.unsubscribe());
     layers.addPillImages(map);
