@@ -169,7 +169,7 @@
     "addHome": "Add your area",
     "homeHint": "Only you can see this",
     "shareStances": "Show friends what I’m interested in and where I go",
-    "shareStancesHint": "Friends are people who follow each other",
+    "shareStancesHint": "Friends are people you follow who follow you back.",
     "shareStancesFailed": "Couldn’t save. Try again."
   },
   "DISCOVER": {
