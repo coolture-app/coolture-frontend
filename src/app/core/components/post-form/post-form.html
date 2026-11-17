@@ -21,7 +21,10 @@
         type="datetime-local"
         [required]="true"
         inputId="startsAt"
-        [errorMessages]="{ required: ('POST_FORM.starts-at-error' | translate) }"
+        [errorMessages]="{
+          required: ('POST_FORM.starts-at-error' | translate),
+          past: ('POST_FORM.starts-at-past' | translate),
+        }"
       ></app-form-input>
       @if (showEnd) {
         <div class="post-form__end">
@@ -57,11 +60,21 @@
         </div>
       }
     </div>
-    @if (!showEnd) {
-      <button type="button" class="post-form__add" (click)="addEnd()">
-        + {{ 'POST_FORM.add-end' | translate }}
-      </button>
-    }
+    <div class="post-form__end-options">
+      @if (!showEnd && !openEnded) {
+        <button type="button" class="post-form__add" (click)="addEnd()">
+          + {{ 'POST_FORM.add-end' | translate }}
+        </button>
+      }
+      <label class="post-form__no-end">
+        <input
+          type="checkbox"
+          [checked]="openEnded"
+          (change)="setOpenEnded($any($event.target).checked)"
+        />
+        {{ 'POST_FORM.no-end-date' | translate }}
+      </label>
+    </div>
   </section>
 
   <section class="post-form__section" aria-labelledby="where-label">
@@ -113,7 +126,11 @@
   ></app-form-input>
 
   <div class="post-form__actions">
-    <app-btn variant="primary" type="submit" [disabled]="isSubmitting || photos().hasUploading">
+    <app-btn
+      variant="primary"
+      type="submit"
+      [disabled]="isSubmitting || photos().hasUploading || startsAtControl.hasError('past')"
+    >
       {{
         isSubmitting
           ? ('POST_FORM.submit-saving' | translate)

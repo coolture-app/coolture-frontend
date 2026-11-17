@@ -58,6 +58,30 @@
     }
   }
 
+  &__end-options {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-xs) var(--space-lg);
+  }
+
+  &__no-end {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+
+    input {
+      width: 16px;
+      height: 16px;
+      margin: 0;
+      accent-color: var(--color-accent);
+      cursor: pointer;
+    }
+  }
+
   &__add {
     align-self: flex-start;
     padding: 2px 0;

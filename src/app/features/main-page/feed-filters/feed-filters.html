@@ -20,13 +20,13 @@
 
   <div class="filters__row">
     <div class="filters__field">
-      <label for="startsFrom">{{ 'MAIN_PAGE.startsFrom' | translate }}</label>
-      <input id="startsFrom" type="datetime-local" [formControl]="f.controls.startsFrom" />
+      <label for="fromDay">{{ 'MAIN_PAGE.fromDay' | translate }}</label>
+      <input id="fromDay" type="date" [formControl]="f.controls.fromDay" />
     </div>
 
     <div class="filters__field">
-      <label for="startsTo">{{ 'MAIN_PAGE.startsTo' | translate }}</label>
-      <input id="startsTo" type="datetime-local" [formControl]="f.controls.startsTo" />
+      <label for="toDay">{{ 'MAIN_PAGE.toDay' | translate }}</label>
+      <input id="toDay" type="date" [formControl]="f.controls.toDay" />
     </div>
   </div>
 

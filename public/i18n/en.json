@@ -1,9 +1,4 @@
 {
-  "DATE_FORMATS": {
-    "short": "MM/dd/yyyy, h:mm a",
-    "mediumDate": "MMMM d, yyyy",
-    "eventCard": "MMM d, HH:mm"
-  },
   "MAIN_PAGE": {
     "searchbar": "Search for events",
     "sort": "Filters and sorting",
@@ -14,8 +9,8 @@
     "order": "Order",
     "clear": "Clear",
     "type": "Type",
-    "startsFrom": "From day",
-    "startsTo": "To day",
+    "fromDay": "From day",
+    "toDay": "To day",
     "allTypes": "All Types",
     "sortCreatedAt": "Created Date",
     "sortStartsAt": "Event Date",
@@ -114,7 +109,9 @@
     "showOnMapHint": "Show on the map",
     "friendsGoing": "Going: {{names}}",
     "friendsInterested": "Interested: {{names}}",
-    "friendsSee": "Friends will see it"
+    "friendsSee": "Friends will see it",
+    "ended": "Ended",
+    "endedHint": "The event has ended"
   },
   "NAVBAR": {
     "main-page": "Home",
@@ -186,7 +183,8 @@
     "bioPlaceholder": "Add a few words about yourself",
     "since": "On Coolture since {{date}}",
     "blockedLoadError": "Couldn’t load blocked people.",
-    "retry": "Try again"
+    "retry": "Try again",
+    "youBlocked": "You blocked this person"
   },
   "SETTINGS": {
     "title": "Settings",
@@ -253,9 +251,11 @@
     "when": "When?",
     "ends-at-error": "The end must be after the start.",
     "add-end": "Add an end",
+    "no-end-date": "No end date",
     "remove-end": "Remove the end",
     "where": "Where?",
-    "online-hint": "You can add the stream or meeting link at the bottom."
+    "online-hint": "You can add the stream or meeting link at the bottom.",
+    "starts-at-past": "The start can't be in the past"
   },
   "COMMENT": {
     "title": "Comments",
@@ -409,5 +409,15 @@
     "hint": "Drag to move. Zoom with the slider, the mouse wheel or two fingers.",
     "zoom": "Zoom",
     "loadError": "This file couldn't be opened. Choose a JPG, PNG or WebP photo."
+  },
+  "EVENT_TIME": {
+    "today": "today",
+    "tomorrow": "tomorrow",
+    "from": "from",
+    "fromToday": "from today",
+    "fromTomorrow": "from tomorrow",
+    "untilFurtherNotice": "until further notice",
+    "runsUntil": "on until",
+    "runsUntilFurtherNotice": "on until further notice"
   }
 }

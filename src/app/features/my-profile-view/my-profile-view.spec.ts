@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController } from '@angular/common/http/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -285,6 +285,87 @@ describe('UserProfileView', () => {
 
       expect(text('.profile__interests')).toBe('Opera');
       http.expectNone((r) => r.url.endsWith('/users/jan-1/interests'));
+    });
+  });
+
+  describe('across a block', () => {
+    const SLIM: UserProfile = {
+      id: 'jan-1',
+      username: 'jan',
+      firstName: 'Jan',
+      lastName: 'Kowalski',
+      isFollowing: false,
+      isBlocked: true,
+      followsYou: false,
+    };
+
+    async function answer(body: UserProfile | null, status = 200) {
+      const request = http.expectOne((r) => r.url.endsWith('/users/by-username/jan'));
+      if (status === 200) {
+        request.flush(body);
+      } else {
+        request.flush({ error: 'not found' }, { status, statusText: 'Not Found' });
+      }
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+    }
+
+    it('shows the not-found page and keeps the address, when they blocked you or there is no one', async () => {
+      await open('/users/jan');
+      await answer(null, 404);
+
+      expect(element.querySelector('app-not-found-view')).not.toBeNull();
+      expect(element.querySelector('.profile')).toBeNull();
+      expect(TestBed.inject(Router).url).toBe('/users/jan');
+    });
+
+    it('shows who you blocked, and Odblokuj, but nothing else of theirs', async () => {
+      await open('/users/jan');
+      await answer(SLIM);
+
+      expect(text('.profile__name')).toBe('Jan Kowalski');
+      expect(text('.profile__username')).toBe('@jan');
+      expect(text('.profile__blocked')).toBe('PROFILE.youBlocked');
+      expect(text('.profile__actions')).toBe('PROFILE.unblock');
+      expect(element.querySelector('.profile__stats')).toBeNull();
+      expect(element.querySelector('app-follow-btn')).toBeNull();
+      expect(element.querySelector('app-relation-pill')).toBeNull();
+      expect(element.querySelector('.profile__since')).toBeNull();
+    });
+
+    it('loads the whole profile after Odblokuj', async () => {
+      spyOn(window, 'confirm').and.returnValue(true);
+      await open('/users/jan');
+      await answer(SLIM);
+
+      element.querySelector<HTMLButtonElement>('.profile__actions button')!.click();
+      http
+        .expectOne((r) => r.method === 'DELETE' && r.url.endsWith('/users/jan-1/block'))
+        .flush(null);
+      await harness.fixture.whenStable();
+      await answer(JAN);
+
+      expect(element.querySelector('.profile__stats')).not.toBeNull();
+      expect(element.querySelector('app-follow-btn')).not.toBeNull();
+      expect(element.querySelector('.profile__blocked')).toBeNull();
+    });
+
+    it('turns slim right after Zablokuj', async () => {
+      spyOn(window, 'confirm').and.returnValue(true);
+      await open('/users/jan');
+      await answer({ ...JAN, bio: 'Opera', isFollowing: true });
+
+      const blocking = view().onBlock();
+      http
+        .expectOne((r) => r.method === 'POST' && r.url.endsWith('/users/jan-1/block'))
+        .flush(null);
+      await blocking;
+      harness.detectChanges();
+
+      expect(text('.profile__blocked')).toBe('PROFILE.youBlocked');
+      expect(element.querySelector('.profile__stats')).toBeNull();
+      expect(element.querySelector('.profile__bio')).toBeNull();
+      expect(view().user()?.isFollowing).toBeFalse();
     });
   });
 });

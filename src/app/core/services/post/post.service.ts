@@ -32,8 +32,8 @@ function filterParams(filters: PostFilterParams): HttpParams {
   if (filters.status) params = params.set('status', filters.status);
   if (filters.followed) params = params.set('followed', true);
   if (filters.type) params = params.set('type', filters.type);
-  if (filters.startsFrom) params = params.set('startsFrom', filters.startsFrom);
-  if (filters.startsTo) params = params.set('startsTo', filters.startsTo);
+  if (filters.from) params = params.set('from', filters.from);
+  if (filters.to) params = params.set('to', filters.to);
   if (filters.includePast) params = params.set('includePast', true);
   if (filters.reactionType) params = params.set('reactionType', filters.reactionType);
   filters.participationTypes?.forEach(

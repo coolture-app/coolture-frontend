@@ -24,6 +24,19 @@
     transform: none;
   }
 
+  // A choice already made stays in its colour, so the viewer still sees it.
+  &--unavailable {
+    cursor: not-allowed;
+
+    &:not([aria-pressed='true']) {
+      opacity: 0.45;
+    }
+
+    &:active:not(:disabled) {
+      transform: none;
+    }
+  }
+
   &.active {
     border-radius: var(--radius-md);
   }
@@ -166,7 +179,7 @@
     background: transparent;
     border: none;
 
-    &:hover:not(:disabled) {
+    &:hover:not(:disabled, .btn--unavailable) {
       background: var(--color-border-light);
     }
 
@@ -181,7 +194,7 @@
       height: 36px;
       border-radius: var(--radius-full);
 
-      &:hover:not(:disabled) {
+      &:hover:not(:disabled, .btn--unavailable) {
         background: var(--color-border);
       }
     }
@@ -195,7 +208,7 @@
       color: #b45309;
       background: #fef3c7;
 
-      &:hover:not(:disabled) {
+      &:hover:not(:disabled, .btn--unavailable) {
         background: #fde68a;
       }
     }
@@ -204,7 +217,7 @@
       color: #047857;
       background: #d1fae5;
 
-      &:hover:not(:disabled) {
+      &:hover:not(:disabled, .btn--unavailable) {
         background: #a7f3d0;
       }
     }
@@ -215,7 +228,7 @@
       color: var(--color-text-inverse);
       background: var(--color-text-secondary);
 
-      &:hover:not(:disabled) {
+      &:hover:not(:disabled, .btn--unavailable) {
         background: #4b5563;
       }
     }

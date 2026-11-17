@@ -21,6 +21,7 @@ function post(startsAt: string, endsAt?: string): PostDetail {
     description: 'Opis',
     startsAt,
     endsAt,
+    openEnded: false,
     positiveReactionCount: 0,
     participantCount: 0,
     interestedCount: 0,
@@ -195,11 +196,46 @@ describe('PostForm editing an existing post', () => {
     expect(new Date(secondSave.startsAt).getTime()).toBe(new Date(SUMMER_START).getTime());
   });
 
+  it('keeps a start that has passed, but refuses moving it to another past time', () => {
+    load(post(SUMMER_START, SUMMER_END));
+
+    expect(component.startsAtControl.hasError('past')).toBeFalse();
+
+    component.startsAtControl.setValue('2026-07-11T19:00');
+    fixture.detectChanges();
+
+    expect(component.startsAtControl.hasError('past')).toBeTrue();
+    expect(submit()).toBeUndefined();
+
+    component.startsAtControl.setValue(localClock(SUMMER_START));
+
+    expect(component.startsAtControl.hasError('past')).toBeFalse();
+  });
+
   it('leaves the end empty for a post without one', () => {
     load(post(SUMMER_START));
 
     expect(component.endsAtControl.value).toBe('');
-    expect(submit().endsAt).toBeNull();
+    expect(submit()).toEqual(jasmine.objectContaining({ endsAt: null, openEnded: false }));
+  });
+
+  it('keeps a post with no end date so, and an end once it is unticked and given', () => {
+    load({ ...post(SUMMER_START), openEnded: true });
+
+    expect(component.openEnded).toBeTrue();
+    expect(submit()).toEqual(jasmine.objectContaining({ endsAt: null, openEnded: true }));
+
+    component.resetSubmitting();
+    component.setOpenEnded(false);
+    component.addEnd();
+    component.endsAtControl.setValue('2026-07-10T23:00');
+
+    expect(submit()).toEqual(
+      jasmine.objectContaining({
+        endsAt: new Date('2026-07-10T23:00').toISOString(),
+        openEnded: false,
+      }),
+    );
   });
 });
 
@@ -289,6 +325,49 @@ describe('PostForm fields', () => {
     component.endsAtControl.setValue('2030-05-01T22:00');
 
     expect(submit()!.endsAt).toBe(new Date('2030-05-01T22:00').toISOString());
+  });
+
+  it('hides the link and the end with "Bez daty końcowej", clears the end, and brings the link back', () => {
+    fillEventFields();
+    component.postForm.controls.type.setValue('ONLINE');
+    component.addEnd();
+    component.endsAtControl.setValue('2030-05-01T22:00');
+    fixture.detectChanges();
+    const element = fixture.nativeElement as HTMLElement;
+    const checkbox = element.querySelector<HTMLInputElement>('.post-form__no-end input')!;
+
+    checkbox.click();
+    fixture.detectChanges();
+
+    expect(element.querySelector('#endsAt')).toBeNull();
+    expect(element.querySelector('.post-form__add')).toBeNull();
+    expect(submit()).toEqual(jasmine.objectContaining({ endsAt: null, openEnded: true }));
+
+    component.resetSubmitting();
+    checkbox.click();
+    fixture.detectChanges();
+
+    expect(element.querySelector('.post-form__add')).not.toBeNull();
+    expect(element.querySelector('#endsAt')).toBeNull();
+    expect(submit()!.openEnded).toBeFalse();
+  });
+
+  it('refuses a start in the past at once, under the field, with Zapisz off', () => {
+    fillEventFields();
+    component.postForm.controls.type.setValue('ONLINE');
+    component.startsAtControl.setValue('2020-05-01T19:00');
+    fixture.detectChanges();
+
+    const error = fixture.nativeElement.querySelector('#startsAt')?.closest('app-form-input');
+    expect(error?.textContent).toContain('POST_FORM.starts-at-past');
+    expect(fixture.nativeElement.querySelector('button[type="submit"]').disabled).toBeTrue();
+    expect(submit()).toBeUndefined();
+
+    component.startsAtControl.setValue('2030-05-01T19:00');
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('button[type="submit"]').disabled).toBeFalse();
+    expect(submit()).toBeDefined();
   });
 
   it('sends no end once it is removed', () => {

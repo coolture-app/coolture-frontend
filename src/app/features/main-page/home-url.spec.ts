@@ -1,5 +1,5 @@
 import { fromHomeParams, HomeUrlState, sameHomeParams, toHomeParams } from './home-url';
-import { NO_FILTERS } from './home-view';
+import { dayWindow, NO_FILTERS } from './home-view';
 
 const DEFAULT: HomeUrlState = {
   search: '',
@@ -26,8 +26,8 @@ describe('the home URL', () => {
       filters: {
         ...NO_FILTERS,
         type: 'OFFLINE',
-        startsFrom: '2026-12-01T18:00',
-        startsTo: '2026-12-02T23:30',
+        fromDay: '2026-12-01',
+        toDay: '2026-12-02',
         followed: true,
         includePast: true,
         place: 'picked',
@@ -42,8 +42,8 @@ describe('the home URL', () => {
       sort: 'popular',
       q: 'jazz',
       type: 'offline',
-      from: '2026-12-01T18:00',
-      to: '2026-12-02T23:30',
+      from: '2026-12-01',
+      to: '2026-12-02',
       followed: 'true',
       past: 'true',
       radius: '25',
@@ -104,9 +104,30 @@ describe('the home URL', () => {
     expect(fromHomeParams({ lat: '0', lng: '0' }).point).toEqual({ latitude: 0, longitude: 0 });
   });
 
+  it('reads an older link’s date and time as its day', () => {
+    const { filters } = fromHomeParams({ from: '2026-12-01T18:00', to: '2026-12-02T23:30' });
+
+    expect(filters.fromDay).toBe('2026-12-01');
+    expect(filters.toDay).toBe('2026-12-02');
+    expect(toHomeParams({ ...DEFAULT, filters })).toEqual({ from: '2026-12-01', to: '2026-12-02' });
+  });
+
   it('compares query strings whatever their order', () => {
     expect(sameHomeParams({ a: '1', b: '2' }, { b: '2', a: '1' })).toBeTrue();
     expect(sameHomeParams({ a: '1' }, { a: '2' })).toBeFalse();
     expect(sameHomeParams({ a: '1' }, {})).toBeFalse();
+  });
+});
+
+describe('the filter days', () => {
+  it('run from the first day’s start to the last day’s end, in local time', () => {
+    expect(dayWindow('2026-11-21', '2026-11-22')).toEqual({
+      from: new Date(2026, 10, 21, 0, 0, 0, 0).toISOString(),
+      to: new Date(2026, 10, 22, 23, 59, 59, 999).toISOString(),
+    });
+    expect(dayWindow('', '2026-11-22')).toEqual({
+      to: new Date(2026, 10, 22, 23, 59, 59, 999).toISOString(),
+    });
+    expect(dayWindow('', '')).toEqual({});
   });
 });

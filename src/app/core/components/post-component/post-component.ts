@@ -41,16 +41,16 @@ import { frameShape, Photo, toPhoto } from '../../models/media/photo';
 import { PhotoViewerService } from '../../services/photo-viewer/photo-viewer.service';
 import { appTicket } from '../../icons/ticket';
 import { FriendsLine } from '../friends-line/friends-line';
-import { DatePipe } from '@angular/common';
 import { InteractionsService } from '../../services/interactions/interactions.service';
 import { AuthService } from '../../services/auth/auth.service';
 import { ModalWindow } from '../modal/modal-window/modal-window';
 import { Btn } from '../btn/btn';
 import { PostService } from '../../services/post/post.service';
 import { CommentsSheetService } from '../../services/comments-sheet/comments-sheet.service';
-import { DateFormatService } from '../../services/date-format/date-format.service';
+import { EventWhenService } from '../../services/event-when/event-when.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { postPlace } from '../../models/posts/post-place';
+import { hasEnded } from '../../utils/event-time';
 import { formatDistance } from '../../models/common/distance';
 import { LocationService } from '../../services/location/location.service';
 import { counted, ParticipationType } from '../../models/common/enums';
@@ -87,7 +87,7 @@ export type PostFold = 'marked' | 'unmarked' | null;
 
 @Component({
   selector: 'app-post-component',
-  imports: [NgIcon, CountedIcon, TranslatePipe, DatePipe, ModalWindow, Btn, Tooltip, FriendsLine],
+  imports: [NgIcon, CountedIcon, TranslatePipe, ModalWindow, Btn, Tooltip, FriendsLine],
   viewProviders: [
     provideIcons({
       appTicket,
@@ -147,7 +147,6 @@ export class PostComponent implements OnInit {
   private slides = viewChild<ElementRef<HTMLElement>>('slides');
   private photoViewer = inject(PhotoViewerService);
   private commentsSheet = inject(CommentsSheetService);
-  private dateFormatService = inject(DateFormatService);
   private toast = inject(ToastService);
   private translate = inject(TranslateService);
   private location = inject(LocationService);
@@ -155,10 +154,20 @@ export class PostComponent implements OnInit {
   private viewerStates = inject(ViewerStates);
 
   isMyPost = signal<boolean>(false);
-  readonly dateFormats = this.dateFormatService.formats;
+  readonly when = inject(EventWhenService);
 
   @Input() data!: PostCard | PostDetail;
   @Input() isFullView!: boolean;
+
+  /** Read on each check, so a card left open turns ended without a reload. */
+  get ended(): boolean {
+    return hasEnded(this.data, new Date());
+  }
+
+  /** The note after a stance's name in its tooltip: why it's off, or who sees it. A translation key. */
+  get stanceNote(): string | null {
+    return this.ended ? 'POST.endedHint' : this.sharesStances() ? 'POST.friendsSee' : null;
+  }
 
   @Output() deleteRequest = new EventEmitter<string>();
 

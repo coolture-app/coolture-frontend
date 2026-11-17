@@ -94,14 +94,27 @@ export class PostForm implements OnInit, OnChanges, OnDestroy {
   isSubmitting = false;
   /** Most events have no end, so its field waits for "Dodaj zakończenie". */
   showEnd = false;
+  /** "Bez daty końcowej": the event runs until further notice, so it has no end. */
+  openEnded = false;
 
   readonly locationGroup = locationForm();
+
+  /** The start as an edit loaded it. It may have passed, and sending it back unchanged is fine. */
+  private initialStart = '';
+
+  /** The API refuses a start moved to the past, to the minute, as the input holds it. */
+  private startNotInPast = (startsAt: AbstractControl): ValidationErrors | null => {
+    const value: string = startsAt.value;
+    const past =
+      !!value && value !== this.initialStart && value < toLocalInputValue(new Date().toISOString());
+    return past ? { past: true } : null;
+  };
 
   postForm = this.fb.group(
     {
       title: ['', [Validators.required, Validators.maxLength(128)]],
       type: ['OFFLINE' as PostType, Validators.required],
-      startsAt: ['', Validators.required],
+      startsAt: ['', [Validators.required, this.startNotInPast]],
       endsAt: [''],
       description: ['', [Validators.required, Validators.maxLength(1024)]],
       eventUrl: [''],
@@ -134,6 +147,12 @@ export class PostForm implements OnInit, OnChanges, OnDestroy {
     this.postForm.controls.type.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((type) => this.matchLocationTo(type ?? 'OFFLINE'));
+    // A start in the past shows its error at once, since it also turns Zapisz off.
+    this.startsAtControl.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      if (this.startsAtControl.hasError('past')) {
+        this.startsAtControl.markAsTouched();
+      }
+    });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -153,6 +172,7 @@ export class PostForm implements OnInit, OnChanges, OnDestroy {
 
   private patchFormFromPost(post: PostDetail): void {
     const location = post.location;
+    this.initialStart = toLocalInputValue(post.startsAt);
     this.postForm.patchValue({
       title: post.title,
       type: post.type,
@@ -171,6 +191,7 @@ export class PostForm implements OnInit, OnChanges, OnDestroy {
       },
     });
     this.showEnd = !!post.endsAt;
+    this.openEnded = post.openEnded;
     this.matchLocationTo(post.type);
   }
 
@@ -182,6 +203,13 @@ export class PostForm implements OnInit, OnChanges, OnDestroy {
   removeEnd(): void {
     this.showEnd = false;
     this.postForm.controls.endsAt.setValue('');
+  }
+
+  setOpenEnded(openEnded: boolean): void {
+    this.openEnded = openEnded;
+    if (openEnded) {
+      this.removeEnd();
+    }
   }
 
   /**
@@ -213,6 +241,7 @@ export class PostForm implements OnInit, OnChanges, OnDestroy {
       type: form.type ?? 'OFFLINE',
       startsAt: form.startsAt ? new Date(form.startsAt).toISOString() : '',
       endsAt: this.showEnd && form.endsAt ? new Date(form.endsAt).toISOString() : null,
+      openEnded: this.openEnded,
       description: form.description ?? '',
       eventUrl: form.eventUrl?.trim() || null,
       location: form.type === 'OFFLINE' ? this.locationRequest() : null,
@@ -260,6 +289,7 @@ export class PostForm implements OnInit, OnChanges, OnDestroy {
     this.postForm.reset({ type: 'OFFLINE' });
     this.matchLocationTo('OFFLINE');
     this.showEnd = false;
+    this.openEnded = false;
     this.photos().reset();
     this.isSubmitting = false;
   }

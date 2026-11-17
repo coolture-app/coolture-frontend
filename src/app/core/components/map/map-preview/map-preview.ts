@@ -10,10 +10,8 @@ import {
   untracked,
 } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs';
 import { RouterLink } from '@angular/router';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideBookmark,
@@ -26,7 +24,9 @@ import {
 import { appTicket } from '../../../icons/ticket';
 import { placeLine } from '../../../models/posts/post-place';
 import { PostMark } from '../../../models/posts/post-mark.model';
-import { cardDate, Place } from '../map-pins';
+import { hasEnded } from '../../../utils/event-time';
+import { Place } from '../map-pins';
+import { EventWhenService } from '../../../services/event-when/event-when.service';
 import { directionsUrl } from './directions';
 import { Tooltip } from '../../../directives/tooltip';
 import { PickStar } from '../pick-star/pick-star';
@@ -59,15 +59,12 @@ import { CommentsSheetService } from '../../../services/comments-sheet/comments-
   styleUrl: './map-preview.scss',
 })
 export class MapPreview {
-  private translate = inject(TranslateService);
+  private eventWhen = inject(EventWhenService);
   private photoViewer = inject(PhotoViewerService);
   readonly reactions = inject(MapReactions);
   private auth = inject(AuthService);
   readonly sheet = inject(CommentsSheetService);
   readonly sharesStances = computed(() => this.auth.isAuthenticated() && this.auth.shareStances());
-  private readonly lang = toSignal(this.translate.onLangChange.pipe(map((change) => change.lang)), {
-    initialValue: this.translate.getCurrentLang() || 'pl',
-  });
   readonly hoverable = mediaQuery('(hover: hover)');
 
   readonly place = input.required<Place>();
@@ -117,7 +114,22 @@ export class MapPreview {
   }
 
   when(post: PostMark): string {
-    return cardDate(post.startsAt, this.lang());
+    return this.eventWhen.card(post);
+  }
+
+  ended(post: PostMark): boolean {
+    return hasEnded(post, new Date());
+  }
+
+  /** The note after a stance's name in its tooltip: why it's off, or who sees it. A translation key. */
+  stanceNote(post: PostMark): string | null {
+    return this.ended(post) ? 'POST.endedHint' : this.sharesStances() ? 'POST.friendsSee' : null;
+  }
+
+  stance(post: PostMark, type: 'INTERESTED' | 'TAKES_PART'): void {
+    if (!this.ended(post)) {
+      this.reactions.stance(post, type);
+    }
   }
 
   open(post: PostMark): void {

@@ -1,5 +1,5 @@
 import { PostMark } from '../../models/posts/post-mark.model';
-import { cardDate, groupPlaces, pinFeatures, pinLabel, pluralForm, shortTitle } from './map-pins';
+import { groupPlaces, pinFeatures, pinLabel, pluralForm, shortTitle } from './map-pins';
 
 const WORDS = {
   today: 'dziś',
@@ -52,8 +52,13 @@ describe('groupPlaces', () => {
 });
 
 describe('pinLabel', () => {
-  const label = (start: Date, end?: Date) =>
-    pinLabel({ startsAt: start.toISOString(), endsAt: end?.toISOString() }, NOW, 'pl', WORDS);
+  const label = (start: Date, end?: Date, openEnded = false) =>
+    pinLabel(
+      { startsAt: start.toISOString(), endsAt: end?.toISOString(), openEnded },
+      NOW,
+      'pl',
+      WORDS,
+    );
 
   it('gives the hour today and tomorrow', () => {
     expect(label(new Date(2026, 10, 18, 19, 0))).toBe('dziś 19:00');
@@ -67,6 +72,16 @@ describe('pinLabel', () => {
 
   it('says an event that is on is on', () => {
     expect(label(new Date(2026, 10, 10), new Date(2026, 10, 30))).toBe('trwa');
+  });
+
+  it('counts an event with no end as on for its first 3 hours', () => {
+    expect(label(new Date(2026, 10, 18, 10, 0))).toBe('trwa');
+    expect(label(new Date(2026, 10, 18, 8, 59))).toBe('dziś 08:59');
+  });
+
+  it('says a post with no end date is on once it started, and gives its start before', () => {
+    expect(label(new Date(2025, 0, 1), undefined, true)).toBe('trwa');
+    expect(label(new Date(2026, 10, 19, 10, 0), undefined, true)).toBe('jutro 10:00');
   });
 });
 
@@ -123,14 +138,5 @@ describe('pinFeatures', () => {
     const key = (id: string) => features.find((f) => f.properties.id === id)!.properties.sortKey;
 
     expect(key('other')).toBeGreaterThan(key('pick'));
-  });
-});
-
-describe('cardDate', () => {
-  it('says the day, the short month and the hour in the app language', () => {
-    const start = new Date(2026, 10, 22, 18, 0).toISOString();
-
-    expect(cardDate(start, 'pl')).toBe('22 lis, 18:00');
-    expect(cardDate(start, 'en')).toBe('Nov 22, 18:00');
   });
 });

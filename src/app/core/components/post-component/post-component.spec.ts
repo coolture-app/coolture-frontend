@@ -18,7 +18,8 @@ function card(overrides: Partial<PostCard> = {}): PostCard {
     id: 'p1',
     author: { id: 'u1', username: 'ola', followersCount: 0, followingCount: 0 },
     title: 'Koncert',
-    startsAt: '2026-12-01T18:00:00Z',
+    startsAt: '2030-12-01T18:00:00Z',
+    openEnded: false,
     positiveReactionCount: 3,
     participantCount: 2,
     interestedCount: 2,
@@ -806,6 +807,68 @@ describe('PostComponent', () => {
       render(card());
 
       expect(component.place).toBe('');
+    });
+  });
+
+  describe('an ended event', () => {
+    const ended = { startsAt: '2020-05-01T18:00:00Z', endsAt: '2020-05-01T21:00:00Z' };
+
+    function stanceButtons(): HTMLButtonElement[] {
+      return Array.from(element().querySelectorAll('.post__stances button'));
+    }
+
+    beforeEach(() => {
+      TestBed.inject(AuthService).currentUser.set({ id: 'u2' } as UserProfile);
+    });
+
+    it('says so after the date, and turns off both stances but keeps the chosen one lit', () => {
+      render(card({ ...ended, myParticipation: 'TAKES_PART' }));
+
+      expect(element().querySelector('.post__info .post__ended')?.textContent?.trim()).toBe(
+        'POST.ended',
+      );
+      const [notForMe, interested, going] = stanceButtons();
+      expect(notForMe.getAttribute('aria-disabled')).toBeNull();
+      expect(interested.getAttribute('aria-disabled')).toBe('true');
+      expect(going.getAttribute('aria-disabled')).toBe('true');
+      expect(going.getAttribute('aria-pressed')).toBe('true');
+      expect(interested.getAttribute('aria-label')).toBe('POST.interested (2) · POST.endedHint');
+    });
+
+    it('ignores a tap on a stance, but still takes a like and Nie dla mnie', () => {
+      const data = card(ended);
+      render(data);
+
+      stanceButtons()[1].click();
+      http.expectNone(() => true);
+      expect(data.myParticipation).toBeUndefined();
+
+      component.likePost();
+      http.expectOne((r) => r.method === 'PUT' || r.method === 'POST').flush({});
+      stanceButtons()[0].click();
+      http.expectOne((r) => r.method === 'PUT' || r.method === 'POST').flush({});
+      expect(data.myParticipation).toBe('NOT_INTERESTED');
+    });
+
+    it('is not ended while it runs, nor three hours into one with no end', () => {
+      const start = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+      render(card({ startsAt: start }));
+
+      expect(element().querySelector('.post__ended')).toBeNull();
+      expect(stanceButtons()[1].getAttribute('aria-disabled')).toBeNull();
+    });
+
+    it('flips a stance back when the API refuses it, as an event that ended while the page was open', () => {
+      const data = card();
+      render(data);
+
+      component.setInterested();
+      http
+        .expectOne((r) => r.method === 'PUT' || r.method === 'POST')
+        .flush({ error: 'The event has ended' }, { status: 400, statusText: 'Bad Request' });
+
+      expect(data.myParticipation).toBeUndefined();
+      expect(component.isInterested()).toBeFalse();
     });
   });
 });

@@ -59,6 +59,7 @@ import {
   PlaceFilter,
   RADII_KM,
   START_SORT,
+  dayWindow,
 } from './home-view';
 import { fromHomeParams, sameHomeParams, toHomeParams } from './home-url';
 import { FeedFilters } from './feed-filters/feed-filters';
@@ -203,8 +204,8 @@ export class MainPage implements OnDestroy {
   );
   /** How many filters the panel has on, counting a date range as one. Not the search or the place. */
   readonly activeFilterCount = computed(() => {
-    const { type, startsFrom, startsTo, followed, status, includePast } = this.activeFilters();
-    const on = [type, startsFrom || startsTo, followed, status, includePast];
+    const { type, from, to, followed, status, includePast } = this.activeFilters();
+    const on = [type, from || to, followed, status, includePast];
     return on.filter((value) => value !== undefined && value !== false).length;
   });
   /** A screenful for the first page. After that one is enough, and the posts stay what's on screen. */
@@ -216,8 +217,8 @@ export class MainPage implements OnDestroy {
 
   /** When an empty result could change by looking at past events too. See the contract's table. */
   readonly canOfferPast = computed(() => {
-    const { includePast, startsFrom, startsTo } = this.activeFilters();
-    const windowApplies = !includePast && !startsFrom && !startsTo;
+    const { includePast, from, to } = this.activeFilters();
+    const windowApplies = !includePast && !from && !to;
     return windowApplies && (this.isFeed() || this.sort() !== 'UPCOMING');
   });
   /** Dla Ciebie hides what the user saw or saved, so a search there points to Wszystkie too. */
@@ -678,15 +679,14 @@ export class MainPage implements OnDestroy {
 
   private readFilters(): PostFilterParams {
     const search = this.searchControl.value.trim();
-    const { type, startsFrom, startsTo, followed, status, includePast, radiusKm } =
+    const { type, fromDay, toDay, followed, status, includePast, radiusKm } =
       this.filtersForm.getRawValue();
     const position = this.place.centre(this.filtersForm.controls.place.value);
 
     return {
       ...(search && { q: search }),
       ...(type && { type: type as PostType }),
-      ...(startsFrom && { startsFrom: new Date(startsFrom).toISOString() }),
-      ...(startsTo && { startsTo: new Date(startsTo).toISOString() }),
+      ...dayWindow(fromDay, toDay),
       ...(followed && this.authService.isAuthenticated() && { followed }),
       ...(status && { status: status as PostStatus }),
       ...(includePast && { includePast }),

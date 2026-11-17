@@ -50,7 +50,10 @@ export interface paths {
       };
       cookie?: never;
     };
-    /** A public profile */
+    /**
+     * A public profile
+     * @description For someone the caller blocked, a slim profile: id, username, names, photo and isBlocked true, so the page can offer Odblokuj. 404 when this user blocked the caller.
+     */
     get: operations['getUser'];
     put?: never;
     post?: never;
@@ -71,7 +74,10 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** A public profile, by its handle */
+    /**
+     * A public profile, by its handle
+     * @description The same answers as getUser, the slim profile and 404 included.
+     */
     get: operations['getUserByUsername'];
     put?: never;
     post?: never;
@@ -152,7 +158,7 @@ export interface paths {
     };
     /**
      * Someone's picked interests
-     * @description Any signed-in user can read anyone's, for their profile. A block doesn't hide them, as it doesn't hide the profile.
+     * @description Any signed-in user can read anyone's, for their profile, except across a block (404).
      */
     get: operations['getUserInterests'];
     /**
@@ -255,7 +261,10 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    /** The caller blocks this user, which ends follows both ways */
+    /**
+     * The caller blocks this user, which ends follows both ways
+     * @description Unblocking doesn't bring the follows back. A block by the other user stays, so two people can block each other.
+     */
     post: operations['block'];
     /** The caller unblocks this user */
     delete: operations['unblock'];
@@ -268,6 +277,7 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
+    /** @description followersCount, followingCount, bio, createdAt and interests are left out of a blocker's slim profile, and only there. */
     UserProfile: {
       /** Format: uuid */
       id: string;
@@ -275,8 +285,8 @@ export interface components {
       firstName?: string;
       lastName?: string;
       avatar?: components['schemas']['MediaResource'];
-      followersCount: number;
-      followingCount: number;
+      followersCount?: number;
+      followingCount?: number;
       bio?: string;
       /** Format: date-time */
       createdAt?: string;
@@ -285,7 +295,7 @@ export interface components {
       /** @description Whether this user follows you. With isFollowing, both true means you're friends. */
       followsYou: boolean;
       /** @description The keys picked, in the catalogue's order, empty if none. In the profile so the page needs no second request. A guest gets them too: they're no more private than the rest of the profile. */
-      interests: string[];
+      interests?: string[];
     };
     /** @description UserProfile's fields, plus what only the caller sees. */
     Me: {
@@ -538,26 +548,6 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          /**
-           * @example {
-           *       "id": "00000000-0000-0000-0000-000000000003",
-           *       "username": "jan_demo",
-           *       "firstName": "Jan",
-           *       "lastName": "Demo",
-           *       "followersCount": 1,
-           *       "followingCount": 1,
-           *       "bio": "Teatr, stand-up i kino autorskie",
-           *       "createdAt": "2026-11-15T17:00:00Z",
-           *       "isFollowing": true,
-           *       "isBlocked": false,
-           *       "followsYou": true,
-           *       "interests": [
-           *         "theatre",
-           *         "stand_up",
-           *         "cinema"
-           *       ]
-           *     }
-           */
           'application/json': components['schemas']['UserProfile'];
         };
       };

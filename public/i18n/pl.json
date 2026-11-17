@@ -1,9 +1,4 @@
 {
-  "DATE_FORMATS": {
-    "short": "dd.MM.yyyy, HH:mm",
-    "mediumDate": "d MMMM yyyy",
-    "eventCard": "d MMM, HH:mm"
-  },
   "MAIN_PAGE": {
     "searchbar": "Szukaj wydarzeń",
     "sort": "Filtry i sortowanie",
@@ -14,8 +9,8 @@
     "order": "Kolejność",
     "clear": "Wyczyść",
     "type": "Typ",
-    "startsFrom": "Od dnia",
-    "startsTo": "Do dnia",
+    "fromDay": "Od dnia",
+    "toDay": "Do dnia",
     "allTypes": "Wszystkie typy",
     "sortCreatedAt": "Data utworzenia",
     "sortStartsAt": "Data wydarzenia",
@@ -114,7 +109,9 @@
     "showOnMapHint": "Pokaż na mapie",
     "friendsGoing": "Biorą udział: {{names}}",
     "friendsInterested": "Interesuje: {{names}}",
-    "friendsSee": "Znajomi zobaczą"
+    "friendsSee": "Znajomi zobaczą",
+    "ended": "Zakończone",
+    "endedHint": "Wydarzenie się zakończyło"
   },
   "NAVBAR": {
     "main-page": "Strona główna",
@@ -186,7 +183,8 @@
     "bioPlaceholder": "Dodaj kilka słów o sobie",
     "since": "Na Coolture od {{date}}",
     "blockedLoadError": "Nie udało się wczytać zablokowanych.",
-    "retry": "Spróbuj ponownie"
+    "retry": "Spróbuj ponownie",
+    "youBlocked": "Zablokowałeś tego użytkownika"
   },
   "SETTINGS": {
     "title": "Ustawienia",
@@ -253,9 +251,11 @@
     "when": "Kiedy?",
     "ends-at-error": "Koniec musi być po początku.",
     "add-end": "Dodaj zakończenie",
+    "no-end-date": "Bez daty końcowej",
     "remove-end": "Usuń zakończenie",
     "where": "Gdzie?",
-    "online-hint": "Link do transmisji lub spotkania możesz dodać na dole."
+    "online-hint": "Link do transmisji lub spotkania możesz dodać na dole.",
+    "starts-at-past": "Początek nie może być w przeszłości"
   },
   "COMMENT": {
     "title": "Komentarze",
@@ -409,5 +409,15 @@
     "hint": "Przeciągnij, aby przesunąć. Przybliż suwakiem, kółkiem myszy lub dwoma palcami.",
     "zoom": "Przybliżenie",
     "loadError": "Nie udało się otworzyć tego pliku. Wybierz zdjęcie JPG, PNG lub WebP."
+  },
+  "EVENT_TIME": {
+    "today": "dziś",
+    "tomorrow": "jutro",
+    "from": "od",
+    "fromToday": "od dziś",
+    "fromTomorrow": "od jutra",
+    "untilFurtherNotice": "do odwołania",
+    "runsUntil": "trwa do",
+    "runsUntilFurtherNotice": "trwa do odwołania"
   }
 }

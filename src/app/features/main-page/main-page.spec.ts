@@ -26,6 +26,7 @@ function card(id: string): PostCard {
     author: { id: 'u1', username: 'ola', followersCount: 0, followingCount: 0 },
     title: `Post ${id}`,
     startsAt: '2026-12-01T18:00:00Z',
+    openEnded: false,
     positiveReactionCount: 0,
     participantCount: 0,
     interestedCount: 0,
@@ -429,7 +430,7 @@ describe('MainPage', () => {
       expectFeed().flush({ ...page(), mode: 'RANKED' });
       component.searchControl.setValue('jazz', { emitEvent: false });
       component.filtersForm.patchValue(
-        { type: 'OFFLINE', startsFrom: '2026-12-01T10:00', startsTo: '2026-12-02T10:00' },
+        { type: 'OFFLINE', fromDay: '2026-12-01', toDay: '2026-12-02' },
         { emitEvent: false },
       );
       component.applyControls();
@@ -515,6 +516,7 @@ describe('MainPage', () => {
         id: 'a',
         title: 'a',
         startsAt: '2026-12-01T18:00:00Z',
+        openEnded: false,
         positiveReactionCount: 0,
         interestedCount: 0,
         goingCount: 0,
@@ -675,7 +677,7 @@ describe('MainPage', () => {
       expect(button('MAIN_PAGE.searchPast')).toBeUndefined();
 
       void component.setSortBy('RECENT');
-      component.filtersForm.controls.startsFrom.setValue('2026-01-01T10:00');
+      component.filtersForm.controls.fromDay.setValue('2026-01-01');
       await settle();
       http.match((r) => r.url.endsWith('/posts'));
       await debounce();

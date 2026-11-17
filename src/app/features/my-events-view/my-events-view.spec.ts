@@ -9,6 +9,7 @@ function card(id: string): PostCard {
     author: { id: 'u1', username: 'ola', followersCount: 0, followingCount: 0 },
     title: `Post ${id}`,
     startsAt: '2026-12-01T18:00:00Z',
+    openEnded: false,
     positiveReactionCount: 0,
     participantCount: 0,
     interestedCount: 0,

@@ -45,6 +45,7 @@ export function toMark(post: PostCard | PostDetail): PostMark | null {
     title: post.title,
     startsAt: post.startsAt,
     endsAt: post.endsAt,
+    openEnded: post.openEnded,
     coverMediaUrl: post.coverMedia?.url,
     excerpt: post.description || undefined,
     positiveReactionCount: post.positiveReactionCount,
