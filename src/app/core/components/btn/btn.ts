@@ -22,6 +22,8 @@ export class Btn {
   @Input({ required: true }) variant: BtnVariant = 'primary';
   @Input() size: BtnSize = 'md';
   @Input() disabled = false;
+  /** Greyed and ignores taps like `disabled`, but stays focusable, so its tooltip can say why. */
+  @Input() unavailable = false;
   @Input() fullWidth = false;
   @Input() pressed?: boolean;
   @Input() type: 'button' | 'submit' | 'reset' = 'button';
@@ -37,11 +39,14 @@ export class Btn {
     const variantClass = `btn--${this.variant}`;
     const sizeClass = this.size !== 'md' ? `btn--${this.size}` : '';
     const widthClass = this.fullWidth ? 'btn--full' : '';
-    return [base, variantClass, sizeClass, widthClass, this.class].filter(Boolean).join(' ');
+    const unavailableClass = this.unavailable ? 'btn--unavailable' : '';
+    return [base, variantClass, sizeClass, widthClass, unavailableClass, this.class]
+      .filter(Boolean)
+      .join(' ');
   }
 
   onClick(event: Event): void {
-    if (!this.disabled) {
+    if (!this.disabled && !this.unavailable) {
       this.btnClick.emit(event);
     }
   }

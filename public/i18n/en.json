@@ -111,7 +111,9 @@
     "showOnMapHint": "Show on the map",
     "friendsGoing": "Going: {{names}}",
     "friendsInterested": "Interested: {{names}}",
-    "friendsSee": "Friends will see it"
+    "friendsSee": "Friends will see it",
+    "ended": "Ended",
+    "endedHint": "The event has ended"
   },
   "NAVBAR": {
     "main-page": "Home",
@@ -183,7 +185,8 @@
     "bioPlaceholder": "Add a few words about yourself",
     "since": "On Coolture since {{date}}",
     "blockedLoadError": "Couldn’t load blocked people.",
-    "retry": "Try again"
+    "retry": "Try again",
+    "youBlocked": "You blocked this person"
   },
   "SETTINGS": {
     "title": "Settings",
@@ -253,7 +256,8 @@
     "no-end-date": "No end date",
     "remove-end": "Remove the end",
     "where": "Where?",
-    "online-hint": "You can add the stream or meeting link at the bottom."
+    "online-hint": "You can add the stream or meeting link at the bottom.",
+    "starts-at-past": "The start can't be in the past"
   },
   "COMMENT": {
     "title": "Comments",

@@ -85,7 +85,12 @@
           }
           {{ post.title }}
         </a>
-        <span class="mini__meta">{{ when(post) }}</span>
+        <span class="mini__meta">
+          {{ when(post) }}
+          @if (ended(post)) {
+            <span class="mini__ended">{{ 'POST.ended' | translate }}</span>
+          }
+        </span>
         @if (placeName()) {
           <span class="mini__meta">{{ placeName() }}</span>
         }
@@ -116,13 +121,15 @@
         type="button"
         class="mini__react"
         [class.mini__react--on]="post.myParticipation === 'INTERESTED'"
+        [class.mini__react--unavailable]="ended(post)"
         [attr.aria-pressed]="post.myParticipation === 'INTERESTED'"
+        [attr.aria-disabled]="ended(post) || null"
         [attr.aria-label]="'MAP.interested' | translate: { count: post.interestedCount }"
         [appTooltip]="
           ('POST.interested' | translate) +
-          (sharesStances() ? ' · ' + ('POST.friendsSee' | translate) : '')
+          (stanceNote(post) ? ' · ' + (stanceNote(post)! | translate) : '')
         "
-        (click)="reactions.stance(mark, 'INTERESTED')"
+        (click)="stance(mark, 'INTERESTED')"
       >
         <ng-icon
           name="lucideBookmark"
@@ -135,13 +142,15 @@
         type="button"
         class="mini__react"
         [class.mini__react--on]="post.myParticipation === 'TAKES_PART'"
+        [class.mini__react--unavailable]="ended(post)"
         [attr.aria-pressed]="post.myParticipation === 'TAKES_PART'"
+        [attr.aria-disabled]="ended(post) || null"
         [attr.aria-label]="'MAP.going' | translate: { count: post.goingCount }"
         [appTooltip]="
           ('POST.takes_part' | translate) +
-          (sharesStances() ? ' · ' + ('POST.friendsSee' | translate) : '')
+          (stanceNote(post) ? ' · ' + (stanceNote(post)! | translate) : '')
         "
-        (click)="reactions.stance(mark, 'TAKES_PART')"
+        (click)="stance(mark, 'TAKES_PART')"
       >
         <ng-icon
           name="appTicket"

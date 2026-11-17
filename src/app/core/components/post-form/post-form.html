@@ -21,7 +21,10 @@
         type="datetime-local"
         [required]="true"
         inputId="startsAt"
-        [errorMessages]="{ required: ('POST_FORM.starts-at-error' | translate) }"
+        [errorMessages]="{
+          required: ('POST_FORM.starts-at-error' | translate),
+          past: ('POST_FORM.starts-at-past' | translate),
+        }"
       ></app-form-input>
       @if (showEnd) {
         <div class="post-form__end">
@@ -123,7 +126,11 @@
   ></app-form-input>
 
   <div class="post-form__actions">
-    <app-btn variant="primary" type="submit" [disabled]="isSubmitting || photos().hasUploading">
+    <app-btn
+      variant="primary"
+      type="submit"
+      [disabled]="isSubmitting || photos().hasUploading || startsAtControl.hasError('past')"
+    >
       {{
         isSubmitting
           ? ('POST_FORM.submit-saving' | translate)
