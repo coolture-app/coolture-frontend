@@ -116,6 +116,8 @@ export interface components {
       startsAt: string;
       /** Format: date-time */
       endsAt?: string;
+      /** @description No end date. Such a post never has endsAt and never ends. */
+      openEnded: boolean;
       tags: string[];
       positiveReactionCount: number;
       /** @description interestedCount and goingCount together. */
@@ -149,6 +151,8 @@ export interface components {
       startsAt: string;
       /** Format: date-time */
       endsAt?: string;
+      /** @description No end date. Such a post never has endsAt and never ends. */
+      openEnded: boolean;
       coverMediaUrl?: string;
       /** @description The description's first 200 characters, with runs of whitespace as one space. Left out when empty. */
       excerpt?: string;
@@ -299,10 +303,10 @@ export interface components {
     /** @description Only posts by people the viewer follows, and posts a friend (a mutual follow) marked Interesuje mnie or Biorę udział, unless that friend stopped sharing their stances. Nothing for a guest. Every post is public, so there's no visibility filter; an older client's visibility parameter is ignored. */
     Followed: boolean;
     Type: components['schemas']['PostType'];
-    /** @description Setting this turns the past-events window off. */
-    StartsFrom: string;
-    /** @description Setting this turns the past-events window off. */
-    StartsTo: string;
+    /** @description Only events running at some moment from this time on: their end is at or after it. Setting this turns the past-events window off. */
+    From: string;
+    /** @description Only events running at some moment up to this time: their start is at or before it. Setting this turns the past-events window off. */
+    To: string;
     /** @description When false, events that ended over 12 hours ago are hidden. UPCOMING always hides ended events. */
     IncludePast: boolean;
   };
@@ -334,10 +338,10 @@ export interface operations {
         /** @description Only posts by people the viewer follows, and posts a friend (a mutual follow) marked Interesuje mnie or Biorę udział, unless that friend stopped sharing their stances. Nothing for a guest. Every post is public, so there's no visibility filter; an older client's visibility parameter is ignored. */
         followed?: components['parameters']['Followed'];
         type?: components['parameters']['Type'];
-        /** @description Setting this turns the past-events window off. */
-        startsFrom?: components['parameters']['StartsFrom'];
-        /** @description Setting this turns the past-events window off. */
-        startsTo?: components['parameters']['StartsTo'];
+        /** @description Only events running at some moment from this time on: their end is at or after it. Setting this turns the past-events window off. */
+        from?: components['parameters']['From'];
+        /** @description Only events running at some moment up to this time: their start is at or before it. Setting this turns the past-events window off. */
+        to?: components['parameters']['To'];
         /** @description Only posts with a place within this many km of latitude and longitude. Ignored without them. */
         radiusKm?: components['parameters']['RadiusKm'];
       };
@@ -367,7 +371,7 @@ export interface operations {
         cursor?: components['parameters']['Cursor'];
         /** @description Page size. Values above 100 are capped. Non-numeric values return 400. */
         limit?: components['parameters']['Limit'];
-        /** @description NEAREST needs latitude and longitude, and shows only posts with a place. STANCE_NEWEST needs participationTypes and puts the viewer's newest of those stances first. */
+        /** @description NEAREST needs latitude and longitude, and shows only posts with a place. STANCE_NEWEST needs participationTypes and puts the viewer's newest of those stances first. UPCOMING mixes events already running into the events to come, every 5th card (README.md). */
         sortBy?: 'RECENT' | 'POPULAR' | 'UPCOMING' | 'NEAREST' | 'STANCE_NEWEST';
         /** @description When false, events that ended over 12 hours ago are hidden. UPCOMING always hides ended events. */
         includePast?: components['parameters']['IncludePast'];
@@ -380,10 +384,10 @@ export interface operations {
         /** @description Only posts by people the viewer follows, and posts a friend (a mutual follow) marked Interesuje mnie or Biorę udział, unless that friend stopped sharing their stances. Nothing for a guest. Every post is public, so there's no visibility filter; an older client's visibility parameter is ignored. */
         followed?: components['parameters']['Followed'];
         type?: components['parameters']['Type'];
-        /** @description Setting this turns the past-events window off. */
-        startsFrom?: components['parameters']['StartsFrom'];
-        /** @description Setting this turns the past-events window off. */
-        startsTo?: components['parameters']['StartsTo'];
+        /** @description Only events running at some moment from this time on: their end is at or after it. Setting this turns the past-events window off. */
+        from?: components['parameters']['From'];
+        /** @description Only events running at some moment up to this time: their start is at or before it. Setting this turns the past-events window off. */
+        to?: components['parameters']['To'];
         /** @description Send together with longitude, rounded to 2 decimals. The centre of radiusKm and of NEAREST. On /feed, the first page's position is also used for proximity, and later pages send it again only with radiusKm. Without it, /feed measures proximity from the viewer's home, if they set one. */
         latitude?: components['parameters']['Latitude'];
         /** @description Send together with latitude. See latitude. */

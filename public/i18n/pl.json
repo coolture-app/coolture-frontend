@@ -1,9 +1,4 @@
 {
-  "DATE_FORMATS": {
-    "short": "dd.MM.yyyy, HH:mm",
-    "mediumDate": "d MMMM yyyy",
-    "eventCard": "d MMM, HH:mm"
-  },
   "MAIN_PAGE": {
     "searchbar": "Szukaj wydarzeń",
     "sort": "Filtry i sortowanie",
@@ -16,8 +11,8 @@
     "type": "Typ",
     "tags": "Tagi",
     "tagsPlaceholder": "muzyka, sztuka, teatr",
-    "startsFrom": "Od dnia",
-    "startsTo": "Do dnia",
+    "fromDay": "Od dnia",
+    "toDay": "Do dnia",
     "allTypes": "Wszystkie typy",
     "sortCreatedAt": "Data utworzenia",
     "sortStartsAt": "Data wydarzenia",
@@ -255,6 +250,7 @@
     "when": "Kiedy?",
     "ends-at-error": "Koniec musi być po początku.",
     "add-end": "Dodaj zakończenie",
+    "no-end-date": "Bez daty końcowej",
     "remove-end": "Usuń zakończenie",
     "where": "Gdzie?",
     "online-hint": "Link do transmisji lub spotkania możesz dodać na dole."
@@ -411,5 +407,15 @@
     "hint": "Przeciągnij, aby przesunąć. Przybliż suwakiem, kółkiem myszy lub dwoma palcami.",
     "zoom": "Przybliżenie",
     "loadError": "Nie udało się otworzyć tego pliku. Wybierz zdjęcie JPG, PNG lub WebP."
+  },
+  "EVENT_TIME": {
+    "today": "dziś",
+    "tomorrow": "jutro",
+    "from": "od",
+    "fromToday": "od dziś",
+    "fromTomorrow": "od jutra",
+    "untilFurtherNotice": "do odwołania",
+    "runsUntil": "trwa do",
+    "runsUntilFurtherNotice": "trwa do odwołania"
   }
 }

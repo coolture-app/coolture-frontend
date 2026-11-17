@@ -7,6 +7,8 @@ export interface PostMark {
   title: string;
   startsAt: string;
   endsAt?: string;
+  /** No end date: no endsAt, and the event never ends. */
+  openEnded: boolean;
   coverMediaUrl?: string;
   /** The description's start, for the map's preview. */
   excerpt?: string;

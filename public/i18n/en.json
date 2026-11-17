@@ -1,9 +1,4 @@
 {
-  "DATE_FORMATS": {
-    "short": "MM/dd/yyyy, h:mm a",
-    "mediumDate": "MMMM d, yyyy",
-    "eventCard": "MMM d, HH:mm"
-  },
   "MAIN_PAGE": {
     "searchbar": "Search for events",
     "sort": "Filters and sorting",
@@ -16,8 +11,8 @@
     "type": "Type",
     "tags": "Tags",
     "tagsPlaceholder": "music, art, theater",
-    "startsFrom": "From day",
-    "startsTo": "To day",
+    "fromDay": "From day",
+    "toDay": "To day",
     "allTypes": "All Types",
     "sortCreatedAt": "Created Date",
     "sortStartsAt": "Event Date",
@@ -255,6 +250,7 @@
     "when": "When?",
     "ends-at-error": "The end must be after the start.",
     "add-end": "Add an end",
+    "no-end-date": "No end date",
     "remove-end": "Remove the end",
     "where": "Where?",
     "online-hint": "You can add the stream or meeting link at the bottom."
@@ -411,5 +407,15 @@
     "hint": "Drag to move. Zoom with the slider, the mouse wheel or two fingers.",
     "zoom": "Zoom",
     "loadError": "This file couldn't be opened. Choose a JPG, PNG or WebP photo."
+  },
+  "EVENT_TIME": {
+    "today": "today",
+    "tomorrow": "tomorrow",
+    "from": "from",
+    "fromToday": "from today",
+    "fromTomorrow": "from tomorrow",
+    "untilFurtherNotice": "until further notice",
+    "runsUntil": "on until",
+    "runsUntilFurtherNotice": "on until further notice"
   }
 }
