@@ -10,8 +10,10 @@ export interface PostFilterParams {
   /** Posts by people the viewer follows, and posts friends are interested in or go to. */
   followed?: boolean;
   type?: PostType;
-  startsFrom?: string; // ISO-8601
-  startsTo?: string; // ISO-8601
+  /** Only events running at some moment from then on. ISO-8601. */
+  from?: string;
+  /** Only events running at some moment up to then. ISO-8601. */
+  to?: string;
   latitude?: number;
   longitude?: number;
   radiusKm?: number;
