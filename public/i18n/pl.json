@@ -116,7 +116,9 @@
     "showOnMapHint": "Pokaż na mapie",
     "friendsGoing": "Biorą udział: {{names}}",
     "friendsInterested": "Interesuje: {{names}}",
-    "friendsSee": "Znajomi zobaczą"
+    "friendsSee": "Znajomi zobaczą",
+    "ended": "Zakończone",
+    "endedHint": "Wydarzenie się zakończyło"
   },
   "NAVBAR": {
     "main-page": "Strona główna",
@@ -188,7 +190,8 @@
     "bioPlaceholder": "Dodaj kilka słów o sobie",
     "since": "Na Coolture od {{date}}",
     "blockedLoadError": "Nie udało się wczytać zablokowanych.",
-    "retry": "Spróbuj ponownie"
+    "retry": "Spróbuj ponownie",
+    "youBlocked": "Zablokowałeś tego użytkownika"
   },
   "SETTINGS": {
     "title": "Ustawienia",
@@ -257,7 +260,8 @@
     "add-end": "Dodaj zakończenie",
     "remove-end": "Usuń zakończenie",
     "where": "Gdzie?",
-    "online-hint": "Link do transmisji lub spotkania możesz dodać na dole."
+    "online-hint": "Link do transmisji lub spotkania możesz dodać na dole.",
+    "starts-at-past": "Początek nie może być w przeszłości"
   },
   "COMMENT": {
     "title": "Komentarze",

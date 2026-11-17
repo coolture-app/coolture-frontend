@@ -97,6 +97,34 @@ export class PostForm implements OnInit, OnChanges, OnDestroy {
 
   readonly locationGroup = locationForm();
 
+  /** The start as an edit loaded it. It may have passed, and sending it back unchanged is fine. */
+  private initialStart = '';
+
+  /**
+   * The API refuses a start moved to the past, to the minute, as the input holds it. The error sits on the start, and
+   * shows at once, since it also turns Zapisz off.
+   */
+  private startNotInPast = (form: AbstractControl): ValidationErrors | null => {
+    const startsAt = form.get('startsAt');
+    if (!startsAt) {
+      return null;
+    }
+    const value: string = startsAt.value;
+    const now = toLocalInputValue(new Date().toISOString());
+    const wrong = !!value && value !== this.initialStart && value < now;
+    if (wrong !== startsAt.hasError('past')) {
+      const others = { ...startsAt.errors };
+      delete others['past'];
+      startsAt.setErrors(
+        wrong ? { ...others, past: true } : Object.keys(others).length ? others : null,
+      );
+    }
+    if (wrong) {
+      startsAt.markAsTouched();
+    }
+    return null;
+  };
+
   postForm = this.fb.group(
     {
       title: ['', [Validators.required, Validators.maxLength(128)]],
@@ -107,7 +135,7 @@ export class PostForm implements OnInit, OnChanges, OnDestroy {
       eventUrl: [''],
       location: this.locationGroup,
     },
-    { validators: endAfterStart },
+    { validators: [endAfterStart, this.startNotInPast] },
   );
 
   get titleControl(): FormControl {
@@ -153,6 +181,7 @@ export class PostForm implements OnInit, OnChanges, OnDestroy {
 
   private patchFormFromPost(post: PostDetail): void {
     const location = post.location;
+    this.initialStart = toLocalInputValue(post.startsAt);
     this.postForm.patchValue({
       title: post.title,
       type: post.type,

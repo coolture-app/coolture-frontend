@@ -1,16 +1,20 @@
-<div class="page">
-  <app-back-link fallback="/" />
-  @if (post()) {
-    <app-post-component
-      (deleteRequest)="removeChild($event)"
-      [data]="post()!"
-      [isFullView]="true"
-    />
-    <section #commentSection id="comments" class="comments" aria-labelledby="comments-title">
-      <h2 id="comments-title" class="comments__title">
-        {{ 'COMMENT.title' | translate }} ({{ post()!.commentsCount || 0 }})
-      </h2>
-      <app-comment-thread [postId]="post()!.id" (countChange)="changeCount($event)" />
-    </section>
-  }
-</div>
+@if (notFound()) {
+  <app-not-found-view />
+} @else {
+  <div class="page">
+    <app-back-link fallback="/" />
+    @if (post()) {
+      <app-post-component
+        (deleteRequest)="removeChild($event)"
+        [data]="post()!"
+        [isFullView]="true"
+      />
+      <section #commentSection id="comments" class="comments" aria-labelledby="comments-title">
+        <h2 id="comments-title" class="comments__title">
+          {{ 'COMMENT.title' | translate }} ({{ post()!.commentsCount || 0 }})
+        </h2>
+        <app-comment-thread [postId]="post()!.id" (countChange)="changeCount($event)" />
+      </section>
+    }
+  </div>
+}

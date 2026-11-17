@@ -11,6 +11,7 @@ import {
   WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { catchError, firstValueFrom, map, of } from 'rxjs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -42,6 +43,7 @@ import { ToastService } from '../../core/services/toast/toast.service';
 import { HomeArea } from '../home-area/home-area';
 import { PhotoViewerService } from '../../core/services/photo-viewer/photo-viewer.service';
 import { AvatarCropper } from '../../core/components/avatar-cropper/avatar-cropper';
+import { NotFoundView } from '../not-found-view/not-found-view';
 
 /** Your own profile at `/profile`, and anyone's at `/users/:username`. */
 @Component({
@@ -58,6 +60,7 @@ import { AvatarCropper } from '../../core/components/avatar-cropper/avatar-cropp
     RelationPill,
     Tooltip,
     HomeArea,
+    NotFoundView,
   ],
   viewProviders: [
     provideIcons({
@@ -92,6 +95,10 @@ export class UserProfileView {
 
   user = signal<UserProfile | null>(null);
   isOwnProfile = signal(true);
+  /** Someone missing, or who blocked you. The URL stays, as for any page that isn't there. */
+  notFound = signal(false);
+  /** Someone you blocked: only who they are, and Odblokuj. */
+  readonly blocked = computed(() => !this.isOwnProfile() && !!this.user()?.isBlocked);
   followersCount = signal(0);
   followingCount = signal(0);
   isUploadingAvatar = signal(false);
@@ -156,6 +163,7 @@ export class UserProfileView {
     this.menuOpen.set(false);
     this.avatarMenuOpen.set(false);
     this.editingBio.set(false);
+    this.notFound.set(false);
 
     const currentUser = this.authService.currentUser();
     if (username && currentUser && username !== currentUser.username) {
@@ -181,15 +189,19 @@ export class UserProfileView {
       const userProfile = await firstValueFrom(this.usersService.getUserByUsername(username));
       this.showUser(userProfile, false);
     } catch (err) {
-      console.error('Error loading user profile', err);
+      if (err instanceof HttpErrorResponse && err.status === 404) {
+        this.notFound.set(true);
+      } else {
+        console.error('Error loading user profile', err);
+      }
     }
   }
 
   private showUser(user: UserProfile, own: boolean) {
     this.user.set(user);
     this.isOwnProfile.set(own);
-    this.followersCount.set(user.followersCount);
-    this.followingCount.set(user.followingCount);
+    this.followersCount.set(user.followersCount ?? 0);
+    this.followingCount.set(user.followingCount ?? 0);
   }
 
   onFollowChanged(event: { deltaFollowers: number; deltaFollowing: number }) {
@@ -243,11 +255,11 @@ export class UserProfileView {
     try {
       if (u.isFollowing) {
         await firstValueFrom(this.relationsService.unfollow(u.id));
-        this.user.set({ ...u, isFollowing: false, followersCount: u.followersCount - 1 });
+        this.user.set({ ...u, isFollowing: false, followersCount: (u.followersCount ?? 0) - 1 });
         this.followersCount.update((c) => c - 1);
       } else {
         await firstValueFrom(this.relationsService.follow(u.id));
-        this.user.set({ ...u, isFollowing: true, followersCount: u.followersCount + 1 });
+        this.user.set({ ...u, isFollowing: true, followersCount: (u.followersCount ?? 0) + 1 });
         this.followersCount.update((c) => c + 1);
       }
     } catch (err) {
@@ -308,10 +320,14 @@ export class UserProfileView {
     try {
       if (isCurrentlyBlocked) {
         await firstValueFrom(this.relationsService.unblock(u.id));
-        this.user.set({ ...u, isBlocked: false });
+        // The slim profile has none of the rest. If they block you too, this ends in the not-found view.
+        await this.loadOtherUserProfile(u.username);
       } else {
         await firstValueFrom(this.relationsService.block(u.id));
-        this.user.set({ ...u, isBlocked: true });
+        // A block ends follows both ways.
+        this.user.set({ ...u, isBlocked: true, isFollowing: false, followsYou: false });
+        this.showFollowers.set(false);
+        this.showFollowing.set(false);
       }
     } catch (err) {
       console.error('Error blocking user', err);

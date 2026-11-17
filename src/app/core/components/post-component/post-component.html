@@ -37,6 +37,9 @@
               <ng-icon name="heroCalendar" />
               {{ data.startsAt | date: dateFormats().short }}
             </span>
+            @if (ended) {
+              <span class="post__ended">{{ 'POST.ended' | translate }}</span>
+            }
             @if (data.type === 'ONLINE') {
               <span class="post__location">
                 <ng-icon name="heroGlobeAlt" />
@@ -220,9 +223,14 @@
           [fullWidth]="true"
           [class]="isInterested() ? 'segment interested' : 'segment'"
           [pressed]="isInterested()"
+          [unavailable]="ended"
           [label]="
             withCount('POST.interested' | translate, data.interestedCount) +
-            (sharesStances() ? ' · ' + ('POST.friendsSee' | translate) : '')
+            (ended
+              ? ' · ' + ('POST.endedHint' | translate)
+              : sharesStances()
+                ? ' · ' + ('POST.friendsSee' | translate)
+                : '')
           "
           (btnClick)="setInterested()"
         >
@@ -237,9 +245,14 @@
           [fullWidth]="true"
           [class]="isTakesPart() ? 'segment takes-part' : 'segment'"
           [pressed]="isTakesPart()"
+          [unavailable]="ended"
           [label]="
             withCount('POST.takes_part' | translate, data.goingCount) +
-            (sharesStances() ? ' · ' + ('POST.friendsSee' | translate) : '')
+            (ended
+              ? ' · ' + ('POST.endedHint' | translate)
+              : sharesStances()
+                ? ' · ' + ('POST.friendsSee' | translate)
+                : '')
           "
           (btnClick)="setTakesPart()"
         >

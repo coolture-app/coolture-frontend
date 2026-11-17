@@ -26,6 +26,7 @@ import {
 import { appTicket } from '../../../icons/ticket';
 import { placeLine } from '../../../models/posts/post-place';
 import { PostMark } from '../../../models/posts/post-mark.model';
+import { eventEnded } from '../../../models/posts/event-time';
 import { cardDate, Place } from '../map-pins';
 import { directionsUrl } from './directions';
 import { Tooltip } from '../../../directives/tooltip';
@@ -118,6 +119,16 @@ export class MapPreview {
 
   when(post: PostMark): string {
     return cardDate(post.startsAt, this.lang());
+  }
+
+  ended(post: PostMark): boolean {
+    return eventEnded(post, new Date());
+  }
+
+  stance(post: PostMark, type: 'INTERESTED' | 'TAKES_PART'): void {
+    if (!this.ended(post)) {
+      this.reactions.stance(post, type);
+    }
   }
 
   open(post: PostMark): void {

@@ -196,6 +196,22 @@ describe('PostForm editing an existing post', () => {
     expect(new Date(secondSave.startsAt).getTime()).toBe(new Date(SUMMER_START).getTime());
   });
 
+  it('keeps a start that has passed, but refuses moving it to another past time', () => {
+    load(post(SUMMER_START, SUMMER_END));
+
+    expect(component.startsAtControl.hasError('past')).toBeFalse();
+
+    component.startsAtControl.setValue('2026-07-11T19:00');
+    fixture.detectChanges();
+
+    expect(component.startsAtControl.hasError('past')).toBeTrue();
+    expect(submit()).toBeUndefined();
+
+    component.startsAtControl.setValue(localClock(SUMMER_START));
+
+    expect(component.startsAtControl.hasError('past')).toBeFalse();
+  });
+
   it('leaves the end empty for a post without one', () => {
     load(post(SUMMER_START));
 
@@ -290,6 +306,24 @@ describe('PostForm fields', () => {
     component.endsAtControl.setValue('2030-05-01T22:00');
 
     expect(submit()!.endsAt).toBe(new Date('2030-05-01T22:00').toISOString());
+  });
+
+  it('refuses a start in the past at once, under the field, with Zapisz off', () => {
+    fillEventFields();
+    component.postForm.controls.type.setValue('ONLINE');
+    component.startsAtControl.setValue('2020-05-01T19:00');
+    fixture.detectChanges();
+
+    const error = fixture.nativeElement.querySelector('#startsAt')?.closest('app-form-input');
+    expect(error?.textContent).toContain('POST_FORM.starts-at-past');
+    expect(fixture.nativeElement.querySelector('button[type="submit"]').disabled).toBeTrue();
+    expect(submit()).toBeUndefined();
+
+    component.startsAtControl.setValue('2030-05-01T19:00');
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('button[type="submit"]').disabled).toBeFalse();
+    expect(submit()).toBeDefined();
   });
 
   it('sends no end once it is removed', () => {

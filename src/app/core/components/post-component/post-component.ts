@@ -51,6 +51,7 @@ import { CommentsSheetService } from '../../services/comments-sheet/comments-she
 import { DateFormatService } from '../../services/date-format/date-format.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { postPlace } from '../../models/posts/post-place';
+import { eventEnded } from '../../models/posts/event-time';
 import { formatDistance } from '../../models/common/distance';
 import { LocationService } from '../../services/location/location.service';
 import { counted, ParticipationType } from '../../models/common/enums';
@@ -159,6 +160,11 @@ export class PostComponent implements OnInit {
 
   @Input() data!: PostCard | PostDetail;
   @Input() isFullView!: boolean;
+
+  /** Read on each check, so a card left open turns ended without a reload. */
+  get ended(): boolean {
+    return eventEnded(this.data, new Date());
+  }
 
   @Output() deleteRequest = new EventEmitter<string>();
 

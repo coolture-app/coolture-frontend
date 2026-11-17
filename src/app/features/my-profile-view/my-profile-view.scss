@@ -233,6 +233,12 @@
     color: var(--color-text-secondary);
   }
 
+  &__blocked {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+  }
+
   &__actions {
     display: flex;
     flex-wrap: wrap;
