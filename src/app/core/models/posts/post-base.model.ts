@@ -14,7 +14,6 @@ export interface PostBase {
   eventUrl?: string;
   startsAt: string; // ISO-8601
   endsAt?: string; // ISO-8601
-  tags: string[];
   positiveReactionCount: number;
   /** Interesuje mnie and Biorę udział together. */
   participantCount: number;

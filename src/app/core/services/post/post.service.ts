@@ -39,7 +39,6 @@ function filterParams(filters: PostFilterParams): HttpParams {
   filters.participationTypes?.forEach(
     (type) => (params = params.append('participationTypes', type)),
   );
-  filters.tags?.forEach((tag) => (params = params.append('tags', tag)));
   if (filters.radiusKm && filters.latitude !== undefined && filters.longitude !== undefined) {
     params = params
       .set('latitude', filters.latitude)

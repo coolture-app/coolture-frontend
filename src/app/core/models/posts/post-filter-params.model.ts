@@ -4,7 +4,6 @@ export interface PostFilterParams {
   cursor?: string;
   limit?: number;
   q?: string;
-  tags?: string[];
   authorId?: string; // UUID
   status?: PostStatus;
   /** Posts by people the viewer follows, and posts friends are interested in or go to. */

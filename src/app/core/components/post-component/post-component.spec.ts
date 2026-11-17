@@ -19,7 +19,6 @@ function card(overrides: Partial<PostCard> = {}): PostCard {
     author: { id: 'u1', username: 'ola', followersCount: 0, followingCount: 0 },
     title: 'Koncert',
     startsAt: '2026-12-01T18:00:00Z',
-    tags: [],
     positiveReactionCount: 3,
     participantCount: 2,
     interestedCount: 2,

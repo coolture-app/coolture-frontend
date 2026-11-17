@@ -14,8 +14,6 @@
     "order": "Order",
     "clear": "Clear",
     "type": "Type",
-    "tags": "Tags",
-    "tagsPlaceholder": "music, art, theater",
     "startsFrom": "From day",
     "startsTo": "To day",
     "allTypes": "All Types",

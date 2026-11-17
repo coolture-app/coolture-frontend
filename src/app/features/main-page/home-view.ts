@@ -13,7 +13,6 @@ export type PlaceFilter = '' | 'mine' | 'picked';
 /** The filter panel's values, as its form holds them. */
 export const NO_FILTERS = {
   type: '',
-  tags: '',
   startsFrom: '',
   startsTo: '',
   /** Only people I follow, and what friends are interested in or go to. */
@@ -38,7 +37,6 @@ export const START_SORT: PostsSort = 'UPCOMING';
 export function createFiltersForm() {
   return new FormGroup({
     type: new FormControl(NO_FILTERS.type, { nonNullable: true }),
-    tags: new FormControl(NO_FILTERS.tags, { nonNullable: true }),
     startsFrom: new FormControl(NO_FILTERS.startsFrom, { nonNullable: true }),
     startsTo: new FormControl(NO_FILTERS.startsTo, { nonNullable: true }),
     followed: new FormControl(NO_FILTERS.followed, { nonNullable: true }),

@@ -7,7 +7,6 @@ export interface PostCreateRequest {
   eventUrl?: string | null;
   startsAt: string; // ISO-8601
   endsAt?: string | null; // ISO-8601
-  tags?: string[];
   type: PostType;
   location?: EventLocationRequest | null;
 

@@ -21,7 +21,6 @@ function post(startsAt: string, endsAt?: string): PostDetail {
     description: 'Opis',
     startsAt,
     endsAt,
-    tags: [],
     positiveReactionCount: 0,
     participantCount: 0,
     interestedCount: 0,
