@@ -51,7 +51,7 @@ import { CommentsSheetService } from '../../services/comments-sheet/comments-she
 import { DateFormatService } from '../../services/date-format/date-format.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { postPlace } from '../../models/posts/post-place';
-import { eventEnded } from '../../models/posts/event-time';
+import { hasEnded } from '../../utils/event-time';
 import { formatDistance } from '../../models/common/distance';
 import { LocationService } from '../../services/location/location.service';
 import { counted, ParticipationType } from '../../models/common/enums';
@@ -163,7 +163,12 @@ export class PostComponent implements OnInit {
 
   /** Read on each check, so a card left open turns ended without a reload. */
   get ended(): boolean {
-    return eventEnded(this.data, new Date());
+    return hasEnded(this.data, new Date());
+  }
+
+  /** The note after a stance's name in its tooltip: why it's off, or who sees it. A translation key. */
+  get stanceNote(): string | null {
+    return this.ended ? 'POST.endedHint' : this.sharesStances() ? 'POST.friendsSee' : null;
   }
 
   @Output() deleteRequest = new EventEmitter<string>();

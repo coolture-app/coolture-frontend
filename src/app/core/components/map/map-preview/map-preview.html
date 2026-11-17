@@ -127,11 +127,7 @@
         [attr.aria-label]="'MAP.interested' | translate: { count: post.interestedCount }"
         [appTooltip]="
           ('POST.interested' | translate) +
-          (ended(post)
-            ? ' · ' + ('POST.endedHint' | translate)
-            : sharesStances()
-              ? ' · ' + ('POST.friendsSee' | translate)
-              : '')
+          (stanceNote(post) ? ' · ' + (stanceNote(post)! | translate) : '')
         "
         (click)="stance(mark, 'INTERESTED')"
       >
@@ -152,11 +148,7 @@
         [attr.aria-label]="'MAP.going' | translate: { count: post.goingCount }"
         [appTooltip]="
           ('POST.takes_part' | translate) +
-          (ended(post)
-            ? ' · ' + ('POST.endedHint' | translate)
-            : sharesStances()
-              ? ' · ' + ('POST.friendsSee' | translate)
-              : '')
+          (stanceNote(post) ? ' · ' + (stanceNote(post)! | translate) : '')
         "
         (click)="stance(mark, 'TAKES_PART')"
       >

@@ -226,11 +226,7 @@
           [unavailable]="ended"
           [label]="
             withCount('POST.interested' | translate, data.interestedCount) +
-            (ended
-              ? ' · ' + ('POST.endedHint' | translate)
-              : sharesStances()
-                ? ' · ' + ('POST.friendsSee' | translate)
-                : '')
+            (stanceNote ? ' · ' + (stanceNote | translate) : '')
           "
           (btnClick)="setInterested()"
         >
@@ -248,11 +244,7 @@
           [unavailable]="ended"
           [label]="
             withCount('POST.takes_part' | translate, data.goingCount) +
-            (ended
-              ? ' · ' + ('POST.endedHint' | translate)
-              : sharesStances()
-                ? ' · ' + ('POST.friendsSee' | translate)
-                : '')
+            (stanceNote ? ' · ' + (stanceNote | translate) : '')
           "
           (btnClick)="setTakesPart()"
         >
