@@ -169,7 +169,7 @@
           </div>
         }
 
-        @if (interests().length && !blocked()) {
+        @if (interests().length) {
           <ul class="profile__interests" [attr.aria-label]="'PROFILE.interests' | translate">
             @for (interest of interests(); track interest.key) {
               <li class="profile__interest">{{ interest.label }}</li>
@@ -201,7 +201,7 @@
               </app-btn>
             </div>
           </form>
-        } @else if (user()?.bio && !blocked()) {
+        } @else if (user()?.bio) {
           <div class="profile__bio">
             <p class="profile__bio-text">{{ user()?.bio }}</p>
             @if (isOwnProfile()) {
@@ -226,7 +226,7 @@
           </button>
         }
 
-        @if (since() && !blocked()) {
+        @if (since()) {
           <p class="profile__since">{{ 'PROFILE.since' | translate: { date: since() } }}</p>
         }
       </section>

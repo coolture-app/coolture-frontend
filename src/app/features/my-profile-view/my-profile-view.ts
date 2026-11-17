@@ -324,8 +324,18 @@ export class UserProfileView {
         await this.loadOtherUserProfile(u.username);
       } else {
         await firstValueFrom(this.relationsService.block(u.id));
-        // A block ends follows both ways.
-        this.user.set({ ...u, isBlocked: true, isFollowing: false, followsYou: false });
+        // What the profile gives from now on. A block ends follows both ways.
+        const { id, username, firstName, lastName, avatar } = u;
+        this.user.set({
+          id,
+          username,
+          firstName,
+          lastName,
+          avatar,
+          isBlocked: true,
+          isFollowing: false,
+          followsYou: false,
+        });
         this.showFollowers.set(false);
         this.showFollowing.set(false);
       }
