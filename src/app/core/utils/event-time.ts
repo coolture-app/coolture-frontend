@@ -70,7 +70,8 @@ export function cardWhen(post: EventTimes, now: Date, locale: string, words: Whe
   }
   if (isRunning(post, now)) {
     const lastDay = nightDay(end);
-    return daysBetween(now, lastDay) === 0
+    // After midnight a night's last day is yesterday, and it still ends at an hour.
+    return daysBetween(now, lastDay) <= 0
       ? `${words.runsUntil} ${hour(end, locale)}`
       : `${words.runsUntil} ${weekday(lastDay, locale)} ${dayMonth(lastDay, now, locale)}`;
   }

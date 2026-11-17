@@ -94,6 +94,11 @@ describe('cardWhen', () => {
     expect(card(post(new Date(2026, 10, 18, 10, 0)))).toBe('trwa do 13:00');
   });
 
+  it('says the hour of a night still running after midnight', () => {
+    const night = post(new Date(2026, 10, 17, 22, 0), new Date(2026, 10, 18, 2, 0));
+    expect(cardWhen(night, new Date(2026, 10, 18, 1, 0), 'pl', WORDS)).toBe('trwa do 02:00');
+  });
+
   it('says a post with no end date runs until further notice', () => {
     expect(card(post(new Date(2026, 10, 20, 10, 0), undefined, true))).toBe(
       'od pt 20 lis, do odwołania',
