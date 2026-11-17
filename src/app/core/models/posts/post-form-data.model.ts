@@ -6,6 +6,7 @@ export interface PostFormData {
   type: PostType;
   startsAt: string;
   endsAt: string | null;
+  openEnded: boolean;
   description: string;
   eventUrl: string | null;
   location: EventLocationRequest | null;
