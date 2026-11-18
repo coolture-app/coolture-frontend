@@ -16,16 +16,6 @@
         <option value="ONLINE">{{ 'MAIN_PAGE.online' | translate }}</option>
       </select>
     </div>
-
-    <div class="filters__field">
-      <label for="tags">{{ 'MAIN_PAGE.tags' | translate }}</label>
-      <input
-        id="tags"
-        type="text"
-        [formControl]="f.controls.tags"
-        placeholder="{{ 'MAIN_PAGE.tagsPlaceholder' | translate }}"
-      />
-    </div>
   </div>
 
   <div class="filters__row">

@@ -20,7 +20,6 @@ function card(overrides: Partial<PostCard> = {}): PostCard {
     title: 'Koncert',
     startsAt: '2030-12-01T18:00:00Z',
     openEnded: false,
-    tags: [],
     positiveReactionCount: 3,
     participantCount: 2,
     interestedCount: 2,

@@ -67,7 +67,7 @@ export interface paths {
     };
     /**
      * Every friend of the viewer who marked this post, for the list behind a card's friends line
-     * @description The same friends as the post's friendStances, without the limit on names: mutual follows who marked the post Biorę udział (going) or Interesuje mnie (interested) and share their stances. Newest stance first. Empty lists for a guest.
+     * @description The same friends as the post's friendStances, without the limit on names: mutual follows who marked the post Biorę udział (going) or Interesuje mnie (interested) and share their stances. Newest stance first. Empty lists for a guest. 404 for a deleted post, or when the viewer and the author blocked one another.
      */
     get: operations['getPostFriends'];
     put?: never;
@@ -118,7 +118,6 @@ export interface components {
       endsAt?: string;
       /** @description No end date. Such a post never has endsAt and never ends. */
       openEnded: boolean;
-      tags: string[];
       positiveReactionCount: number;
       /** @description interestedCount and goingCount together. */
       participantCount: number;
@@ -296,8 +295,6 @@ export interface components {
     RadiusKm: number;
     /** @description Matches a part of the title, the description, the city or the place's name, ignoring case. */
     Q: string;
-    /** @description Comma-separated or repeated. A post matches if it has any of them. */
-    Tags: string[];
     AuthorId: string;
     Status: components['schemas']['PostStatus'];
     /** @description Only posts by people the viewer follows, and posts a friend (a mutual follow) marked Interesuje mnie or Biorę udział, unless that friend stopped sharing their stances. Nothing for a guest. Every post is public, so there's no visibility filter; an older client's visibility parameter is ignored. */
@@ -331,8 +328,6 @@ export interface operations {
         includePast?: components['parameters']['IncludePast'];
         /** @description Matches a part of the title, the description, the city or the place's name, ignoring case. */
         q?: components['parameters']['Q'];
-        /** @description Comma-separated or repeated. A post matches if it has any of them. */
-        tags?: components['parameters']['Tags'];
         authorId?: components['parameters']['AuthorId'];
         status?: components['parameters']['Status'];
         /** @description Only posts by people the viewer follows, and posts a friend (a mutual follow) marked Interesuje mnie or Biorę udział, unless that friend stopped sharing their stances. Nothing for a guest. Every post is public, so there's no visibility filter; an older client's visibility parameter is ignored. */
@@ -377,8 +372,6 @@ export interface operations {
         includePast?: components['parameters']['IncludePast'];
         /** @description Matches a part of the title, the description, the city or the place's name, ignoring case. */
         q?: components['parameters']['Q'];
-        /** @description Comma-separated or repeated. A post matches if it has any of them. */
-        tags?: components['parameters']['Tags'];
         authorId?: components['parameters']['AuthorId'];
         status?: components['parameters']['Status'];
         /** @description Only posts by people the viewer follows, and posts a friend (a mutual follow) marked Interesuje mnie or Biorę udział, unless that friend stopped sharing their stances. Nothing for a guest. Every post is public, so there's no visibility filter; an older client's visibility parameter is ignored. */

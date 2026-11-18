@@ -32,7 +32,6 @@ export function toHomeParams({ search, filters, tab, sort, point, map }: HomeUrl
     ...(inAll && sort !== START_SORT && { sort: sort.toLowerCase() }),
     ...(query && { q: query }),
     ...(filters.type && { type: filters.type.toLowerCase() }),
-    ...(filters.tags.trim() && { tags: filters.tags.trim() }),
     ...(filters.fromDay && { from: filters.fromDay }),
     ...(filters.toDay && { to: filters.toDay }),
     ...(filters.followed && { followed: 'true' }),
@@ -70,7 +69,6 @@ export function fromHomeParams(params: Params): HomeUrlState {
     filters: {
       ...NO_FILTERS,
       type: oneOf('type', TYPES),
-      tags: text('tags'),
       fromDay: day('from'),
       toDay: day('to'),
       followed: text('followed') === 'true',

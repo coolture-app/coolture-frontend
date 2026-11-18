@@ -22,7 +22,6 @@ function post(startsAt: string, endsAt?: string): PostDetail {
     startsAt,
     endsAt,
     openEnded: false,
-    tags: [],
     positiveReactionCount: 0,
     participantCount: 0,
     interestedCount: 0,

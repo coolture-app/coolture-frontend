@@ -9,7 +9,6 @@ export interface PostCreateRequest {
   endsAt?: string | null; // ISO-8601; null removes the end on an edit
   /** No end date. Can't come with an endsAt. */
   openEnded?: boolean;
-  tags?: string[];
   type: PostType;
   location?: EventLocationRequest | null;
 

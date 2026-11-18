@@ -13,7 +13,6 @@ export type PlaceFilter = '' | 'mine' | 'picked';
 /** The filter panel's values, as its form holds them. */
 export const NO_FILTERS = {
   type: '',
-  tags: '',
   /** Days, as a date input holds them ("2026-11-21"). A post matches if it runs at any moment between them. */
   fromDay: '',
   toDay: '',
@@ -39,7 +38,6 @@ export const START_SORT: PostsSort = 'UPCOMING';
 export function createFiltersForm() {
   return new FormGroup({
     type: new FormControl(NO_FILTERS.type, { nonNullable: true }),
-    tags: new FormControl(NO_FILTERS.tags, { nonNullable: true }),
     fromDay: new FormControl(NO_FILTERS.fromDay, { nonNullable: true }),
     toDay: new FormControl(NO_FILTERS.toDay, { nonNullable: true }),
     followed: new FormControl(NO_FILTERS.followed, { nonNullable: true }),

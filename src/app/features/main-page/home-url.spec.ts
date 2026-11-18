@@ -26,7 +26,6 @@ describe('the home URL', () => {
       filters: {
         ...NO_FILTERS,
         type: 'OFFLINE',
-        tags: 'rock,folk',
         fromDay: '2026-12-01',
         toDay: '2026-12-02',
         followed: true,
@@ -43,7 +42,6 @@ describe('the home URL', () => {
       sort: 'popular',
       q: 'jazz',
       type: 'offline',
-      tags: 'rock,folk',
       from: '2026-12-01',
       to: '2026-12-02',
       followed: 'true',

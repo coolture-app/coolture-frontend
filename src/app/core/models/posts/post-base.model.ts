@@ -16,7 +16,6 @@ export interface PostBase {
   endsAt?: string; // ISO-8601
   /** No end date: no endsAt, and the event never ends. */
   openEnded: boolean;
-  tags: string[];
   positiveReactionCount: number;
   /** Interesuje mnie and Biorę udział together. */
   participantCount: number;

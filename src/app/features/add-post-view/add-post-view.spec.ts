@@ -36,7 +36,6 @@ describe('AddPostView, after saving', () => {
     spyOn(TestBed.inject(PostService), 'addPost').and.returnValue(of({ id: 'p9' } as PostDetail));
 
     await fixture.componentInstance.onFormSubmit({
-      tags: [],
       mediaIds: [],
     } as unknown as PostFormData);
 

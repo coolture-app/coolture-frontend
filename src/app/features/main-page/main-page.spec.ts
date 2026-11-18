@@ -27,7 +27,6 @@ function card(id: string): PostCard {
     title: `Post ${id}`,
     startsAt: '2026-12-01T18:00:00Z',
     openEnded: false,
-    tags: [],
     positiveReactionCount: 0,
     participantCount: 0,
     interestedCount: 0,
@@ -197,12 +196,10 @@ describe('MainPage', () => {
       expectFeed().flush({ ...page(), mode: 'RANKED' });
 
       component.filtersForm.controls.type.setValue('OFFLINE');
-      component.filtersForm.controls.tags.setValue('a, b');
       await debounce();
 
       const first = expectFeed();
       expect(param(first, 'type')).toBe('OFFLINE');
-      expect(first.request.params.getAll('tags')).toEqual(['a', 'b']);
       first.flush({
         items: [card('a')],
         page: { limit: 20, hasMore: true, nextCursor: 'c1' },

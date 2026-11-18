@@ -9,8 +9,6 @@
     "order": "Order",
     "clear": "Clear",
     "type": "Type",
-    "tags": "Tags",
-    "tagsPlaceholder": "music, art, theater",
     "fromDay": "From day",
     "toDay": "To day",
     "allTypes": "All Types",

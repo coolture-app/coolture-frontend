@@ -10,7 +10,6 @@ function card(id: string): PostCard {
     title: `Post ${id}`,
     startsAt: '2026-12-01T18:00:00Z',
     openEnded: false,
-    tags: [],
     positiveReactionCount: 0,
     participantCount: 0,
     interestedCount: 0,

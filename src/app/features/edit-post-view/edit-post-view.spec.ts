@@ -30,7 +30,7 @@ describe('EditPostView', () => {
 });
 
 function formData(removedMediaIds: string[] = []): PostFormData {
-  return { tags: [], mediaIds: [], removedMediaIds } as unknown as PostFormData;
+  return { mediaIds: [], removedMediaIds } as unknown as PostFormData;
 }
 
 describe('EditPostView, after saving', () => {
