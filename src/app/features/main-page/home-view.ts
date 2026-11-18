@@ -14,8 +14,9 @@ export type PlaceFilter = '' | 'mine' | 'picked';
 export const NO_FILTERS = {
   type: '',
   tags: '',
-  startsFrom: '',
-  startsTo: '',
+  /** Days, as a date input holds them ("2026-11-21"). A post matches if it runs at any moment between them. */
+  fromDay: '',
+  toDay: '',
   /** Only people I follow, and what friends are interested in or go to. */
   followed: false,
   status: '',
@@ -39,8 +40,8 @@ export function createFiltersForm() {
   return new FormGroup({
     type: new FormControl(NO_FILTERS.type, { nonNullable: true }),
     tags: new FormControl(NO_FILTERS.tags, { nonNullable: true }),
-    startsFrom: new FormControl(NO_FILTERS.startsFrom, { nonNullable: true }),
-    startsTo: new FormControl(NO_FILTERS.startsTo, { nonNullable: true }),
+    fromDay: new FormControl(NO_FILTERS.fromDay, { nonNullable: true }),
+    toDay: new FormControl(NO_FILTERS.toDay, { nonNullable: true }),
     followed: new FormControl(NO_FILTERS.followed, { nonNullable: true }),
     status: new FormControl(NO_FILTERS.status, { nonNullable: true }),
     includePast: new FormControl(NO_FILTERS.includePast, { nonNullable: true }),
@@ -88,4 +89,16 @@ export class HomeViewMemory {
     const current = saved && saved.query === this.list.query();
     return current && Date.now() - saved.at < RESTORE_WINDOW_MS ? saved.view : null;
   }
+}
+
+/** The API's window for two filter days: from the first day's start to the last day's end, in the browser's time zone. */
+export function dayWindow(fromDay: string, toDay: string): { from?: string; to?: string } {
+  const day = (value: string, hours: [number, number, number, number]) => {
+    const [year, month, date] = value.split('-').map(Number);
+    return new Date(year, month - 1, date, ...hours).toISOString();
+  };
+  return {
+    ...(fromDay && { from: day(fromDay, [0, 0, 0, 0]) }),
+    ...(toDay && { to: day(toDay, [23, 59, 59, 999]) }),
+  };
 }

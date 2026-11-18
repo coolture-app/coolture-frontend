@@ -17,8 +17,11 @@ export interface HomeUrlState {
 
 const SORTS: readonly PostsSort[] = ['UPCOMING', 'NEAREST', 'POPULAR', 'RECENT'];
 const TYPES: readonly string[] = ['OFFLINE', 'ONLINE'];
-/** What a `datetime-local` input holds. Anything else would throw when it's turned into a date. */
-const LOCAL_TIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/;
+/**
+ * A date input's day, with the time older links held after it ("2026-12-01T18:00"), which is dropped. Anything else
+ * would throw when it's turned into a date.
+ */
+const DAY = /^(\d{4}-\d{2}-\d{2})(T\d{2}:\d{2}(:\d{2})?)?$/;
 
 /** The query string for a state. Defaults are left out, so the default feed is a plain `/`. */
 export function toHomeParams({ search, filters, tab, sort, point, map }: HomeUrlState): Params {
@@ -30,8 +33,8 @@ export function toHomeParams({ search, filters, tab, sort, point, map }: HomeUrl
     ...(query && { q: query }),
     ...(filters.type && { type: filters.type.toLowerCase() }),
     ...(filters.tags.trim() && { tags: filters.tags.trim() }),
-    ...(filters.startsFrom && { from: filters.startsFrom }),
-    ...(filters.startsTo && { to: filters.startsTo }),
+    ...(filters.fromDay && { from: filters.fromDay }),
+    ...(filters.toDay && { to: filters.toDay }),
     ...(filters.followed && { followed: 'true' }),
     ...(filters.includePast && { past: 'true' }),
     ...(filters.place && point && { radius: String(filters.radiusKm) }),
@@ -48,7 +51,7 @@ export function fromHomeParams(params: Params): HomeUrlState {
     const value = text(name).toUpperCase();
     return allowed.includes(value) ? value : '';
   };
-  const localTime = (name: string): string => (LOCAL_TIME.test(text(name)) ? text(name) : '');
+  const day = (name: string): string => DAY.exec(text(name))?.[1] ?? '';
 
   const point = readPoint(text('lat'), text('lng'));
   const radius = Number(text('radius'));
@@ -68,8 +71,8 @@ export function fromHomeParams(params: Params): HomeUrlState {
       ...NO_FILTERS,
       type: oneOf('type', TYPES),
       tags: text('tags'),
-      startsFrom: localTime('from'),
-      startsTo: localTime('to'),
+      fromDay: day('from'),
+      toDay: day('to'),
       followed: text('followed') === 'true',
       includePast: text('past') === 'true',
       // A radius with no point asks for the reader's own position.

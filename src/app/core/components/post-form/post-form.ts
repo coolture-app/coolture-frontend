@@ -94,6 +94,8 @@ export class PostForm implements OnInit, OnChanges, OnDestroy {
   isSubmitting = false;
   /** Most events have no end, so its field waits for "Dodaj zakończenie". */
   showEnd = false;
+  /** "Bez daty końcowej": the event runs until further notice, so it has no end. */
+  openEnded = false;
 
   readonly locationGroup = locationForm();
 
@@ -189,6 +191,7 @@ export class PostForm implements OnInit, OnChanges, OnDestroy {
       },
     });
     this.showEnd = !!post.endsAt;
+    this.openEnded = post.openEnded;
     this.matchLocationTo(post.type);
   }
 
@@ -200,6 +203,13 @@ export class PostForm implements OnInit, OnChanges, OnDestroy {
   removeEnd(): void {
     this.showEnd = false;
     this.postForm.controls.endsAt.setValue('');
+  }
+
+  setOpenEnded(openEnded: boolean): void {
+    this.openEnded = openEnded;
+    if (openEnded) {
+      this.removeEnd();
+    }
   }
 
   /**
@@ -231,6 +241,7 @@ export class PostForm implements OnInit, OnChanges, OnDestroy {
       type: form.type ?? 'OFFLINE',
       startsAt: form.startsAt ? new Date(form.startsAt).toISOString() : '',
       endsAt: this.showEnd && form.endsAt ? new Date(form.endsAt).toISOString() : null,
+      openEnded: this.openEnded,
       description: form.description ?? '',
       eventUrl: form.eventUrl?.trim() || null,
       location: form.type === 'OFFLINE' ? this.locationRequest() : null,
@@ -278,6 +289,7 @@ export class PostForm implements OnInit, OnChanges, OnDestroy {
     this.postForm.reset({ type: 'OFFLINE' });
     this.matchLocationTo('OFFLINE');
     this.showEnd = false;
+    this.openEnded = false;
     this.photos().reset();
     this.isSubmitting = false;
   }

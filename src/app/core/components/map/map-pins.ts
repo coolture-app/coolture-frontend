@@ -3,6 +3,7 @@ import { GeoPoint } from '../../models/common/geo.model';
 import { PostMark } from '../../models/posts/post-mark.model';
 import { placeLine } from '../../models/posts/post-place';
 import { haversineMeters } from '../../services/location/location.service';
+import { daysBetween, hour, isRunning, plainDayMonth } from '../../utils/event-time';
 
 /**
  * Posts this close share one pin. Two venues in one building (Helios and Peron 5 in Metropolia) are a few metres
@@ -10,7 +11,6 @@ import { haversineMeters } from '../../services/location/location.service';
  */
 export const SAME_PLACE_METERS = 30;
 const TITLE_CHARS = 18;
-const DAY_MS = 24 * 60 * 60 * 1000;
 /** Up to this many days ahead a pin names the weekday; further, the month, so "sob 22" is never a month off. */
 const WEEKDAY_DAYS = 6;
 
@@ -80,16 +80,16 @@ export function groupPlaces(marks: readonly PostMark[]): Place[] {
 
 /** The pill's text: the hour today and tomorrow, the weekday and day within the week, else the day and month. */
 export function pinLabel(
-  post: Pick<PostMark, 'startsAt' | 'endsAt'>,
+  post: Pick<PostMark, 'startsAt' | 'endsAt' | 'openEnded'>,
   now: Date,
   locale: string,
   words: PinWords,
 ): string {
   const start = new Date(post.startsAt);
-  if (post.endsAt && start <= now && new Date(post.endsAt) > now) {
+  if (isRunning(post, now)) {
     return words.now;
   }
-  const days = Math.round((startOfDay(start) - startOfDay(now)) / DAY_MS);
+  const days = daysBetween(now, start);
   if (days === 0) {
     return `${words.today} ${hour(start, locale)}`;
   }
@@ -100,27 +100,7 @@ export function pinLabel(
     const weekday = new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(start);
     return `${weekday.replace('.', '')} ${start.getDate()}`;
   }
-  return dayMonth(start, locale);
-}
-
-/** "22 lis, 18:00": a post's start as the preview shows it, in the pins' words. */
-export function cardDate(iso: string, locale: string): string {
-  const date = new Date(iso);
-  return `${dayMonth(date, locale)}, ${hour(date, locale)}`;
-}
-
-function dayMonth(date: Date, locale: string): string {
-  return new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' })
-    .format(date)
-    .replace('.', '');
-}
-
-function hour(date: Date, locale: string): string {
-  return new Intl.DateTimeFormat(locale, {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  }).format(date);
+  return plainDayMonth(start, locale);
 }
 
 /** The title beside the pill when zoomed in, cut on a word where it can be. */
@@ -208,8 +188,4 @@ export function pinFeatures(
 
 function bySoonest(a: PostMark, b: PostMark): number {
   return a.startsAt.localeCompare(b.startsAt) || a.id.localeCompare(b.id);
-}
-
-function startOfDay(date: Date): number {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
 }

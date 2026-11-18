@@ -35,7 +35,7 @@
           <div class="post__info">
             <span class="post__date" [title]="'POST.starts' | translate">
               <ng-icon name="heroCalendar" />
-              {{ data.startsAt | date: dateFormats().short }}
+              {{ isFullView ? when.page(data) : when.card(data) }}
             </span>
             @if (ended) {
               <span class="post__ended">{{ 'POST.ended' | translate }}</span>

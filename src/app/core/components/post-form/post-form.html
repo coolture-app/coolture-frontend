@@ -60,11 +60,21 @@
         </div>
       }
     </div>
-    @if (!showEnd) {
-      <button type="button" class="post-form__add" (click)="addEnd()">
-        + {{ 'POST_FORM.add-end' | translate }}
-      </button>
-    }
+    <div class="post-form__end-options">
+      @if (!showEnd && !openEnded) {
+        <button type="button" class="post-form__add" (click)="addEnd()">
+          + {{ 'POST_FORM.add-end' | translate }}
+        </button>
+      }
+      <label class="post-form__no-end">
+        <input
+          type="checkbox"
+          [checked]="openEnded"
+          (change)="setOpenEnded($any($event.target).checked)"
+        />
+        {{ 'POST_FORM.no-end-date' | translate }}
+      </label>
+    </div>
   </section>
 
   <section class="post-form__section" aria-labelledby="where-label">

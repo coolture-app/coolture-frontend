@@ -21,6 +21,7 @@ function post(startsAt: string, endsAt?: string): PostDetail {
     description: 'Opis',
     startsAt,
     endsAt,
+    openEnded: false,
     tags: [],
     positiveReactionCount: 0,
     participantCount: 0,
@@ -216,7 +217,26 @@ describe('PostForm editing an existing post', () => {
     load(post(SUMMER_START));
 
     expect(component.endsAtControl.value).toBe('');
-    expect(submit().endsAt).toBeNull();
+    expect(submit()).toEqual(jasmine.objectContaining({ endsAt: null, openEnded: false }));
+  });
+
+  it('keeps a post with no end date so, and an end once it is unticked and given', () => {
+    load({ ...post(SUMMER_START), openEnded: true });
+
+    expect(component.openEnded).toBeTrue();
+    expect(submit()).toEqual(jasmine.objectContaining({ endsAt: null, openEnded: true }));
+
+    component.resetSubmitting();
+    component.setOpenEnded(false);
+    component.addEnd();
+    component.endsAtControl.setValue('2026-07-10T23:00');
+
+    expect(submit()).toEqual(
+      jasmine.objectContaining({
+        endsAt: new Date('2026-07-10T23:00').toISOString(),
+        openEnded: false,
+      }),
+    );
   });
 });
 
@@ -306,6 +326,31 @@ describe('PostForm fields', () => {
     component.endsAtControl.setValue('2030-05-01T22:00');
 
     expect(submit()!.endsAt).toBe(new Date('2030-05-01T22:00').toISOString());
+  });
+
+  it('hides the link and the end with "Bez daty końcowej", clears the end, and brings the link back', () => {
+    fillEventFields();
+    component.postForm.controls.type.setValue('ONLINE');
+    component.addEnd();
+    component.endsAtControl.setValue('2030-05-01T22:00');
+    fixture.detectChanges();
+    const element = fixture.nativeElement as HTMLElement;
+    const checkbox = element.querySelector<HTMLInputElement>('.post-form__no-end input')!;
+
+    checkbox.click();
+    fixture.detectChanges();
+
+    expect(element.querySelector('#endsAt')).toBeNull();
+    expect(element.querySelector('.post-form__add')).toBeNull();
+    expect(submit()).toEqual(jasmine.objectContaining({ endsAt: null, openEnded: true }));
+
+    component.resetSubmitting();
+    checkbox.click();
+    fixture.detectChanges();
+
+    expect(element.querySelector('.post-form__add')).not.toBeNull();
+    expect(element.querySelector('#endsAt')).toBeNull();
+    expect(submit()!.openEnded).toBeFalse();
   });
 
   it('refuses a start in the past at once, under the field, with Zapisz off', () => {
