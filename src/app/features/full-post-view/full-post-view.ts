@@ -7,7 +7,9 @@ import {
   viewChild,
   DestroyRef,
   effect,
+  signal,
 } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Title } from '@angular/platform-browser';
 import { PostComponent } from '../../core/components/post-component/post-component';
 import { BackLink } from '../../core/components/back-link/back-link';
@@ -18,10 +20,11 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { BackService } from '../../core/services/back/back.service';
 import { PostListStore } from '../../core/services/post-list/post-list.store';
+import { NotFoundView } from '../not-found-view/not-found-view';
 
 @Component({
   selector: 'app-full-post-view',
-  imports: [PostComponent, CommentThread, TranslatePipe, BackLink],
+  imports: [PostComponent, CommentThread, TranslatePipe, BackLink, NotFoundView],
   templateUrl: './full-post-view.html',
   styleUrl: './full-post-view.scss',
 })
@@ -38,6 +41,8 @@ export class FullPostView implements OnInit {
 
   commentSection = viewChild<ElementRef>('commentSection');
   post = this.postService.activePost;
+  /** Deleted, missing, or by someone in a block with the viewer: the API doesn't say which. The URL stays. */
+  notFound = signal(false);
 
   constructor() {
     effect(() => {
@@ -76,7 +81,13 @@ export class FullPostView implements OnInit {
               this.postService.setActivePost(data);
               this.title.setTitle(data.title);
             },
-            error: (error) => console.log(error),
+            error: (error) => {
+              if (error instanceof HttpErrorResponse && error.status === 404) {
+                this.notFound.set(true);
+              } else {
+                console.error(error);
+              }
+            },
           });
       }
     } else {

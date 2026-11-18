@@ -260,6 +260,14 @@
     font-size: var(--text-sm);
   }
 
+  &__ended {
+    margin-left: var(--space-xs);
+    padding: 0 var(--space-xs);
+    border-radius: var(--radius-full);
+    background: var(--color-border-light);
+    font-size: var(--text-meta);
+  }
+
   &__text {
     display: -webkit-box;
     margin: 0;
@@ -308,6 +316,19 @@
       border-color: var(--color-accent);
       background: var(--color-accent-light);
       color: var(--color-accent);
+    }
+
+    // A choice already made stays lit, so the viewer still sees it.
+    &--unavailable {
+      cursor: not-allowed;
+
+      &:not(.mini__react--on) {
+        opacity: 0.45;
+
+        &:hover {
+          background: var(--color-surface);
+        }
+      }
     }
   }
 

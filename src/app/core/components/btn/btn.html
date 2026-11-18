@@ -3,6 +3,7 @@
   [disabled]="disabled"
   [type]="type"
   [attr.aria-pressed]="pressed"
+  [attr.aria-disabled]="unavailable || null"
   [appTooltip]="label"
   (click)="onClick($event)"
 >
