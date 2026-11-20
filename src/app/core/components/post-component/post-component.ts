@@ -167,12 +167,19 @@ export class PostComponent implements OnInit {
     return hasEnded(this.data, new Date());
   }
 
-  /** The post page's first kind, the likeliest. Cards don't show one. */
-  kind(): { key: string; name: string; icon: string } | null {
-    const key = 'kinds' in this.data ? this.data.kinds?.[0] : undefined;
-    const name = key ? this.kinds.eventName(key) : null;
-    return key && name ? { key, name, icon: kindIcon(key) } : null;
+  /**
+   * The post page's kinds, best first, each a link to Wszystkie filtered by it: a post that turns up under a second
+   * kind says so here. Cards don't show them.
+   */
+  shownKinds(): { key: string; name: string }[] {
+    const keys = 'kinds' in this.data ? (this.data.kinds ?? []) : [];
+    return keys.flatMap((key) => {
+      const name = this.kinds.eventName(key);
+      return name ? [{ key, name }] : [];
+    });
   }
+
+  readonly kindIcon = kindIcon;
 
   /** The note after a stance's name in its tooltip: why it's off, or who sees it. A translation key. */
   get stanceNote(): string | null {

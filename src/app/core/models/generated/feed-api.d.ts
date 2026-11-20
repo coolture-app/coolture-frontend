@@ -163,8 +163,10 @@ export interface components {
       coordinates: components['schemas']['GeoPoint'];
       venueName?: string;
       city?: string;
-      /** @description The post's first kind of event, for the pin's icon. Left out until derived. */
+      /** @description The kind the pin names: the first of the post's kinds among those asked for in `kinds`, else its first. Left out until derived. */
       kind?: string;
+      /** @description Every kind of event the post has, best first. Left out until derived. */
+      kinds?: string[];
       myReaction?: components['schemas']['ReactionType'];
       myParticipation?: components['schemas']['ParticipationType'];
       friendStances?: components['schemas']['FriendStances'];

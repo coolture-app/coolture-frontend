@@ -550,20 +550,23 @@ describe('PostComponent', () => {
       fixture.detectChanges();
     }
 
-    it('names the first kind on the post page, linking to Wszystkie filtered by it', async () => {
+    it('names every kind on the post page, best first, each linking to Wszystkie filtered by it', async () => {
       render(detail(['stage', 'concerts']), true);
       await flushKinds();
 
-      const link = element().querySelector<HTMLAnchorElement>('.post__kind')!;
-      expect(link.textContent?.trim()).toBe('Scena');
-      expect(link.getAttribute('href')).toBe('/?tab=all&kinds=stage');
+      const links = [...element().querySelectorAll<HTMLAnchorElement>('.post__kind')];
+      expect(links.map((link) => link.textContent?.trim())).toEqual(['Scena', 'Koncerty']);
+      expect(links.map((link) => link.getAttribute('href'))).toEqual([
+        '/?tab=all&kinds=stage',
+        '/?tab=all&kinds=concerts',
+      ]);
     });
 
     it('shows nothing before a kind is derived', async () => {
       render(detail([]), true);
       await new Promise((resolve) => setTimeout(resolve));
 
-      expect(element().querySelector('.post__kind')).toBeNull();
+      expect(element().querySelector('.post__kinds')).toBeNull();
       http.expectNone((r) => r.url.endsWith('/dicts/interests'));
     });
 
@@ -571,7 +574,7 @@ describe('PostComponent', () => {
       render(detail(['stage']));
       await new Promise((resolve) => setTimeout(resolve));
 
-      expect(element().querySelector('.post__kind')).toBeNull();
+      expect(element().querySelector('.post__kinds')).toBeNull();
       http.expectNone((r) => r.url.endsWith('/dicts/interests'));
     });
   });

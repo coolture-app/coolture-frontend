@@ -11,9 +11,9 @@ import {
   lucideMic,
   lucideMusic,
   lucidePartyPopper,
+  lucidePersonStanding,
   lucideTent,
   lucideTrees,
-  lucideTrophy,
   lucideUtensils,
 } from '@ng-icons/lucide';
 
@@ -31,7 +31,7 @@ const KIND_ICONS: Readonly<Record<string, string>> = {
   nightlife: lucidePartyPopper,
   fairs: lucideTent,
   food: lucideUtensils,
-  sports: lucideTrophy,
+  sports: lucidePersonStanding,
   wellbeing: lucideLeaf,
   outdoors: lucideTrees,
   kids: lucideBaby,

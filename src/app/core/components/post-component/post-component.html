@@ -33,16 +33,22 @@
         <div class="post__author">
           <span class="post__username">{{ data.author.username }}</span>
           <div class="post__info">
-            @if (isFullView && kind(); as kind) {
-              <a
-                class="post__kind"
-                routerLink="/"
-                [queryParams]="{ tab: 'all', kinds: kind.key }"
-                [appTooltip]="'POST.kindHint' | translate: { kind: kind.name }"
-              >
-                <ng-icon [svg]="kind.icon" aria-hidden="true" />
-                {{ kind.name }}
-              </a>
+            @if (isFullView) {
+              @let kinds = shownKinds();
+              @if (kinds.length) {
+                <span class="post__kinds">
+                  <ng-icon [svg]="kindIcon(kinds[0].key)" aria-hidden="true" />
+                  @for (kind of kinds; track kind.key) {
+                    <a
+                      class="post__kind"
+                      routerLink="/"
+                      [queryParams]="{ tab: 'all', kinds: kind.key }"
+                      [appTooltip]="'POST.kindHint' | translate: { kind: kind.name }"
+                      >{{ kind.name }}</a
+                    >
+                  }
+                </span>
+              }
             }
             <span class="post__date" [title]="'POST.starts' | translate">
               <ng-icon name="heroCalendar" />

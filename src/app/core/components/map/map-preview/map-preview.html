@@ -96,8 +96,8 @@
           {{ post.title }}
         </a>
         <span class="mini__meta">
-          @if (post.kind && kinds.eventName(post.kind); as kind) {
-            {{ kind }} ·
+          @if (kindWords(post); as words) {
+            {{ words }} ·
           }
           {{ when(post) }}
           @if (ended(post)) {

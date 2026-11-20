@@ -68,6 +68,13 @@ export class MapPreview {
   readonly sheet = inject(CommentsSheetService);
   readonly kinds = inject(KindsService);
   readonly kindIcon = kindIcon;
+
+  /** The pin's kind first, so the words agree with the icon, then the rest: "Koncert, Scena". */
+  kindWords(post: PostMark): string | null {
+    const keys = post.kind ? [post.kind, ...(post.kinds ?? []).filter((k) => k !== post.kind)] : [];
+    const words = keys.map((k) => this.kinds.eventName(k)).filter((w): w is string => !!w);
+    return words.length ? words.join(', ') : null;
+  }
   readonly sharesStances = computed(() => this.auth.isAuthenticated() && this.auth.shareStances());
   readonly hoverable = mediaQuery('(hover: hover)');
 
