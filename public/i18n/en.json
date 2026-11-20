@@ -9,7 +9,7 @@
     "order": "Order",
     "clear": "Clear",
     "kind": "Kind",
-    "anyKind": "Any kind",
+    "clearKinds": "Clear kind",
     "kids": "For children",
     "type": "Type",
     "fromDay": "From day",

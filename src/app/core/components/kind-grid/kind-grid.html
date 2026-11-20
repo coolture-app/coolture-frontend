@@ -5,8 +5,8 @@
       class="kind"
       [class.kind--on]="selected().has(tile.key)"
       [attr.aria-pressed]="selected().has(tile.key)"
-      [disabled]="disabled()"
-      (click)="toggled.emit(tile.key)"
+      [disabled]="off()"
+      (click)="tap(tile.key)"
     >
       <ng-icon class="kind__icon" [svg]="tile.icon" aria-hidden="true" />
       <span class="kind__text">

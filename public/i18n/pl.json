@@ -9,7 +9,7 @@
     "order": "Kolejność",
     "clear": "Wyczyść",
     "kind": "Rodzaj",
-    "anyKind": "Każdy rodzaj",
+    "clearKinds": "Wyczyść rodzaj",
     "kids": "Dla dzieci",
     "type": "Typ",
     "fromDay": "Od dnia",
