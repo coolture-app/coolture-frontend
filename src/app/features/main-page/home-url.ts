@@ -1,6 +1,7 @@
 import { Params } from '@angular/router';
 import { GeoPoint } from '../../core/models/common/geo.model';
 import { PostsSort } from '../../core/models/common/enums';
+import { KIDS_KIND } from '../../core/services/interests/kinds.service';
 import { FilterValues, HomeTab, NO_FILTERS, RADII_KM, START_SORT } from './home-view';
 
 /** What the home page's URL holds, so that a reload or a shared link shows the same list. */
@@ -25,6 +26,11 @@ const MAX_KINDS = 32;
  * would throw when it's turned into a date.
  */
 const DAY = /^(\d{4}-\d{2}-\d{2})(T\d{2}:\d{2}(:\d{2})?)?$/;
+
+/** Wszystkie filtered by one kind: Dla dzieci is the switch, any other kind is a chip. */
+export function kindParams(key: string): Params {
+  return key === KIDS_KIND ? { tab: 'all', kids: 'true' } : { tab: 'all', kinds: key };
+}
 
 /** The query string for a state. Defaults are left out, so the default feed is a plain `/`. */
 export function toHomeParams({ search, filters, tab, sort, point, map }: HomeUrlState): Params {
@@ -64,6 +70,8 @@ export function fromHomeParams(params: Params): HomeUrlState {
     Number.isInteger(radius) && radius >= 1 && radius <= RADII_KM[RADII_KM.length - 1];
   const tab: HomeTab = text('tab') === 'all' ? 'all' : 'forYou';
   const sort = oneOf('sort', SORTS) as PostsSort | '';
+  // Dla dzieci is the switch, so a link that lists it as a kind reads the same.
+  const kinds = kindKeys(text('kinds'));
 
   return {
     search: text('q'),
@@ -73,8 +81,8 @@ export function fromHomeParams(params: Params): HomeUrlState {
     map: text('view') === 'map',
     filters: {
       ...NO_FILTERS,
-      kinds: kindKeys(text('kinds')),
-      kids: text('kids') === 'true',
+      kinds: kinds.filter((key) => key !== KIDS_KIND),
+      kids: text('kids') === 'true' || kinds.includes(KIDS_KIND),
       type: oneOf('type', TYPES),
       fromDay: day('from'),
       toDay: day('to'),

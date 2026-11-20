@@ -42,7 +42,7 @@
                     <a
                       class="post__kind"
                       routerLink="/"
-                      [queryParams]="{ tab: 'all', kinds: kind.key }"
+                      [queryParams]="kindParams(kind.key)"
                       [appTooltip]="'POST.kindHint' | translate: { kind: kind.name }"
                       >{{ kind.name }}</a
                     >

@@ -1,4 +1,4 @@
-import { fromHomeParams, HomeUrlState, sameHomeParams, toHomeParams } from './home-url';
+import { fromHomeParams, HomeUrlState, kindParams, sameHomeParams, toHomeParams } from './home-url';
 import { dayWindow, NO_FILTERS } from './home-view';
 
 const DEFAULT: HomeUrlState = {
@@ -110,6 +110,19 @@ describe('the home URL', () => {
 
     expect(filters.kinds).toEqual(['concerts', 'food']);
     expect(filters.kids).toBeFalse();
+  });
+
+  it('reads kinds=kids as the Dla dzieci switch, not as a kind', () => {
+    const { filters } = fromHomeParams({ kinds: 'concerts,kids' });
+
+    expect(filters.kinds).toEqual(['concerts']);
+    expect(filters.kids).toBeTrue();
+  });
+
+  it('links Dla dzieci as the switch, and any other kind as a chip', () => {
+    expect(kindParams('kids')).toEqual({ tab: 'all', kids: 'true' });
+    expect(kindParams('concerts')).toEqual({ tab: 'all', kinds: 'concerts' });
+    expect(fromHomeParams(kindParams('kids')).filters.kids).toBeTrue();
   });
 
   it('takes a whole radius from the map’s area, up to the largest chip', () => {

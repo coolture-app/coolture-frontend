@@ -544,6 +544,7 @@ describe('PostComponent', () => {
           kinds: [
             { key: 'concerts', labelPl: 'Koncerty', labelEn: 'Concerts' },
             { key: 'stage', labelPl: 'Scena', labelEn: 'Stage' },
+            { key: 'kids', labelPl: 'Dla dzieci', labelEn: 'For kids' },
           ],
           categories: [],
         });
@@ -562,20 +563,29 @@ describe('PostComponent', () => {
       ]);
     });
 
+    it('links Dla dzieci as the switch, and the other kinds as chips', async () => {
+      render(detail(['kids', 'concerts']), true);
+      await flushKinds();
+
+      const links = [...element().querySelectorAll<HTMLAnchorElement>('.post__kind')];
+      expect(links.map((link) => link.getAttribute('href'))).toEqual([
+        '/?tab=all&kids=true',
+        '/?tab=all&kinds=concerts',
+      ]);
+    });
+
     it('shows nothing before a kind is derived', async () => {
       render(detail([]), true);
       await new Promise((resolve) => setTimeout(resolve));
 
       expect(element().querySelector('.post__kinds')).toBeNull();
-      http.expectNone((r) => r.url.endsWith('/dicts/interests'));
     });
 
-    it('stays off cards, which load no kinds', async () => {
+    it('stays off cards', async () => {
       render(detail(['stage']));
       await new Promise((resolve) => setTimeout(resolve));
 
       expect(element().querySelector('.post__kinds')).toBeNull();
-      http.expectNone((r) => r.url.endsWith('/dicts/interests'));
     });
   });
 
@@ -693,7 +703,7 @@ describe('PostComponent', () => {
 
       expect(login).toHaveBeenCalledTimes(4);
       expect(login).toHaveBeenCalledWith(TestBed.inject(Router).url);
-      http.expectNone(() => true);
+      http.expectNone((r) => !r.url.endsWith('/dicts/interests'));
       expect(component.isLiked()).toBeFalse();
       expect(component.stance()).toBeUndefined();
     });
@@ -889,7 +899,7 @@ describe('PostComponent', () => {
       render(data);
 
       stanceButtons()[1].click();
-      http.expectNone(() => true);
+      http.expectNone((r) => !r.url.endsWith('/dicts/interests'));
       expect(data.myParticipation).toBeUndefined();
 
       component.likePost();

@@ -41,6 +41,7 @@ import { frameShape, Photo, toPhoto } from '../../models/media/photo';
 import { PhotoViewerService } from '../../services/photo-viewer/photo-viewer.service';
 import { appTicket } from '../../icons/ticket';
 import { kindIcon } from '../../icons/kind-icons';
+import { kindParams } from '../../../features/main-page/home-url';
 import { KindsService } from '../../services/interests/kinds.service';
 import { FriendsLine } from '../friends-line/friends-line';
 import { InteractionsService } from '../../services/interactions/interactions.service';
@@ -180,6 +181,7 @@ export class PostComponent implements OnInit {
   }
 
   readonly kindIcon = kindIcon;
+  readonly kindParams = kindParams;
 
   /** The note after a stance's name in its tooltip: why it's off, or who sees it. A translation key. */
   get stanceNote(): string | null {
