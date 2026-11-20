@@ -7,8 +7,8 @@ import { Kind } from '../../models/interests/interest.model';
 import { InterestsService } from './interests.service';
 
 /**
- * The kinds of event and their names, from the cached catalogue. It's asked for only once a name is first read, so
- * pages that show no kind, such as a list of cards, don't load it.
+ * The kinds of event and their names, from the cached catalogue. It's asked for only once a name is first read, or
+ * on `preload`, so pages that show no kind don't load it.
  */
 @Injectable({
   providedIn: 'root',
@@ -49,6 +49,11 @@ export class KindsService {
     const id = `KINDS.one.${key}`;
     const word: string = this.translate.instant(id);
     return word !== id ? word : this.name(key);
+  }
+
+  /** Asks for the catalogue now, so a panel that shows the kinds opens with them rather than growing when they arrive. */
+  preload(): void {
+    this.request();
   }
 
   /** Later, since a cached catalogue answers at once, and a signal can't be set while a computed one is read. */

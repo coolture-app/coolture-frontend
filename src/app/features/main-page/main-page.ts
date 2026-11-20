@@ -38,6 +38,7 @@ import { PostFilterParams } from '../../core/models/posts/post-filter-params.mod
 import { NamedPlace } from '../../core/models/common/geo.model';
 import { GeocodingService } from '../../core/services/geocoding/geocoding.service';
 import { PostService } from '../../core/services/post/post.service';
+import { KindsService } from '../../core/services/interests/kinds.service';
 import { AuthService } from '../../core/services/auth/auth.service';
 import { LocationService } from '../../core/services/location/location.service';
 import { PostListStore } from '../../core/services/post-list/post-list.store';
@@ -123,6 +124,7 @@ const MAP_PICKS = 30;
 })
 export class MainPage implements OnDestroy {
   private postService = inject(PostService);
+  private kinds = inject(KindsService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private destroyRef = inject(DestroyRef);
@@ -264,6 +266,8 @@ export class MainPage implements OnDestroy {
       this.isMapView.set(fromHomeParams(this.route.snapshot.queryParams).map);
     }
     this.postService.clearActivePost();
+    // Filtry's kinds, so the panel opens with them. After render, so only in the browser.
+    afterNextRender(() => this.kinds.preload());
     this.mapOpened.set(this.isMapView());
     this.mapResumes.set(restored && this.isMapView());
     const focus = this.mapFocus.take();

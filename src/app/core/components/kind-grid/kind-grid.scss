@@ -12,7 +12,10 @@
 
 .kind {
   display: inline-flex;
+  // Filtry's chips grow to fill each row, so the rows end flush instead of ragged.
+  flex: 1 0 auto;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   padding: 6px 12px 6px 10px;
   border: 1px solid var(--color-border);
@@ -75,6 +78,7 @@
 
   .kinds--large & {
     align-items: flex-start;
+    justify-content: flex-start;
     gap: var(--space-sm);
     padding: var(--space-md);
     border-radius: var(--radius-md);
