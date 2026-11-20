@@ -316,6 +316,7 @@ export class Map implements OnDestroy {
     const labels = followLanguage(map, this.translate);
     this.destroy$.subscribe(() => labels.unsubscribe());
     layers.addPillImages(map);
+    layers.addKindImages(map);
     const focus = this.focus();
     if (focus) {
       this.showFocus(map, focus, false);
@@ -342,9 +343,12 @@ export class Map implements OnDestroy {
     }
   }
 
-  /** MapLibre asks again for the pills if a style reload dropped them. */
-  onImageMissing(): void {
-    if (this.map) {
+  /**
+   * MapLibre asks again for the pills if a style reload dropped them, and for the icon of a kind the frontend doesn't
+   * know yet, which gets a plain one.
+   */
+  onImageMissing(id: string): void {
+    if (this.map && !layers.addKindImage(this.map, id)) {
       layers.addPillImages(this.map);
     }
   }

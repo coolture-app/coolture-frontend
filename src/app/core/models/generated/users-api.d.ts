@@ -137,7 +137,10 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** Every interest a person can pick, by category, with how many they must pick */
+    /**
+     * Onboarding's choices, kinds of event then interests by category, with how many to pick
+     * @description Only offered interests are listed, and only they can be picked. A category with no offered interest is left out.
+     */
     get: operations['getInterestCatalog'];
     put?: never;
     post?: never;
@@ -157,13 +160,13 @@ export interface paths {
       cookie?: never;
     };
     /**
-     * Someone's picked interests
+     * Someone's picked kinds and interests
      * @description Any signed-in user can read anyone's, for their profile, except across a block (404).
      */
     get: operations['getUserInterests'];
     /**
-     * Replaces the caller's interests
-     * @description Between the catalogue's minSelections and maxSelections keys, all from the catalogue, or 400.
+     * Replaces the caller's kinds and interests
+     * @description At least the catalogue's minKinds kinds, and between its minInterests and maxInterests offered interests; otherwise 400.
      */
     put: operations['replaceUserInterests'];
     post?: never;
@@ -277,7 +280,7 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
-    /** @description followersCount, followingCount, bio, createdAt and interests are left out of a blocker's slim profile, and only there. */
+    /** @description followersCount, followingCount, bio, createdAt, interests and kinds are left out of a blocker's slim profile, and only there. */
     UserProfile: {
       /** Format: uuid */
       id: string;
@@ -296,6 +299,8 @@ export interface components {
       followsYou: boolean;
       /** @description The keys picked, in the catalogue's order, empty if none. In the profile so the page needs no second request. A guest gets them too: they're no more private than the rest of the profile. */
       interests?: string[];
+      /** @description The kinds of event picked, in the catalogue's order, empty if none. */
+      kinds?: string[];
     };
     /** @description UserProfile's fields, plus what only the caller sees. */
     Me: {
@@ -315,8 +320,9 @@ export interface components {
       /** @description Always false, as you can't follow yourself. */
       followsYou: boolean;
       interests: string[];
-      /** @description False until onboarding's interests are saved. */
-      interestsSelected: boolean;
+      kinds: string[];
+      /** @description Whether the caller has picked their kinds of event. False until onboarding is saved, and for accounts from before kinds, which onboarding then asks again. */
+      onboarded: boolean;
       /** @description Whether friends (mutual follows) see the caller's Interesuje mnie and Biorę udział. True until turned off. */
       shareStances: boolean;
       home?: components['schemas']['Home'];
@@ -374,8 +380,10 @@ export interface components {
       setAt: string;
     };
     InterestCatalog: {
-      minSelections: number;
-      maxSelections: number;
+      minKinds: number;
+      minInterests: number;
+      maxInterests: number;
+      kinds: components['schemas']['Kind'][];
       categories: components['schemas']['InterestCategory'][];
     };
     InterestCategory: {
@@ -384,12 +392,18 @@ export interface components {
       labelEn: string;
       interests: components['schemas']['Interest'][];
     };
+    Kind: {
+      key: string;
+      labelPl: string;
+      labelEn: string;
+    };
     Interest: {
       key: string;
       labelPl: string;
       labelEn: string;
     };
     UserInterests: {
+      kinds: string[];
       interests: string[];
     };
     GeoPoint: {
@@ -759,7 +773,7 @@ export interface operations {
     };
     requestBody?: never;
     responses: {
-      /** @description Interest keys */
+      /** @description Kind and interest keys */
       200: {
         headers: {
           [name: string]: unknown;
@@ -785,10 +799,14 @@ export interface operations {
       content: {
         /**
          * @example {
+         *       "kinds": [
+         *         "stage",
+         *         "cinema"
+         *       ],
          *       "interests": [
          *         "theatre",
          *         "stand_up",
-         *         "cinema"
+         *         "jazz"
          *       ]
          *     }
          */
@@ -796,7 +814,7 @@ export interface operations {
       };
     };
     responses: {
-      /** @description The interests as stored, without repeats */
+      /** @description The kinds and interests as stored, without repeats */
       200: {
         headers: {
           [name: string]: unknown;

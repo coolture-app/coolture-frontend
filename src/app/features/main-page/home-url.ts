@@ -1,6 +1,7 @@
 import { Params } from '@angular/router';
 import { GeoPoint } from '../../core/models/common/geo.model';
 import { PostsSort } from '../../core/models/common/enums';
+import { KIDS_KIND } from '../../core/services/interests/kinds.service';
 import { FilterValues, HomeTab, NO_FILTERS, RADII_KM, START_SORT } from './home-view';
 
 /** What the home page's URL holds, so that a reload or a shared link shows the same list. */
@@ -17,11 +18,19 @@ export interface HomeUrlState {
 
 const SORTS: readonly PostsSort[] = ['UPCOMING', 'NEAREST', 'POPULAR', 'RECENT'];
 const TYPES: readonly string[] = ['OFFLINE', 'ONLINE'];
+/** The contract's pattern for `kinds`. */
+const KIND_KEY = /^[a-z_]{1,64}$/;
+const MAX_KINDS = 32;
 /**
  * A date input's day, with the time older links held after it ("2026-12-01T18:00"), which is dropped. Anything else
  * would throw when it's turned into a date.
  */
 const DAY = /^(\d{4}-\d{2}-\d{2})(T\d{2}:\d{2}(:\d{2})?)?$/;
+
+/** Wszystkie filtered by one kind: Dla dzieci is the switch, any other kind is a chip. */
+export function kindParams(key: string): Params {
+  return key === KIDS_KIND ? { tab: 'all', kids: 'true' } : { tab: 'all', kinds: key };
+}
 
 /** The query string for a state. Defaults are left out, so the default feed is a plain `/`. */
 export function toHomeParams({ search, filters, tab, sort, point, map }: HomeUrlState): Params {
@@ -31,6 +40,8 @@ export function toHomeParams({ search, filters, tab, sort, point, map }: HomeUrl
     ...(inAll && { tab: 'all' }),
     ...(inAll && sort !== START_SORT && { sort: sort.toLowerCase() }),
     ...(query && { q: query }),
+    ...(filters.kinds.length && { kinds: filters.kinds.join(',') }),
+    ...(filters.kids && { kids: 'true' }),
     ...(filters.type && { type: filters.type.toLowerCase() }),
     ...(filters.fromDay && { from: filters.fromDay }),
     ...(filters.toDay && { to: filters.toDay }),
@@ -59,6 +70,8 @@ export function fromHomeParams(params: Params): HomeUrlState {
     Number.isInteger(radius) && radius >= 1 && radius <= RADII_KM[RADII_KM.length - 1];
   const tab: HomeTab = text('tab') === 'all' ? 'all' : 'forYou';
   const sort = oneOf('sort', SORTS) as PostsSort | '';
+  // Dla dzieci is the switch, so a link that lists it as a kind reads the same.
+  const kinds = kindKeys(text('kinds'));
 
   return {
     search: text('q'),
@@ -68,6 +81,8 @@ export function fromHomeParams(params: Params): HomeUrlState {
     map: text('view') === 'map',
     filters: {
       ...NO_FILTERS,
+      kinds: kinds.filter((key) => key !== KIDS_KIND),
+      kids: text('kids') === 'true' || kinds.includes(KIDS_KIND),
       type: oneOf('type', TYPES),
       fromDay: day('from'),
       toDay: day('to'),
@@ -84,6 +99,15 @@ export function fromHomeParams(params: Params): HomeUrlState {
 export function sameHomeParams(a: Params, b: Params): boolean {
   const sorted = (params: Params) => JSON.stringify(Object.entries(params).sort());
   return sorted(a) === sorted(b);
+}
+
+/**
+ * Kind keys as the API takes them, without repeats. A well-formed key no post has just matches nothing, so the
+ * catalogue isn't needed here; anything else would be a 400.
+ */
+function kindKeys(value: string): string[] {
+  const keys = value.split(',').filter((key) => KIND_KEY.test(key));
+  return [...new Set(keys)].slice(0, MAX_KINDS);
 }
 
 function readPoint(lat: string, lng: string): GeoPoint | null {

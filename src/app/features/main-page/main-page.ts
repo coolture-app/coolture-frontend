@@ -38,6 +38,7 @@ import { PostFilterParams } from '../../core/models/posts/post-filter-params.mod
 import { NamedPlace } from '../../core/models/common/geo.model';
 import { GeocodingService } from '../../core/services/geocoding/geocoding.service';
 import { PostService } from '../../core/services/post/post.service';
+import { KindsService } from '../../core/services/interests/kinds.service';
 import { AuthService } from '../../core/services/auth/auth.service';
 import { LocationService } from '../../core/services/location/location.service';
 import { PostListStore } from '../../core/services/post-list/post-list.store';
@@ -123,6 +124,8 @@ const MAP_PICKS = 30;
 })
 export class MainPage implements OnDestroy {
   private postService = inject(PostService);
+  /** Created with the page, so its catalogue is loaded by the time Filtry opens. */
+  private kinds = inject(KindsService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private destroyRef = inject(DestroyRef);
@@ -202,10 +205,10 @@ export class MainPage implements OnDestroy {
       ? (this.home()?.name ?? null)
       : null,
   );
-  /** How many filters the panel has on, counting a date range as one. Not the search or the place. */
+  /** How many filters the panel has on, counting a date range and the chosen kinds as one each. Not the search or the place. */
   readonly activeFilterCount = computed(() => {
-    const { type, from, to, followed, status, includePast } = this.activeFilters();
-    const on = [type, from || to, followed, status, includePast];
+    const { kinds, kids, type, from, to, followed, status, includePast } = this.activeFilters();
+    const on = [kinds, kids, type, from || to, followed, status, includePast];
     return on.filter((value) => value !== undefined && value !== false).length;
   });
   /** A screenful for the first page. After that one is enough, and the posts stay what's on screen. */
@@ -679,12 +682,14 @@ export class MainPage implements OnDestroy {
 
   private readFilters(): PostFilterParams {
     const search = this.searchControl.value.trim();
-    const { type, fromDay, toDay, followed, status, includePast, radiusKm } =
+    const { kinds, kids, type, fromDay, toDay, followed, status, includePast, radiusKm } =
       this.filtersForm.getRawValue();
     const position = this.place.centre(this.filtersForm.controls.place.value);
 
     return {
       ...(search && { q: search }),
+      ...(kinds.length && { kinds }),
+      ...(kids && { kids }),
       ...(type && { type: type as PostType }),
       ...dayWindow(fromDay, toDay),
       ...(followed && this.authService.isAuthenticated() && { followed }),

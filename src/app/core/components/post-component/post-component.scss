@@ -86,6 +86,7 @@
 }
 
 .post__date,
+.post__kinds,
 .post__location {
   display: inline-flex;
   align-items: center;
@@ -400,4 +401,26 @@
   padding: var(--space-xl);
   color: var(--color-text-tertiary);
   font-size: var(--text-sm);
+}
+
+.post__kinds {
+  flex-wrap: wrap;
+
+  ng-icon {
+    display: flex;
+  }
+}
+
+.post__kind {
+  color: inherit;
+  font-weight: var(--font-medium);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  &:not(:last-child)::after {
+    content: ',';
+  }
 }

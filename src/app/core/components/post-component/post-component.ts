@@ -18,7 +18,7 @@ import {
 import { PostCard } from '../../models/posts/post-card.model';
 import { PostDetail } from '../../models/posts/post-detail.model';
 import { MapFocus } from '../map/map-focus';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
@@ -40,6 +40,9 @@ import { catchError, concatMap, EMPTY, Observable, Subject, tap } from 'rxjs';
 import { frameShape, Photo, toPhoto } from '../../models/media/photo';
 import { PhotoViewerService } from '../../services/photo-viewer/photo-viewer.service';
 import { appTicket } from '../../icons/ticket';
+import { kindIcon } from '../../icons/kind-icons';
+import { kindParams } from '../../../features/main-page/home-url';
+import { KindsService } from '../../services/interests/kinds.service';
 import { FriendsLine } from '../friends-line/friends-line';
 import { InteractionsService } from '../../services/interactions/interactions.service';
 import { AuthService } from '../../services/auth/auth.service';
@@ -87,7 +90,7 @@ export type PostFold = 'marked' | 'unmarked' | null;
 
 @Component({
   selector: 'app-post-component',
-  imports: [NgIcon, CountedIcon, TranslatePipe, ModalWindow, Btn, Tooltip, FriendsLine],
+  imports: [NgIcon, CountedIcon, TranslatePipe, ModalWindow, Btn, Tooltip, FriendsLine, RouterLink],
   viewProviders: [
     provideIcons({
       appTicket,
@@ -155,6 +158,7 @@ export class PostComponent implements OnInit {
 
   isMyPost = signal<boolean>(false);
   readonly when = inject(EventWhenService);
+  private kinds = inject(KindsService);
 
   @Input() data!: PostCard | PostDetail;
   @Input() isFullView!: boolean;
@@ -163,6 +167,21 @@ export class PostComponent implements OnInit {
   get ended(): boolean {
     return hasEnded(this.data, new Date());
   }
+
+  /**
+   * The post page's kinds, best first, each a link to Wszystkie filtered by it: a post that turns up under a second
+   * kind says so here. Cards don't show them.
+   */
+  shownKinds(): { key: string; name: string }[] {
+    const keys = 'kinds' in this.data ? (this.data.kinds ?? []) : [];
+    return keys.flatMap((key) => {
+      const name = this.kinds.eventName(key);
+      return name ? [{ key, name }] : [];
+    });
+  }
+
+  readonly kindIcon = kindIcon;
+  readonly kindParams = kindParams;
 
   /** The note after a stance's name in its tooltip: why it's off, or who sees it. A translation key. */
   get stanceNote(): string | null {

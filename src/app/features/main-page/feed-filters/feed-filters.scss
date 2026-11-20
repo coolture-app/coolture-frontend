@@ -23,6 +23,23 @@
     font-size: var(--text-base);
   }
 
+  &__kinds {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    margin-bottom: var(--space-md);
+  }
+
+  &__kinds-head {
+    @include flex-between;
+  }
+
+  &__label {
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+    font-weight: 500;
+  }
+
   &__row {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));

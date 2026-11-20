@@ -32,7 +32,17 @@
             (click)="open(post)"
             (mouseenter)="onRowEnter(post, $event)"
           >
-            <span class="preview__date">{{ when(post) }}</span>
+            <span class="preview__date">
+              @if (post.kind) {
+                <ng-icon
+                  class="preview__kind"
+                  [svg]="kindIcon(post.kind)"
+                  [attr.aria-label]="kinds.eventName(post.kind)"
+                  role="img"
+                />
+              }
+              {{ when(post) }}
+            </span>
             <span class="preview__row-title">
               @if (isPick(post)) {
                 <app-pick-star class="preview__star" />
@@ -86,6 +96,9 @@
           {{ post.title }}
         </a>
         <span class="mini__meta">
+          @if (kindWords(post); as words) {
+            {{ words }} ·
+          }
           {{ when(post) }}
           @if (ended(post)) {
             <span class="mini__ended">{{ 'POST.ended' | translate }}</span>

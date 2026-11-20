@@ -37,7 +37,7 @@ export class App implements OnInit {
   protected readonly devSwitcher = devTools?.component ?? null;
   protected readonly interestsDismissed = signal(false);
   protected readonly interestsRequired = computed(
-    () => this.authService.interestsSelected() === false && !this.interestsDismissed(),
+    () => this.authService.onboarded() === false && !this.interestsDismissed(),
   );
   /** Onboarding's optional second step, right after the interests are saved. Skipping it ends onboarding. */
   protected readonly homeStep = signal(false);

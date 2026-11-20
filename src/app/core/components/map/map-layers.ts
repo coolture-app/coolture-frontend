@@ -1,5 +1,6 @@
 import type { ExpressionSpecification, Map as MapLibreMap } from 'maplibre-gl';
 import type { LayerComponent } from '@maplibre/ngx-maplibre-gl';
+import { KIND_KEYS, kindIcon } from '../../icons/kind-icons';
 
 /** MapLibre's paint can't read CSS variables, so the tokens it needs are repeated here. */
 const ACCENT = '#2563eb';
@@ -92,6 +93,68 @@ export function addPillImages(map: MapLibreMap): void {
   }
 }
 
+const KIND_ICON_SIZE = 14;
+/** The pill text's image for a kind: dark on a plain pill, white on a lit one. */
+const KIND_IMAGE = /^kind-(lit-)?([a-z_]+)$/;
+
+/** Draws every known kind's icons once per map, so the first pins already have them. */
+export function addKindImages(map: MapLibreMap): void {
+  for (const key of KIND_KEYS) {
+    addKindImage(map, `kind-${key}`);
+    addKindImage(map, `kind-lit-${key}`);
+  }
+}
+
+/**
+ * Draws a kind's icon from its Lucide SVG, which uses only paths, circles, lines and rectangles. Drawn at once rather
+ * than loaded as an image, since MapLibre takes a missing image only while it asks for it. False if `name` isn't a
+ * kind's image.
+ */
+export function addKindImage(map: MapLibreMap, name: string): boolean {
+  const match = KIND_IMAGE.exec(name);
+  if (!match) {
+    return false;
+  }
+  if (map.hasImage(name)) {
+    return true;
+  }
+  const size = KIND_ICON_SIZE * PIXEL_RATIO;
+  const context = canvas(size, size);
+  if (!context) {
+    return true;
+  }
+  context.scale(size / 24, size / 24);
+  context.strokeStyle = match[1] ? '#ffffff' : TEXT;
+  context.lineWidth = 2.25;
+  context.lineCap = 'round';
+  context.lineJoin = 'round';
+  for (const shape of svgShapes(kindIcon(match[2]))) {
+    context.stroke(shape);
+  }
+  map.addImage(name, context.getImageData(0, 0, size, size), { pixelRatio: PIXEL_RATIO });
+  return true;
+}
+
+function svgShapes(svg: string): Path2D[] {
+  return [...svg.matchAll(/<(path|circle|line|rect)\b([^>]*)>/g)].map(([, tag, attributes]) => {
+    const text = (name: string) => new RegExp(`\\b${name}="([^"]*)"`).exec(attributes)?.[1];
+    const value = (name: string) => Number(text(name) ?? 0);
+    if (tag === 'path') {
+      return new Path2D(text('d'));
+    }
+    const shape = new Path2D();
+    if (tag === 'circle') {
+      shape.arc(value('cx'), value('cy'), value('r'), 0, 2 * Math.PI);
+    } else if (tag === 'line') {
+      shape.moveTo(value('x1'), value('y1'));
+      shape.lineTo(value('x2'), value('y2'));
+    } else {
+      shape.roundRect(value('x'), value('y'), value('width'), value('height'), value('rx'));
+    }
+    return shape;
+  });
+}
+
 /** The pick's star: white on an accent circle with a white edge, the same on pills, clusters and `PickStar`. */
 function badge(context: CanvasRenderingContext2D, x: number, y: number, radius: number): void {
   const r = PIXEL_RATIO;
@@ -133,6 +196,25 @@ function star(
 
 const IS_PICK: ExpressionSpecification = ['==', ['get', 'tone'], 'pick'];
 
+/** The pill's date, after the kind's icon when it has one. */
+function pillText(images: string): ExpressionSpecification {
+  const centred = { 'vertical-align': 'center' } as const;
+  return [
+    'case',
+    ['==', ['get', 'kind'], ''],
+    ['format', ['get', 'label'], {}],
+    [
+      'format',
+      ['image', ['concat', images, ['get', 'kind']]],
+      centred,
+      ' ',
+      {},
+      ['get', 'label'],
+      centred,
+    ],
+  ];
+}
+
 /** A post or a place: the pill with its date, drawn whatever it overlaps, so no event goes missing. */
 export const PILL_LAYOUT: SymbolLayout = {
   'icon-image': ['case', IS_PICK, 'pill-pick', 'pill-plain'],
@@ -142,7 +224,7 @@ export const PILL_LAYOUT: SymbolLayout = {
   'text-allow-overlap': true,
   'icon-ignore-placement': true,
   'text-ignore-placement': true,
-  'text-field': ['get', 'label'],
+  'text-field': pillText('kind-'),
   'text-font': BOLD,
   'text-size': 12.5,
   'symbol-sort-key': ['get', 'sortKey'],
@@ -154,6 +236,7 @@ export const PILL_PAINT: SymbolPaint = { 'text-color': TEXT };
 export const LIT_LAYOUT: SymbolLayout = {
   ...PILL_LAYOUT,
   'icon-image': ['case', IS_PICK, 'pill-lit-pick', 'pill-lit'],
+  'text-field': pillText('kind-lit-'),
   'text-size': 13.5,
 };
 export const LIT_PAINT: SymbolPaint = { 'text-color': '#ffffff' };

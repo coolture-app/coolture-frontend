@@ -2,6 +2,7 @@ import {
   booleanAttribute,
   Component,
   computed,
+  ElementRef,
   inject,
   input,
   OnInit,
@@ -12,24 +13,23 @@ import {
 import { toSignal } from '@angular/core/rxjs-interop';
 import { CanDeactivateFn, Router } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { firstValueFrom, forkJoin, map, of } from 'rxjs';
+import { firstValueFrom, forkJoin, map } from 'rxjs';
 import { BackLink } from '../../core/components/back-link/back-link';
 import { Btn } from '../../core/components/btn/btn';
+import { KindGrid } from '../../core/components/kind-grid/kind-grid';
 import { ModalWindow } from '../../core/components/modal/modal-window/modal-window';
-import {
-  Interest,
-  InterestCatalog,
-  InterestCategory,
-} from '../../core/models/interests/interest.model';
+import { Interest, InterestCatalog, label } from '../../core/models/interests/interest.model';
 import { AuthService } from '../../core/services/auth/auth.service';
 import { InterestsService } from '../../core/services/interests/interests.service';
 
 export const unsavedInterestsGuard: CanDeactivateFn<InterestsView> = (component) =>
   component.confirmLeave();
 
+type Section = 'kinds' | 'topics';
+
 @Component({
   selector: 'app-interests-view',
-  imports: [TranslatePipe, BackLink, Btn, ModalWindow],
+  imports: [TranslatePipe, BackLink, Btn, KindGrid, ModalWindow],
   templateUrl: './interests-view.html',
   styleUrl: './interests-view.scss',
 })
@@ -38,52 +38,67 @@ export class InterestsView implements OnInit {
   private interestsService = inject(InterestsService);
   private router = inject(Router);
   private translate = inject(TranslateService);
+  private element = inject<ElementRef<HTMLElement>>(ElementRef);
 
-  /** First selection after sign-up, shown as an overlay: nothing saved yet, may be skipped, no navigation after saving. */
+  /** First selection after sign-in, shown as an overlay in two pages, with no navigation after saving. */
   readonly onboarding = input(false, { transform: booleanAttribute });
   readonly dismissed = output<void>();
-  /** Onboarding goes on to its next step. */
+  /** Onboarding is done. */
   readonly saved = output<void>();
 
   private leaveModal = viewChild.required(ModalWindow);
   private resolveLeave: ((leave: boolean) => void) | null = null;
-  private savedInterests = '';
+  private savedSnapshot = '';
 
   private currentLang = toSignal(this.translate.onLangChange.pipe(map((event) => event.lang)), {
     initialValue: this.translate.getCurrentLang(),
   });
   protected catalog = signal<InterestCatalog | null>(null);
-  protected selected = signal<ReadonlySet<string>>(new Set());
-  protected expandedCategory = signal<string | null>(null);
+  protected kinds = signal<ReadonlySet<string>>(new Set());
+  protected interests = signal<ReadonlySet<string>>(new Set());
+  protected page = signal(0);
   protected saving = signal(false);
   protected errorKey = signal<string | null>(null);
 
+  /** Onboarding asks for the kinds first, then the topics. The profile's page shows both at once. */
+  protected pages = computed<Section[][]>(() =>
+    this.onboarding() ? [['kinds'], ['topics']] : [['kinds', 'topics']],
+  );
+  protected sections = computed(() => this.pages()[this.page()]);
+  protected isLastPage = computed(() => this.page() === this.pages().length - 1);
+  protected hasKinds = computed(() => this.kinds().size >= (this.catalog()?.minKinds ?? 1));
   protected canSave = computed(() => {
     const catalog = this.catalog();
-    const count = this.selected().size;
-    return !!catalog && count >= catalog.minSelections && count <= catalog.maxSelections;
+    const count = this.interests().size;
+    return (
+      !!catalog && this.hasKinds() && count >= catalog.minInterests && count <= catalog.maxInterests
+    );
   });
 
-  private interestsSnapshot = computed(() => [...this.selected()].sort().join());
+  private snapshot = computed(
+    () => `${[...this.kinds()].sort().join()}|${[...this.interests()].sort().join()}`,
+  );
 
   async ngOnInit(): Promise<void> {
     await this.load();
   }
 
+  /** Onboarding loads what's held too: an account from before kinds sees its interests ticked as topics. */
   protected async load(): Promise<void> {
     this.errorKey.set(null);
     try {
       const { catalog, selection } = await firstValueFrom(
         forkJoin({
           catalog: this.interestsService.getCatalog(),
-          selection: this.onboarding()
-            ? of({ interests: [] })
-            : this.interestsService.getUserInterests(this.authService.userId()),
+          selection: this.interestsService.getUserInterests(this.authService.userId()),
         }),
       );
+      // Only offered topics can be saved, so one held from before that's no longer offered goes with the next save.
+      const offered = new Set(catalog.categories.flatMap((c) => c.interests.map((i) => i.key)));
       this.catalog.set(catalog);
-      this.selected.set(new Set(selection.interests));
-      this.savedInterests = this.interestsSnapshot();
+      this.kinds.set(new Set(selection.kinds));
+      this.interests.set(new Set(selection.interests.filter((key) => offered.has(key))));
+      this.savedSnapshot = this.snapshot();
     } catch (error) {
       console.error('Error while fetching interests', error);
       this.errorKey.set('INTERESTS.load-error');
@@ -91,35 +106,26 @@ export class InterestsView implements OnInit {
   }
 
   protected label(item: Interest): string {
-    return this.currentLang() === 'en' ? item.labelEn : item.labelPl;
+    return label(item, this.currentLang());
   }
 
   protected isSelected(key: string): boolean {
-    return this.selected().has(key);
-  }
-
-  protected categoryLabel(category: InterestCategory): string {
-    const count = category.interests.filter((interest) => this.isSelected(interest.key)).length;
-    return count ? `${this.label(category)} (${count})` : this.label(category);
+    return this.interests().has(key);
   }
 
   protected isAtLimit(key: string): boolean {
-    return !this.isSelected(key) && this.selected().size >= (this.catalog()?.maxSelections ?? 0);
-  }
-
-  protected toggleCategory(key: string): void {
-    this.expandedCategory.update((expanded) => (expanded === key ? null : key));
+    return !this.isSelected(key) && this.interests().size >= (this.catalog()?.maxInterests ?? 0);
   }
 
   protected toggleInterest(key: string): void {
     this.errorKey.set(null);
-    this.selected.update((keys) => {
-      const next = new Set(keys);
-      if (!next.delete(key)) {
-        next.add(key);
-      }
-      return next;
-    });
+    this.interests.update((keys) => toggled(keys, key));
+  }
+
+  /** The overlay keeps its scroll, so the next page would open where the last one was left. */
+  protected goTo(page: number): void {
+    this.page.set(page);
+    this.element.nativeElement.scrollIntoView?.({ block: 'start' });
   }
 
   protected async save(): Promise<void> {
@@ -145,10 +151,13 @@ export class InterestsView implements OnInit {
     this.errorKey.set(null);
     try {
       const saved = await firstValueFrom(
-        this.interestsService.replaceUserInterests(this.authService.userId(), [...this.selected()]),
+        this.interestsService.replaceUserInterests(this.authService.userId(), {
+          kinds: [...this.kinds()],
+          interests: [...this.interests()],
+        }),
       );
-      this.savedInterests = this.interestsSnapshot();
-      this.authService.markInterestsSelected(saved.interests);
+      this.savedSnapshot = this.snapshot();
+      this.authService.markOnboarded(saved);
       return true;
     } catch (error) {
       console.error('Error while saving interests', error);
@@ -160,7 +169,7 @@ export class InterestsView implements OnInit {
   }
 
   confirmLeave(): boolean | Promise<boolean> {
-    if (this.interestsSnapshot() === this.savedInterests) {
+    if (this.snapshot() === this.savedSnapshot) {
       return true;
     }
     this.leaveModal().open();
@@ -170,4 +179,12 @@ export class InterestsView implements OnInit {
   protected async onLeaveAnswer(action: string): Promise<void> {
     this.resolveLeave?.(action === 'YES' ? await this.persist() : action === 'NO');
   }
+}
+
+function toggled(keys: ReadonlySet<string>, key: string): ReadonlySet<string> {
+  const next = new Set(keys);
+  if (!next.delete(key)) {
+    next.add(key);
+  }
+  return next;
 }

@@ -1,60 +1,95 @@
-<main class="interests">
+<main class="interests" [class.interests--onboarding]="onboarding()">
   <div class="interests__head">
     @if (!onboarding()) {
       <app-back-link fallback="/profile" />
+      <h1>{{ 'INTERESTS.title' | translate }}</h1>
+    } @else {
+      <span class="interests__step">
+        {{ 'INTERESTS.step' | translate: { step: page() + 1, steps: pages().length } }}
+      </span>
+      <h1>
+        {{
+          (sections()[0] === 'kinds' ? 'INTERESTS.kinds-question' : 'INTERESTS.topics-question')
+            | translate
+        }}
+      </h1>
     }
-    <h1>{{ 'INTERESTS.title' | translate }}</h1>
   </div>
 
   @if (catalog(); as catalog) {
-    <p class="interests__subtitle">
-      {{
-        'INTERESTS.subtitle' | translate: { min: catalog.minSelections, max: catalog.maxSelections }
-      }}
-    </p>
+    @let headed = sections().length > 1;
+    @if (sections().includes('kinds')) {
+      <section class="interests__section" [attr.aria-labelledby]="headed ? 'kinds-heading' : null">
+        @if (headed) {
+          <h2 id="kinds-heading">{{ 'INTERESTS.kinds' | translate }}</h2>
+        }
+        <p class="interests__subtitle">{{ 'INTERESTS.kinds-subtitle' | translate }}</p>
+        <app-kind-grid
+          large
+          [kinds]="catalog.kinds"
+          [(selected)]="kinds"
+          [disabled]="saving()"
+          [label]="'INTERESTS.kinds' | translate"
+          (selectedChange)="errorKey.set(null)"
+        />
+      </section>
+    }
 
-    <div class="interests__tiles">
-      @for (category of catalog.categories; track category.key) {
-        <app-btn
-          variant="secondary"
-          size="sm"
-          [class]="expandedCategory() === category.key ? 'active' : ''"
-          [pressed]="expandedCategory() === category.key"
-          (btnClick)="toggleCategory(category.key)"
-        >
-          {{ categoryLabel(category) }}
-        </app-btn>
-      }
-    </div>
-
-    @for (category of catalog.categories; track category.key) {
-      @if (expandedCategory() === category.key) {
-        <div class="interests__tiles interests__tiles--nested">
-          @for (interest of category.interests; track interest.key) {
-            <app-btn
-              variant="secondary"
-              size="sm"
-              [class]="isSelected(interest.key) ? 'active' : ''"
-              [pressed]="isSelected(interest.key)"
-              [disabled]="isAtLimit(interest.key) || saving()"
-              (btnClick)="toggleInterest(interest.key)"
-            >
-              {{ label(interest) }}
-            </app-btn>
-          }
-        </div>
-      }
+    @if (sections().includes('topics')) {
+      <section class="interests__section" [attr.aria-labelledby]="headed ? 'topics-heading' : null">
+        @if (headed) {
+          <h2 id="topics-heading">{{ 'INTERESTS.topics' | translate }}</h2>
+        }
+        <p class="interests__subtitle">
+          {{ 'INTERESTS.topics-subtitle' | translate: { max: catalog.maxInterests } }}
+        </p>
+        @for (category of catalog.categories; track category.key) {
+          <div class="interests__group">
+            <h3 class="interests__group-name">{{ label(category) }}</h3>
+            <div class="interests__tiles">
+              @for (interest of category.interests; track interest.key) {
+                <app-btn
+                  variant="secondary"
+                  size="sm"
+                  [class]="isSelected(interest.key) ? 'active' : ''"
+                  [pressed]="isSelected(interest.key)"
+                  [disabled]="isAtLimit(interest.key) || saving()"
+                  (btnClick)="toggleInterest(interest.key)"
+                >
+                  {{ label(interest) }}
+                </app-btn>
+              }
+            </div>
+          </div>
+        }
+      </section>
     }
 
     <div class="interests__footer">
-      <span class="interests__counter" aria-live="polite">
-        {{
-          'INTERESTS.counter' | translate: { count: selected().size, max: catalog.maxSelections }
-        }}
-      </span>
-      <app-btn variant="primary" [disabled]="!canSave() || saving()" (btnClick)="save()">
-        {{ 'INTERESTS.save' | translate }}
-      </app-btn>
+      @if (page() > 0) {
+        <app-btn variant="plain" [disabled]="saving()" (btnClick)="goTo(page() - 1)">
+          {{ 'INTERESTS.back' | translate }}
+        </app-btn>
+      }
+      @if (sections().includes('topics')) {
+        <span class="interests__counter" aria-live="polite">
+          {{
+            'INTERESTS.counter' | translate: { count: interests().size, max: catalog.maxInterests }
+          }}
+        </span>
+      }
+      @if (!isLastPage()) {
+        <app-btn variant="primary" [disabled]="!hasKinds()" (btnClick)="goTo(page() + 1)">
+          {{ 'INTERESTS.next' | translate }}
+        </app-btn>
+      } @else {
+        <app-btn variant="primary" [disabled]="!canSave() || saving()" (btnClick)="save()">
+          {{
+            (page() > 0 && interests().size === 0 ? 'INTERESTS.skip-topics' : 'INTERESTS.save')
+              | translate
+          }}
+        </app-btn>
+      }
     </div>
   } @else if (!errorKey()) {
     <p class="interests__subtitle">{{ 'INTERESTS.loading' | translate }}</p>

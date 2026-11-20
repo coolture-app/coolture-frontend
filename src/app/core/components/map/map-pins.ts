@@ -47,6 +47,8 @@ export interface PinProperties {
   count: number;
   tone: PinTone;
   sortKey: number;
+  /** The kind whose icon goes before the date, or '' for none. */
+  kind: string;
 }
 
 /** The Polish plural forms (1 wydarzenie, 2 wydarzenia, 5 wydarzeń); other languages use `one` and `many`. */
@@ -180,10 +182,17 @@ export function pinFeatures(
         count,
         tone,
         sortKey: (tone === 'pick' ? 1e9 : 0) + Math.max(0, 1e8 - minutesAway),
+        kind: placeKind(place),
       },
     };
   });
   return { type: 'FeatureCollection', features };
+}
+
+/** A place's kind only when every post there has it first, so the icon never stands for one post among several. */
+export function placeKind(place: Place): string {
+  const kind = place.posts[0].kind ?? '';
+  return place.posts.every((post) => post.kind === kind) ? kind : '';
 }
 
 function bySoonest(a: PostMark, b: PostMark): number {

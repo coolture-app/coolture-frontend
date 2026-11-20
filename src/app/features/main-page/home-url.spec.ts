@@ -1,4 +1,4 @@
-import { fromHomeParams, HomeUrlState, sameHomeParams, toHomeParams } from './home-url';
+import { fromHomeParams, HomeUrlState, kindParams, sameHomeParams, toHomeParams } from './home-url';
 import { dayWindow, NO_FILTERS } from './home-view';
 
 const DEFAULT: HomeUrlState = {
@@ -91,6 +91,38 @@ describe('the home URL', () => {
     });
 
     expect(state).toEqual(DEFAULT);
+  });
+
+  it('carries the kinds as one list, and Dla dzieci', () => {
+    const state: HomeUrlState = {
+      ...DEFAULT,
+      filters: { ...NO_FILTERS, kinds: ['concerts', 'stage'], kids: true },
+    };
+
+    const params = toHomeParams(state);
+
+    expect(params).toEqual({ kinds: 'concerts,stage', kids: 'true' });
+    expect(fromHomeParams(params)).toEqual(state);
+  });
+
+  it('keeps only well-formed kinds, once each, which the API would refuse otherwise', () => {
+    const { filters } = fromHomeParams({ kinds: 'concerts,Stage,,concerts,a-b,food', kids: 'yes' });
+
+    expect(filters.kinds).toEqual(['concerts', 'food']);
+    expect(filters.kids).toBeFalse();
+  });
+
+  it('reads kinds=kids as the Dla dzieci switch, not as a kind', () => {
+    const { filters } = fromHomeParams({ kinds: 'concerts,kids' });
+
+    expect(filters.kinds).toEqual(['concerts']);
+    expect(filters.kids).toBeTrue();
+  });
+
+  it('links Dla dzieci as the switch, and any other kind as a chip', () => {
+    expect(kindParams('kids')).toEqual({ tab: 'all', kids: 'true' });
+    expect(kindParams('concerts')).toEqual({ tab: 'all', kinds: 'concerts' });
+    expect(fromHomeParams(kindParams('kids')).filters.kids).toBeTrue();
   });
 
   it('takes a whole radius from the map’s area, up to the largest chip', () => {

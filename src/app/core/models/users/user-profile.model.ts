@@ -16,6 +16,8 @@ export interface UserProfile extends Omit<UserSummary, 'followersCount' | 'follo
   followsYou: boolean;
   /** Interest keys, in the catalogue's order. */
   interests?: string[];
+  /** Kind keys, in the catalogue's order. */
+  kinds?: string[];
 }
 
 /** The `/auth/me` response: the caller's profile plus account state only the caller sees. */
@@ -23,7 +25,9 @@ export interface Me extends UserProfile {
   followersCount: number;
   followingCount: number;
   interests: string[];
-  interestsSelected: boolean;
+  kinds: string[];
+  /** Whether the caller has picked a kind of event; accounts from before kinds haven't. */
+  onboarded: boolean;
   /** Whether friends see the caller's Interesuje mnie and Biorę udział. */
   shareStances: boolean;
   /** Where the caller lives, if they said. Nobody else can read it. */

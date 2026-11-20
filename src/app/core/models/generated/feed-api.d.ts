@@ -163,6 +163,10 @@ export interface components {
       coordinates: components['schemas']['GeoPoint'];
       venueName?: string;
       city?: string;
+      /** @description The kind the pin names: the first of the post's kinds among those asked for in `kinds`, else its first. Left out until derived. */
+      kind?: string;
+      /** @description Every kind of event the post has, best first. Left out until derived. */
+      kinds?: string[];
       myReaction?: components['schemas']['ReactionType'];
       myParticipation?: components['schemas']['ParticipationType'];
       friendStances?: components['schemas']['FriendStances'];
@@ -299,6 +303,10 @@ export interface components {
     Status: components['schemas']['PostStatus'];
     /** @description Only posts by people the viewer follows, and posts a friend (a mutual follow) marked Interesuje mnie or Biorę udział, unless that friend stopped sharing their stances. Nothing for a guest. Every post is public, so there's no visibility filter; an older client's visibility parameter is ignored. */
     Followed: boolean;
+    /** @description Kinds of event as comma-separated keys from /dicts/interests (kinds=concerts,stage); a post matches any of them. A post's kinds are derived from its text after it's saved, so for a few seconds a new post has none and matches no kind. A key no post has matches nothing; a key that isn't lowercase letters and underscores is a 400. */
+    Kinds: string;
+    /** @description Only posts for children, whatever their other kinds, so kinds=concerts&kids=true gives kids' concerts. */
+    Kids: boolean;
     Type: components['schemas']['PostType'];
     /** @description Only events running at some moment from this time on: their end is at or after it. Setting this turns the past-events window off. */
     From: string;
@@ -332,6 +340,10 @@ export interface operations {
         status?: components['parameters']['Status'];
         /** @description Only posts by people the viewer follows, and posts a friend (a mutual follow) marked Interesuje mnie or Biorę udział, unless that friend stopped sharing their stances. Nothing for a guest. Every post is public, so there's no visibility filter; an older client's visibility parameter is ignored. */
         followed?: components['parameters']['Followed'];
+        /** @description Kinds of event as comma-separated keys from /dicts/interests (kinds=concerts,stage); a post matches any of them. A post's kinds are derived from its text after it's saved, so for a few seconds a new post has none and matches no kind. A key no post has matches nothing; a key that isn't lowercase letters and underscores is a 400. */
+        kinds?: components['parameters']['Kinds'];
+        /** @description Only posts for children, whatever their other kinds, so kinds=concerts&kids=true gives kids' concerts. */
+        kids?: components['parameters']['Kids'];
         type?: components['parameters']['Type'];
         /** @description Only events running at some moment from this time on: their end is at or after it. Setting this turns the past-events window off. */
         from?: components['parameters']['From'];
@@ -376,6 +388,10 @@ export interface operations {
         status?: components['parameters']['Status'];
         /** @description Only posts by people the viewer follows, and posts a friend (a mutual follow) marked Interesuje mnie or Biorę udział, unless that friend stopped sharing their stances. Nothing for a guest. Every post is public, so there's no visibility filter; an older client's visibility parameter is ignored. */
         followed?: components['parameters']['Followed'];
+        /** @description Kinds of event as comma-separated keys from /dicts/interests (kinds=concerts,stage); a post matches any of them. A post's kinds are derived from its text after it's saved, so for a few seconds a new post has none and matches no kind. A key no post has matches nothing; a key that isn't lowercase letters and underscores is a 400. */
+        kinds?: components['parameters']['Kinds'];
+        /** @description Only posts for children, whatever their other kinds, so kinds=concerts&kids=true gives kids' concerts. */
+        kids?: components['parameters']['Kids'];
         type?: components['parameters']['Type'];
         /** @description Only events running at some moment from this time on: their end is at or after it. Setting this turns the past-events window off. */
         from?: components['parameters']['From'];
@@ -428,6 +444,10 @@ export interface operations {
         radiusKm?: components['parameters']['RadiusKm'];
         /** @description Only posts by people the viewer follows, and posts a friend (a mutual follow) marked Interesuje mnie or Biorę udział, unless that friend stopped sharing their stances. Nothing for a guest. Every post is public, so there's no visibility filter; an older client's visibility parameter is ignored. */
         followed?: components['parameters']['Followed'];
+        /** @description Kinds of event as comma-separated keys from /dicts/interests (kinds=concerts,stage); a post matches any of them. A post's kinds are derived from its text after it's saved, so for a few seconds a new post has none and matches no kind. A key no post has matches nothing; a key that isn't lowercase letters and underscores is a 400. */
+        kinds?: components['parameters']['Kinds'];
+        /** @description Only posts for children, whatever their other kinds, so kinds=concerts&kids=true gives kids' concerts. */
+        kids?: components['parameters']['Kids'];
         /** @description Signed-in only. Leaves out what the feed leaves out for this viewer: their own posts, and posts they reacted to or take part in, so the map of the feed's tab matches its list. */
         excludeMine?: boolean;
       };

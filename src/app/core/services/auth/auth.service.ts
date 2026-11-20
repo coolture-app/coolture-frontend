@@ -5,6 +5,7 @@ import { catchError, finalize, map, Observable, of, shareReplay, tap } from 'rxj
 import { ApiUrlService } from '../api-url.service';
 import { Me, UserProfile } from '../../models/users/user-profile.model';
 import { NamedPlace } from '../../models/common/geo.model';
+import { UserInterests } from '../../models/interests/interest.model';
 import { environment } from '../../../../environments/environment';
 import { DEV_IDENTITY } from '../../auth/dev-identity';
 
@@ -46,11 +47,11 @@ export class AuthService {
 
   readonly currentUser = signal<UserProfile | null>(null);
   /**
-   * Whether the signed-in user has picked interests, or null while unknown.
+   * Whether the signed-in user has picked a kind of event, or null while unknown.
    * A selection can only be replaced, never removed, so once true it stays true for the session
    * and a /auth/me response sent before a save cannot undo it.
    */
-  readonly interestsSelected = signal<boolean | null>(null);
+  readonly onboarded = signal<boolean | null>(null);
   /** Where the signed-in user lives, if they said. Only `/auth/me` gives it. */
   readonly home = signal<NamedPlace | null>(null);
   /** Whether friends see the signed-in user's stances. Only `/auth/me` gives it. */
@@ -69,9 +70,9 @@ export class AuthService {
     const changesBefore = this.homeChanges;
     const shareChangesBefore = this.shareChanges;
     this.sessionCheck ??= this.http.get<Me>(this.apiUrl.path('/auth/me')).pipe(
-      tap(({ interestsSelected, home, shareStances, ...profile }) => {
+      tap(({ onboarded, home, shareStances, ...profile }) => {
         this.currentUser.set(profile);
-        this.interestsSelected.update((selected) => selected || interestsSelected);
+        this.onboarded.update((selected) => selected || onboarded);
         if (this.homeChanges === changesBefore) {
           this.home.set(home ?? null);
         }
@@ -93,9 +94,9 @@ export class AuthService {
   }
 
   /** After the interests were saved, so the profile shows them without asking `/auth/me` again. */
-  markInterestsSelected(interests: string[]): void {
-    this.interestsSelected.set(true);
-    this.currentUser.update((user) => user && { ...user, interests });
+  markOnboarded({ kinds, interests }: UserInterests): void {
+    this.onboarded.set(true);
+    this.currentUser.update((user) => user && { ...user, kinds, interests });
   }
 
   /** After the home was saved or removed. */
@@ -112,7 +113,7 @@ export class AuthService {
 
   private clearUser(): void {
     this.currentUser.set(null);
-    this.interestsSelected.set(null);
+    this.onboarded.set(null);
     this.home.set(null);
     this.shareStances.set(true);
   }

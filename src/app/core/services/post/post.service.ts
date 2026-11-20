@@ -31,6 +31,8 @@ function filterParams(filters: PostFilterParams): HttpParams {
   if (filters.authorId) params = params.set('authorId', filters.authorId);
   if (filters.status) params = params.set('status', filters.status);
   if (filters.followed) params = params.set('followed', true);
+  if (filters.kinds?.length) params = params.set('kinds', filters.kinds.join(','));
+  if (filters.kids) params = params.set('kids', true);
   if (filters.type) params = params.set('type', filters.type);
   if (filters.from) params = params.set('from', filters.from);
   if (filters.to) params = params.set('to', filters.to);

@@ -23,6 +23,7 @@ const ME: UserProfile = {
   isBlocked: false,
   followsYou: false,
   interests: ['theatre', 'jazz'],
+  kinds: ['stage', 'concerts'],
 };
 
 const JAN: UserProfile = {
@@ -33,11 +34,17 @@ const JAN: UserProfile = {
   lastName: 'Kowalski',
   bio: undefined,
   interests: ['opera'],
+  kinds: [],
 };
 
 const CATALOG: InterestCatalog = {
-  minSelections: 1,
-  maxSelections: 10,
+  minKinds: 1,
+  minInterests: 0,
+  maxInterests: 6,
+  kinds: [
+    { key: 'concerts', labelPl: 'Koncerty', labelEn: 'Concerts' },
+    { key: 'stage', labelPl: 'Scena', labelEn: 'Stage' },
+  ],
   categories: [
     {
       key: 'music',
@@ -113,13 +120,14 @@ describe('UserProfileView', () => {
       expect(text('.profile__actions')).toContain('PROFILE.addHome');
     });
 
-    it('lists the picks as chips, in the catalogue’s order', async () => {
+    it('lists the kinds and then the topics as chips, each in the catalogue’s order', async () => {
       await flushCatalog();
 
       const chips = [...element.querySelectorAll('.profile__interest')].map((c) =>
         c.textContent?.trim(),
       );
-      expect(chips).toEqual(['Jazz', 'Teatr']);
+      expect(chips).toEqual(['Koncerty', 'Scena', 'Jazz', 'Teatr']);
+      expect(element.querySelectorAll('.profile__interest--kind ng-icon').length).toBe(2);
     });
 
     it('shows no chips when the catalogue can’t be read', async () => {

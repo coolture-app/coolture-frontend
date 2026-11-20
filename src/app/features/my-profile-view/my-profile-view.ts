@@ -31,8 +31,10 @@ import { Users } from '../../core/services/users/users.service';
 import { RelationsService } from '../../core/services/relations/relations.service';
 import { MediaService } from '../../core/services/media/media.service';
 import { InterestsService } from '../../core/services/interests/interests.service';
+import { KindsService } from '../../core/services/interests/kinds.service';
+import { kindIcon } from '../../core/icons/kind-icons';
 import { UserProfile } from '../../core/models/users/user-profile.model';
-import { Interest } from '../../core/models/interests/interest.model';
+import { Interest, label } from '../../core/models/interests/interest.model';
 import { FollowListComponent } from '../../core/components/follow-list/follow-list';
 import { BackLink } from '../../core/components/back-link/back-link';
 import { Btn } from '../../core/components/btn/btn';
@@ -83,6 +85,7 @@ export class UserProfileView {
   private relationsService = inject(RelationsService);
   private mediaService = inject(MediaService);
   private interestsService = inject(InterestsService);
+  private kindsService = inject(KindsService);
   private toast = inject(ToastService);
   private translate = inject(TranslateService);
   private document = inject(DOCUMENT);
@@ -129,10 +132,21 @@ export class UserProfileView {
   /** In the catalogue's order, so every profile lists them the same way. */
   readonly interests = computed(() => {
     const picked = new Set(this.user()?.interests ?? []);
-    const en = this.lang() === 'en';
     return this.interestCatalog()
       .filter((interest) => picked.has(interest.key))
-      .map((interest) => ({ key: interest.key, label: en ? interest.labelEn : interest.labelPl }));
+      .map((interest) => ({ key: interest.key, label: label(interest, this.lang()) }));
+  });
+  /** Before the interests, also in the catalogue's order. */
+  readonly kinds = computed(() => {
+    const picked = new Set(this.user()?.kinds ?? []);
+    return this.kindsService
+      .kinds()
+      .filter((kind) => picked.has(kind.key))
+      .map((kind) => ({
+        key: kind.key,
+        label: this.kindsService.name(kind.key),
+        icon: kindIcon(kind.key),
+      }));
   });
 
   /** Month and year only. The parts of a full date, because Polish needs the month's genitive. */

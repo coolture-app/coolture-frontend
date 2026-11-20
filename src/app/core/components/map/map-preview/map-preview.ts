@@ -22,6 +22,8 @@ import {
   lucideX,
 } from '@ng-icons/lucide';
 import { appTicket } from '../../../icons/ticket';
+import { kindIcon } from '../../../icons/kind-icons';
+import { KindsService } from '../../../services/interests/kinds.service';
 import { placeLine } from '../../../models/posts/post-place';
 import { PostMark } from '../../../models/posts/post-mark.model';
 import { hasEnded } from '../../../utils/event-time';
@@ -64,6 +66,15 @@ export class MapPreview {
   readonly reactions = inject(MapReactions);
   private auth = inject(AuthService);
   readonly sheet = inject(CommentsSheetService);
+  readonly kinds = inject(KindsService);
+  readonly kindIcon = kindIcon;
+
+  /** The pin's kind first, so the words agree with the icon, then the rest: "Koncert, Scena". */
+  kindWords(post: PostMark): string | null {
+    const keys = post.kind ? [post.kind, ...(post.kinds ?? []).filter((k) => k !== post.kind)] : [];
+    const words = keys.map((k) => this.kinds.eventName(k)).filter((w): w is string => !!w);
+    return words.length ? words.join(', ') : null;
+  }
   readonly sharesStances = computed(() => this.auth.isAuthenticated() && this.auth.shareStances());
   readonly hoverable = mediaQuery('(hover: hover)');
 

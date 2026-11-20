@@ -169,8 +169,14 @@
           </div>
         }
 
-        @if (interests().length) {
+        @if (kinds().length || interests().length) {
           <ul class="profile__interests" [attr.aria-label]="'PROFILE.interests' | translate">
+            @for (kind of kinds(); track kind.key) {
+              <li class="profile__interest profile__interest--kind">
+                <ng-icon [svg]="kind.icon" aria-hidden="true" />
+                {{ kind.label }}
+              </li>
+            }
             @for (interest of interests(); track interest.key) {
               <li class="profile__interest">{{ interest.label }}</li>
             }

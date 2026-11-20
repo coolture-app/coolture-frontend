@@ -8,19 +8,19 @@ import { AuthService } from '../../core/services/auth/auth.service';
 import { InterestsService } from '../../core/services/interests/interests.service';
 import { InterestsView } from './interests-view';
 
+const named = (key: string) => ({ key, labelPl: key, labelEn: key });
+
 const CATALOG: InterestCatalog = {
-  minSelections: 2,
-  maxSelections: 3,
+  minKinds: 1,
+  minInterests: 0,
+  maxInterests: 3,
+  kinds: ['concerts', 'stage', 'kids'].map(named),
   categories: [
     {
       key: 'music',
       labelPl: 'Muzyka',
       labelEn: 'Music',
-      interests: ['jazz', 'rock', 'opera', 'pop'].map((key) => ({
-        key,
-        labelPl: key,
-        labelEn: key,
-      })),
+      interests: ['jazz', 'rock', 'opera', 'pop'].map(named),
     },
   ],
 };
@@ -30,7 +30,7 @@ describe('InterestsView', () => {
   let element: HTMLElement;
   const authService = {
     userId: () => 'user-1',
-    markInterestsSelected: jasmine.createSpy('markInterestsSelected'),
+    markOnboarded: jasmine.createSpy('markOnboarded'),
   };
   const interestsService = jasmine.createSpyObj<InterestsService>('InterestsService', [
     'getCatalog',
@@ -38,27 +38,33 @@ describe('InterestsView', () => {
     'replaceUserInterests',
   ]);
 
-  const tile = (text: string) =>
+  const kind = (name: string) =>
+    [...element.querySelectorAll<HTMLButtonElement>('.kind')].find(
+      (button) => button.querySelector('.kind__name')?.textContent?.trim() === name,
+    )!;
+  const topic = (text: string) =>
     [...element.querySelectorAll<HTMLButtonElement>('.interests__tiles button')].find(
       (button) => button.textContent?.trim() === text,
     )!;
-  const saveButton = () => element.querySelector<HTMLButtonElement>('.interests__footer button')!;
   const footerButton = (text: string) =>
     [...element.querySelectorAll<HTMLButtonElement>('.interests__footer button')].find(
       (button) => button.textContent?.trim() === text,
     )!;
+  const save = () => footerButton('INTERESTS.save');
   const modalButton = (index: number) =>
     element.querySelectorAll<HTMLButtonElement>('app-modal-window button')[index];
   const error = () => element.querySelector('.interests__error');
 
   async function render(
-    saved: string[] = [],
+    saved: Partial<UserInterests> = {},
     onboarding = false,
     catalog: Observable<InterestCatalog> = of(CATALOG),
   ) {
     interestsService.getCatalog.and.returnValue(catalog);
-    interestsService.getUserInterests.and.returnValue(of({ interests: saved }));
-    interestsService.replaceUserInterests.and.callFake((_id, interests) => of({ interests }));
+    interestsService.getUserInterests.and.returnValue(
+      of({ kinds: saved.kinds ?? [], interests: saved.interests ?? [] }),
+    );
+    interestsService.replaceUserInterests.and.callFake((_id, selection) => of(selection));
     TestBed.resetTestingModule();
 
     await TestBed.configureTestingModule({
@@ -86,273 +92,282 @@ describe('InterestsView', () => {
     fixture.detectChanges();
   }
 
-  beforeEach(() => interestsService.replaceUserInterests.calls.reset());
-
-  it('shows interests only after their category is clicked', async () => {
-    await render();
-    expect(tile('jazz')).toBeUndefined();
-
-    await click(tile('Muzyka'));
-
-    expect(tile('jazz')).toBeDefined();
+  beforeEach(() => {
+    interestsService.replaceUserInterests.calls.reset();
+    authService.markOnboarded.calls.reset();
   });
 
-  it('does not count a category as a selection', async () => {
-    await render();
+  describe('onboarding', () => {
+    it('asks for the kinds first, without the topics', async () => {
+      await render({}, true);
 
-    await click(tile('Muzyka'));
+      expect(kind('concerts')).toBeDefined();
+      expect(topic('jazz')).toBeUndefined();
+      expect(footerButton('INTERESTS.next').disabled).toBeTrue();
+    });
 
-    expect(saveButton().disabled).toBeTrue();
+    it('goes on to the topics once a kind is picked, and back with the picks kept', async () => {
+      await render({}, true);
+      await click(kind('stage'));
+
+      await click(footerButton('INTERESTS.next'));
+      expect(kind('stage')).toBeUndefined();
+      expect(topic('jazz')).toBeDefined();
+
+      await click(footerButton('INTERESTS.back'));
+      expect(kind('stage').getAttribute('aria-pressed')).toBe('true');
+    });
+
+    it('saves the kinds alone when the topics are skipped', async () => {
+      await render({}, true);
+      await click(kind('concerts'));
+      await click(footerButton('INTERESTS.next'));
+
+      await click(footerButton('INTERESTS.skip-topics'));
+
+      expect(interestsService.replaceUserInterests).toHaveBeenCalledOnceWith('user-1', {
+        kinds: ['concerts'],
+        interests: [],
+      });
+    });
+
+    it('ticks the topics an account held before kinds', async () => {
+      await render({ interests: ['jazz'] }, true);
+      await click(kind('concerts'));
+      await click(footerButton('INTERESTS.next'));
+
+      expect(interestsService.getUserInterests).toHaveBeenCalledWith('user-1');
+      expect(topic('jazz').getAttribute('aria-pressed')).toBe('true');
+      expect(save()).toBeDefined();
+    });
+
+    it('goes on to the next step instead of leaving the page', async () => {
+      await render({}, true);
+      const navigate = spyOn(TestBed.inject(Router), 'navigateByUrl').and.resolveTo(true);
+      const saved = jasmine.createSpy('saved');
+      fixture.componentInstance.saved.subscribe(saved);
+      await click(kind('concerts'));
+      await click(footerButton('INTERESTS.next'));
+      await click(topic('jazz'));
+
+      await click(save());
+
+      expect(saved).toHaveBeenCalledTimes(1);
+      expect(navigate).not.toHaveBeenCalled();
+    });
+
+    it('can be skipped when the catalogue is down', async () => {
+      await render(
+        {},
+        true,
+        throwError(() => new Error('down')),
+      );
+      const dismissed = jasmine.createSpy('dismissed');
+      fixture.componentInstance.dismissed.subscribe(dismissed);
+
+      await click(footerButton('INTERESTS.skip'));
+
+      expect(dismissed).toHaveBeenCalledTimes(1);
+    });
+
+    it('has no link back to the profile', async () => {
+      await render({}, true);
+
+      expect(element.querySelector('app-back-link')).toBeNull();
+    });
   });
 
-  it('blocks more selections at the limit', async () => {
-    await render();
-    await click(tile('Muzyka'));
+  describe('editing', () => {
+    it('shows the kinds and the topics on one page, with one save', async () => {
+      await render({ kinds: ['concerts'], interests: ['jazz'] });
 
-    await click(tile('jazz'));
-    await click(tile('rock'));
-    await click(tile('opera'));
+      expect(kind('concerts').getAttribute('aria-pressed')).toBe('true');
+      expect(topic('jazz').getAttribute('aria-pressed')).toBe('true');
+      expect(footerButton('INTERESTS.next')).toBeUndefined();
+      expect(save().disabled).toBeFalse();
+    });
 
-    expect(tile('pop').disabled).toBeTrue();
-    expect(tile('jazz').disabled).toBeFalse();
+    it('links back to the profile', async () => {
+      await render({ kinds: ['concerts'] });
+
+      expect(element.querySelector('app-back-link a')?.getAttribute('href')).toBe('/profile');
+    });
+
+    it("can't save without a kind", async () => {
+      await render({ kinds: ['concerts'] });
+
+      await click(kind('concerts'));
+
+      expect(save().disabled).toBeTrue();
+    });
+
+    it('blocks more topics at the limit', async () => {
+      await render({ kinds: ['concerts'] });
+
+      await click(topic('jazz'));
+      await click(topic('rock'));
+      await click(topic('opera'));
+
+      expect(topic('pop').disabled).toBeTrue();
+      expect(topic('jazz').disabled).toBeFalse();
+    });
+
+    it('drops a held topic that is no longer offered, without counting it', async () => {
+      await render({ kinds: ['concerts'], interests: ['astrology', 'jazz'] });
+      spyOn(TestBed.inject(Router), 'navigateByUrl').and.resolveTo(true);
+      expect(fixture.componentInstance.confirmLeave()).toBeTrue();
+
+      await click(topic('rock'));
+      await click(topic('opera'));
+      expect(topic('pop').disabled).toBeTrue();
+
+      await click(save());
+      expect(interestsService.replaceUserInterests).toHaveBeenCalledOnceWith('user-1', {
+        kinds: ['concerts'],
+        interests: jasmine.arrayWithExactContents(['jazz', 'rock', 'opera']),
+      });
+    });
+
+    it('sends the picked kinds and topics, and goes back to the profile', async () => {
+      await render({ kinds: ['concerts'] });
+      const navigate = spyOn(TestBed.inject(Router), 'navigateByUrl').and.resolveTo(true);
+      await click(kind('stage'));
+      await click(topic('jazz'));
+
+      await click(save());
+
+      expect(interestsService.replaceUserInterests).toHaveBeenCalledOnceWith('user-1', {
+        kinds: jasmine.arrayWithExactContents(['concerts', 'stage']),
+        interests: ['jazz'],
+      });
+      expect(navigate).toHaveBeenCalledOnceWith('/profile');
+    });
+
+    it('marks the selection as made after saving', async () => {
+      await render({ kinds: ['concerts'] });
+      spyOn(TestBed.inject(Router), 'navigateByUrl').and.resolveTo(true);
+      await click(topic('rock'));
+
+      await click(save());
+
+      expect(authService.markOnboarded).toHaveBeenCalledWith({
+        kinds: ['concerts'],
+        interests: ['rock'],
+      });
+      expect(fixture.componentInstance.confirmLeave()).toBeTrue();
+    });
+
+    it('sends one request when save is clicked twice at once', async () => {
+      await render({ kinds: ['concerts'] });
+      spyOn(TestBed.inject(Router), 'navigateByUrl').and.resolveTo(true);
+
+      save().click();
+      await click(save());
+
+      expect(interestsService.replaceUserInterests).toHaveBeenCalledTimes(1);
+    });
+
+    it('locks the picks while saving', async () => {
+      await render({ kinds: ['concerts'] });
+      const pending = new Subject<UserInterests>();
+      interestsService.replaceUserInterests.and.returnValue(pending);
+
+      await click(save());
+
+      expect(kind('stage').disabled).toBeTrue();
+      expect(topic('jazz').disabled).toBeTrue();
+      pending.next({ kinds: ['concerts'], interests: [] });
+      pending.complete();
+    });
+
+    it('offers a retry, and no skip, when the catalogue is down', async () => {
+      await render(
+        { kinds: ['concerts'] },
+        false,
+        throwError(() => new Error('down')),
+      );
+
+      expect(error()?.textContent).toContain('INTERESTS.load-error');
+      expect(element.textContent).not.toContain('INTERESTS.loading');
+      expect(footerButton('INTERESTS.skip')).toBeUndefined();
+
+      interestsService.getCatalog.and.returnValue(of(CATALOG));
+      await click(footerButton('INTERESTS.retry'));
+
+      expect(error()).toBeNull();
+      expect(kind('concerts')).toBeDefined();
+    });
   });
 
-  it('sends only the selected interests on save', async () => {
-    await render();
-    spyOn(TestBed.inject(Router), 'navigateByUrl').and.resolveTo(true);
-    await click(tile('Muzyka'));
-    await click(tile('jazz'));
-    await click(tile('rock'));
+  describe('leaving with changes', () => {
+    beforeEach(async () => {
+      await render({ kinds: ['concerts'], interests: ['jazz'] });
+    });
 
-    await click(saveButton());
+    it('leaves without asking when nothing changed', () => {
+      expect(fixture.componentInstance.confirmLeave()).toBeTrue();
+    });
 
-    expect(interestsService.replaceUserInterests).toHaveBeenCalledOnceWith(
-      'user-1',
-      jasmine.arrayWithExactContents(['jazz', 'rock']),
-    );
-  });
+    it('saves and leaves when the user agrees', async () => {
+      await click(kind('stage'));
 
-  it('shows an error instead of the loading text when the catalogue fails', async () => {
-    await render(
-      [],
-      true,
-      throwError(() => new Error('down')),
-    );
+      const leave = fixture.componentInstance.confirmLeave();
+      await click(modalButton(0));
 
-    expect(error()?.textContent).toContain('INTERESTS.load-error');
-    expect(element.textContent).not.toContain('INTERESTS.loading');
-  });
+      expect(await leave).toBeTrue();
+      expect(interestsService.replaceUserInterests).toHaveBeenCalledTimes(1);
+    });
 
-  it('offers a retry after a catalogue failure and recovers', async () => {
-    await render(
-      [],
-      true,
-      throwError(() => new Error('down')),
-    );
-    interestsService.getCatalog.and.returnValue(of(CATALOG));
+    it('leaves without saving when the user declines', async () => {
+      await click(topic('rock'));
 
-    await click(footerButton('INTERESTS.retry'));
+      const leave = fixture.componentInstance.confirmLeave();
+      await click(modalButton(1));
 
-    expect(error()).toBeNull();
-    expect(tile('Muzyka')).toBeDefined();
-  });
+      expect(await leave).toBeTrue();
+      expect(interestsService.replaceUserInterests).not.toHaveBeenCalled();
+    });
 
-  it('lets a new user skip the selection when the catalogue is down', async () => {
-    await render(
-      [],
-      true,
-      throwError(() => new Error('down')),
-    );
-    const dismissed = jasmine.createSpy('dismissed');
-    fixture.componentInstance.dismissed.subscribe(dismissed);
+    it('stays on the page when the modal is dismissed with Escape', async () => {
+      await click(topic('rock'));
 
-    await click(footerButton('INTERESTS.skip'));
+      const leave = fixture.componentInstance.confirmLeave();
+      element.querySelector('dialog')!.dispatchEvent(new Event('cancel'));
 
-    expect(dismissed).toHaveBeenCalledTimes(1);
-  });
+      expect(await leave).toBeFalse();
+    });
 
-  it('offers no skip when editing a saved selection', async () => {
-    await render(
-      ['jazz'],
-      false,
-      throwError(() => new Error('down')),
-    );
+    it('stays and explains why when saving with no kind', async () => {
+      await click(kind('concerts'));
 
-    expect(footerButton('INTERESTS.skip')).toBeUndefined();
-    expect(footerButton('INTERESTS.retry')).toBeDefined();
-  });
+      const leave = fixture.componentInstance.confirmLeave();
+      await click(modalButton(0));
 
-  it('locks the interests while saving', async () => {
-    await render([], true);
-    const pending = new Subject<UserInterests>();
-    interestsService.replaceUserInterests.and.returnValue(pending);
-    await click(tile('Muzyka'));
-    await click(tile('jazz'));
-    await click(tile('rock'));
+      expect(await leave).toBeFalse();
+      expect(error()?.textContent).toContain('INTERESTS.selection-error');
+      expect(interestsService.replaceUserInterests).not.toHaveBeenCalled();
+    });
 
-    await click(saveButton());
+    it('stays and shows an error when saving fails', async () => {
+      interestsService.replaceUserInterests.and.returnValue(throwError(() => new Error('down')));
+      await click(topic('rock'));
 
-    expect(tile('opera').disabled).toBeTrue();
-    expect(tile('jazz').disabled).toBeTrue();
-    pending.next({ interests: [] });
-    pending.complete();
-  });
+      const leave = fixture.componentInstance.confirmLeave();
+      await click(modalButton(0));
 
-  it('links back to the profile, but not during the first selection', async () => {
-    await render(['jazz']);
-    expect(element.querySelector('app-back-link a')?.getAttribute('href')).toBe('/profile');
+      expect(await leave).toBeFalse();
+      expect(error()?.textContent).toContain('INTERESTS.save-error');
+    });
 
-    await render([], true);
-    expect(element.querySelector('app-back-link')).toBeNull();
-  });
+    it('clears the error when the picks change', async () => {
+      await click(kind('concerts'));
+      const leave = fixture.componentInstance.confirmLeave();
+      await click(modalButton(0));
+      await leave;
 
-  it('does not ask for a saved selection during the first selection', async () => {
-    interestsService.getUserInterests.calls.reset();
+      await click(kind('stage'));
 
-    await render([], true);
-
-    expect(interestsService.getUserInterests).not.toHaveBeenCalled();
-    expect(tile('Muzyka')).toBeDefined();
-  });
-
-  it('stays on the current page after the first save', async () => {
-    await render([], true);
-    const navigate = spyOn(TestBed.inject(Router), 'navigateByUrl').and.resolveTo(true);
-    await click(tile('Muzyka'));
-    await click(tile('jazz'));
-    await click(tile('rock'));
-
-    await click(saveButton());
-
-    expect(navigate).not.toHaveBeenCalled();
-  });
-
-  it('goes back to the profile after a later save', async () => {
-    await render(['jazz', 'rock']);
-    const navigate = spyOn(TestBed.inject(Router), 'navigateByUrl').and.resolveTo(true);
-
-    await click(saveButton());
-
-    expect(navigate).toHaveBeenCalledOnceWith('/profile');
-  });
-
-  it('leaves without asking when nothing changed', async () => {
-    await render(['jazz', 'rock']);
-
-    expect(fixture.componentInstance.confirmLeave()).toBeTrue();
-  });
-
-  it('saves changes and leaves when the user agrees', async () => {
-    await render(['jazz', 'rock']);
-    await click(tile('Muzyka (2)'));
-    await click(tile('opera'));
-
-    const leave = fixture.componentInstance.confirmLeave();
-    await click(modalButton(0));
-
-    expect(await leave).toBeTrue();
-    expect(interestsService.replaceUserInterests).toHaveBeenCalledTimes(1);
-  });
-
-  it('leaves without saving when the user declines', async () => {
-    await render(['jazz', 'rock']);
-    await click(tile('Muzyka (2)'));
-    await click(tile('opera'));
-
-    const leave = fixture.componentInstance.confirmLeave();
-    await click(modalButton(1));
-
-    expect(await leave).toBeTrue();
-    expect(interestsService.replaceUserInterests).not.toHaveBeenCalled();
-  });
-
-  it('stays on the page when the modal is dismissed with Escape', async () => {
-    await render(['jazz', 'rock']);
-    await click(tile('Muzyka (2)'));
-    await click(tile('opera'));
-
-    const leave = fixture.componentInstance.confirmLeave();
-    element.querySelector('dialog')!.dispatchEvent(new Event('cancel'));
-
-    expect(await leave).toBeFalse();
-  });
-
-  it('stays and explains why when saving a selection under the minimum', async () => {
-    await render(['jazz', 'rock']);
-    await click(tile('Muzyka (2)'));
-    await click(tile('jazz'));
-
-    const leave = fixture.componentInstance.confirmLeave();
-    await click(modalButton(0));
-
-    expect(await leave).toBeFalse();
-    expect(error()?.textContent).toContain('INTERESTS.selection-error');
-    expect(interestsService.replaceUserInterests).not.toHaveBeenCalled();
-  });
-
-  it('stays and shows an error when saving fails', async () => {
-    await render(['jazz', 'rock']);
-    interestsService.replaceUserInterests.and.returnValue(throwError(() => new Error('down')));
-    await click(tile('Muzyka (2)'));
-    await click(tile('opera'));
-
-    const leave = fixture.componentInstance.confirmLeave();
-    await click(modalButton(0));
-
-    expect(await leave).toBeFalse();
-    expect(error()?.textContent).toContain('INTERESTS.save-error');
-  });
-
-  it('clears the error when the selection changes', async () => {
-    await render(['jazz', 'rock']);
-    await click(tile('Muzyka (2)'));
-    await click(tile('jazz'));
-    const leave = fixture.componentInstance.confirmLeave();
-    await click(modalButton(0));
-    await leave;
-
-    await click(tile('opera'));
-
-    expect(error()).toBeNull();
-  });
-
-  it('sends one request when save is clicked twice at once', async () => {
-    await render();
-    spyOn(TestBed.inject(Router), 'navigateByUrl').and.resolveTo(true);
-    await click(tile('Muzyka'));
-    await click(tile('jazz'));
-    await click(tile('rock'));
-
-    saveButton().click();
-    await click(saveButton());
-
-    expect(interestsService.replaceUserInterests).toHaveBeenCalledTimes(1);
-  });
-
-  it('does not ask about leaving when only a category was opened', async () => {
-    await render(['jazz', 'rock']);
-
-    await click(tile('Muzyka (2)'));
-
-    expect(fixture.componentInstance.confirmLeave()).toBeTrue();
-  });
-
-  it('shows how many interests are selected in a category', async () => {
-    await render(['jazz', 'rock']);
-
-    expect(tile('Muzyka (2)')).toBeDefined();
-  });
-
-  it('marks the interests as selected after saving', async () => {
-    await render([], true);
-    spyOn(TestBed.inject(Router), 'navigateByUrl').and.resolveTo(true);
-    await click(tile('Muzyka'));
-    await click(tile('jazz'));
-    await click(tile('rock'));
-
-    await click(saveButton());
-
-    expect(authService.markInterestsSelected).toHaveBeenCalledWith(['jazz', 'rock']);
-    expect(fixture.componentInstance.confirmLeave()).toBeTrue();
+      expect(error()).toBeNull();
+    });
   });
 });

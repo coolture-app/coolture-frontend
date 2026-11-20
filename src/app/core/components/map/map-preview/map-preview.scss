@@ -139,6 +139,13 @@
     white-space: nowrap;
   }
 
+  &__kind {
+    --ng-icon__size: 13px;
+    display: inline-flex;
+    margin-right: 2px;
+    vertical-align: -2px;
+  }
+
   &__row-title {
     min-width: 0;
     overflow: hidden;

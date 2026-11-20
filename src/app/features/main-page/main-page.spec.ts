@@ -1,3 +1,4 @@
+import { InterestCatalog } from '../../core/models/interests/interest.model';
 import { ViewportScroller } from '@angular/common';
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -41,6 +42,18 @@ function card(id: string): PostCard {
 function page(ids: string[] = []) {
   return { items: ids.map(card), page: { limit: 20, hasMore: false } };
 }
+
+const KIND_CATALOG: InterestCatalog = {
+  minKinds: 1,
+  minInterests: 0,
+  maxInterests: 6,
+  kinds: [
+    { key: 'concerts', labelPl: 'Koncerty', labelEn: 'Concerts' },
+    { key: 'stage', labelPl: 'Scena', labelEn: 'Stage' },
+    { key: 'kids', labelPl: 'Dla dzieci', labelEn: 'For children' },
+  ],
+  categories: [],
+};
 
 describe('MainPage', () => {
   let fixture: ComponentFixture<MainPage>;
@@ -165,7 +178,15 @@ describe('MainPage', () => {
     spyOn(scroller, 'scrollToPosition');
   });
 
-  afterEach(() => http.verify());
+  /** Filtry asks for the kinds' names when it opens. */
+  function flushKinds(): void {
+    http.match((r) => r.url.endsWith('/dicts/interests')).forEach((r) => r.flush(KIND_CATALOG));
+  }
+
+  afterEach(() => {
+    flushKinds();
+    http.verify();
+  });
 
   describe('the two tabs', () => {
     it('opens on Dla Ciebie, the feed', async () => {
@@ -212,6 +233,89 @@ describe('MainPage', () => {
       expect(param(next, 'cursor')).toBe('c1');
       expect(param(next, 'type')).toBe('OFFLINE');
       next.flush({ ...page(), mode: 'RANKED' });
+    });
+
+    it('filters by the kinds picked in Filtry, counted as one, and by Dla dzieci', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      component.toggleFilters();
+      await settle();
+      flushKinds();
+      await settle();
+      const tile = (name: string) =>
+        [...fixture.nativeElement.querySelectorAll('.kind')].find(
+          (b: HTMLElement) => b.textContent!.trim() === name,
+        ) as HTMLButtonElement;
+      expect(tile('Dla dzieci')).toBeUndefined();
+
+      tile('Scena').click();
+      tile('Koncerty').click();
+      await debounce();
+      const feed = expectFeed();
+      expect(param(feed, 'kinds')).toBe('concerts,stage');
+      feed.flush({ ...page(), mode: 'RANKED' });
+      await settle();
+      expect(router.url).toBe('/?kinds=concerts,stage');
+
+      component.filtersForm.controls.kids.setValue(true);
+      await debounce();
+      const kids = expectFeed();
+      expect(param(kids, 'kids')).toBe('true');
+      kids.flush({ ...page(), mode: 'RANKED' });
+      await settle();
+      expect(component.activeFilterCount()).toBe(2);
+    });
+
+    it('clears the kinds and Dla dzieci with Wyczyść, and the kinds alone with Wyczyść rodzaj', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      component.toggleFilters();
+      await settle();
+      flushKinds();
+      await settle();
+      const el = fixture.nativeElement as HTMLElement;
+      const tile = (name: string) =>
+        [...el.querySelectorAll<HTMLButtonElement>('.kind')].find(
+          (b) => b.textContent!.trim() === name,
+        )!;
+      const clearKinds = () =>
+        [...el.querySelectorAll<HTMLButtonElement>('.filters__kinds-head button')].find((b) =>
+          b.textContent!.includes('MAIN_PAGE.clearKinds'),
+        );
+      expect(clearKinds()).toBeUndefined();
+
+      tile('Koncerty').click();
+      component.filtersForm.controls.kids.setValue(true);
+      await debounce();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      await settle();
+      expect(tile('Koncerty').getAttribute('aria-pressed')).toBe('true');
+
+      clearKinds()!.click();
+      await debounce();
+      const kinds = expectFeed();
+      expect(param(kinds, 'kinds')).toBeNull();
+      expect(param(kinds, 'kids')).toBe('true');
+      kinds.flush({ ...page(), mode: 'RANKED' });
+      await settle();
+      expect(tile('Koncerty').getAttribute('aria-pressed')).toBe('false');
+      expect(clearKinds()).toBeUndefined();
+
+      tile('Scena').click();
+      await debounce();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      await settle();
+
+      component.clearFilters();
+      await settle();
+      const cleared = expectFeed();
+      expect(param(cleared, 'kinds')).toBeNull();
+      expect(param(cleared, 'kids')).toBeNull();
+      cleared.flush({ ...page(), mode: 'RANKED' });
+      await settle();
+      expect(tile('Scena').getAttribute('aria-pressed')).toBe('false');
+      expect(clearKinds()).toBeUndefined();
+      expect(component.activeFilterCount()).toBe(0);
     });
 
     it('shows Wszystkie as every post, coming up next first, with the same search', async () => {

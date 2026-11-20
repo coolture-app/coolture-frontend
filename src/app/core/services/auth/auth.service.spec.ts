@@ -9,10 +9,10 @@ describe('AuthService', () => {
   let service: AuthService;
   let http: HttpTestingController;
 
-  const respond = (interestsSelected: boolean) =>
+  const respond = (onboarded: boolean) =>
     http
       .expectOne((request) => request.url.endsWith('/auth/me'))
-      .flush({ id: 'user-1', interestsSelected } as Me);
+      .flush({ id: 'user-1', onboarded } as Me);
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -45,7 +45,7 @@ describe('AuthService', () => {
     service.checkSession().subscribe();
     respond(false);
 
-    expect(service.interestsSelected()).toBeFalse();
+    expect(service.onboarded()).toBeFalse();
   });
 
   it('sends one request for session checks made at the same time', () => {
@@ -74,7 +74,7 @@ describe('AuthService', () => {
     service.checkSession().subscribe();
     respond(false);
 
-    expect(service.interestsSelected()).toBeTrue();
+    expect(service.onboarded()).toBeTrue();
   });
 
   it('keeps the user when the session check fails on the server side', () => {

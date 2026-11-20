@@ -1,0 +1,20 @@
+<div class="kinds" [class.kinds--large]="large()" role="group" [attr.aria-label]="label() || null">
+  @for (tile of tiles(); track tile.key) {
+    <button
+      type="button"
+      class="kind"
+      [class.kind--on]="selected().has(tile.key)"
+      [attr.aria-pressed]="selected().has(tile.key)"
+      [disabled]="off()"
+      (click)="tap(tile.key)"
+    >
+      <ng-icon class="kind__icon" [svg]="tile.icon" aria-hidden="true" />
+      <span class="kind__text">
+        <span class="kind__name">{{ tile.name }}</span>
+        @if (large()) {
+          <span class="kind__hint">{{ 'KINDS.hint.' + tile.key | translate }}</span>
+        }
+      </span>
+    </button>
+  }
+</div>
