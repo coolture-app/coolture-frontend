@@ -20,4 +20,8 @@ export interface PostFilterParams {
   reactionType?: ReactionType;
   sortBy?: PostsSort;
   includePast?: boolean;
+  /** Kind keys; a post matches any of them. */
+  kinds?: string[];
+  /** Only posts for children, whatever their other kinds. */
+  kids?: boolean;
 }

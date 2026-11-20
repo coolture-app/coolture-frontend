@@ -260,6 +260,14 @@
     background: var(--color-accent-light);
     font-size: var(--text-meta);
     color: var(--color-accent-hover);
+
+    &--kind {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-xs);
+      background: var(--color-accent);
+      color: var(--color-text-inverse);
+    }
   }
 
   &__bio {

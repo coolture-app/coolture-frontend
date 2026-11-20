@@ -5,6 +5,7 @@ import { catchError, finalize, map, Observable, of, shareReplay, tap } from 'rxj
 import { ApiUrlService } from '../api-url.service';
 import { Me, UserProfile } from '../../models/users/user-profile.model';
 import { NamedPlace } from '../../models/common/geo.model';
+import { UserInterests } from '../../models/interests/interest.model';
 import { environment } from '../../../../environments/environment';
 import { DEV_IDENTITY } from '../../auth/dev-identity';
 
@@ -46,7 +47,7 @@ export class AuthService {
 
   readonly currentUser = signal<UserProfile | null>(null);
   /**
-   * Whether the signed-in user has picked interests, or null while unknown.
+   * Whether the signed-in user has picked a kind of event, or null while unknown.
    * A selection can only be replaced, never removed, so once true it stays true for the session
    * and a /auth/me response sent before a save cannot undo it.
    */
@@ -93,9 +94,9 @@ export class AuthService {
   }
 
   /** After the interests were saved, so the profile shows them without asking `/auth/me` again. */
-  markInterestsSelected(interests: string[]): void {
+  markInterestsSelected({ kinds, interests }: UserInterests): void {
     this.interestsSelected.set(true);
-    this.currentUser.update((user) => user && { ...user, interests });
+    this.currentUser.update((user) => user && { ...user, kinds, interests });
   }
 
   /** After the home was saved or removed. */

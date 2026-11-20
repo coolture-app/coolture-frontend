@@ -27,9 +27,7 @@ export class InterestsService {
     return this.http.get<UserInterests>(this.apiUrl.path(`/users/${userId}/interests`));
   }
 
-  replaceUserInterests(userId: string, interests: string[]): Observable<UserInterests> {
-    return this.http.put<UserInterests>(this.apiUrl.path(`/users/${userId}/interests`), {
-      interests,
-    });
+  replaceUserInterests(userId: string, selection: UserInterests): Observable<UserInterests> {
+    return this.http.put<UserInterests>(this.apiUrl.path(`/users/${userId}/interests`), selection);
   }
 }

@@ -18,6 +18,8 @@ export interface PostMark {
   coordinates: GeoPoint;
   venueName?: string;
   city?: string;
+  /** The first kind of event; left out until derived. */
+  kind?: string;
   /** The viewer's own; left out for a guest. */
   myReaction?: ReactionType;
   myParticipation?: ParticipationType;
