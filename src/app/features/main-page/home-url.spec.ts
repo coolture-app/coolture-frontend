@@ -93,6 +93,25 @@ describe('the home URL', () => {
     expect(state).toEqual(DEFAULT);
   });
 
+  it('carries the kinds as one list, and Dla dzieci', () => {
+    const state: HomeUrlState = {
+      ...DEFAULT,
+      filters: { ...NO_FILTERS, kinds: ['concerts', 'stage'], kids: true },
+    };
+
+    const params = toHomeParams(state);
+
+    expect(params).toEqual({ kinds: 'concerts,stage', kids: 'true' });
+    expect(fromHomeParams(params)).toEqual(state);
+  });
+
+  it('keeps only well-formed kinds, once each, which the API would refuse otherwise', () => {
+    const { filters } = fromHomeParams({ kinds: 'concerts,Stage,,concerts,a-b,food', kids: 'yes' });
+
+    expect(filters.kinds).toEqual(['concerts', 'food']);
+    expect(filters.kids).toBeFalse();
+  });
+
   it('takes a whole radius from the map’s area, up to the largest chip', () => {
     expect(fromHomeParams({ radius: '7', lat: '54.35', lng: '18.65' }).filters.radiusKm).toBe(7);
     expect(fromHomeParams({ radius: '0', lat: '54.35', lng: '18.65' }).filters.place).toBe('');

@@ -12,6 +12,10 @@ export type PlaceFilter = '' | 'mine' | 'picked';
 
 /** The filter panel's values, as its form holds them. */
 export const NO_FILTERS = {
+  /** Kind keys; a post matches any of them. */
+  kinds: [] as string[],
+  /** Only posts for children, narrowing the kinds rather than adding to them. */
+  kids: false,
   type: '',
   /** Days, as a date input holds them ("2026-11-21"). A post matches if it runs at any moment between them. */
   fromDay: '',
@@ -37,6 +41,8 @@ export const START_SORT: PostsSort = 'UPCOMING';
 /** The filter panel's form, one control per value in NO_FILTERS. */
 export function createFiltersForm() {
   return new FormGroup({
+    kinds: new FormControl(NO_FILTERS.kinds, { nonNullable: true }),
+    kids: new FormControl(NO_FILTERS.kids, { nonNullable: true }),
     type: new FormControl(NO_FILTERS.type, { nonNullable: true }),
     fromDay: new FormControl(NO_FILTERS.fromDay, { nonNullable: true }),
     toDay: new FormControl(NO_FILTERS.toDay, { nonNullable: true }),

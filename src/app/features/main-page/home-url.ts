@@ -17,6 +17,9 @@ export interface HomeUrlState {
 
 const SORTS: readonly PostsSort[] = ['UPCOMING', 'NEAREST', 'POPULAR', 'RECENT'];
 const TYPES: readonly string[] = ['OFFLINE', 'ONLINE'];
+/** The contract's pattern for `kinds`. */
+const KIND_KEY = /^[a-z_]{1,64}$/;
+const MAX_KINDS = 32;
 /**
  * A date input's day, with the time older links held after it ("2026-12-01T18:00"), which is dropped. Anything else
  * would throw when it's turned into a date.
@@ -31,6 +34,8 @@ export function toHomeParams({ search, filters, tab, sort, point, map }: HomeUrl
     ...(inAll && { tab: 'all' }),
     ...(inAll && sort !== START_SORT && { sort: sort.toLowerCase() }),
     ...(query && { q: query }),
+    ...(filters.kinds.length && { kinds: filters.kinds.join(',') }),
+    ...(filters.kids && { kids: 'true' }),
     ...(filters.type && { type: filters.type.toLowerCase() }),
     ...(filters.fromDay && { from: filters.fromDay }),
     ...(filters.toDay && { to: filters.toDay }),
@@ -68,6 +73,8 @@ export function fromHomeParams(params: Params): HomeUrlState {
     map: text('view') === 'map',
     filters: {
       ...NO_FILTERS,
+      kinds: kindKeys(text('kinds')),
+      kids: text('kids') === 'true',
       type: oneOf('type', TYPES),
       fromDay: day('from'),
       toDay: day('to'),
@@ -84,6 +91,15 @@ export function fromHomeParams(params: Params): HomeUrlState {
 export function sameHomeParams(a: Params, b: Params): boolean {
   const sorted = (params: Params) => JSON.stringify(Object.entries(params).sort());
   return sorted(a) === sorted(b);
+}
+
+/**
+ * Kind keys as the API takes them, without repeats. A well-formed key no post has just matches nothing, so the
+ * catalogue isn't needed here; anything else would be a 400.
+ */
+function kindKeys(value: string): string[] {
+  const keys = value.split(',').filter((key) => KIND_KEY.test(key));
+  return [...new Set(keys)].slice(0, MAX_KINDS);
 }
 
 function readPoint(lat: string, lng: string): GeoPoint | null {

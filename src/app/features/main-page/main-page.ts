@@ -202,10 +202,10 @@ export class MainPage implements OnDestroy {
       ? (this.home()?.name ?? null)
       : null,
   );
-  /** How many filters the panel has on, counting a date range as one. Not the search or the place. */
+  /** How many filters the panel has on, counting a date range and the chosen kinds as one each. Not the search or the place. */
   readonly activeFilterCount = computed(() => {
-    const { type, from, to, followed, status, includePast } = this.activeFilters();
-    const on = [type, from || to, followed, status, includePast];
+    const { kinds, kids, type, from, to, followed, status, includePast } = this.activeFilters();
+    const on = [kinds, kids, type, from || to, followed, status, includePast];
     return on.filter((value) => value !== undefined && value !== false).length;
   });
   /** A screenful for the first page. After that one is enough, and the posts stay what's on screen. */
@@ -679,12 +679,14 @@ export class MainPage implements OnDestroy {
 
   private readFilters(): PostFilterParams {
     const search = this.searchControl.value.trim();
-    const { type, fromDay, toDay, followed, status, includePast, radiusKm } =
+    const { kinds, kids, type, fromDay, toDay, followed, status, includePast, radiusKm } =
       this.filtersForm.getRawValue();
     const position = this.place.centre(this.filtersForm.controls.place.value);
 
     return {
       ...(search && { q: search }),
+      ...(kinds.length && { kinds }),
+      ...(kids && { kids }),
       ...(type && { type: type as PostType }),
       ...dayWindow(fromDay, toDay),
       ...(followed && this.authService.isAuthenticated() && { followed }),
