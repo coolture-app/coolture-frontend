@@ -47,8 +47,10 @@
     color: var(--color-text-inverse);
   }
 
+  // A flex box, so the SVG isn't set on the text's baseline and cut off at the bottom by ng-icon's overflow.
   &__icon {
-    font-size: 22px;
+    --ng-icon__size: 22px;
+    display: flex;
     flex-shrink: 0;
   }
 

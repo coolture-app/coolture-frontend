@@ -405,6 +405,11 @@
 
 .post__kind {
   color: inherit;
+
+  ng-icon {
+    display: flex;
+  }
+
   font-weight: var(--font-medium);
   text-decoration: none;
 

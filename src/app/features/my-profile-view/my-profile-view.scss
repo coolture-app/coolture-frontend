@@ -267,6 +267,10 @@
       gap: var(--space-xs);
       background: var(--color-accent);
       color: var(--color-text-inverse);
+
+      ng-icon {
+        display: flex;
+      }
     }
   }
 

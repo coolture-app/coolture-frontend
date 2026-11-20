@@ -140,8 +140,9 @@
   }
 
   &__kind {
+    --ng-icon__size: 13px;
+    display: inline-flex;
     margin-right: 2px;
-    font-size: 13px;
     vertical-align: -2px;
   }
 
