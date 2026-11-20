@@ -321,8 +321,8 @@ export interface components {
       followsYou: boolean;
       interests: string[];
       kinds: string[];
-      /** @description Whether the caller has a kind of event. False until onboarding is saved, and for accounts from before kinds, which onboarding then asks again. */
-      interestsSelected: boolean;
+      /** @description Whether the caller has picked their kinds of event. False until onboarding is saved, and for accounts from before kinds, which onboarding then asks again. */
+      onboarded: boolean;
       /** @description Whether friends (mutual follows) see the caller's Interesuje mnie and Biorę udział. True until turned off. */
       shareStances: boolean;
       home?: components['schemas']['Home'];

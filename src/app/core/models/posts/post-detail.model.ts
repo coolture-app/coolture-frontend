@@ -7,6 +7,6 @@ export interface PostMedia {
 }
 export interface PostDetail extends PostBase {
   media: PostMedia[];
-  /** Kinds of event, the first the likeliest; empty until derived. */
+  /** Kinds of event, the first the likeliest; left out until derived. */
   kinds?: string[];
 }

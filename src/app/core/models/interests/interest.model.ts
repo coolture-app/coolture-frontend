@@ -4,6 +4,11 @@ export interface Interest {
   labelEn: string;
 }
 
+/** The name to show in the given language. */
+export function label(item: Interest, lang: string): string {
+  return lang === 'en' ? item.labelEn : item.labelPl;
+}
+
 /** A kind of event: a format someone goes to, such as a concert or a workshop. */
 export type Kind = Interest;
 
