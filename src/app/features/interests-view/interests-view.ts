@@ -90,9 +90,11 @@ export class InterestsView implements OnInit {
           selection: this.interestsService.getUserInterests(this.authService.userId()),
         }),
       );
+      // Only offered topics can be saved, so one held from before that's no longer offered goes with the next save.
+      const offered = new Set(catalog.categories.flatMap((c) => c.interests.map((i) => i.key)));
       this.catalog.set(catalog);
       this.kinds.set(new Set(selection.kinds));
-      this.interests.set(new Set(selection.interests));
+      this.interests.set(new Set(selection.interests.filter((key) => offered.has(key))));
       this.savedSnapshot = this.snapshot();
     } catch (error) {
       console.error('Error while fetching interests', error);
@@ -108,7 +110,6 @@ export class InterestsView implements OnInit {
     return this.interests().has(key);
   }
 
-  /** A topic held from before but no longer offered isn't shown, yet counts toward the limit, as saving keeps it. */
   protected isAtLimit(key: string): boolean {
     return !this.isSelected(key) && this.interests().size >= (this.catalog()?.maxInterests ?? 0);
   }

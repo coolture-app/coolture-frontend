@@ -139,7 +139,7 @@ export interface paths {
     };
     /**
      * Onboarding's choices, kinds of event then interests by category, with how many to pick
-     * @description Only offered interests are listed; a hidden one is still accepted from someone who already holds it. A category with no offered interest is left out.
+     * @description Only offered interests are listed, and only they can be picked. A category with no offered interest is left out.
      */
     get: operations['getInterestCatalog'];
     put?: never;
@@ -166,7 +166,7 @@ export interface paths {
     get: operations['getUserInterests'];
     /**
      * Replaces the caller's kinds and interests
-     * @description At least the catalogue's minKinds kinds, and between its minInterests and maxInterests interests, each offered or already held by the caller; otherwise 400.
+     * @description At least the catalogue's minKinds kinds, and between its minInterests and maxInterests offered interests; otherwise 400.
      */
     put: operations['replaceUserInterests'];
     post?: never;
@@ -806,7 +806,7 @@ export interface operations {
          *       "interests": [
          *         "theatre",
          *         "stand_up",
-         *         "cinema"
+         *         "jazz"
          *       ]
          *     }
          */

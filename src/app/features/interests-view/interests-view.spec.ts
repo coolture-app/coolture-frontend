@@ -212,17 +212,19 @@ describe('InterestsView', () => {
       expect(topic('jazz').disabled).toBeFalse();
     });
 
-    it('counts and keeps a held topic that is no longer offered', async () => {
+    it('drops a held topic that is no longer offered, without counting it', async () => {
       await render({ kinds: ['concerts'], interests: ['astrology', 'jazz'] });
       spyOn(TestBed.inject(Router), 'navigateByUrl').and.resolveTo(true);
+      expect(fixture.componentInstance.confirmLeave()).toBeTrue();
 
       await click(topic('rock'));
-      expect(topic('opera').disabled).toBeTrue();
+      await click(topic('opera'));
+      expect(topic('pop').disabled).toBeTrue();
 
       await click(save());
       expect(interestsService.replaceUserInterests).toHaveBeenCalledOnceWith('user-1', {
         kinds: ['concerts'],
-        interests: jasmine.arrayWithExactContents(['astrology', 'jazz', 'rock']),
+        interests: jasmine.arrayWithExactContents(['jazz', 'rock', 'opera']),
       });
     });
 
