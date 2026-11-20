@@ -7,8 +7,8 @@ import { kindIcon } from '../../icons/kind-icons';
 import { Kind } from '../../models/interests/interest.model';
 
 /**
- * Kinds of event as tiles to pick, several at once. `large` is onboarding's and the profile's: two columns, each with
- * a hint of what it holds. Otherwise Filtry's: three columns, the icon above the name.
+ * Kinds of event to pick, several at once. `large` is onboarding's and the profile's: tiles in two columns, each with
+ * a hint of what it holds. Otherwise Filtry's: chips, the icon before the name, wrapping onto as many rows as needed.
  */
 @Component({
   selector: 'app-kind-grid',
