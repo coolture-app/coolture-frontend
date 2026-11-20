@@ -7,7 +7,7 @@
     </app-btn>
   </div>
 
-  @if (kinds.tileKinds().length) {
+  @if (tileKinds().length) {
     <div class="filters__kinds">
       <div class="filters__kinds-head">
         <span class="filters__label">{{ 'MAIN_PAGE.kind' | translate }}</span>
@@ -19,7 +19,7 @@
       </div>
       <app-kind-grid
         #grid
-        [kinds]="kinds.tileKinds()"
+        [kinds]="tileKinds()"
         [formControl]="f.controls.kinds"
         [label]="'MAIN_PAGE.kind' | translate"
       />

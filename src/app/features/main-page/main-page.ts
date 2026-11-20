@@ -124,6 +124,7 @@ const MAP_PICKS = 30;
 })
 export class MainPage implements OnDestroy {
   private postService = inject(PostService);
+  /** Created with the page, so its catalogue is loaded by the time Filtry opens. */
   private kinds = inject(KindsService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
@@ -266,8 +267,6 @@ export class MainPage implements OnDestroy {
       this.isMapView.set(fromHomeParams(this.route.snapshot.queryParams).map);
     }
     this.postService.clearActivePost();
-    // Filtry's kinds, so the panel opens with them. After render, so only in the browser.
-    afterNextRender(() => this.kinds.preload());
     this.mapOpened.set(this.isMapView());
     this.mapResumes.set(restored && this.isMapView());
     const focus = this.mapFocus.take();

@@ -17,9 +17,6 @@ import {
   lucideUtensils,
 } from '@ng-icons/lucide';
 
-/** The kind that Filtry shows as a switch rather than a tile: it narrows the other kinds instead of adding to them. */
-export const KIDS_KIND = 'kids';
-
 /** Each kind's Lucide icon, the same on Filtry's tiles, onboarding, the profile and the map's pins. */
 const KIND_ICONS: Readonly<Record<string, string>> = {
   concerts: lucideMusic,

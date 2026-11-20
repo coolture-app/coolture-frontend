@@ -1,15 +1,15 @@
-import { computed, inject, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable, PLATFORM_ID, signal } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslateService } from '@ngx-translate/core';
 import { catchError, map, of } from 'rxjs';
-import { KIDS_KIND } from '../../icons/kind-icons';
 import { Kind } from '../../models/interests/interest.model';
 import { InterestsService } from './interests.service';
 
-/**
- * The kinds of event and their names, from the cached catalogue. It's asked for only once a name is first read, or
- * on `preload`, so pages that show no kind don't load it.
- */
+/** The kind that Filtry shows as a switch rather than a tile: it narrows the other kinds instead of adding to them. */
+export const KIDS_KIND = 'kids';
+
+/** The kinds of event and their names, from the cached catalogue. */
 @Injectable({
   providedIn: 'root',
 })
@@ -20,16 +20,17 @@ export class KindsService {
   private lang = toSignal(this.translate.onLangChange.pipe(map((event) => event.lang)), {
     initialValue: this.translate.getCurrentLang(),
   });
-  private loaded = signal<readonly Kind[]>([]);
-  private requested = false;
 
-  /** In the catalogue's order. Empty until loaded, and if loading failed, so a kind then shows no name. */
-  readonly kinds = computed(() => {
-    this.request();
-    return this.loaded();
-  });
-  /** Filtry's tiles: every kind but Dla dzieci, which is a switch there. */
-  readonly tileKinds = computed(() => this.kinds().filter((kind) => kind.key !== KIDS_KIND));
+  /** In the catalogue's order. Empty on the server and if loading failed, so a kind then shows no name. */
+  readonly kinds = isPlatformBrowser(inject(PLATFORM_ID))
+    ? toSignal(
+        this.interests.getCatalog().pipe(
+          map((catalog) => catalog.kinds as readonly Kind[]),
+          catchError(() => of([] as readonly Kind[])),
+        ),
+        { initialValue: [] as readonly Kind[] },
+      )
+    : signal<readonly Kind[]>([]).asReadonly();
 
   private names = computed(() => {
     const en = this.lang() === 'en';
@@ -49,27 +50,5 @@ export class KindsService {
     const id = `KINDS.one.${key}`;
     const word: string = this.translate.instant(id);
     return word !== id ? word : this.name(key);
-  }
-
-  /** Asks for the catalogue now, so a panel that shows the kinds opens with them rather than growing when they arrive. */
-  preload(): void {
-    this.request();
-  }
-
-  /** Later, since a cached catalogue answers at once, and a signal can't be set while a computed one is read. */
-  private request(): void {
-    if (this.requested) {
-      return;
-    }
-    this.requested = true;
-    queueMicrotask(() =>
-      this.interests
-        .getCatalog()
-        .pipe(
-          map((catalog) => catalog.kinds),
-          catchError(() => of([] as Kind[])),
-        )
-        .subscribe((kinds) => this.loaded.set(kinds)),
-    );
   }
 }

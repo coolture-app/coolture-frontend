@@ -7,8 +7,7 @@ import { heroXMark } from '@ng-icons/heroicons/outline';
 import { Btn } from '../../../core/components/btn/btn';
 import { KindGrid } from '../../../core/components/kind-grid/kind-grid';
 import { Switch } from '../../../core/components/switch/switch/switch';
-import { KIDS_KIND } from '../../../core/icons/kind-icons';
-import { KindsService } from '../../../core/services/interests/kinds.service';
+import { KIDS_KIND, KindsService } from '../../../core/services/interests/kinds.service';
 import { FiltersForm } from '../home-view';
 
 /** The home page's filter panel, everything but the place. The home page owns the form and applies it. */
@@ -29,5 +28,7 @@ export class FeedFilters {
   /** Filters apply as they change; this only closes the panel. */
   readonly done = output<void>();
 
+  /** Filtry's tiles: every kind but Dla dzieci, which is a switch there. */
+  protected tileKinds = computed(() => this.kinds.kinds().filter((kind) => kind.key !== KIDS_KIND));
   protected hasKidsKind = computed(() => this.kinds.kinds().some((kind) => kind.key === KIDS_KIND));
 }
