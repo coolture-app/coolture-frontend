@@ -1,5 +1,5 @@
 import { PostMark } from '../../models/posts/post-mark.model';
-import { groupPlaces, pinFeatures, pinLabel, pluralForm, shortTitle } from './map-pins';
+import { groupPlaces, pinFeatures, pinLabel, placeKind, pluralForm, shortTitle } from './map-pins';
 
 const WORDS = {
   today: 'dziś',
@@ -138,5 +138,35 @@ describe('pinFeatures', () => {
     const key = (id: string) => features.find((f) => f.properties.id === id)!.properties.sortKey;
 
     expect(key('other')).toBeGreaterThan(key('pick'));
+  });
+});
+
+describe('placeKind', () => {
+  const at = (posts: PostMark[]) => groupPlaces(posts)[0];
+
+  it('is a post’s first kind, or none before its kind is derived', () => {
+    expect(placeKind(at([mark('a', NOW, 54.35, 18.6, { kind: 'concerts' })]))).toBe('concerts');
+    expect(placeKind(at([mark('a', NOW)]))).toBe('');
+  });
+
+  it('is a place’s kind only when all its posts share it', () => {
+    const later = new Date(2026, 10, 20);
+    const same = at([
+      mark('a', NOW, 54.35, 18.6, { kind: 'stage' }),
+      mark('b', later, 54.35, 18.6, { kind: 'stage' }),
+    ]);
+    const mixed = at([
+      mark('a', NOW, 54.35, 18.6, { kind: 'stage' }),
+      mark('b', later, 54.35, 18.6, { kind: 'concerts' }),
+    ]);
+    const partly = at([
+      mark('a', NOW, 54.35, 18.6, { kind: 'stage' }),
+      mark('b', later, 54.35, 18.6),
+    ]);
+
+    expect(placeKind(same)).toBe('stage');
+    expect(placeKind(mixed)).toBe('');
+    expect(placeKind(partly)).toBe('');
+    expect(pinFeatures([same], null, NOW, 'pl', WORDS).features[0].properties.kind).toBe('stage');
   });
 });

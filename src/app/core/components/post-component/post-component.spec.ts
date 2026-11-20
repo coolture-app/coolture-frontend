@@ -530,6 +530,52 @@ describe('PostComponent', () => {
     });
   });
 
+  describe('kind', () => {
+    const detail = (kinds: string[]): PostDetail => ({ ...card(), media: [], kinds });
+
+    async function flushKinds(): Promise<void> {
+      await new Promise((resolve) => setTimeout(resolve));
+      http
+        .expectOne((r) => r.url.endsWith('/dicts/interests'))
+        .flush({
+          minKinds: 1,
+          minInterests: 0,
+          maxInterests: 6,
+          kinds: [
+            { key: 'concerts', labelPl: 'Koncerty', labelEn: 'Concerts' },
+            { key: 'stage', labelPl: 'Scena', labelEn: 'Stage' },
+          ],
+          categories: [],
+        });
+      fixture.detectChanges();
+    }
+
+    it('names the first kind on the post page, linking to Wszystkie filtered by it', async () => {
+      render(detail(['stage', 'concerts']), true);
+      await flushKinds();
+
+      const link = element().querySelector<HTMLAnchorElement>('.post__kind')!;
+      expect(link.textContent?.trim()).toBe('Scena');
+      expect(link.getAttribute('href')).toBe('/?tab=all&kinds=stage');
+    });
+
+    it('shows nothing before a kind is derived', async () => {
+      render(detail([]), true);
+      await new Promise((resolve) => setTimeout(resolve));
+
+      expect(element().querySelector('.post__kind')).toBeNull();
+      http.expectNone((r) => r.url.endsWith('/dicts/interests'));
+    });
+
+    it('stays off cards, which load no kinds', async () => {
+      render(detail(['stage']));
+      await new Promise((resolve) => setTimeout(resolve));
+
+      expect(element().querySelector('.post__kind')).toBeNull();
+      http.expectNone((r) => r.url.endsWith('/dicts/interests'));
+    });
+  });
+
   describe('place', () => {
     const location = {
       id: 'l1',

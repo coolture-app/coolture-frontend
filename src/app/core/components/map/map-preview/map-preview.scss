@@ -139,6 +139,12 @@
     white-space: nowrap;
   }
 
+  &__kind {
+    margin-right: 2px;
+    font-size: 13px;
+    vertical-align: -2px;
+  }
+
   &__row-title {
     min-width: 0;
     overflow: hidden;

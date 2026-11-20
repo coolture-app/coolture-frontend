@@ -24,7 +24,7 @@
     (mapLoad)="onMapLoad($event)"
     (moveEnd)="onMoveEnd($event)"
     (mapClick)="onMapClick($event)"
-    (styleImageMissing)="onImageMissing()"
+    (styleImageMissing)="onImageMissing($event.id)"
   >
     @if (radiusArea(); as area) {
       <mgl-geojson-source id="radius" [data]="area"></mgl-geojson-source>
