@@ -5,11 +5,11 @@
       <h1>{{ 'INTERESTS.title' | translate }}</h1>
     } @else {
       <span class="interests__step">
-        {{ 'INTERESTS.step' | translate: { step: step() === 'kinds' ? 1 : 2, steps: 2 } }}
+        {{ 'INTERESTS.step' | translate: { step: page() + 1, steps: pages().length } }}
       </span>
       <h1>
         {{
-          (step() === 'kinds' ? 'INTERESTS.kinds-question' : 'INTERESTS.topics-question')
+          (sections()[0] === 'kinds' ? 'INTERESTS.kinds-question' : 'INTERESTS.topics-question')
             | translate
         }}
       </h1>
@@ -17,31 +17,30 @@
   </div>
 
   @if (catalog(); as catalog) {
-    @if (showKinds()) {
-      <section class="interests__section" aria-labelledby="kinds-heading">
-        @if (!onboarding()) {
+    @let headed = sections().length > 1;
+    @if (sections().includes('kinds')) {
+      <section class="interests__section" [attr.aria-labelledby]="headed ? 'kinds-heading' : null">
+        @if (headed) {
           <h2 id="kinds-heading">{{ 'INTERESTS.kinds' | translate }}</h2>
         }
-        <p class="interests__subtitle" [id]="onboarding() ? 'kinds-heading' : null">
-          {{ 'INTERESTS.kinds-subtitle' | translate }}
-        </p>
+        <p class="interests__subtitle">{{ 'INTERESTS.kinds-subtitle' | translate }}</p>
         <app-kind-grid
           large
           [kinds]="catalog.kinds"
-          [selected]="kinds()"
+          [(selected)]="kinds"
           [disabled]="saving()"
           [label]="'INTERESTS.kinds' | translate"
-          (toggled)="toggleKind($event)"
+          (selectedChange)="errorKey.set(null)"
         />
       </section>
     }
 
-    @if (showTopics()) {
-      <section class="interests__section" aria-labelledby="topics-heading">
-        @if (!onboarding()) {
+    @if (sections().includes('topics')) {
+      <section class="interests__section" [attr.aria-labelledby]="headed ? 'topics-heading' : null">
+        @if (headed) {
           <h2 id="topics-heading">{{ 'INTERESTS.topics' | translate }}</h2>
         }
-        <p class="interests__subtitle" [id]="onboarding() ? 'topics-heading' : null">
+        <p class="interests__subtitle">
           {{ 'INTERESTS.topics-subtitle' | translate: { max: catalog.maxInterests } }}
         </p>
         @for (category of catalog.categories; track category.key) {
@@ -67,26 +66,26 @@
     }
 
     <div class="interests__footer">
-      @if (onboarding() && step() === 'topics') {
-        <app-btn variant="plain" [disabled]="saving()" (btnClick)="goTo('kinds')">
+      @if (page() > 0) {
+        <app-btn variant="plain" [disabled]="saving()" (btnClick)="goTo(page() - 1)">
           {{ 'INTERESTS.back' | translate }}
         </app-btn>
       }
-      @if (showTopics()) {
+      @if (sections().includes('topics')) {
         <span class="interests__counter" aria-live="polite">
           {{
             'INTERESTS.counter' | translate: { count: interests().size, max: catalog.maxInterests }
           }}
         </span>
       }
-      @if (onboarding() && step() === 'kinds') {
-        <app-btn variant="primary" [disabled]="!hasKinds()" (btnClick)="goTo('topics')">
+      @if (!isLastPage()) {
+        <app-btn variant="primary" [disabled]="!hasKinds()" (btnClick)="goTo(page() + 1)">
           {{ 'INTERESTS.next' | translate }}
         </app-btn>
       } @else {
         <app-btn variant="primary" [disabled]="!canSave() || saving()" (btnClick)="save()">
           {{
-            (onboarding() && interests().size === 0 ? 'INTERESTS.skip-topics' : 'INTERESTS.save')
+            (page() > 0 && interests().size === 0 ? 'INTERESTS.skip-topics' : 'INTERESTS.save')
               | translate
           }}
         </app-btn>

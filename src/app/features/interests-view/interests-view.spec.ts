@@ -30,7 +30,7 @@ describe('InterestsView', () => {
   let element: HTMLElement;
   const authService = {
     userId: () => 'user-1',
-    markInterestsSelected: jasmine.createSpy('markInterestsSelected'),
+    markOnboarded: jasmine.createSpy('markOnboarded'),
   };
   const interestsService = jasmine.createSpyObj<InterestsService>('InterestsService', [
     'getCatalog',
@@ -94,7 +94,7 @@ describe('InterestsView', () => {
 
   beforeEach(() => {
     interestsService.replaceUserInterests.calls.reset();
-    authService.markInterestsSelected.calls.reset();
+    authService.markOnboarded.calls.reset();
   });
 
   describe('onboarding', () => {
@@ -250,7 +250,7 @@ describe('InterestsView', () => {
 
       await click(save());
 
-      expect(authService.markInterestsSelected).toHaveBeenCalledWith({
+      expect(authService.markOnboarded).toHaveBeenCalledWith({
         kinds: ['concerts'],
         interests: ['rock'],
       });

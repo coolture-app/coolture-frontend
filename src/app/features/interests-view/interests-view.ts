@@ -18,15 +18,14 @@ import { BackLink } from '../../core/components/back-link/back-link';
 import { Btn } from '../../core/components/btn/btn';
 import { KindGrid } from '../../core/components/kind-grid/kind-grid';
 import { ModalWindow } from '../../core/components/modal/modal-window/modal-window';
-import { Interest, InterestCatalog } from '../../core/models/interests/interest.model';
+import { Interest, InterestCatalog, label } from '../../core/models/interests/interest.model';
 import { AuthService } from '../../core/services/auth/auth.service';
 import { InterestsService } from '../../core/services/interests/interests.service';
 
 export const unsavedInterestsGuard: CanDeactivateFn<InterestsView> = (component) =>
   component.confirmLeave();
 
-/** Onboarding asks for the kinds first, then the topics. The profile's page shows both at once. */
-type Step = 'kinds' | 'topics';
+type Section = 'kinds' | 'topics';
 
 @Component({
   selector: 'app-interests-view',
@@ -41,10 +40,10 @@ export class InterestsView implements OnInit {
   private translate = inject(TranslateService);
   private element = inject<ElementRef<HTMLElement>>(ElementRef);
 
-  /** First selection after sign-in, shown as an overlay in two steps, with no navigation after saving. */
+  /** First selection after sign-in, shown as an overlay in two pages, with no navigation after saving. */
   readonly onboarding = input(false, { transform: booleanAttribute });
   readonly dismissed = output<void>();
-  /** Onboarding goes on to its next step. */
+  /** Onboarding is done. */
   readonly saved = output<void>();
 
   private leaveModal = viewChild.required(ModalWindow);
@@ -57,12 +56,16 @@ export class InterestsView implements OnInit {
   protected catalog = signal<InterestCatalog | null>(null);
   protected kinds = signal<ReadonlySet<string>>(new Set());
   protected interests = signal<ReadonlySet<string>>(new Set());
-  protected step = signal<Step>('kinds');
+  protected page = signal(0);
   protected saving = signal(false);
   protected errorKey = signal<string | null>(null);
 
-  protected showKinds = computed(() => !this.onboarding() || this.step() === 'kinds');
-  protected showTopics = computed(() => !this.onboarding() || this.step() === 'topics');
+  /** Onboarding asks for the kinds first, then the topics. The profile's page shows both at once. */
+  protected pages = computed<Section[][]>(() =>
+    this.onboarding() ? [['kinds'], ['topics']] : [['kinds', 'topics']],
+  );
+  protected sections = computed(() => this.pages()[this.page()]);
+  protected isLastPage = computed(() => this.page() === this.pages().length - 1);
   protected hasKinds = computed(() => this.kinds().size >= (this.catalog()?.minKinds ?? 1));
   protected canSave = computed(() => {
     const catalog = this.catalog();
@@ -103,7 +106,7 @@ export class InterestsView implements OnInit {
   }
 
   protected label(item: Interest): string {
-    return this.currentLang() === 'en' ? item.labelEn : item.labelPl;
+    return label(item, this.currentLang());
   }
 
   protected isSelected(key: string): boolean {
@@ -114,19 +117,14 @@ export class InterestsView implements OnInit {
     return !this.isSelected(key) && this.interests().size >= (this.catalog()?.maxInterests ?? 0);
   }
 
-  protected toggleKind(key: string): void {
-    this.errorKey.set(null);
-    this.kinds.update((keys) => toggled(keys, key));
-  }
-
   protected toggleInterest(key: string): void {
     this.errorKey.set(null);
     this.interests.update((keys) => toggled(keys, key));
   }
 
-  /** The overlay keeps its scroll, so the next step would open where the last one was left. */
-  protected goTo(step: Step): void {
-    this.step.set(step);
+  /** The overlay keeps its scroll, so the next page would open where the last one was left. */
+  protected goTo(page: number): void {
+    this.page.set(page);
     this.element.nativeElement.scrollIntoView?.({ block: 'start' });
   }
 
@@ -159,7 +157,7 @@ export class InterestsView implements OnInit {
         }),
       );
       this.savedSnapshot = this.snapshot();
-      this.authService.markInterestsSelected(saved);
+      this.authService.markOnboarded(saved);
       return true;
     } catch (error) {
       console.error('Error while saving interests', error);
