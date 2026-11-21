@@ -3,9 +3,9 @@
   <div class="filters__header">
     <span class="filters__title">{{ 'MAIN_PAGE.filters' | translate }}</span>
     <div class="filters__actions">
-      <app-btn variant="plain" size="sm" (btnClick)="clear.emit()">
-        <ng-icon name="heroXMark" /> {{ 'MAIN_PAGE.clear' | translate }}
-      </app-btn>
+      <app-btn variant="secondary" size="sm" (btnClick)="clear.emit()">{{
+        'MAIN_PAGE.clear' | translate
+      }}</app-btn>
       <app-btn
         variant="icon"
         size="sm"
