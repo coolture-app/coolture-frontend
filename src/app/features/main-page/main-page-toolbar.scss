@@ -65,9 +65,10 @@
   }
 }
 
-// The place pill: its name gives way before the radius does.
+// The place pill takes what Filtry and Lista | Mapa leave of the row, as the only one whose text varies. Its name gives
+// way before the radius does.
 .place-btn {
-  flex: 0 1 auto;
+  flex: 1 1 auto;
   min-width: 0;
 
   ng-icon {
@@ -84,18 +85,14 @@
     flex-shrink: 0;
     color: var(--color-text-secondary);
   }
+
+  &__chevron {
+    margin-left: auto;
+  }
 }
 
-// Phones: the place takes what Filtry (an icon) and the Mapa or Lista button leave of the row.
+// Phones: Filtry is an icon.
 @media (max-width: 639px) {
-  .place-btn {
-    flex: 1 1 auto;
-
-    .place-btn__chevron {
-      margin-left: auto;
-    }
-  }
-
   .filters-btn {
     padding: 0 10px;
   }
