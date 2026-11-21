@@ -17,4 +17,14 @@
       </span>
     </button>
   }
+  @if (hidden() || open()) {
+    <button
+      type="button"
+      class="kind kind--fold"
+      [attr.aria-expanded]="open()"
+      (click)="toggleFold()"
+    >
+      {{ open() ? ('KINDS.less' | translate) : ('KINDS.more' | translate: { count: hidden() }) }}
+    </button>
+  }
 </div>

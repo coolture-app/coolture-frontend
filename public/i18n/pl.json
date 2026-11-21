@@ -332,6 +332,8 @@
     "leave-text": "Czy zatwierdzić zmiany przed wyjściem?"
   },
   "KINDS": {
+    "more": "+{{count}} więcej",
+    "less": "Mniej",
     "one": {
       "concerts": "Koncert",
       "stage": "Scena",

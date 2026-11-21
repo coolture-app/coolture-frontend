@@ -332,6 +332,8 @@
     "leave-text": "Do you want to save your changes before leaving?"
   },
   "KINDS": {
+    "more": "+{{count}} more",
+    "less": "Less",
     "one": {
       "concerts": "Concert",
       "stage": "Stage",

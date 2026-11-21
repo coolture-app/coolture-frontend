@@ -11,6 +11,9 @@ import { KIDS_KIND, KindsService } from '../../../core/services/interests/kinds.
 import { PostsSort } from '../../../core/models/common/enums';
 import { FiltersForm } from '../home-view';
 
+/** Rodzaj's chips while folded: the kinds most upcoming posts had when this was decided (decisions.md, 2026-11-21). */
+const FIRST_KINDS = ['stage', 'concerts', 'cinema', 'talks', 'nightlife'];
+
 /** The home page's filter panel: Wszystkie's order and everything but the place. The home page owns both. */
 @Component({
   selector: 'app-feed-filters',
@@ -34,6 +37,7 @@ export class FeedFilters {
   readonly done = output<void>();
 
   /** Filtry's tiles: every kind but Dla dzieci, which is a switch there. */
+  protected readonly firstKinds = FIRST_KINDS;
   protected tileKinds = computed(() => this.kinds.kinds().filter((kind) => kind.key !== KIDS_KIND));
   protected hasKidsKind = computed(() => this.kinds.kinds().some((kind) => kind.key === KIDS_KIND));
 }
