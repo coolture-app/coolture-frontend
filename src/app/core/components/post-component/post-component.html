@@ -44,6 +44,8 @@
                       routerLink="/"
                       [queryParams]="kindParams(kind.key)"
                       [appTooltip]="'POST.kindHint' | translate: { kind: kind.name }"
+                      (click)="$event.stopPropagation()"
+                      (keydown.enter)="$event.stopPropagation()"
                       >{{ kind.name }}</a
                     >
                   }

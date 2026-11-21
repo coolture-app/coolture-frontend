@@ -574,6 +574,18 @@ describe('PostComponent', () => {
       ]);
     });
 
+    it('opens the kind, not the author’s profile, by click or Enter', async () => {
+      render(detail(['stage']), true);
+      await flushKinds();
+      const navigate = spyOn(TestBed.inject(Router), 'navigate');
+      const link = element().querySelector<HTMLAnchorElement>('.post__kind')!;
+
+      link.click();
+      link.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+
+      expect(navigate).not.toHaveBeenCalledWith(['/users', jasmine.anything()]);
+    });
+
     it('shows nothing before a kind is derived', async () => {
       render(detail([]), true);
       await new Promise((resolve) => setTimeout(resolve));
