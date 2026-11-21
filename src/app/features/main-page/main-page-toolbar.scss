@@ -147,6 +147,9 @@
 .sort-line {
   display: flex;
   justify-content: flex-end;
+  align-self: center;
+  width: 100%;
+  max-width: var(--container-max);
   margin-bottom: var(--space-sm);
 
   &__btn {
