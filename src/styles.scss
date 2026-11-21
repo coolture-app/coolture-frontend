@@ -95,6 +95,12 @@ html.comments-docked app-full-post-view {
   }
 }
 
+// An SVG clips to its box, and that clip snaps to whole pixels. A card at a fractional height
+// then loses the top row of a small icon's stroke, such as the calendar's rings.
+ng-icon svg {
+  overflow: visible;
+}
+
 // An outline icon drawn filled, for the "on" state of a toggle.
 ng-icon.icon--filled svg {
   fill: currentColor;
