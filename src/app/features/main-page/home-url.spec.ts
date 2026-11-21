@@ -25,7 +25,6 @@ describe('the home URL', () => {
       map: true,
       filters: {
         ...NO_FILTERS,
-        type: 'OFFLINE',
         fromDay: '2026-12-01',
         toDay: '2026-12-02',
         followed: true,
@@ -41,7 +40,6 @@ describe('the home URL', () => {
       tab: 'all',
       sort: 'popular',
       q: 'jazz',
-      type: 'offline',
       from: '2026-12-01',
       to: '2026-12-02',
       followed: 'true',
@@ -69,6 +67,40 @@ describe('the home URL', () => {
 
     expect(params).toEqual({ tab: 'all', sort: 'nearest', lat: '54.35', lng: '18.65' });
     expect(fromHomeParams(params).filters.place).toBe('');
+  });
+
+  it('writes Online as the API’s type, with no radius or point', () => {
+    const params = toHomeParams({
+      ...DEFAULT,
+      tab: 'all',
+      filters: { ...NO_FILTERS, place: 'online', radiusKm: 25 },
+    });
+
+    expect(params).toEqual({ tab: 'all', type: 'online' });
+    expect(fromHomeParams(params).filters).toEqual({ ...NO_FILTERS, place: 'online' });
+  });
+
+  it('reads Online over a radius, a map and Najbliższe, which need a place', () => {
+    const state = fromHomeParams({
+      tab: 'all',
+      sort: 'nearest',
+      type: 'ONLINE',
+      radius: '10',
+      lat: '54.35',
+      lng: '18.65',
+      view: 'map',
+    });
+
+    expect(state.filters.place).toBe('online');
+    expect(state.filters.radiusKm).toBe(NO_FILTERS.radiusKm);
+    expect(state.point).toBeNull();
+    expect(state.map).toBeFalse();
+    expect(state.sort).toBe('UPCOMING');
+  });
+
+  it('reads an old link’s type=offline as Wszędzie, or as its radius', () => {
+    expect(fromHomeParams({ type: 'offline' })).toEqual(DEFAULT);
+    expect(fromHomeParams({ type: 'offline', radius: '10' }).filters.place).toBe('mine');
   });
 
   it('asks for the reader’s own position when a radius comes with no point', () => {

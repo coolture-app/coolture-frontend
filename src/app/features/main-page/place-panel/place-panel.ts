@@ -9,14 +9,14 @@ import {
   heroMapPin,
   heroXMark,
 } from '@ng-icons/heroicons/outline';
-import { lucideLocateFixed } from '@ng-icons/lucide';
+import { lucideLocateFixed, lucideRadio } from '@ng-icons/lucide';
 
 import { Btn } from '../../../core/components/btn/btn';
 import { PlaceSearch } from '../../../core/components/place-search/place-search';
 import { GeoPoint, NamedPlace } from '../../../core/models/common/geo.model';
 import { FiltersForm, PlaceFilter, RADII_KM } from '../home-view';
 
-/** "Gdzie?": what the list's radius is centred on, and how far it reaches. The home page owns the form. */
+/** "Gdzie?": what the list's radius is centred on and how far it reaches, or Online. The home page owns the form. */
 @Component({
   selector: 'app-place-panel',
   imports: [NgTemplateOutlet, TranslatePipe, NgIcon, Btn, PlaceSearch],
@@ -28,6 +28,7 @@ import { FiltersForm, PlaceFilter, RADII_KM } from '../home-view';
       heroMapPin,
       heroXMark,
       lucideLocateFixed,
+      lucideRadio,
     }),
   ],
   templateUrl: './place-panel.html',

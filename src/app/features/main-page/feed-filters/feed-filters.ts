@@ -25,7 +25,7 @@ export class FeedFilters {
   /** "Od obserwowanych i znajomych" needs someone to follow, so a guest doesn't see it. */
   readonly signedIn = input(false);
   readonly clear = output<void>();
-  /** Filters apply as they change; this only closes the panel. */
+  /** Filters apply as they change, so the panel has only a close. */
   readonly done = output<void>();
 
   /** Filtry's tiles: every kind but Dla dzieci, which is a switch there. */

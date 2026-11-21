@@ -2,9 +2,19 @@
 <div class="filters">
   <div class="filters__header">
     <span class="filters__title">{{ 'MAIN_PAGE.filters' | translate }}</span>
-    <app-btn variant="plain" size="sm" (btnClick)="clear.emit()">
-      <ng-icon name="heroXMark" /> {{ 'MAIN_PAGE.clear' | translate }}
-    </app-btn>
+    <div class="filters__actions">
+      <app-btn variant="plain" size="sm" (btnClick)="clear.emit()">
+        <ng-icon name="heroXMark" /> {{ 'MAIN_PAGE.clear' | translate }}
+      </app-btn>
+      <app-btn
+        variant="icon"
+        size="sm"
+        [label]="'MAIN_PAGE.close' | translate"
+        (btnClick)="done.emit()"
+      >
+        <ng-icon name="heroXMark" />
+      </app-btn>
+    </div>
   </div>
 
   @if (tileKinds().length) {
@@ -25,17 +35,6 @@
       />
     </div>
   }
-
-  <div class="filters__row">
-    <div class="filters__field">
-      <label for="type">{{ 'MAIN_PAGE.type' | translate }}</label>
-      <select id="type" [formControl]="f.controls.type">
-        <option value="">{{ 'MAIN_PAGE.allTypes' | translate }}</option>
-        <option value="OFFLINE">{{ 'MAIN_PAGE.offline' | translate }}</option>
-        <option value="ONLINE">{{ 'MAIN_PAGE.online' | translate }}</option>
-      </select>
-    </div>
-  </div>
 
   <div class="filters__row">
     <div class="filters__field">
@@ -75,9 +74,5 @@
         [label]="'MAIN_PAGE.includePast' | translate"
       ></app-switch>
     </div>
-  </div>
-
-  <div class="filters__footer">
-    <app-btn variant="primary" (btnClick)="done.emit()">{{ 'MAIN_PAGE.done' | translate }}</app-btn>
   </div>
 </div>

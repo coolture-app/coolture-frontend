@@ -1,6 +1,7 @@
 @use '_mixin' as *;
 
-// The toolbar's buttons: the sort, Filtry and the place pill. Apart from main-page.scss for its style budget.
+// The toolbar's buttons, the place pill and Filtry, and the sort line above the list. Apart from main-page.scss for its
+// style budget.
 
 .filters-btn {
   &__count {
@@ -127,19 +128,58 @@
   }
 }
 
-// Phones: the place gets a row of its own, so its name fits, and the sort, Filtry (an icon) and Lista | Mapa (icons)
-// share the row below.
+// Phones: the place takes what Filtry (an icon) and the Mapa or Lista button leave of the row.
 @media (max-width: 639px) {
-  .searchbar__row {
-    flex-wrap: wrap;
-  }
-
   .place-btn {
-    order: -1;
-    flex: 1 0 100%;
+    flex: 1 1 auto;
 
     .place-btn__chevron {
       margin-left: auto;
     }
+  }
+
+  .filters-btn {
+    padding: 0 10px;
+  }
+}
+
+// "Sortuj: Nadchodzące ▾" on the right, scrolling with the cards.
+.sort-line {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--space-sm);
+
+  &__btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-height: 36px;
+    padding: 0 var(--space-xs);
+    border: none;
+    border-radius: var(--radius-md);
+    background: none;
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    cursor: pointer;
+
+    ng-icon {
+      --ng-icon__size: 16px;
+      color: var(--color-text-secondary);
+    }
+
+    &:hover {
+      background: var(--color-surface-alt);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-accent);
+    }
+  }
+
+  &__label {
+    color: var(--color-text-secondary);
+    font-weight: var(--font-normal);
   }
 }
