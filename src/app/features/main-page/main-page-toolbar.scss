@@ -1,7 +1,6 @@
 @use '_mixin' as *;
 
-// The toolbar's buttons, the place pill and Filtry, and the sort line above the list. Apart from main-page.scss for its
-// style budget.
+// The toolbar's buttons: the place pill and Filtry. Apart from main-page.scss for its style budget.
 
 .filters-btn {
   &__count {
@@ -17,11 +16,7 @@
   }
 }
 
-.sort-wrapper {
-  position: relative;
-}
-
-.sort-btn {
+.bar-btn {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -70,43 +65,6 @@
   }
 }
 
-.sort-menu {
-  position: absolute;
-  top: calc(100% + var(--space-xs));
-  right: 0;
-  min-width: 160px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
-  z-index: var(--z-dropdown);
-  overflow: hidden;
-
-  &__item {
-    display: block;
-    width: 100%;
-    padding: var(--space-sm) var(--space-md);
-    background: transparent;
-    border: none;
-    font-family: var(--font-sans);
-    font-size: var(--text-sm);
-    color: var(--color-text);
-    text-align: left;
-    cursor: pointer;
-    transition: background var(--transition-fast);
-
-    &:hover {
-      background: var(--color-background);
-    }
-
-    &.active {
-      background: var(--color-accent-light);
-      color: var(--color-accent);
-      font-weight: 500;
-    }
-  }
-}
-
 // The place pill: its name gives way before the radius does.
 .place-btn {
   flex: 0 1 auto;
@@ -140,49 +98,5 @@
 
   .filters-btn {
     padding: 0 10px;
-  }
-}
-
-// "Sortuj: Nadchodzące ▾" on the right, scrolling with the cards.
-.sort-line {
-  display: flex;
-  justify-content: flex-end;
-  align-self: center;
-  width: 100%;
-  max-width: var(--container-max);
-  margin-bottom: var(--space-sm);
-
-  &__btn {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    min-height: 36px;
-    padding: 0 var(--space-xs);
-    border: none;
-    border-radius: var(--radius-md);
-    background: none;
-    color: var(--color-text);
-    font-family: var(--font-sans);
-    font-size: var(--text-sm);
-    font-weight: var(--font-medium);
-    cursor: pointer;
-
-    ng-icon {
-      --ng-icon__size: 16px;
-      color: var(--color-text-secondary);
-    }
-
-    &:hover {
-      background: var(--color-surface-alt);
-    }
-
-    &:focus-visible {
-      outline: 2px solid var(--color-accent);
-    }
-  }
-
-  &__label {
-    color: var(--color-text-secondary);
-    font-weight: var(--font-normal);
   }
 }

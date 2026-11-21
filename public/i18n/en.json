@@ -39,7 +39,7 @@
     "map": "Map",
     "view": "View",
     "filtersActive": "Filters, {{count}} on",
-    "sortBy": "Sort:",
+    "sortBy": "Sort",
     "location": "Location",
     "anywhere": "Anywhere",
     "myLocation": "My location",

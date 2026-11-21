@@ -359,24 +359,53 @@ describe('MainPage', () => {
       resorted.flush(page());
     });
 
-    it('shows the sort menu only on Wszystkie', async () => {
+    it('sorts from Filtry’s chips on Wszystkie only, counting an order that isn’t the first', async () => {
+      const sortChips = () =>
+        Array.from(
+          fixture.nativeElement.querySelectorAll('.filters__chip') as NodeListOf<HTMLButtonElement>,
+        );
       await open();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
+      component.toggleFilters();
       await settle();
-      expect(fixture.nativeElement.querySelector('.sort-wrapper')).toBeNull();
+      expect(sortChips().length).toBe(0);
 
       component.setTab('all');
       await settle();
       expectPosts().flush(page());
       await settle();
-
-      expect(fixture.nativeElement.querySelector('.sort-wrapper')).not.toBeNull();
-      expect(component.sortOptions().map((o) => o.value)).toEqual([
-        'UPCOMING',
-        'NEAREST',
-        'POPULAR',
-        'RECENT',
+      expect(sortChips().map((chip) => chip.textContent!.trim())).toEqual([
+        'MAIN_PAGE.sortUpcoming',
+        'MAIN_PAGE.sortNearest',
+        'MAIN_PAGE.sortPopular',
+        'MAIN_PAGE.sortRecent',
       ]);
+      expect(component.activeFilterCount()).toBe(0);
+
+      sortChips()[2].click();
+      await settle();
+      expect(param(expectPosts(), 'sortBy')).toBe('POPULAR');
+      await settle();
+      expect(component.showFilters()).toBeTrue();
+      expect(sortChips()[2].getAttribute('aria-pressed')).toBe('true');
+      expect(component.activeFilterCount()).toBe(1);
+
+      component.setTab('forYou');
+      await settle();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      expect(component.activeFilterCount()).toBe(0);
+    });
+
+    it('sets the order back with Wyczyść', async () => {
+      await router.navigateByUrl('/?tab=all&sort=popular');
+      await open();
+      expectPosts().flush(page());
+
+      component.clearFilters();
+      await settle();
+
+      expect(param(expectPosts(), 'sortBy')).toBe('UPCOMING');
+      expect(component.activeFilterCount()).toBe(0);
     });
 
     it('goes back to the feed, with its filters, on Dla Ciebie', async () => {
@@ -1392,7 +1421,8 @@ describe('MainPage', () => {
       expect(param(posts, 'includePast')).toBe('true');
       expect(component.tab()).toBe('all');
       expect(component.searchControl.value).toBe('jazz');
-      expect(component.activeFilterCount()).toBe(1);
+      // Popularne and Pokaż minione.
+      expect(component.activeFilterCount()).toBe(2);
       posts.flush(page());
     });
 

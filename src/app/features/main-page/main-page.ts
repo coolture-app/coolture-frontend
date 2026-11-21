@@ -125,7 +125,6 @@ const SORT_OPTIONS: { value: PostsSort; labelKey: string }[] = [
   templateUrl: './main-page.html',
   styleUrls: ['./main-page.scss', './main-page-toolbar.scss', './main-page-map.scss'],
   host: {
-    '(document:click)': 'closeSortMenu($event)',
     '(document:keydown.escape)': 'closePopups()',
     '(window:scroll)': 'onScroll()',
   },
@@ -155,7 +154,6 @@ export class MainPage implements OnDestroy {
 
   showFilters = signal(false);
   showPlace = signal(false);
-  showSortMenu = signal(false);
   isMapView = signal(false);
   /** The map stays once opened, hidden under Lista, so its style and tiles load once a visit. */
   readonly mapOpened = signal(false);
@@ -213,12 +211,13 @@ export class MainPage implements OnDestroy {
       : null,
   );
   /**
-   * How many filters the panel has on, counting a date range and the chosen kinds as one each. Not the search or the
-   * place, Online included.
+   * How many filters the panel has on, counting a date range and the chosen kinds as one each, and Wszystkie's order
+   * when it isn't the first. Not the search or the place, Online included.
    */
   readonly activeFilterCount = computed(() => {
     const { kinds, kids, from, to, followed, status, includePast } = this.activeFilters();
-    const on = [kinds, kids, from || to, followed, status, includePast];
+    const resorted = !this.isFeed() && this.sort() !== START_SORT;
+    const on = [kinds, kids, from || to, followed, status, includePast, resorted || undefined];
     return on.filter((value) => value !== undefined && value !== false).length;
   });
   /** A screenful for the first page. After that one is enough, and the posts stay what's on screen. */
@@ -362,7 +361,6 @@ export class MainPage implements OnDestroy {
   closePopups(): void {
     this.showFilters.set(false);
     this.showPlace.set(false);
-    this.showSortMenu.set(false);
   }
 
   togglePlace(): void {
@@ -400,7 +398,6 @@ export class MainPage implements OnDestroy {
       this.barHidden.set(false);
     } else if (delta > 0) {
       this.barHidden.set(true);
-      this.showSortMenu.set(false);
     }
     this.scrolling.set(true);
     clearTimeout(this.scrollStop);
@@ -412,12 +409,17 @@ export class MainPage implements OnDestroy {
     this.showFilters.update((v) => !v);
   }
 
-  /** Filtry's "Wyczyść" leaves the place, which has its own panel. */
+  /** Filtry's "Wyczyść" leaves the place, which has its own panel. Wszystkie's order is in Filtry, so it goes too. */
   clearFilters(): void {
     const { place, radiusKm } = this.filtersForm.getRawValue();
     this.filtersForm.reset({ ...NO_FILTERS, place, radiusKm }, { emitEvent: false });
     this.searchControl.setValue('', { emitEvent: false });
-    this.applyControls();
+    this.changeList(() => {
+      if (!this.isFeed()) {
+        this.sort.set(START_SORT);
+      }
+      this.applyFilters();
+    });
   }
 
   /** The empty state's shortcut. The panel opens, so that the user can see and undo what's now on. */
@@ -438,19 +440,8 @@ export class MainPage implements OnDestroy {
     }
   }
 
-  toggleSortMenu(): void {
-    this.showSortMenu.update((v) => !v);
-  }
-
-  closeSortMenu(event: Event): void {
-    if (!(event.target as Element).closest?.('.sort-wrapper')) {
-      this.showSortMenu.set(false);
-    }
-  }
-
   /** Najbliższe needs a point: the user's position, else their home. With neither, the order stays and a note says why. */
   async setSortBy(sortBy: PostsSort): Promise<void> {
-    this.showSortMenu.set(false);
     if (sortBy === 'NEAREST' && !this.place.own()) {
       const position = await this.location.request();
       if (position) {
@@ -482,11 +473,6 @@ export class MainPage implements OnDestroy {
       this.filtersForm.controls.radiusKm.setValue(radius, { emitEvent: false });
       this.applyControls();
     }
-  }
-
-  getSortLabelKey(): string {
-    const sort = SORT_OPTIONS.find((o) => o.value === this.sort());
-    return sort ? sort.labelKey : 'MAIN_PAGE.sortUpcoming';
   }
 
   toggleMapView(isToggled: boolean): void {

@@ -17,6 +17,25 @@
     </div>
   </div>
 
+  @if (sort(); as current) {
+    <div class="filters__section">
+      <span class="filters__label" id="sort-label">{{ 'MAIN_PAGE.sortBy' | translate }}</span>
+      <div class="filters__chips" role="group" aria-labelledby="sort-label">
+        @for (option of sortOptions(); track option.value) {
+          <button
+            type="button"
+            class="filters__chip"
+            [class.filters__chip--on]="current === option.value"
+            [attr.aria-pressed]="current === option.value"
+            (click)="sortChange.emit(option.value)"
+          >
+            {{ option.labelKey | translate }}
+          </button>
+        }
+      </div>
+    </div>
+  }
+
   @if (tileKinds().length) {
     <div class="filters__kinds">
       <div class="filters__kinds-head">
