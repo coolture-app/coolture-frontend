@@ -275,10 +275,8 @@ export class PostForm implements OnInit, OnChanges, OnDestroy {
       endsAt: this.showEnd && form.endsAt ? new Date(form.endsAt).toISOString() : null,
       openEnded: this.openEnded,
       description: form.description ?? '',
-      links: form.links.map(({ url, label }) => ({
-        url: linkUrl(url),
-        ...(label.trim() ? { label: label.trim() } : {}),
-      })),
+      // The API strips a label, and drops a blank one.
+      links: form.links.map(({ url, label }) => ({ url: linkUrl(url), label })),
       location: form.type === 'OFFLINE' ? this.locationRequest() : null,
       mediaIds: photos.mediaIds(),
       removedMediaIds: photos.removedMediaIds,

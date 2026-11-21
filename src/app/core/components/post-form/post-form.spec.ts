@@ -416,8 +416,8 @@ describe('PostForm fields', () => {
     component.removeLink(2);
 
     expect(submit()!.links).toEqual([
-      { url: 'https://bilety.pl/koncert', label: 'Bilety' },
-      { url: 'https://fb.com/events/1' },
+      { url: 'https://bilety.pl/koncert', label: ' Bilety ' },
+      { url: 'https://fb.com/events/1', label: '   ' },
     ]);
   });
 

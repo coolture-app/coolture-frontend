@@ -1,6 +1,9 @@
 <p class="post-links" [attr.aria-label]="'POST.links' | translate">
   <ng-icon class="post-links__icon" name="lucideLink" aria-hidden="true" />
   @for (link of links(); track $index) {
+    @if (!$first) {
+      <span class="post-links__dot" aria-hidden="true">·</span>
+    }
     <a
       class="post-links__link"
       [href]="link.url"

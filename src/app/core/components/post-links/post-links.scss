@@ -34,12 +34,8 @@
     outline-offset: 2px;
     border-radius: var(--radius-sm);
   }
+}
 
-  & + &::before {
-    content: '·';
-    display: inline-block;
-    margin: 0 var(--space-sm);
-    color: var(--color-text-tertiary);
-    font-weight: normal;
-  }
+.post-links__dot {
+  margin: 0 var(--space-sm);
 }
