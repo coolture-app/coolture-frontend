@@ -306,7 +306,10 @@
     "no-events": "You don't have any events yet... Sad face.",
     "all": "All",
     "interested": "Interested",
-    "takes_part": "Going"
+    "takes_part": "Going",
+    "loading": "Loading your plans…",
+    "load-error": "Couldn't load your plans.",
+    "retry": "Try again"
   },
   "INTERESTS": {
     "title": "Your interests",

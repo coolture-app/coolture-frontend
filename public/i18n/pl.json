@@ -306,7 +306,10 @@
     "no-events": "Nie masz jeszcze żadnych wydarzeń... Smutno.",
     "all": "Wszystkie",
     "interested": "Interesuje mnie",
-    "takes_part": "Biorę udział"
+    "takes_part": "Biorę udział",
+    "loading": "Wczytywanie planów…",
+    "load-error": "Nie udało się wczytać planów.",
+    "retry": "Spróbuj ponownie"
   },
   "INTERESTS": {
     "title": "Twoje zainteresowania",

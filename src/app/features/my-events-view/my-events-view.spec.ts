@@ -25,8 +25,8 @@ describe('MyEventsView', () => {
   let fixture: ComponentFixture<MyEventsView>;
   let http: HttpTestingController;
 
-  function page(ids: string[]) {
-    return { items: ids.map(card), page: { limit: 20, hasMore: false } };
+  function page(ids: string[], nextCursor?: string) {
+    return { items: ids.map(card), page: { limit: 20, hasMore: !!nextCursor, nextCursor } };
   }
 
   function requests(): TestRequest[] {
@@ -34,7 +34,7 @@ describe('MyEventsView', () => {
   }
 
   function shown(): string[] {
-    return fixture.componentInstance.posts().items.map((post) => post.id);
+    return fixture.componentInstance.list.items().map((post) => post.id);
   }
 
   beforeEach(() => {
@@ -66,5 +66,28 @@ describe('MyEventsView', () => {
     expect(interested.cancelled).toBeTrue();
     takesPart.flush(page(['going']));
     expect(shown()).toEqual(['going']);
+  });
+
+  it('goes past the first page, with the same plans', () => {
+    requests()[0].flush(page(['a'], 'next'));
+
+    fixture.componentInstance.list.loadMore();
+    const [second] = requests();
+
+    expect(second.request.params.get('cursor')).toBe('next');
+    second.flush(page(['b']));
+    expect(shown()).toEqual(['a', 'b']);
+    expect(fixture.componentInstance.list.canLoadMore()).toBeFalse();
+  });
+
+  it('offers a retry when plans fail to load', () => {
+    requests()[0].flush(null, { status: 500, statusText: 'Server Error' });
+    fixture.detectChanges();
+
+    const alert = fixture.nativeElement.querySelector('[role="alert"]') as HTMLElement;
+    expect(alert.textContent).toContain('MY_EVENTS.load-error');
+    alert.querySelector('button')!.click();
+    requests()[0].flush(page(['a']));
+    expect(shown()).toEqual(['a']);
   });
 });
