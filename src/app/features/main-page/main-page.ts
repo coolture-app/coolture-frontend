@@ -33,7 +33,7 @@ import { Btn } from '../../core/components/btn/btn';
 import { PostSkeleton } from '../../core/components/post-skeleton/post-skeleton';
 import { InfiniteScroll } from '../../core/directives/infinite-scroll';
 import { PULL_THRESHOLD, PullToRefresh } from '../../core/directives/pull-to-refresh';
-import { lucideRefreshCw } from '@ng-icons/lucide';
+import { lucideRadio, lucideRefreshCw } from '@ng-icons/lucide';
 import { PostFilterParams } from '../../core/models/posts/post-filter-params.model';
 import { NamedPlace } from '../../core/models/common/geo.model';
 import { GeocodingService } from '../../core/services/geocoding/geocoding.service';
@@ -44,7 +44,7 @@ import { LocationService } from '../../core/services/location/location.service';
 import { PostListStore } from '../../core/services/post-list/post-list.store';
 import { HomeTapService } from '../../core/services/home-tap/home-tap.service';
 import { Tooltip } from '../../core/directives/tooltip';
-import { PostType, PostStatus, PostsSort } from '../../core/models/common/enums';
+import { PostStatus, PostsSort } from '../../core/models/common/enums';
 import { Map, type MapArea } from '../../core/components/map/map/map';
 import { MapFocus } from '../../core/components/map/map-focus';
 import { PostMark } from '../../core/models/posts/post-mark.model';
@@ -86,6 +86,13 @@ const SCROLL_STOP_MS = 1000;
 const CARDS_BEFORE_END = 15;
 /** How many of the feed's first posts the map lights up as top picks on Dla Ciebie. */
 const MAP_PICKS = 30;
+/** Wszystkie's orders. Dla Ciebie has no menu: its order is the ranking. */
+const SORT_OPTIONS: { value: PostsSort; labelKey: string }[] = [
+  { value: 'UPCOMING', labelKey: 'MAIN_PAGE.sortUpcoming' },
+  { value: 'NEAREST', labelKey: 'MAIN_PAGE.sortNearest' },
+  { value: 'POPULAR', labelKey: 'MAIN_PAGE.sortPopular' },
+  { value: 'RECENT', labelKey: 'MAIN_PAGE.sortRecent' },
+];
 
 @Component({
   selector: 'app-main-page',
@@ -111,13 +118,13 @@ const MAP_PICKS = 30;
       heroXMark,
       heroChevronDown,
       heroMapPin,
+      lucideRadio,
       lucideRefreshCw,
     }),
   ],
   templateUrl: './main-page.html',
   styleUrls: ['./main-page.scss', './main-page-toolbar.scss', './main-page-map.scss'],
   host: {
-    '(document:click)': 'closeSortMenu($event)',
     '(document:keydown.escape)': 'closePopups()',
     '(window:scroll)': 'onScroll()',
   },
@@ -147,7 +154,6 @@ export class MainPage implements OnDestroy {
 
   showFilters = signal(false);
   showPlace = signal(false);
-  showSortMenu = signal(false);
   isMapView = signal(false);
   /** The map stays once opened, hidden under Lista, so its style and tiles load once a visit. */
   readonly mapOpened = signal(false);
@@ -171,14 +177,6 @@ export class MainPage implements OnDestroy {
   private listScrollY = 0;
   private scrollStop: ReturnType<typeof setTimeout> | undefined;
 
-  /** Wszystkie's orders. Dla Ciebie has no menu: its order is the ranking. */
-  sortOptions: { value: PostsSort; labelKey: string }[] = [
-    { value: 'UPCOMING', labelKey: 'MAIN_PAGE.sortUpcoming' },
-    { value: 'NEAREST', labelKey: 'MAIN_PAGE.sortNearest' },
-    { value: 'POPULAR', labelKey: 'MAIN_PAGE.sortPopular' },
-    { value: 'RECENT', labelKey: 'MAIN_PAGE.sortRecent' },
-  ];
-
   filtersForm = createFiltersForm();
   readonly home = this.authService.home;
 
@@ -192,8 +190,15 @@ export class MainPage implements OnDestroy {
     }),
     (point) => this.geocoding.areaAt(point),
   );
-  /** What the applied radius is centred on, for the place pill. */
+  /** What the applied radius is centred on, or Online, for the place pill. */
   readonly activePlace = signal<PlaceFilter>('');
+  /** Online posts have no place, so there's nothing to measure from or show on a map. */
+  readonly isOnline = computed(() => this.activePlace() === 'online');
+  /** The picked place up to its first comma, "Śródmieście" of "Śródmieście, Gdynia", so the pill fits a phone. */
+  readonly pickedShortName = computed(() => this.place.picked()?.name.split(',')[0].trim() ?? '');
+  readonly sortOptions = computed(() =>
+    this.isOnline() ? SORT_OPTIONS.filter((option) => option.value !== 'NEAREST') : SORT_OPTIONS,
+  );
   /** Dla Ciebie is the ranked feed of posts new to the user; Wszystkie is every post, in a chosen order. */
   readonly tab = signal<HomeTab>('forYou');
   /** Wszystkie's order. Kept while on Dla Ciebie, so going back finds it as it was. */
@@ -205,10 +210,14 @@ export class MainPage implements OnDestroy {
       ? (this.home()?.name ?? null)
       : null,
   );
-  /** How many filters the panel has on, counting a date range and the chosen kinds as one each. Not the search or the place. */
+  /**
+   * How many filters the panel has on, counting a date range and the chosen kinds as one each, and Wszystkie's order
+   * when it isn't the first. Not the search or the place, Online included.
+   */
   readonly activeFilterCount = computed(() => {
-    const { kinds, kids, type, from, to, followed, status, includePast } = this.activeFilters();
-    const on = [kinds, kids, type, from || to, followed, status, includePast];
+    const { kinds, kids, from, to, followed, status, includePast } = this.activeFilters();
+    const resorted = !this.isFeed() && this.sort() !== START_SORT;
+    const on = [kinds, kids, from || to, followed, status, includePast, resorted || undefined];
     return on.filter((value) => value !== undefined && value !== false).length;
   });
   /** A screenful for the first page. After that one is enough, and the posts stay what's on screen. */
@@ -323,6 +332,8 @@ export class MainPage implements OnDestroy {
         this.locationFailed.set(false);
         if (place === 'mine' && !this.place.position()) {
           void this.locateForFilter();
+        } else if (place === 'online') {
+          this.showOnline();
         }
       });
 
@@ -350,7 +361,6 @@ export class MainPage implements OnDestroy {
   closePopups(): void {
     this.showFilters.set(false);
     this.showPlace.set(false);
-    this.showSortMenu.set(false);
   }
 
   togglePlace(): void {
@@ -388,7 +398,6 @@ export class MainPage implements OnDestroy {
       this.barHidden.set(false);
     } else if (delta > 0) {
       this.barHidden.set(true);
-      this.showSortMenu.set(false);
     }
     this.scrolling.set(true);
     clearTimeout(this.scrollStop);
@@ -400,12 +409,17 @@ export class MainPage implements OnDestroy {
     this.showFilters.update((v) => !v);
   }
 
-  /** Filtry's "Wyczyść" leaves the place, which has its own panel. */
+  /** Filtry's "Wyczyść" leaves the place, which has its own panel. Wszystkie's order is in Filtry, so it goes too. */
   clearFilters(): void {
     const { place, radiusKm } = this.filtersForm.getRawValue();
     this.filtersForm.reset({ ...NO_FILTERS, place, radiusKm }, { emitEvent: false });
     this.searchControl.setValue('', { emitEvent: false });
-    this.applyControls();
+    this.changeList(() => {
+      if (!this.isFeed()) {
+        this.sort.set(START_SORT);
+      }
+      this.applyFilters();
+    });
   }
 
   /** The empty state's shortcut. The panel opens, so that the user can see and undo what's now on. */
@@ -426,19 +440,8 @@ export class MainPage implements OnDestroy {
     }
   }
 
-  toggleSortMenu(): void {
-    this.showSortMenu.update((v) => !v);
-  }
-
-  closeSortMenu(event: Event): void {
-    if (!(event.target as Element).closest?.('.sort-wrapper')) {
-      this.showSortMenu.set(false);
-    }
-  }
-
   /** Najbliższe needs a point: the user's position, else their home. With neither, the order stays and a note says why. */
   async setSortBy(sortBy: PostsSort): Promise<void> {
-    this.showSortMenu.set(false);
     if (sortBy === 'NEAREST' && !this.place.own()) {
       const position = await this.location.request();
       if (position) {
@@ -470,11 +473,6 @@ export class MainPage implements OnDestroy {
       this.filtersForm.controls.radiusKm.setValue(radius, { emitEvent: false });
       this.applyControls();
     }
-  }
-
-  getSortLabelKey(): string {
-    const sort = this.sortOptions.find((o) => o.value === this.sort());
-    return sort ? sort.labelKey : 'MAIN_PAGE.sortUpcoming';
   }
 
   toggleMapView(isToggled: boolean): void {
@@ -513,6 +511,17 @@ export class MainPage implements OnDestroy {
     this.isMapView.set(false);
     this.showInUrl();
     this.load();
+  }
+
+  /** At once rather than after the form's debounce, as the map goes and Najbliższe falls back to the first order. */
+  private showOnline(): void {
+    this.changeList(() => {
+      if (this.sort() === 'NEAREST') {
+        this.sort.set(START_SORT);
+      }
+      this.applyFilters();
+    });
+    this.toggleMapView(false);
   }
 
   /** Applies a change, and starts a new list only if it changes which list should be showing. */
@@ -630,10 +639,10 @@ export class MainPage implements OnDestroy {
 
   /** The filters as the form has them, and what their radius is centred on. */
   private applyFilters(): void {
-    this.activeFilters.set(this.readFilters());
-    this.activePlace.set(
-      this.activeFilters().radiusKm ? this.filtersForm.controls.place.value : '',
-    );
+    const filters = this.readFilters();
+    const place = this.filtersForm.controls.place.value;
+    this.activeFilters.set(filters);
+    this.activePlace.set(filters.radiusKm || place === 'online' ? place : '');
   }
 
   /** The current state as the URL's query string. */
@@ -682,15 +691,15 @@ export class MainPage implements OnDestroy {
 
   private readFilters(): PostFilterParams {
     const search = this.searchControl.value.trim();
-    const { kinds, kids, type, fromDay, toDay, followed, status, includePast, radiusKm } =
+    const { kinds, kids, fromDay, toDay, followed, status, includePast, place, radiusKm } =
       this.filtersForm.getRawValue();
-    const position = this.place.centre(this.filtersForm.controls.place.value);
+    const position = this.place.centre(place);
 
     return {
       ...(search && { q: search }),
       ...(kinds.length && { kinds }),
       ...(kids && { kids }),
-      ...(type && { type: type as PostType }),
+      ...(place === 'online' && { type: 'ONLINE' as const }),
       ...dayWindow(fromDay, toDay),
       ...(followed && this.authService.isAuthenticated() && { followed }),
       ...(status && { status: status as PostStatus }),

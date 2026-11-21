@@ -45,6 +45,12 @@
     cursor: not-allowed;
   }
 
+  // Plainer than a kind, as it picks nothing.
+  &--fold {
+    border-style: dashed;
+    color: var(--color-text-secondary);
+  }
+
   &--on {
     background: var(--color-accent);
     border-color: var(--color-accent);

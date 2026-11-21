@@ -1,6 +1,6 @@
 @use '_mixin' as *;
 
-// The toolbar's buttons: the sort, Filtry and the place pill. Apart from main-page.scss for its style budget.
+// The toolbar's buttons: the place pill and Filtry. Apart from main-page.scss for its style budget.
 
 .filters-btn {
   &__count {
@@ -16,11 +16,7 @@
   }
 }
 
-.sort-wrapper {
-  position: relative;
-}
-
-.sort-btn {
+.bar-btn {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -69,46 +65,10 @@
   }
 }
 
-.sort-menu {
-  position: absolute;
-  top: calc(100% + var(--space-xs));
-  right: 0;
-  min-width: 160px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
-  z-index: var(--z-dropdown);
-  overflow: hidden;
-
-  &__item {
-    display: block;
-    width: 100%;
-    padding: var(--space-sm) var(--space-md);
-    background: transparent;
-    border: none;
-    font-family: var(--font-sans);
-    font-size: var(--text-sm);
-    color: var(--color-text);
-    text-align: left;
-    cursor: pointer;
-    transition: background var(--transition-fast);
-
-    &:hover {
-      background: var(--color-background);
-    }
-
-    &.active {
-      background: var(--color-accent-light);
-      color: var(--color-accent);
-      font-weight: 500;
-    }
-  }
-}
-
-// The place pill: its name gives way before the radius does.
+// The place pill takes what Filtry and Lista | Mapa leave of the row, as the only one whose text varies. Its name gives
+// way before the radius does.
 .place-btn {
-  flex: 0 1 auto;
+  flex: 1 1 auto;
   min-width: 0;
 
   ng-icon {
@@ -125,21 +85,15 @@
     flex-shrink: 0;
     color: var(--color-text-secondary);
   }
+
+  &__chevron {
+    margin-left: auto;
+  }
 }
 
-// Phones: the place gets a row of its own, so its name fits, and the sort, Filtry (an icon) and Lista | Mapa (icons)
-// share the row below.
+// Phones: Filtry is an icon.
 @media (max-width: 639px) {
-  .searchbar__row {
-    flex-wrap: wrap;
-  }
-
-  .place-btn {
-    order: -1;
-    flex: 1 0 100%;
-
-    .place-btn__chevron {
-      margin-left: auto;
-    }
+  .filters-btn {
+    padding: 0 10px;
   }
 }

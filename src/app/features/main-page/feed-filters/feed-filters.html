@@ -2,40 +2,59 @@
 <div class="filters">
   <div class="filters__header">
     <span class="filters__title">{{ 'MAIN_PAGE.filters' | translate }}</span>
-    <app-btn variant="plain" size="sm" (btnClick)="clear.emit()">
-      <ng-icon name="heroXMark" /> {{ 'MAIN_PAGE.clear' | translate }}
-    </app-btn>
+    <div class="filters__actions">
+      <app-btn variant="secondary" size="sm" (btnClick)="clear.emit()">{{
+        'MAIN_PAGE.clear' | translate
+      }}</app-btn>
+      <app-btn
+        variant="icon"
+        size="sm"
+        [label]="'MAIN_PAGE.close' | translate"
+        (btnClick)="done.emit()"
+      >
+        <ng-icon name="heroXMark" />
+      </app-btn>
+    </div>
   </div>
+
+  @if (sort(); as current) {
+    <div class="filters__section">
+      <span class="filters__label" id="sort-label">{{ 'MAIN_PAGE.sortBy' | translate }}</span>
+      <div class="filters__chips" role="group" aria-labelledby="sort-label">
+        @for (option of sortOptions(); track option.value) {
+          <button
+            type="button"
+            class="filters__chip"
+            [class.filters__chip--on]="current === option.value"
+            [attr.aria-pressed]="current === option.value"
+            (click)="sortChange.emit(option.value)"
+          >
+            {{ option.labelKey | translate }}
+          </button>
+        }
+      </div>
+    </div>
+  }
 
   @if (tileKinds().length) {
     <div class="filters__kinds">
       <div class="filters__kinds-head">
         <span class="filters__label">{{ 'MAIN_PAGE.kind' | translate }}</span>
         @if (grid.selected().size) {
-          <app-btn variant="secondary" size="sm" (btnClick)="f.controls.kinds.setValue([])">
-            <ng-icon name="heroXMark" /> {{ 'MAIN_PAGE.clearKinds' | translate }}
-          </app-btn>
+          <app-btn variant="secondary" size="sm" (btnClick)="f.controls.kinds.setValue([])">{{
+            'MAIN_PAGE.clearKinds' | translate
+          }}</app-btn>
         }
       </div>
       <app-kind-grid
         #grid
         [kinds]="tileKinds()"
+        [first]="firstKinds"
         [formControl]="f.controls.kinds"
         [label]="'MAIN_PAGE.kind' | translate"
       />
     </div>
   }
-
-  <div class="filters__row">
-    <div class="filters__field">
-      <label for="type">{{ 'MAIN_PAGE.type' | translate }}</label>
-      <select id="type" [formControl]="f.controls.type">
-        <option value="">{{ 'MAIN_PAGE.allTypes' | translate }}</option>
-        <option value="OFFLINE">{{ 'MAIN_PAGE.offline' | translate }}</option>
-        <option value="ONLINE">{{ 'MAIN_PAGE.online' | translate }}</option>
-      </select>
-    </div>
-  </div>
 
   <div class="filters__row">
     <div class="filters__field">
@@ -75,9 +94,5 @@
         [label]="'MAIN_PAGE.includePast' | translate"
       ></app-switch>
     </div>
-  </div>
-
-  <div class="filters__footer">
-    <app-btn variant="primary" (btnClick)="done.emit()">{{ 'MAIN_PAGE.done' | translate }}</app-btn>
   </div>
 </div>

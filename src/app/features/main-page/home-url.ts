@@ -17,7 +17,6 @@ export interface HomeUrlState {
 }
 
 const SORTS: readonly PostsSort[] = ['UPCOMING', 'NEAREST', 'POPULAR', 'RECENT'];
-const TYPES: readonly string[] = ['OFFLINE', 'ONLINE'];
 /** The contract's pattern for `kinds`. */
 const KIND_KEY = /^[a-z_]{1,64}$/;
 const MAX_KINDS = 32;
@@ -36,18 +35,20 @@ export function kindParams(key: string): Params {
 export function toHomeParams({ search, filters, tab, sort, point, map }: HomeUrlState): Params {
   const query = search.trim();
   const inAll = tab === 'all';
+  const online = filters.place === 'online';
   const params: Params = {
     ...(inAll && { tab: 'all' }),
     ...(inAll && sort !== START_SORT && { sort: sort.toLowerCase() }),
     ...(query && { q: query }),
     ...(filters.kinds.length && { kinds: filters.kinds.join(',') }),
     ...(filters.kids && { kids: 'true' }),
-    ...(filters.type && { type: filters.type.toLowerCase() }),
+    // The API's name for it, which older links also used.
+    ...(online && { type: 'online' }),
     ...(filters.fromDay && { from: filters.fromDay }),
     ...(filters.toDay && { to: filters.toDay }),
     ...(filters.followed && { followed: 'true' }),
     ...(filters.includePast && { past: 'true' }),
-    ...(filters.place && point && { radius: String(filters.radiusKm) }),
+    ...(filters.place && !online && point && { radius: String(filters.radiusKm) }),
     ...(point && { lat: String(point.latitude), lng: String(point.longitude) }),
     ...(map && { view: 'map' }),
   };
@@ -72,25 +73,28 @@ export function fromHomeParams(params: Params): HomeUrlState {
   const sort = oneOf('sort', SORTS) as PostsSort | '';
   // Dla dzieci is the switch, so a link that lists it as a kind reads the same.
   const kinds = kindKeys(text('kinds'));
+  // Online posts have no place, so no radius, Najbliższe or map goes with them. An old link's type=offline is
+  // Wszędzie, as Online is the only type left to choose.
+  const online = text('type').toUpperCase() === 'ONLINE';
+  const place = online ? 'online' : hasRadius ? (point ? 'picked' : 'mine') : '';
 
   return {
     search: text('q'),
     tab,
-    sort: tab === 'all' && sort ? sort : START_SORT,
-    point,
-    map: text('view') === 'map',
+    sort: tab === 'all' && sort && !(online && sort === 'NEAREST') ? sort : START_SORT,
+    point: online ? null : point,
+    map: text('view') === 'map' && !online,
     filters: {
       ...NO_FILTERS,
       kinds: kinds.filter((key) => key !== KIDS_KIND),
       kids: text('kids') === 'true' || kinds.includes(KIDS_KIND),
-      type: oneOf('type', TYPES),
       fromDay: day('from'),
       toDay: day('to'),
       followed: text('followed') === 'true',
       includePast: text('past') === 'true',
       // A radius with no point asks for the reader's own position.
-      place: hasRadius ? (point ? 'picked' : 'mine') : '',
-      radiusKm: hasRadius ? radius : NO_FILTERS.radiusKm,
+      place,
+      radiusKm: hasRadius && !online ? radius : NO_FILTERS.radiusKm,
     },
   };
 }

@@ -5,8 +5,7 @@ app-map.map-hidden {
   display: none;
 }
 
-// Phones on Mapa: the map fills the page, the bar floats over it see-through, and Filtry and Lista | Mapa are round
-// buttons down the map's top right.
+// Phones on Mapa: the map fills the page, and the bar floats over it see-through, with the same rows as on Lista.
 @media (max-width: 639px) {
   .page--map {
     position: relative;
@@ -26,32 +25,6 @@ app-map.map-hidden {
     .searchbar--hidden {
       transform: none;
       visibility: visible;
-    }
-
-    .filters-btn,
-    app-view-switch {
-      position: absolute;
-      right: var(--space-md);
-      box-shadow: var(--shadow-md);
-    }
-
-    .filters-btn {
-      top: calc(100% + var(--space-sm));
-      justify-content: center;
-      width: 44px;
-      height: 44px;
-      padding: 0;
-    }
-
-    app-view-switch {
-      top: calc(100% + var(--space-sm) + 52px);
-    }
-
-    // On the round button's corner.
-    .filters-btn__count {
-      position: absolute;
-      top: -4px;
-      right: -4px;
     }
   }
 }

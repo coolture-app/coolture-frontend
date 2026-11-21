@@ -64,68 +64,40 @@
       <div class="searchbar__row">
         <button
           type="button"
-          class="sort-btn place-btn"
-          [class.sort-btn--active]="showPlace() || activePlace() !== ''"
+          class="bar-btn place-btn"
+          [class.bar-btn--active]="showPlace() || activePlace() !== ''"
           [attr.aria-expanded]="showPlace()"
           [appTooltip]="'MAIN_PAGE.where' | translate"
           (click)="togglePlace()"
         >
-          <ng-icon name="heroMapPin" />
+          <ng-icon [name]="activePlace() === 'online' ? 'lucideRadio' : 'heroMapPin'" />
           <span class="place-btn__text">
             @switch (activePlace()) {
               @case ('mine') {
                 {{ 'MAIN_PAGE.nearMe' | translate }}
               }
               @case ('picked') {
-                {{ place.picked()?.name || ('MAIN_PAGE.pickedPlace' | translate) }}
+                {{ pickedShortName() || ('MAIN_PAGE.pickedPlace' | translate) }}
+              }
+              @case ('online') {
+                {{ 'MAIN_PAGE.online' | translate }}
               }
               @default {
                 {{ 'MAIN_PAGE.anywhere' | translate }}
               }
             }
           </span>
-          @if (activePlace() !== '') {
+          @if (activePlace() === 'mine' || activePlace() === 'picked') {
             <span class="place-btn__radius"
               >· {{ 'MAIN_PAGE.km' | translate: { km: activeFilters().radiusKm } }}</span
             >
           }
           <ng-icon class="place-btn__chevron" name="heroChevronDown" />
         </button>
-        @if (!isMapView() && !isFeed()) {
-          <div class="sort-wrapper">
-            <button
-              type="button"
-              class="sort-btn"
-              aria-haspopup="true"
-              [attr.aria-expanded]="showSortMenu()"
-              [appTooltip]="
-                'MAIN_PAGE.sortLabel' | translate: { sort: getSortLabelKey() | translate }
-              "
-              (click)="toggleSortMenu()"
-            >
-              <span>{{ getSortLabelKey() | translate }}</span>
-              <ng-icon name="heroChevronDown" />
-            </button>
-            @if (showSortMenu()) {
-              <div class="sort-menu">
-                @for (option of sortOptions; track option.value) {
-                  <button
-                    type="button"
-                    class="sort-menu__item"
-                    [class.active]="sort() === option.value"
-                    (click)="setSortBy(option.value)"
-                  >
-                    {{ option.labelKey | translate }}
-                  </button>
-                }
-              </div>
-            }
-          </div>
-        }
         <button
           type="button"
-          class="sort-btn filters-btn"
-          [class.sort-btn--active]="showFilters()"
+          class="bar-btn filters-btn"
+          [class.bar-btn--active]="showFilters()"
           [attr.aria-expanded]="showFilters()"
           [appTooltip]="
             activeFilterCount()
@@ -140,11 +112,10 @@
             <span class="filters-btn__count" aria-hidden="true">{{ activeFilterCount() }}</span>
           }
         </button>
-        <app-view-switch
-          [mapView]="isMapView()"
-          [vertical]="isMapView()"
-          (switched)="toggleMapView($event)"
-        />
+        <!-- Online posts have no pins. -->
+        @if (!isOnline()) {
+          <app-view-switch [mapView]="isMapView()" (switched)="toggleMapView($event)" />
+        }
       </div>
       <!-- Opens under the bar, wherever the list is scrolled to, over a dimmed page. -->
       @if (showFilters()) {
@@ -153,6 +124,9 @@
           class="filters-popover"
           [form]="filtersForm"
           [signedIn]="authService.isAuthenticated()"
+          [sort]="isFeed() ? null : sort()"
+          [sortOptions]="sortOptions()"
+          (sortChange)="setSortBy($event)"
           (clear)="clearFilters()"
           (done)="showFilters.set(false)"
         />

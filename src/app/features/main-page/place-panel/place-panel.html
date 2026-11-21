@@ -89,6 +89,18 @@
         <span></span>
         <ng-container *ngTemplateOutlet="check; context: { $implicit: chosen() === '' }" />
       </button>
+      <button
+        type="button"
+        class="panel__option"
+        [class.panel__option--on]="chosen() === 'online'"
+        [attr.aria-pressed]="chosen() === 'online'"
+        (click)="setPlace('online'); done.emit()"
+      >
+        <ng-icon name="lucideRadio" aria-hidden="true" />
+        <span class="panel__option-name">{{ 'MAIN_PAGE.online' | translate }}</span>
+        <span></span>
+        <ng-container *ngTemplateOutlet="check; context: { $implicit: chosen() === 'online' }" />
+      </button>
     </div>
   </app-place-search>
 

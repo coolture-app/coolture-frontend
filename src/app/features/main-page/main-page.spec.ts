@@ -216,11 +216,11 @@ describe('MainPage', () => {
       await open();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
 
-      component.filtersForm.controls.type.setValue('OFFLINE');
+      component.filtersForm.controls.includePast.setValue(true);
       await debounce();
 
       const first = expectFeed();
-      expect(param(first, 'type')).toBe('OFFLINE');
+      expect(param(first, 'includePast')).toBe('true');
       first.flush({
         items: [card('a')],
         page: { limit: 20, hasMore: true, nextCursor: 'c1' },
@@ -231,7 +231,7 @@ describe('MainPage', () => {
       component.list.loadMore();
       const next = expectFeed();
       expect(param(next, 'cursor')).toBe('c1');
-      expect(param(next, 'type')).toBe('OFFLINE');
+      expect(param(next, 'includePast')).toBe('true');
       next.flush({ ...page(), mode: 'RANKED' });
     });
 
@@ -345,38 +345,67 @@ describe('MainPage', () => {
       await settle();
       expect(param(expectPosts(), 'sortBy')).toBe('POPULAR');
 
-      component.filtersForm.controls.type.setValue('ONLINE');
+      component.filtersForm.controls.includePast.setValue(true);
       await debounce();
       const filtered = expectPosts();
       expect(param(filtered, 'sortBy')).toBe('POPULAR');
-      expect(param(filtered, 'type')).toBe('ONLINE');
+      expect(param(filtered, 'includePast')).toBe('true');
       filtered.flush(page());
 
       await component.setSortBy('RECENT');
       await settle();
       const resorted = expectPosts();
-      expect(param(resorted, 'type')).toBe('ONLINE');
+      expect(param(resorted, 'includePast')).toBe('true');
       resorted.flush(page());
     });
 
-    it('shows the sort menu only on Wszystkie', async () => {
+    it('sorts from Filtry’s chips on Wszystkie only, counting an order that isn’t the first', async () => {
+      const sortChips = () =>
+        Array.from(
+          fixture.nativeElement.querySelectorAll('.filters__chip') as NodeListOf<HTMLButtonElement>,
+        );
       await open();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
+      component.toggleFilters();
       await settle();
-      expect(fixture.nativeElement.querySelector('.sort-wrapper')).toBeNull();
+      expect(sortChips().length).toBe(0);
 
       component.setTab('all');
       await settle();
       expectPosts().flush(page());
       await settle();
-
-      expect(fixture.nativeElement.querySelector('.sort-wrapper')).not.toBeNull();
-      expect(component.sortOptions.map((o) => o.value)).toEqual([
-        'UPCOMING',
-        'NEAREST',
-        'POPULAR',
-        'RECENT',
+      expect(sortChips().map((chip) => chip.textContent!.trim())).toEqual([
+        'MAIN_PAGE.sortUpcoming',
+        'MAIN_PAGE.sortNearest',
+        'MAIN_PAGE.sortPopular',
+        'MAIN_PAGE.sortRecent',
       ]);
+      expect(component.activeFilterCount()).toBe(0);
+
+      sortChips()[2].click();
+      await settle();
+      expect(param(expectPosts(), 'sortBy')).toBe('POPULAR');
+      await settle();
+      expect(component.showFilters()).toBeTrue();
+      expect(sortChips()[2].getAttribute('aria-pressed')).toBe('true');
+      expect(component.activeFilterCount()).toBe(1);
+
+      component.setTab('forYou');
+      await settle();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      expect(component.activeFilterCount()).toBe(0);
+    });
+
+    it('sets the order back with Wyczyść', async () => {
+      await router.navigateByUrl('/?tab=all&sort=popular');
+      await open();
+      expectPosts().flush(page());
+
+      component.clearFilters();
+      await settle();
+
+      expect(param(expectPosts(), 'sortBy')).toBe('UPCOMING');
+      expect(component.activeFilterCount()).toBe(0);
     });
 
     it('goes back to the feed, with its filters, on Dla Ciebie', async () => {
@@ -400,7 +429,7 @@ describe('MainPage', () => {
       expectFeed().flush({ ...page(), mode: 'RANKED' });
 
       expect(component.searchControl.enabled).toBeTrue();
-      expect(component.filtersForm.controls.type.enabled).toBeTrue();
+      expect(component.filtersForm.controls.kinds.enabled).toBeTrue();
     });
 
     it('does not start a new list when nothing about it changed', async () => {
@@ -534,7 +563,7 @@ describe('MainPage', () => {
       expectFeed().flush({ ...page(), mode: 'RANKED' });
       component.searchControl.setValue('jazz', { emitEvent: false });
       component.filtersForm.patchValue(
-        { type: 'OFFLINE', fromDay: '2026-12-01', toDay: '2026-12-02' },
+        { includePast: true, fromDay: '2026-12-01', toDay: '2026-12-02' },
         { emitEvent: false },
       );
       component.applyControls();
@@ -1159,7 +1188,7 @@ describe('MainPage', () => {
       feed.flush({ ...page(), mode: 'RANKED' });
       nameLookups('Wrzeszcz Górny');
       await settle();
-      expect(pill()).toBe('Wrzeszcz Górny, Gdańsk · MAIN_PAGE.km');
+      expect(pill()).toBe('Wrzeszcz Górny · MAIN_PAGE.km');
       expect(router.url).toBe('/?radius=7&lat=54.35&lng=18.65');
       await openPlace();
       expect(radiusChips().map((c) => c.getAttribute('aria-pressed'))).toEqual([
@@ -1201,7 +1230,7 @@ describe('MainPage', () => {
       feed.flush({ ...page(), mode: 'RANKED' });
     });
 
-    it('closes the panel on Escape, and on Done', async () => {
+    it('closes the panel on Escape, and on its ✕', async () => {
       await open();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
       component.toggleFilters();
@@ -1213,9 +1242,113 @@ describe('MainPage', () => {
 
       component.toggleFilters();
       await settle();
-      button('MAIN_PAGE.done').click();
+      (
+        fixture.nativeElement.querySelector(
+          'app-feed-filters [aria-label="MAIN_PAGE.close"]',
+        ) as HTMLButtonElement
+      ).click();
       await settle();
       expect(component.showFilters()).toBeFalse();
+    });
+  });
+
+  describe('Online', () => {
+    async function pickOnline(): Promise<void> {
+      await openPlace();
+      option('MAIN_PAGE.online').click();
+      await settle();
+    }
+
+    it('is picked in the place panel, which closes, and lists online posts with no radius', async () => {
+      askedLocation = { latitude: 54.35, longitude: 18.65 };
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      await openPlace();
+      option('MAIN_PAGE.myLocation').click();
+      await debounce();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+
+      // Still open on the position's radius.
+      option('MAIN_PAGE.online').click();
+      await settle();
+
+      const feed = expectFeed();
+      expect(param(feed, 'type')).toBe('ONLINE');
+      expect(param(feed, 'radiusKm')).toBeNull();
+      expect(param(feed, 'latitude')).toBeNull();
+      feed.flush({ ...page(), mode: 'RANKED' });
+      await debounce();
+      expect(component.showPlace()).toBeFalse();
+      expect(pill()).toBe('MAIN_PAGE.online');
+      expect(component.activeFilterCount()).toBe(0);
+      expect(router.url).toBe('/?type=online');
+    });
+
+    it('hides Mapa, and goes to Lista when picked on the map', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      component.setTab('all');
+      await settle();
+      expectPosts().flush(page());
+      component.toggleMapView(true);
+      await settle();
+      http.match((r) => r.url.endsWith('/posts/map'));
+
+      await pickOnline();
+
+      expect(component.isMapView()).toBeFalse();
+      const posts = expectPosts();
+      expect(param(posts, 'type')).toBe('ONLINE');
+      posts.flush(page());
+      await debounce();
+      expect(fixture.nativeElement.querySelector('app-view-switch')).toBeNull();
+
+      await openPlace();
+      option('MAIN_PAGE.anywhere').click();
+      await debounce();
+      expectPosts().flush(page());
+      await settle();
+      expect(fixture.nativeElement.querySelector('app-view-switch')).not.toBeNull();
+    });
+
+    it('takes Najbliższe out of the sort, going back to Nadchodzące', async () => {
+      askedLocation = { latitude: 54.35, longitude: 18.65 };
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      component.setTab('all');
+      await settle();
+      expectPosts().flush(page());
+      await component.setSortBy('NEAREST');
+      await settle();
+      expectPosts().flush(page());
+
+      await pickOnline();
+
+      const posts = expectPosts();
+      expect(param(posts, 'sortBy')).toBe('UPCOMING');
+      posts.flush(page());
+      await debounce();
+      expect(component.sortOptions().map((o) => o.value)).toEqual([
+        'UPCOMING',
+        'POPULAR',
+        'RECENT',
+      ]);
+    });
+
+    it('is no longer a Typ in Filtry, and Wyczyść leaves it on', async () => {
+      await router.navigateByUrl('/?type=online&past=true');
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      component.toggleFilters();
+      await settle();
+
+      expect(fixture.nativeElement.querySelector('app-feed-filters select')).toBeNull();
+      component.clearFilters();
+      await settle();
+      const feed = expectFeed();
+      expect(param(feed, 'type')).toBe('ONLINE');
+      expect(param(feed, 'includePast')).toBeNull();
+      feed.flush({ ...page(), mode: 'RANKED' });
     });
   });
 
@@ -1277,17 +1410,18 @@ describe('MainPage', () => {
     });
 
     it('opens with what the URL holds', async () => {
-      await router.navigateByUrl('/?tab=all&sort=popular&q=jazz&type=offline&past=true');
+      await router.navigateByUrl('/?tab=all&sort=popular&q=jazz&type=online&past=true');
 
       await open();
 
       const posts = expectPosts();
       expect(param(posts, 'sortBy')).toBe('POPULAR');
       expect(param(posts, 'q')).toBe('jazz');
-      expect(param(posts, 'type')).toBe('OFFLINE');
+      expect(param(posts, 'type')).toBe('ONLINE');
       expect(param(posts, 'includePast')).toBe('true');
       expect(component.tab()).toBe('all');
       expect(component.searchControl.value).toBe('jazz');
+      // Popularne and Pokaż minione.
       expect(component.activeFilterCount()).toBe(2);
       posts.flush(page());
     });
@@ -1366,7 +1500,7 @@ describe('MainPage', () => {
       nameLookups('Wrzeszcz Górny');
       await settle();
 
-      expect(pill()).toBe('Wrzeszcz Górny, Gdańsk · MAIN_PAGE.km');
+      expect(pill()).toBe('Wrzeszcz Górny · MAIN_PAGE.km');
       expect(router.url).toBe('/?radius=25&lat=54.35&lng=18.65');
     });
 
