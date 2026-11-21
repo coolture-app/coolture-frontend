@@ -41,6 +41,7 @@ import { frameShape, Photo, toPhoto } from '../../models/media/photo';
 import { PhotoViewerService } from '../../services/photo-viewer/photo-viewer.service';
 import { appTicket } from '../../icons/ticket';
 import { kindIcon } from '../../icons/kind-icons';
+import { PostLinks } from '../post-links/post-links';
 import { kindParams } from '../../../features/main-page/home-url';
 import { KindsService } from '../../services/interests/kinds.service';
 import { FriendsLine } from '../friends-line/friends-line';
@@ -90,7 +91,17 @@ export type PostFold = 'marked' | 'unmarked' | null;
 
 @Component({
   selector: 'app-post-component',
-  imports: [NgIcon, CountedIcon, TranslatePipe, ModalWindow, Btn, Tooltip, FriendsLine, RouterLink],
+  imports: [
+    NgIcon,
+    CountedIcon,
+    TranslatePipe,
+    ModalWindow,
+    Btn,
+    Tooltip,
+    FriendsLine,
+    RouterLink,
+    PostLinks,
+  ],
   viewProviders: [
     provideIcons({
       appTicket,

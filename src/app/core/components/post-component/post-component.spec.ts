@@ -601,6 +601,37 @@ describe('PostComponent', () => {
     });
   });
 
+  describe('links', () => {
+    const links = () =>
+      Array.from(element().querySelectorAll<HTMLAnchorElement>('.post-links__link')).map((link) => [
+        link.textContent!.trim(),
+        link.getAttribute('href'),
+        link.target,
+      ]);
+
+    it('shows each by its name or domain, in a new tab, on cards too', () => {
+      render(
+        card({
+          links: [
+            { url: 'https://bilety.example/k', label: 'Bilety' },
+            { url: 'https://www.fb.com/e' },
+          ],
+        }),
+      );
+
+      expect(links()).toEqual([
+        ['Bilety', 'https://bilety.example/k', '_blank'],
+        ['fb.com', 'https://www.fb.com/e', '_blank'],
+      ]);
+    });
+
+    it('leaves no line when there are none', () => {
+      render(card());
+
+      expect(element().querySelector('app-post-links')).toBeNull();
+    });
+  });
+
   describe('place', () => {
     const location = {
       id: 'l1',

@@ -1,0 +1,13 @@
+<p class="post-links" [attr.aria-label]="'POST.links' | translate">
+  <ng-icon class="post-links__icon" name="lucideLink" aria-hidden="true" />
+  @for (link of links(); track $index) {
+    <a
+      class="post-links__link"
+      [href]="link.url"
+      target="_blank"
+      rel="noopener noreferrer nofollow ugc"
+      [attr.aria-label]="name(link) + ', ' + ('POST.opens-in-new-tab' | translate)"
+      >{{ name(link) }}<ng-icon name="lucideArrowUpRight" aria-hidden="true"
+    /></a>
+  }
+</p>

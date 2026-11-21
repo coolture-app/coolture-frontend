@@ -111,7 +111,10 @@ export interface components {
       location?: components['schemas']['EventLocation'];
       title: string;
       description?: string;
+      /** @description The page the scraper imported the post from, unique per author. Not for display. */
       eventUrl?: string;
+      /** @description Links under the description, in the author's order (PostLimits.MAX_LINKS). Left out when the post has none. */
+      links?: components['schemas']['PostLink'][];
       /** Format: date-time */
       startsAt: string;
       /** Format: date-time */
@@ -222,6 +225,12 @@ export interface components {
       /** Format: double */
       longitude: number;
     };
+    PostLink: {
+      /** @description Starts with http:// or https://. */
+      url: string;
+      /** @description The author's name for it. Left out when none; the app shows the domain. */
+      label?: string;
+    };
     MediaResource: {
       /** Format: uuid */
       id: string;
@@ -297,7 +306,7 @@ export interface components {
     Longitude: number;
     /** @description Only posts with a place within this many km of latitude and longitude. Ignored without them. */
     RadiusKm: number;
-    /** @description Matches a part of the title, the description, the city or the place's name, ignoring case. */
+    /** @description Words separated by spaces; any after the 8th are ignored. Every word must appear in the title, the description, the city or the place's name, in any order, ignoring case and diacritics. A word of 5 or more letters also matches its other Polish forms ("koncertu" finds "koncert"). */
     Q: string;
     AuthorId: string;
     Status: components['schemas']['PostStatus'];
@@ -334,7 +343,7 @@ export interface operations {
         longitude?: components['parameters']['Longitude'];
         /** @description When false, events that ended over 12 hours ago are hidden. UPCOMING always hides ended events. */
         includePast?: components['parameters']['IncludePast'];
-        /** @description Matches a part of the title, the description, the city or the place's name, ignoring case. */
+        /** @description Words separated by spaces; any after the 8th are ignored. Every word must appear in the title, the description, the city or the place's name, in any order, ignoring case and diacritics. A word of 5 or more letters also matches its other Polish forms ("koncertu" finds "koncert"). */
         q?: components['parameters']['Q'];
         authorId?: components['parameters']['AuthorId'];
         status?: components['parameters']['Status'];
@@ -378,11 +387,11 @@ export interface operations {
         cursor?: components['parameters']['Cursor'];
         /** @description Page size. Values above 100 are capped. Non-numeric values return 400. */
         limit?: components['parameters']['Limit'];
-        /** @description NEAREST needs latitude and longitude, and shows only posts with a place. STANCE_NEWEST needs participationTypes and puts the viewer's newest of those stances first. UPCOMING mixes events already running into the events to come, every 5th card (README.md). */
+        /** @description NEAREST needs latitude and longitude, and shows only posts with a place. STANCE_NEWEST needs participationTypes and puts the viewer's newest of those stances first. UPCOMING mixes events already running into the events to come, every 5th card. POPULAR orders by likes + Interesuje mnie + Biorę udział (README.md). */
         sortBy?: 'RECENT' | 'POPULAR' | 'UPCOMING' | 'NEAREST' | 'STANCE_NEWEST';
         /** @description When false, events that ended over 12 hours ago are hidden. UPCOMING always hides ended events. */
         includePast?: components['parameters']['IncludePast'];
-        /** @description Matches a part of the title, the description, the city or the place's name, ignoring case. */
+        /** @description Words separated by spaces; any after the 8th are ignored. Every word must appear in the title, the description, the city or the place's name, in any order, ignoring case and diacritics. A word of 5 or more letters also matches its other Polish forms ("koncertu" finds "koncert"). */
         q?: components['parameters']['Q'];
         authorId?: components['parameters']['AuthorId'];
         status?: components['parameters']['Status'];

@@ -1,5 +1,6 @@
 import { PostType } from '../common/enums';
 import { EventLocationRequest } from '../common/geo.model';
+import { PostLink } from './post-link';
 
 export interface PostFormData {
   title: string;
@@ -8,7 +9,7 @@ export interface PostFormData {
   endsAt: string | null;
   openEnded: boolean;
   description: string;
-  eventUrl: string | null;
+  links: PostLink[];
   location: EventLocationRequest | null;
   /** In the order the post shows them. The first is the cover. */
   mediaIds: string[];

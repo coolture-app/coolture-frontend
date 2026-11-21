@@ -37,7 +37,7 @@
           ></app-form-input>
           <button
             type="button"
-            class="post-form__remove-end"
+            class="post-form__remove"
             (click)="removeEnd()"
             [title]="'POST_FORM.remove-end' | translate"
             [attr.aria-label]="'POST_FORM.remove-end' | translate"
@@ -117,13 +117,63 @@
 
   <app-post-photos [saved]="existingMedia" [editing]="mode === 'edit'"></app-post-photos>
 
-  <app-form-input
-    [control]="eventUrlControl"
-    [label]="'POST_FORM.event-url' | translate"
-    [placeholder]="'POST_FORM.event-url-placeholder' | translate"
-    type="url"
-    inputId="eventUrl"
-  ></app-form-input>
+  <section class="post-form__section" aria-labelledby="links-label">
+    <h3 class="post-form__section-title" id="links-label">
+      {{ 'POST_FORM.links' | translate: { max: maxLinks } }}
+    </h3>
+    @for (link of links.controls; track link; let i = $index) {
+      <div class="post-form__link">
+        <div class="post-form__link-fields">
+          <app-form-input
+            [control]="link.controls.url"
+            [label]="'POST_FORM.link-url' | translate"
+            [placeholder]="'POST_FORM.link-url-placeholder' | translate"
+            type="url"
+            [required]="true"
+            [inputId]="'link-url-' + i"
+            [errorMessages]="{
+              required: ('POST_FORM.link-url-error' | translate),
+              pattern: ('POST_FORM.link-url-error' | translate),
+            }"
+          ></app-form-input>
+          <app-form-input
+            [control]="link.controls.label"
+            [label]="'POST_FORM.link-label' | translate"
+            [placeholder]="'POST_FORM.link-label-placeholder' | translate"
+            [maxLength]="maxLinkLabel"
+            [inputId]="'link-label-' + i"
+          ></app-form-input>
+        </div>
+        <button
+          type="button"
+          class="post-form__remove"
+          (click)="removeLink(i)"
+          [title]="'POST_FORM.remove-link' | translate"
+          [attr.aria-label]="'POST_FORM.remove-link' | translate"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            aria-hidden="true"
+          >
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+    }
+    @if (links.length < maxLinks) {
+      <button type="button" class="post-form__add" (click)="addLink()">
+        + {{ 'POST_FORM.add-link' | translate }}
+      </button>
+    }
+  </section>
 
   <div class="post-form__actions">
     <app-btn

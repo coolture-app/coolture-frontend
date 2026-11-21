@@ -33,7 +33,21 @@
     }
   }
 
-  &__remove-end {
+  &__link {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-xs);
+  }
+
+  &__link-fields {
+    display: grid;
+    flex: 1;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space-sm) var(--space-md);
+    min-width: 0;
+  }
+
+  &__remove {
     display: flex;
     flex-shrink: 0;
     align-items: center;

@@ -3,6 +3,7 @@ import { EventLocation } from '../common/geo.model';
 import { MediaResource } from '../media/media-resource.model';
 import { PostType, PostStatus, ReactionType, ParticipationType } from '../common/enums';
 import { FriendStances } from './friend-stances.model';
+import { PostLink } from './post-link';
 
 // Fields without a value are left out of the JSON, not sent as null.
 export interface PostBase {
@@ -11,7 +12,7 @@ export interface PostBase {
   location?: EventLocation;
   title: string;
   description?: string;
-  eventUrl?: string;
+  links?: PostLink[];
   startsAt: string; // ISO-8601
   endsAt?: string; // ISO-8601
   /** No end date: no endsAt, and the event never ends. */

@@ -17,8 +17,10 @@ import {
 import { CommonModule, formatDate } from '@angular/common';
 import {
   AbstractControl,
+  FormArray,
   FormBuilder,
   FormControl,
+  FormGroup,
   ReactiveFormsModule,
   ValidationErrors,
   Validators,
@@ -37,6 +39,13 @@ import { PostFormData } from '../../models/posts/post-form-data.model';
 import { PostDetail, PostMedia } from '../../models/posts/post-detail.model';
 import { PostType } from '../../models/common/enums';
 import { EventLocationRequest } from '../../models/common/geo.model';
+import { linkUrl, PostLink } from '../../models/posts/post-link';
+import { MAX_LINK_LABEL, MAX_POST_LINKS } from '../../models/posts/post-limits';
+
+type LinkGroup = FormGroup<{ url: FormControl<string>; label: FormControl<string> }>;
+
+/** An address with a dot in its host, with or without its scheme, which `linkUrl` adds. */
+const LINK_ADDRESS = /^\s*(https?:\/\/)?[^\s/]+\.[^\s]+\s*$/i;
 
 /**
  * A `datetime-local` input holds a local time with no zone, and the API sends UTC.
@@ -117,7 +126,7 @@ export class PostForm implements OnInit, OnChanges, OnDestroy {
       startsAt: ['', [Validators.required, this.startNotInPast]],
       endsAt: [''],
       description: ['', [Validators.required, Validators.maxLength(1024)]],
-      eventUrl: [''],
+      links: new FormArray<LinkGroup>([]),
       location: this.locationGroup,
     },
     { validators: endAfterStart },
@@ -135,9 +144,12 @@ export class PostForm implements OnInit, OnChanges, OnDestroy {
   get descriptionControl(): FormControl {
     return this.postForm.controls.description;
   }
-  get eventUrlControl(): FormControl {
-    return this.postForm.controls.eventUrl;
+  get links(): FormArray<LinkGroup> {
+    return this.postForm.controls.links;
   }
+
+  readonly maxLinks = MAX_POST_LINKS;
+  readonly maxLinkLabel = MAX_LINK_LABEL;
 
   get isOffline(): boolean {
     return this.postForm.controls.type.value === 'OFFLINE';
@@ -179,7 +191,6 @@ export class PostForm implements OnInit, OnChanges, OnDestroy {
       startsAt: toLocalInputValue(post.startsAt),
       endsAt: toLocalInputValue(post.endsAt),
       description: post.description ?? '',
-      eventUrl: post.eventUrl ?? '',
       location: {
         venueName: location?.venueName ?? '',
         street: location?.street ?? '',
@@ -190,6 +201,8 @@ export class PostForm implements OnInit, OnChanges, OnDestroy {
         coordinates: location?.coordinates ?? null,
       },
     });
+    this.links.clear();
+    (post.links ?? []).forEach((link) => this.links.push(this.linkGroup(link)));
     this.showEnd = !!post.endsAt;
     this.openEnded = post.openEnded;
     this.matchLocationTo(post.type);
@@ -203,6 +216,25 @@ export class PostForm implements OnInit, OnChanges, OnDestroy {
   removeEnd(): void {
     this.showEnd = false;
     this.postForm.controls.endsAt.setValue('');
+  }
+
+  addLink(): void {
+    if (this.links.length >= MAX_POST_LINKS) {
+      return;
+    }
+    this.links.push(this.linkGroup());
+    this.focusAfterRender(`#link-url-${this.links.length - 1}`);
+  }
+
+  removeLink(index: number): void {
+    this.links.removeAt(index);
+  }
+
+  private linkGroup(link?: PostLink): LinkGroup {
+    return this.fb.nonNullable.group({
+      url: [link?.url ?? '', [Validators.required, Validators.pattern(LINK_ADDRESS)]],
+      label: [link?.label ?? '', Validators.maxLength(MAX_LINK_LABEL)],
+    });
   }
 
   setOpenEnded(openEnded: boolean): void {
@@ -243,7 +275,10 @@ export class PostForm implements OnInit, OnChanges, OnDestroy {
       endsAt: this.showEnd && form.endsAt ? new Date(form.endsAt).toISOString() : null,
       openEnded: this.openEnded,
       description: form.description ?? '',
-      eventUrl: form.eventUrl?.trim() || null,
+      links: form.links.map(({ url, label }) => ({
+        url: linkUrl(url),
+        ...(label.trim() ? { label: label.trim() } : {}),
+      })),
       location: form.type === 'OFFLINE' ? this.locationRequest() : null,
       mediaIds: photos.mediaIds(),
       removedMediaIds: photos.removedMediaIds,
@@ -287,6 +322,7 @@ export class PostForm implements OnInit, OnChanges, OnDestroy {
 
   resetForm(): void {
     this.postForm.reset({ type: 'OFFLINE' });
+    this.links.clear();
     this.matchLocationTo('OFFLINE');
     this.showEnd = false;
     this.openEnded = false;

@@ -110,7 +110,9 @@
     "friendsInterested": "Interesuje: {{names}}",
     "friendsSee": "Znajomi zobaczą",
     "ended": "Zakończone",
-    "endedHint": "Wydarzenie się zakończyło"
+    "endedHint": "Wydarzenie się zakończyło",
+    "links": "Linki",
+    "opens-in-new-tab": "otwiera się w nowej karcie"
   },
   "NAVBAR": {
     "main-page": "Strona główna",
@@ -215,8 +217,6 @@
     "starts-at": "Początek",
     "starts-at-error": "Podaj, kiedy się zaczyna.",
     "ends-at": "Koniec",
-    "event-url": "Link do wydarzenia",
-    "event-url-placeholder": "https://...",
     "description": "Opis wydarzenia",
     "description-placeholder": "Opisz swoje wydarzenie...",
     "description-error-required": "Opis jest wymagany.",
@@ -254,7 +254,15 @@
     "remove-end": "Usuń zakończenie",
     "where": "Gdzie?",
     "online-hint": "Link do transmisji lub spotkania możesz dodać na dole.",
-    "starts-at-past": "Początek nie może być w przeszłości"
+    "starts-at-past": "Początek nie może być w przeszłości",
+    "links": "Linki (do {{max}})",
+    "link-url": "Adres",
+    "link-url-placeholder": "np. bilety.pl/koncert",
+    "link-url-error": "Wpisz adres strony, np. bilety.pl/koncert.",
+    "link-label": "Nazwa",
+    "link-label-placeholder": "np. Bilety",
+    "add-link": "Dodaj link",
+    "remove-link": "Usuń link"
   },
   "COMMENT": {
     "title": "Komentarze",
