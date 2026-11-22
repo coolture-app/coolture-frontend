@@ -71,7 +71,7 @@ describe('ProfileEvents', () => {
     expect(request.request.params.get('participantId')).toBe('jan-1');
     expect(request.request.params.getAll('participationTypes')).toEqual(['TAKES_PART']);
     expect(element().querySelector('.events__title')?.textContent).toContain(
-      'PROFILE_EVENTS.posts',
+      'PROFILE_EVENTS.going',
     );
   });
 
