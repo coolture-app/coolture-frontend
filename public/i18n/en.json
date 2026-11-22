@@ -5,25 +5,16 @@
     "title": "Home Page",
     "no-posts": "No posts to display... Sad face.",
     "filters": "Filters",
-    "order": "Order",
     "clear": "Clear",
     "kind": "Kind",
     "clearKinds": "Clear kind",
     "kids": "For children",
     "fromDay": "From day",
     "toDay": "To day",
-    "sortCreatedAt": "Created Date",
-    "sortStartsAt": "Event Date",
-    "sortLikes": "Likes",
-    "sortParticipants": "Participants",
     "sortRecent": "Recent",
     "sortPopular": "Popular",
     "sortUpcoming": "Upcoming",
-    "sortRecommended": "Recommended",
-    "orderDesc": "Descending",
-    "orderAsc": "Ascending",
     "online": "Online",
-    "recommended": "Recommended",
     "loading": "Loading...",
     "endOfList": "That's everything",
     "loadError": "Could not load posts.",
@@ -65,9 +56,6 @@
     "nearMe": "Near me",
     "nearestFromHome": "Distances from: {{place}}"
   },
-  "FULL_POST": {
-    "title": "Cool post"
-  },
   "BACK": {
     "to": "Back to: {{page}}",
     "post": "Event",
@@ -81,7 +69,6 @@
     "show-more": "Show more",
     "show-less": "Show less",
     "loading": "Loading post...",
-    "participating": "going",
     "comments": "Show comments",
     "photo-alt": "Event photo",
     "edit": "Edit post",
@@ -122,21 +109,10 @@
     "friends": "People",
     "my-events": "Plans",
     "my-profile": "Profile",
-    "menu": "Menu",
     "addPost": "Add post",
     "logout": "Log out",
     "login": "Log in",
     "switch-language": "Switch to Polish (PL)"
-  },
-  "LANG": {
-    "pl": "PL",
-    "en": "EN"
-  },
-  "REGISTER": {
-    "title": "Register!"
-  },
-  "LOGIN": {
-    "title": "Log in!"
   },
   "404": {
     "header": "The thing you are looking for doesnt exist.",
@@ -150,9 +126,6 @@
     "interests": "Interests",
     "cancel": "Cancel",
     "save": "Save",
-    "firstName": "First Name",
-    "lastName": "Last Name",
-    "username": "Username",
     "bio": "Bio",
     "followers": "Followers",
     "following": "Following",
@@ -425,10 +398,6 @@
   },
   "MAP": {
     "searchArea": "Search this area",
-    "today": "today",
-    "tomorrow": "tomorrow",
-    "now": "on now",
-    "from": "from",
     "directions": "Directions",
     "close": "Close",
     "locate": "My location",
@@ -440,8 +409,6 @@
     "enlargePhoto": "Enlarge the photo",
     "likes": "Likes: {{count}}",
     "going": "Going: {{count}}",
-    "todayFrom": "today",
-    "tomorrowFrom": "tomorrow",
     "events_one": "{{count}} event",
     "events_few": "{{count}} events",
     "events_many": "{{count}} events",

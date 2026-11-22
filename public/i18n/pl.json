@@ -5,25 +5,16 @@
     "title": "Strona główna",
     "no-posts": "Nie ma postów do wyświetlenia... Smutno.",
     "filters": "Filtry",
-    "order": "Kolejność",
     "clear": "Wyczyść",
     "kind": "Rodzaj",
     "clearKinds": "Wyczyść rodzaj",
     "kids": "Dla dzieci",
     "fromDay": "Od dnia",
     "toDay": "Do dnia",
-    "sortCreatedAt": "Data utworzenia",
-    "sortStartsAt": "Data wydarzenia",
-    "sortLikes": "Polubienia",
-    "sortParticipants": "Uczestnicy",
     "sortRecent": "Najnowsze",
     "sortPopular": "Popularne",
     "sortUpcoming": "Nadchodzące",
-    "sortRecommended": "Rekomendowane",
-    "orderDesc": "Malejąco",
-    "orderAsc": "Rosnąco",
     "online": "Online",
-    "recommended": "Rekomendowane",
     "loading": "Ładowanie...",
     "endOfList": "To już wszystko",
     "loadError": "Nie udało się wczytać postów.",
@@ -65,9 +56,6 @@
     "nearMe": "Przy mnie",
     "nearestFromHome": "Odległości od: {{place}}"
   },
-  "FULL_POST": {
-    "title": "Fajny post"
-  },
   "BACK": {
     "to": "Wróć do: {{page}}",
     "post": "Wydarzenie",
@@ -81,7 +69,6 @@
     "show-more": "Wyświetl więcej",
     "show-less": "Wyświetl mniej",
     "loading": "Ładowanie posta...",
-    "participating": "uczestników",
     "comments": "Pokaż komentarze",
     "photo-alt": "Zdjęcie z wydarzenia",
     "edit": "Edytuj post",
@@ -122,21 +109,10 @@
     "friends": "Ludzie",
     "my-events": "Plany",
     "my-profile": "Profil",
-    "menu": "Menu",
     "addPost": "Dodaj post",
     "logout": "Wyloguj się",
     "login": "Zaloguj się",
     "switch-language": "Zmień język na angielski (EN)"
-  },
-  "LANG": {
-    "pl": "PL",
-    "en": "EN"
-  },
-  "REGISTER": {
-    "title": "Zarejestruj się!"
-  },
-  "LOGIN": {
-    "title": "Zaloguj się!"
   },
   "404": {
     "header": "Strona, której szukasz, nie istnieje.",
@@ -150,9 +126,6 @@
     "interests": "Zainteresowania",
     "cancel": "Anuluj",
     "save": "Zapisz",
-    "firstName": "Imię",
-    "lastName": "Nazwisko",
-    "username": "Nazwa użytkownika",
     "bio": "Bio",
     "followers": "Obserwujący",
     "following": "Obserwowani",
@@ -425,10 +398,6 @@
   },
   "MAP": {
     "searchArea": "Szukaj w tym obszarze",
-    "today": "dziś",
-    "tomorrow": "jutro",
-    "now": "trwa",
-    "from": "od",
     "directions": "Prowadź",
     "close": "Zamknij",
     "locate": "Moja lokalizacja",
@@ -440,8 +409,6 @@
     "enlargePhoto": "Powiększ zdjęcie",
     "likes": "Polubienia: {{count}}",
     "going": "Wezmą udział: {{count}}",
-    "todayFrom": "dziś",
-    "tomorrowFrom": "jutra",
     "events_one": "{{count}} wydarzenie",
     "events_few": "{{count}} wydarzenia",
     "events_many": "{{count}} wydarzeń",
