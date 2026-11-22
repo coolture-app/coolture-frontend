@@ -1,5 +1,5 @@
 <div class="form-field" [class.has-error]="showErrors" [class.is-focused]="false">
-  <label *ngIf="label" [for]="inputId" class="form-field__label">
+  <label *ngIf="label" [for]="inputId" class="form-field__label" [class.form-field__label--heading]="heading">
     {{ label }}
     <span *ngIf="!required" class="form-field__optional">{{ optionalLabel | translate }}</span>
   </label>

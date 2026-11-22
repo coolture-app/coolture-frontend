@@ -16,6 +16,8 @@ export class FormFileUpload {
   @Input() buttonText = 'POST_FORM.media-click';
   @Input() required = false;
   @Input() optionalLabel = 'POST_FORM.optional';
+  /** Labels a whole part of the form, not a field inside one. */
+  @Input() heading = false;
   @Input() disabled = false;
 
   @Output() filesSelected = new EventEmitter<File[]>();

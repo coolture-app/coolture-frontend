@@ -5,6 +5,7 @@
     [placeholder]="'POST_FORM.title-placeholder' | translate"
     [required]="true"
     [maxLength]="128"
+    [heading]="true"
     inputId="title"
     [errorMessages]="{
       required: ('POST_FORM.title-error-required' | translate),
@@ -108,6 +109,7 @@
     [required]="true"
     [maxLength]="1024"
     [rows]="5"
+    [heading]="true"
     inputId="description"
     [errorMessages]="{
       required: ('POST_FORM.description-error-required' | translate),
