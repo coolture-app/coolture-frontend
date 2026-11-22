@@ -33,5 +33,8 @@ replaces `dev-tools.ts` in development builds only, so production builds don't c
 | `npm run build`     | Production build into `dist/`                                                                                    |
 | `npm run api-types` | Regenerates the API types from `coolture-aws`'s contract. Run it after any contract change and commit the result |
 
+`npm run api-types` reads the contracts from `../coolture-aws`. For another checkout, such as a worktree, set
+`COOLTURE_AWS`: `COOLTURE_AWS=../aws-x npm run api-types` in bash, `$env:COOLTURE_AWS='../aws-x'` first in PowerShell.
+
 A pre-commit hook runs lint and format. To format on save in VS Code, install the Prettier extension, turn on
 "Format On Save" and pick Prettier as the default formatter; it reads the project's settings.
