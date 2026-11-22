@@ -13,7 +13,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { catchError, firstValueFrom, map, of } from 'rxjs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -38,7 +38,8 @@ import { KindsService } from '../../core/services/interests/kinds.service';
 import { kindIcon } from '../../core/icons/kind-icons';
 import { UserProfile } from '../../core/models/users/user-profile.model';
 import { Interest, label } from '../../core/models/interests/interest.model';
-import { FollowListComponent } from '../../core/components/follow-list/follow-list';
+import { FollowListComponent, FollowListType } from '../../core/components/follow-list/follow-list';
+import { Sheet } from '../../core/components/sheet/sheet';
 import { BackLink } from '../../core/components/back-link/back-link';
 import { Btn } from '../../core/components/btn/btn';
 import { FollowBtn } from '../../core/components/follow-btn/follow-btn';
@@ -62,6 +63,7 @@ import { ProfileEvents } from './profile-events/profile-events';
     NgIcon,
     AvatarCropper,
     FollowListComponent,
+    Sheet,
     RouterLink,
     BackLink,
     Btn,
@@ -128,8 +130,10 @@ export class UserProfileView {
   /** A photo picked and being placed in the circle, not uploaded yet. */
   pickedFile = signal<File | null>(null);
   private avatarInput = viewChild<ElementRef<HTMLInputElement>>('avatarInput');
-  showFollowers = signal(false);
-  showFollowing = signal(false);
+  /** The follow list open in a sheet, if any. */
+  readonly followList = signal<FollowListType | null>(null);
+  private followSheet = viewChild(Sheet);
+  private router = inject(Router);
   showHome = signal(false);
   /** Private, so only shown on your own profile, from `/auth/me`. */
   readonly home = this.authService.home;
@@ -211,8 +215,7 @@ export class UserProfileView {
   }
 
   private async load(username: string | null) {
-    this.showFollowers.set(false);
-    this.showFollowing.set(false);
+    this.followList.set(null);
     this.menuOpen.set(false);
     this.avatarMenuOpen.set(false);
     this.editingBio.set(false);
@@ -264,9 +267,13 @@ export class UserProfileView {
     this.followingCount.set(user.followingCount ?? 0);
   }
 
-  onFollowChanged(event: { deltaFollowers: number; deltaFollowing: number }) {
-    this.followersCount.update((c) => c + event.deltaFollowers);
-    this.followingCount.update((c) => c + event.deltaFollowing);
+  /** This page's address, /profile or /users/…, with the list after #. */
+  followListUrl(list: FollowListType): string {
+    return `${this.router.url.split('#')[0]}#${list}`;
+  }
+
+  onFollowChanged(by: number) {
+    this.followingCount.update((c) => c + by);
   }
 
   startEditingBio() {
@@ -407,8 +414,7 @@ export class UserProfileView {
           isFollowing: false,
           followsYou: false,
         });
-        this.showFollowers.set(false);
-        this.showFollowing.set(false);
+        this.followSheet()?.close();
       }
     } catch (err) {
       console.error('Error blocking user', err);
@@ -492,15 +498,5 @@ export class UserProfileView {
       console.error('Error removing avatar', err);
       this.toast.show(this.translate.instant('PROFILE.saveFailed'));
     }
-  }
-
-  toggleFollowers() {
-    this.showFollowers.set(!this.showFollowers());
-    this.showFollowing.set(false);
-  }
-
-  toggleFollowing() {
-    this.showFollowing.set(!this.showFollowing());
-    this.showFollowers.set(false);
   }
 }

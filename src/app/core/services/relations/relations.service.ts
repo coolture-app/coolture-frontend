@@ -23,23 +23,26 @@ export class RelationsService {
   private apiUrl = inject(ApiUrlService);
   private http = inject(HttpClient);
 
+  /** By name from A to Z, as getFollowing. `q` keeps those whose names or username hold all its words. */
   getFollowers(
     userId: string,
     pagination?: PaginationInfo,
+    q?: string,
   ): Observable<PaginatedResponse<UserListItem>> {
     return this.http.get<PaginatedResponse<UserListItem>>(
       this.apiUrl.path(`/users/${userId}/followers`),
-      { params: this.paginationParams(pagination) },
+      { params: this.peopleParams(pagination, q) },
     );
   }
 
   getFollowing(
     userId: string,
     pagination?: PaginationInfo,
+    q?: string,
   ): Observable<PaginatedResponse<UserListItem>> {
     return this.http.get<PaginatedResponse<UserListItem>>(
       this.apiUrl.path(`/users/${userId}/following`),
-      { params: this.paginationParams(pagination) },
+      { params: this.peopleParams(pagination, q) },
     );
   }
 
@@ -67,6 +70,11 @@ export class RelationsService {
 
   unblock(userId: string): Observable<void> {
     return this.http.delete<void>(this.apiUrl.path(`/users/${userId}/block`));
+  }
+
+  private peopleParams(pagination?: PaginationInfo, q?: string): HttpParams {
+    const params = this.paginationParams(pagination);
+    return q ? params.set('q', q) : params;
   }
 
   private paginationParams(pagination?: PaginationInfo): HttpParams {

@@ -1,102 +1,66 @@
-<div class="follow-list">
-  <div
-    class="follow-list__backdrop"
-    (click)="onClose()"
-    (keydown.escape)="onClose()"
-    tabindex="-1"
-  ></div>
+<label class="follow-list__search">
+  <ng-icon name="lucideSearch" aria-hidden="true" />
+  <input
+    type="search"
+    [placeholder]="'FOLLOW_LIST.search' | translate"
+    [attr.aria-label]="'FOLLOW_LIST.search' | translate"
+    [value]="typed()"
+    (input)="search($any($event.target).value)"
+    (keydown.escape)="escapeSearch($event)"
+  />
+  @if (typed()) {
+    <button
+      type="button"
+      class="follow-list__search-clear"
+      [attr.aria-label]="'FOLLOW_LIST.clearSearch' | translate"
+      (click)="clearSearch()"
+    >
+      <ng-icon name="lucideX" aria-hidden="true" />
+    </button>
+  }
+</label>
 
-  <div
-    class="follow-list__panel"
-    role="dialog"
-    [attr.aria-label]="type() === 'followers' ? 'Followers' : 'Following'"
-  >
-    <div class="follow-list__header">
-      <div class="follow-list__header-content">
-        <h3 class="follow-list__title">
-          {{ (isFollowersPanel() ? 'PROFILE.followers' : 'PROFILE.following') | translate }}
-          @if (!isLoadingInitial()) {
-            ({{ users().length }}{{ hasMore() ? '+' : '' }})
-          }
-        </h3>
-      </div>
-      <app-btn
-        variant="icon"
-        (btnClick)="onClose()"
-        [attr.aria-label]="'PROFILE.close' | translate"
-      >
-        <ng-icon name="heroXMark" />
-      </app-btn>
-    </div>
-
-    <div class="follow-list__content">
-      @if (isLoadingInitial()) {
-        <div class="follow-list__loading-state">
-          <div class="follow-list__spinner"></div>
-        </div>
-      } @else {
-        @for (user of users(); track user.id) {
-          <div class="follow-list__user">
-            <div class="follow-list__info" [routerLink]="['/users', user.username]">
-              @if (user.avatar; as avatar) {
-                <img [src]="avatar.url" [alt]="user.username" class="follow-list__avatar" />
-              } @else {
-                <div class="follow-list__avatar follow-list__avatar--placeholder">
-                  {{ user | initials }}
-                </div>
-              }
-              <div class="follow-list__details">
-                <span class="follow-list__name">{{ user.firstName }} {{ user.lastName }}</span>
-                <span class="follow-list__handle">
-                  <span class="follow-list__username">&#64;{{ user.username }}</span>
-                  <app-relation-pill
-                    [following]="followingIds().has(user.id)"
-                    [followsYou]="user.followsYou"
-                  />
-                </span>
-                <div class="follow-list__stats">
-                  <span class="follow-list__stat">
-                    <strong>{{ user.followersCount }}</strong>
-                    {{ 'PROFILE.followers' | translate }}
-                  </span>
-                  <span class="follow-list__stat">
-                    <strong>{{ user.followingCount }}</strong>
-                    {{ 'PROFILE.following' | translate }}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            @if (canFollow(user)) {
-              <div class="follow-list__actions">
-                <app-follow-btn
-                  [following]="followingIds().has(user.id)"
-                  [busy]="actionUserId() === user.id"
-                  (toggled)="toggleFollow(user)"
-                />
-              </div>
-            }
-          </div>
-        } @empty {
-          <p class="follow-list__empty">
-            {{ (isFollowersPanel() ? 'PROFILE.no-followers' : 'PROFILE.no-following') | translate }}
-          </p>
+<ul class="follow-list__rows">
+  @for (user of users(); track user.id) {
+    <li class="follow-list__row">
+      <a class="follow-list__person" [routerLink]="['/users', user.username]" [replaceUrl]="true">
+        @if (user.avatar; as avatar) {
+          <img [src]="avatar.url" alt="" class="follow-list__avatar" loading="lazy" />
+        } @else {
+          <span class="follow-list__avatar follow-list__avatar--placeholder" aria-hidden="true">
+            {{ user | initials }}
+          </span>
         }
-
-        @if (hasMore()) {
-          <div class="follow-list__footer">
-            @if (isLoadingMore()) {
-              <div class="follow-list__loading-more">
-                <div class="follow-list__spinner follow-list__spinner--sm"></div>
-              </div>
-            } @else {
-              <app-btn variant="secondary" (btnClick)="loadMore()">
-                {{ 'PROFILE.load-more' | translate }}
-              </app-btn>
-            }
-          </div>
-        }
+        <span class="follow-list__name">{{ fullName(user) }}</span>
+        <app-relation-pill
+          [following]="followingIds().has(user.id)"
+          [followsYou]="user.followsYou"
+        />
+      </a>
+      @if (canFollow(user)) {
+        <app-follow-btn
+          [following]="followingIds().has(user.id)"
+          [busy]="busyId() === user.id"
+          (toggled)="toggleFollow(user)"
+        />
       }
-    </div>
-  </div>
-</div>
+    </li>
+  }
+</ul>
+<div [appInfiniteScroll]="hasMore() && !loading() && !failed()" (reachedEnd)="loadMore()"></div>
+
+@if (failed()) {
+  <app-load-state [failed]="true" (retry)="retry()" />
+} @else if (loading()) {
+  <app-load-state />
+} @else if (!users().length) {
+  <p class="follow-list__empty">
+    @if (typed()) {
+      {{ 'FOLLOW_LIST.noMatch' | translate: { q: typed() } }}
+    } @else if (type() === 'followers') {
+      {{ 'FOLLOW_LIST.noFollowers' | translate }}
+    } @else {
+      {{ (isOwnProfile() ? 'FOLLOW_LIST.noFollowingOwn' : 'FOLLOW_LIST.noFollowing') | translate }}
+    }
+  </p>
+}

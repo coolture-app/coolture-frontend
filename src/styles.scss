@@ -61,14 +61,19 @@ img {
   display: block;
 }
 
-// Keeps the feed's 560 px column clear of the docked comments panel (420 px and a 16 px gap), moving it
-// only as far as a screen needs: 2 x (280 + 436) - screen width.
-html.comments-docked app-main-page {
+// Keeps a 560 px column, the feed's or a profile's, clear of a docked sheet (420 px and a 16 px gap),
+// moving it only as far as a screen needs: 2 x (280 + 436) - screen width.
+html.sheet-docked app-main-page {
+  padding-right: max(0px, calc(1432px - 100vw));
+}
+
+html.sheet-docked app-user-profile-view {
+  display: block;
   padding-right: max(0px, calc(1432px - 100vw));
 }
 
 // The same for the post page's 680 px column, which the friends list docks beside.
-html.comments-docked app-full-post-view {
+html.sheet-docked app-full-post-view {
   display: block;
   padding-right: max(0px, calc(1552px - 100vw));
 }

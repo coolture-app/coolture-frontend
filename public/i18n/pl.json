@@ -155,17 +155,12 @@
     "username": "Nazwa użytkownika",
     "bio": "Bio",
     "followers": "Obserwujący",
-    "followers-subtitle": "Osoby obserwujące to konto",
-    "following-subtitle": "Osoby obserwowane przez to konto",
     "following": "Obserwowani",
     "follow": "Obserwuj",
     "block": "Zablokuj",
     "unblock": "Odblokuj",
     "blocked": "Zablokowani",
     "no-blocked": "Brak zablokowanych użytkowników",
-    "no-followers": "Nikt jeszcze nie obserwuje",
-    "no-following": "Nie obserwujesz nikogo",
-    "load-more": "Załaduj więcej",
     "loading": "Ładowanie...",
     "hidden-posts": "Ukryte posty",
     "addHome": "Dodaj miejsce",
@@ -567,5 +562,14 @@
     "add": "Dodaj wydarzenie",
     "noUpcoming": "Brak nadchodzących wydarzeń.",
     "noPast": "Brak minionych wydarzeń."
+  },
+  "FOLLOW_LIST": {
+    "search": "Szukaj osób",
+    "clearSearch": "Wyczyść",
+    "noMatch": "Nikt nie pasuje do „{{q}}”.",
+    "noFollowers": "Nikt jeszcze nie obserwuje.",
+    "noFollowing": "Nikogo jeszcze nie obserwuje.",
+    "noFollowingOwn": "Nie obserwujesz jeszcze nikogo.",
+    "close": "Zamknij listę"
   }
 }

@@ -185,7 +185,10 @@ export interface paths {
       };
       cookie?: never;
     };
-    /** Who follows this user, most recent follow first */
+    /**
+     * Who follows this user, by name from A to Z
+     * @description Sorted by the first and last name, or the username when there's no first name, ignoring case and diacritics.
+     */
     get: operations['getFollowers'];
     put?: never;
     post?: never;
@@ -204,7 +207,10 @@ export interface paths {
       };
       cookie?: never;
     };
-    /** Who this user follows, most recent follow first */
+    /**
+     * Who this user follows, by name from A to Z
+     * @description Sorted by the first and last name, or the username when there's no first name, ignoring case and diacritics.
+     */
     get: operations['getFollowing'];
     put?: never;
     post?: never;
@@ -500,6 +506,8 @@ export interface components {
   };
   parameters: {
     UserId: string;
+    /** @description Words separated by spaces; any after the 8th are ignored. Every word must appear in the username, the first or the last name, ignoring case and diacritics ("jan kowalski"). Without it, everyone. */
+    PeopleQuery: string;
     /** @description The nextCursor of the previous page, unchanged. Opaque, don't parse it. */
     Cursor: string;
     /** @description Page size. Outside 1 to 100, or not a number, returns 400. */
@@ -536,7 +544,7 @@ export interface operations {
     parameters: {
       query?: {
         /** @description Words separated by spaces; any after the 8th are ignored. Every word must appear in the username, the first or the last name, ignoring case and diacritics ("jan kowalski"). Without it, everyone. */
-        q?: string;
+        q?: components['parameters']['PeopleQuery'];
         /** @description The nextCursor of the previous page, unchanged. Opaque, don't parse it. */
         cursor?: components['parameters']['Cursor'];
         /** @description Page size. Outside 1 to 100, or not a number, returns 400. */
@@ -856,6 +864,8 @@ export interface operations {
   getFollowers: {
     parameters: {
       query?: {
+        /** @description Words separated by spaces; any after the 8th are ignored. Every word must appear in the username, the first or the last name, ignoring case and diacritics ("jan kowalski"). Without it, everyone. */
+        q?: components['parameters']['PeopleQuery'];
         /** @description The nextCursor of the previous page, unchanged. Opaque, don't parse it. */
         cursor?: components['parameters']['Cursor'];
         /** @description Page size. Outside 1 to 100, or not a number, returns 400. */
@@ -885,6 +895,8 @@ export interface operations {
   getFollowing: {
     parameters: {
       query?: {
+        /** @description Words separated by spaces; any after the 8th are ignored. Every word must appear in the username, the first or the last name, ignoring case and diacritics ("jan kowalski"). Without it, everyone. */
+        q?: components['parameters']['PeopleQuery'];
         /** @description The nextCursor of the previous page, unchanged. Opaque, don't parse it. */
         cursor?: components['parameters']['Cursor'];
         /** @description Page size. Outside 1 to 100, or not a number, returns 400. */

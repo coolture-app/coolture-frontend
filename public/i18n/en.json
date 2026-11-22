@@ -155,17 +155,12 @@
     "username": "Username",
     "bio": "Bio",
     "followers": "Followers",
-    "followers-subtitle": "People who follow this account",
-    "following-subtitle": "People this account follows",
     "following": "Following",
     "follow": "Follow",
     "block": "Block",
     "unblock": "Unblock",
     "blocked": "Blocked",
     "no-blocked": "No blocked users",
-    "no-followers": "No followers yet",
-    "no-following": "Not following anyone yet",
-    "load-more": "Load More",
     "loading": "Loading...",
     "hidden-posts": "Hidden posts",
     "addHome": "Add your area",
@@ -567,5 +562,14 @@
     "add": "Add an event",
     "noUpcoming": "No upcoming events.",
     "noPast": "No past events."
+  },
+  "FOLLOW_LIST": {
+    "search": "Search people",
+    "clearSearch": "Clear",
+    "noMatch": "Nobody matches “{{q}}”.",
+    "noFollowers": "No followers yet.",
+    "noFollowing": "Not following anyone yet.",
+    "noFollowingOwn": "You're not following anyone yet.",
+    "close": "Close the list"
   }
 }

@@ -119,11 +119,11 @@
 
           @if (!blocked()) {
             <div class="profile__stats">
-              <button type="button" class="profile__stat" (click)="toggleFollowers()">
+              <button type="button" class="profile__stat" (click)="followList.set('followers')">
                 <span class="profile__stat-value">{{ followersCount() }}</span>
                 <span class="profile__stat-label">{{ 'PROFILE.followers' | translate }}</span>
               </button>
-              <button type="button" class="profile__stat" (click)="toggleFollowing()">
+              <button type="button" class="profile__stat" (click)="followList.set('following')">
                 <span class="profile__stat-value">{{ followingCount() }}</span>
                 <span class="profile__stat-label">{{ 'PROFILE.following' | translate }}</span>
               </button>
@@ -252,14 +252,22 @@
     </div>
   }
 
-  @if (showFollowers() || showFollowing()) {
-    <app-follow-list
-      [userId]="user()?.id ?? ''"
-      [type]="showFollowers() ? 'followers' : 'following'"
-      [isOwnProfile]="isOwnProfile()"
-      (closeList)="showFollowers.set(false); showFollowing.set(false)"
-      (followChanged)="onFollowChanged($event)"
-    />
+  @if (followList(); as list) {
+    @if (user(); as shown) {
+      <app-sheet
+        [url]="followListUrl(list)"
+        [title]="(list === 'followers' ? 'PROFILE.followers' : 'PROFILE.following') | translate"
+        [closeLabel]="'FOLLOW_LIST.close' | translate"
+        (closed)="followList.set(null)"
+      >
+        <app-follow-list
+          [userId]="shown.id"
+          [type]="list"
+          [isOwnProfile]="isOwnProfile()"
+          (followChanged)="onFollowChanged($event)"
+        />
+      </app-sheet>
+    }
   }
 
   @if (pickedFile(); as file) {
