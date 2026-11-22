@@ -1,0 +1,28 @@
+<button
+  type="button"
+  class="owner__toggle"
+  aria-haspopup="menu"
+  [attr.aria-expanded]="open()"
+  [attr.aria-label]="'POST.ownerMenu' | translate"
+  [appTooltip]="'POST.ownerMenu' | translate"
+  (click)="toggle($event)"
+>
+  <ng-icon name="lucideEllipsis" aria-hidden="true" />
+</button>
+@if (open()) {
+  <div class="owner__menu" role="menu">
+    <button type="button" role="menuitem" class="owner__item" (click)="edit()">
+      <ng-icon name="lucidePencil" aria-hidden="true" />
+      {{ 'POST.edit' | translate }}
+    </button>
+    <button
+      type="button"
+      role="menuitem"
+      class="owner__item owner__item--danger"
+      (click)="remove()"
+    >
+      <ng-icon name="lucideTrash2" aria-hidden="true" />
+      {{ 'POST.delete' | translate }}
+    </button>
+  </div>
+}

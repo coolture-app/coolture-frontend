@@ -1,4 +1,4 @@
-import { RedirectFunction, Router, Routes } from '@angular/router';
+import { RedirectFunction, Route, Router, Routes } from '@angular/router';
 import { MainPage } from './features/main-page/main-page';
 import { FullPostView } from './features/full-post-view/full-post-view';
 import { TranslateService } from '@ngx-translate/core';
@@ -7,7 +7,9 @@ import { NotFoundView } from './features/not-found-view/not-found-view';
 import { AddPostView } from './features/add-post-view/add-post-view';
 import { DiscoverView } from './features/discover-view/discover-view';
 import { UserProfileView } from './features/my-profile-view/my-profile-view';
-import { authGuard } from './core/auth/auth.guard';
+import { signedIn } from './core/auth/auth.guard';
+import { GuestView } from './features/guest-view/guest-view';
+import { SignInReason } from './core/components/sign-in-card/sign-in-card';
 import { EditPostView } from './features/edit-post-view/edit-post-view';
 import { MyEventsView } from './features/my-events-view/my-events-view';
 import { AuthCallbackView } from './features/auth-callback-view/auth-callback-view';
@@ -31,6 +33,17 @@ function movedTo(path: string): RedirectFunction {
       fragment: fragment ?? undefined,
     });
   };
+}
+
+/**
+ * A route for signed-in people, and its twin at the same path that tells a guest why to sign in. The twin is matched
+ * when `signedIn` refuses, so the URL stays and the sign-in comes back to it.
+ */
+function needsSignIn(reason: SignInReason, route: Route): Routes {
+  return [
+    { ...route, canMatch: [signedIn] },
+    { path: route.path, component: GuestView, data: { signIn: reason }, title: route.title },
+  ];
 }
 
 /** The app's old paths and where they went, so saved links keep working. */
@@ -63,102 +76,92 @@ export const routes: Routes = [
     redirectTo: '/',
     pathMatch: 'full',
   },
-  {
+  ...needsSignIn('addPost', {
     // Before posts/:id, which would take "new" for an id.
     path: 'posts/new',
     component: AddPostView,
-    canActivate: [authGuard],
     title: () => {
       const translate = inject(TranslateService);
       return translate.get('ADD_POST.title');
     },
-  },
-  {
+  }),
+  ...needsSignIn('editPost', {
     path: 'posts/:id/edit',
     component: EditPostView,
-    canActivate: [authGuard],
     title: () => {
       const translate = inject(TranslateService);
       return translate.get('EDIT_POST.title');
     },
-  },
+  }),
   {
     path: 'posts/:id',
     component: FullPostView,
   },
-  {
+  ...needsSignIn('interests', {
     path: 'profile/interests',
     component: InterestsView,
-    canActivate: [authGuard],
     canDeactivate: [unsavedInterestsGuard],
     title: () => {
       const translate = inject(TranslateService);
       return translate.get('INTERESTS.title');
     },
-  },
-  {
+  }),
+  ...needsSignIn('settings', {
     path: 'profile/hidden',
     component: HiddenPostsView,
-    canActivate: [authGuard],
     title: () => {
       const translate = inject(TranslateService);
       return translate.get('HIDDEN.title');
     },
-  },
-  {
+  }),
+  ...needsSignIn('settings', {
     path: 'profile/settings',
     component: SettingsView,
-    canActivate: [authGuard],
     title: () => {
       const translate = inject(TranslateService);
       return translate.get('SETTINGS.title');
     },
-  },
-  {
+  }),
+  ...needsSignIn('settings', {
     path: 'profile/blocked',
     component: BlockedUsersView,
-    canActivate: [authGuard],
     title: () => {
       const translate = inject(TranslateService);
       return translate.get('PROFILE.blocked');
     },
-  },
-  {
+  }),
+  ...needsSignIn('profile', {
     path: 'profile',
     component: UserProfileView,
-    canActivate: [authGuard],
     title: () => {
       const translate = inject(TranslateService);
       return translate.get('PROFILE.title');
     },
-  },
-  {
+  }),
+  ...needsSignIn('user', {
     path: 'users/:username',
     component: UserProfileView,
-    canActivate: [authGuard],
     title: () => {
       const translate = inject(TranslateService);
       return translate.get('PROFILE.title');
     },
-  },
-  {
+  }),
+  ...needsSignIn('people', {
     path: 'people',
     component: DiscoverView,
-    canActivate: [authGuard],
     title: () => {
       const translate = inject(TranslateService);
       return translate.get('DISCOVER.title');
     },
-  },
-  {
+  }),
+  ...needsSignIn('plans', {
     path: 'plans',
     component: MyEventsView,
-    canActivate: [authGuard],
     title: () => {
       const translate = inject(TranslateService);
       return translate.get('MY_EVENTS.title');
     },
-  },
+  }),
   {
     path: 'auth/callback',
     component: AuthCallbackView,

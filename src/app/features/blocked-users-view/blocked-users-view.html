@@ -22,7 +22,7 @@
               <span class="blocked__name">{{ user.firstName }} {{ user.lastName }}</span>
               <span class="blocked__username">&#64;{{ user.username }}</span>
             </span>
-            <app-btn variant="secondary" size="sm" (btnClick)="unblock(user.id)">
+            <app-btn variant="secondary" size="sm" (btnClick)="unblock(user)">
               {{ 'PROFILE.unblock' | translate }}
             </app-btn>
           </li>

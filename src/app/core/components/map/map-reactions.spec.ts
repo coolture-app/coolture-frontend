@@ -8,21 +8,20 @@ import { AuthService } from '../../services/auth/auth.service';
 import { PostListStore } from '../../services/post-list/post-list.store';
 import { ViewerStates } from '../../services/viewer-states/viewer-states';
 import { PostCard } from '../../models/posts/post-card.model';
+import { SignInPromptService } from '../../services/sign-in-prompt/sign-in-prompt.service';
 
 describe('MapReactions', () => {
   let reactions: MapReactions;
   let http: HttpTestingController;
   const signedIn = signal(true);
   const userId = signal('u1');
-  const login = jasmine.createSpy('login');
   const post = { ...mark('a'), interestedCount: 2, goingCount: 1 };
 
   beforeEach(() => {
     signedIn.set(true);
     userId.set('u1');
-    login.calls.reset();
     TestBed.configureTestingModule({
-      providers: [{ provide: AuthService, useValue: { isAuthenticated: signedIn, userId, login } }],
+      providers: [{ provide: AuthService, useValue: { isAuthenticated: signedIn, userId } }],
     });
     reactions = TestBed.inject(MapReactions);
     http = TestBed.inject(HttpTestingController);
@@ -106,12 +105,12 @@ describe('MapReactions', () => {
     expect(reactions.shown(post)).toBe(post);
   });
 
-  it('signs a guest in instead', () => {
+  it('asks a guest to sign in instead', () => {
     signedIn.set(false);
 
     reactions.like(post);
 
-    expect(login).toHaveBeenCalled();
+    expect(TestBed.inject(SignInPromptService).reason()).toBe('like');
     expect(reactions.shown(post)).toBe(post);
     http.expectNone(() => true);
   });

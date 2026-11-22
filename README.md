@@ -35,6 +35,3 @@ replaces `dev-tools.ts` in development builds only, so production builds don't c
 
 A pre-commit hook runs lint and format. To format on save in VS Code, install the Prettier extension, turn on
 "Format On Save" and pick Prettier as the default formatter; it reads the project's settings.
-
-Components with their own usage notes have a README next to them, such as the
-[confirmation modal](src/app/core/components/modal/modal-window/README.md).

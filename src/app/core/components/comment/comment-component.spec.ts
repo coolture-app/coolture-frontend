@@ -1,3 +1,4 @@
+import { ConfirmAnswer, ConfirmService } from '../../services/confirm/confirm.service';
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
@@ -34,6 +35,12 @@ function comment(overrides: Partial<CommentSummary> = {}): CommentSummary {
 }
 
 describe('CommentComponent', () => {
+  async function askToDelete(answer: ConfirmAnswer) {
+    const asked = component.askToDelete();
+    TestBed.inject(ConfirmService).answer(answer);
+    await asked;
+  }
+
   let component: CommentComponent;
   let fixture: ComponentFixture<CommentComponent>;
   let service: CommentsService;
@@ -316,14 +323,14 @@ describe('CommentComponent', () => {
       component.commentDeleted.subscribe((d) => deleted.push(d));
       await render(mine());
 
-      component.handleModalResponse('NO');
+      await askToDelete('cancel');
       expect(remove).not.toHaveBeenCalled();
 
-      component.handleModalResponse('YES');
+      await askToDelete('confirm');
       expect(TestBed.inject(ToastService).message()).toBe('COMMENT.delete-error');
       expect(deleted).toEqual([]);
 
-      component.handleModalResponse('YES');
+      await askToDelete('confirm');
       expect(deleted).toEqual([{ id: 'c1', hasReplies: false }]);
     });
 
@@ -334,7 +341,7 @@ describe('CommentComponent', () => {
       await render({ ...mine(), repliesCount: 1 });
 
       component.onReplyDeleted({ id: 'r1', hasReplies: false });
-      component.handleModalResponse('YES');
+      await askToDelete('confirm');
 
       expect(deleted.at(-1)).toEqual({ id: 'c1', hasReplies: false });
     });

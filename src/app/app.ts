@@ -11,6 +11,8 @@ import { HomeArea } from './features/home-area/home-area';
 import { Toast } from './core/components/toast/toast';
 import { PhotoViewer } from './core/components/photo-viewer/photo-viewer';
 import { CommentsSheet } from './core/components/comments-sheet/comments-sheet';
+import { ConfirmDialog } from './core/components/confirm-dialog/confirm-dialog';
+import { SignInPrompt } from './core/components/sign-in-prompt/sign-in-prompt';
 import { distinctUntilChanged, filter, first, map } from 'rxjs';
 import { devTools } from '../environments/dev-tools';
 
@@ -25,6 +27,8 @@ import { devTools } from '../environments/dev-tools';
     Toast,
     PhotoViewer,
     CommentsSheet,
+    ConfirmDialog,
+    SignInPrompt,
   ],
   templateUrl: './app.html',
   styleUrl: './app.scss',

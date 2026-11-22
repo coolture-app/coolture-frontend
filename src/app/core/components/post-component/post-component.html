@@ -84,32 +84,11 @@
         </div>
       </div>
       @if (isMyPost()) {
-        <div class="post__owner-actions">
-          <button
-            type="button"
-            class="post__icon-btn"
-            [appTooltip]="'POST.edit' | translate"
-            (click)="editPost()"
-          >
-            <ng-icon name="heroPencilSquare" />
-          </button>
-          <button
-            type="button"
-            class="post__icon-btn"
-            [appTooltip]="'POST.delete' | translate"
-            (click)="openModal()"
-          >
-            <ng-icon name="heroTrash" />
-          </button>
-        </div>
-        <app-modal-window
-          #myModal
-          modalType="YESNO"
-          [title]="'POST.modal-delete-title' | translate"
-          [text]="'POST.modal-delete-body' | translate"
-          (modalAction)="handleModalResponse($event)"
-        >
-        </app-modal-window>
+        <app-post-owner-menu
+          [postId]="data.id"
+          [postTitle]="data.title"
+          (deleted)="deleteRequest.emit($event)"
+        />
       }
     </div>
     <h3

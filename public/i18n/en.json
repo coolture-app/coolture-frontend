@@ -86,8 +86,6 @@
     "photo-alt": "Event photo",
     "edit": "Edit post",
     "delete": "Delete post",
-    "modal-delete-title": "Do you really want to delete your post?",
-    "modal-delete-body": "This action cannot be undone.",
     "interested": "Interested",
     "takes_part": "Going",
     "online": "Online",
@@ -112,7 +110,12 @@
     "ended": "Ended",
     "endedHint": "The event has ended",
     "links": "Links",
-    "opens-in-new-tab": "opens in a new tab"
+    "opens-in-new-tab": "opens in a new tab",
+    "ownerMenu": "More",
+    "deleteTitle": "Delete “{{title}}”?",
+    "deleteText": "The event leaves Coolture with its comments. This can't be undone.",
+    "deleteFailed": "Couldn't delete the event. Try again.",
+    "loadFailed": "Couldn't load the event."
   },
   "NAVBAR": {
     "main-page": "Home",
@@ -178,14 +181,17 @@
     "addAvatar": "Add photo",
     "showAvatar": "View photo",
     "removeAvatar": "Remove photo",
-    "removeAvatarConfirm": "Remove your profile photo?",
-    "blockConfirm": "Block this person?",
-    "unblockConfirm": "Unblock this person?",
     "bioPlaceholder": "Add a few words about yourself",
     "since": "On Coolture since {{date}}",
     "blockedLoadError": "Couldn’t load blocked people.",
     "retry": "Try again",
-    "youBlocked": "You blocked this person"
+    "youBlocked": "You blocked this person",
+    "blockTitle": "Block @{{username}}?",
+    "blockText": "You won't see each other's profiles, events or comments, and follows end both ways.",
+    "unblockTitle": "Unblock @{{username}}?",
+    "unblockText": "You'll see each other's profiles and events again. Follows don't come back by themselves.",
+    "removeAvatarTitle": "Remove the profile photo?",
+    "loadFailed": "Couldn't load the profile."
   },
   "SETTINGS": {
     "title": "Settings",
@@ -288,9 +294,9 @@
     "earlier-replies": "Earlier replies",
     "edit-comment": "Edit",
     "delete-comment": "Delete",
-    "modal-delete-title": "Are you sure you want to delete your comment?",
-    "modal-delete-body": "This can't be undone.",
-    "deleted-comment": "Comment deleted"
+    "deleted-comment": "Comment deleted",
+    "deleteTitle": "Delete the comment?",
+    "deleteText": "This can't be undone."
   },
   "FRIENDS": {
     "title": "Friends",
@@ -303,11 +309,6 @@
   },
   "EVENT_CARD": {
     "by": "by"
-  },
-  "MODAL": {
-    "yes": "Yes",
-    "no": "No",
-    "ok": "Okay"
   },
   "MY_EVENTS": {
     "title": "Plans",
@@ -340,7 +341,8 @@
     "retry": "Try again",
     "skip": "Skip for now",
     "leave-title": "Unsaved changes",
-    "leave-text": "Do you want to save your changes before leaving?"
+    "leave-text": "Save your changes before leaving?",
+    "leave-discard": "Don't save"
   },
   "KINDS": {
     "more": "+{{count}} more",
@@ -476,5 +478,70 @@
     "untilFurtherNotice": "until further notice",
     "runsUntil": "on until",
     "runsUntilFurtherNotice": "on until further notice"
+  },
+  "CONFIRM": {
+    "cancel": "Cancel"
+  },
+  "LOAD": {
+    "loading": "Loading",
+    "failed": "Couldn't load.",
+    "retry": "Try again"
+  },
+  "SIGN_IN": {
+    "signIn": "Sign in",
+    "signUp": "Create an account",
+    "close": "Close",
+    "addPost": {
+      "title": "Sign in to add an event",
+      "text": "Everyone on Coolture will see the event you add."
+    },
+    "editPost": {
+      "title": "Sign in to edit the event",
+      "text": "You can only edit events you added."
+    },
+    "plans": {
+      "title": "Sign in to see your plans",
+      "text": "Events you're interested in and going to are kept here."
+    },
+    "profile": {
+      "title": "Sign in to see your profile",
+      "text": "Your photo, interests and events in one place."
+    },
+    "user": {
+      "title": "Sign in to see this profile",
+      "text": "You'll see what they're into and which events they add."
+    },
+    "people": {
+      "title": "Sign in to find friends",
+      "text": "Follow friends and see where they're going."
+    },
+    "settings": {
+      "title": "Sign in to change settings",
+      "text": "Settings belong to your account."
+    },
+    "interests": {
+      "title": "Sign in to pick your interests",
+      "text": "They shape your For you tab."
+    },
+    "like": {
+      "title": "Sign in to like",
+      "text": "Likes help us pick events for you."
+    },
+    "interested": {
+      "title": "Sign in to save the event",
+      "text": "Events you're interested in go to your plans."
+    },
+    "takesPart": {
+      "title": "Sign in to say you're going",
+      "text": "The event goes to your plans, and friends see you're going."
+    },
+    "notForMe": {
+      "title": "Sign in to hide the event",
+      "text": "We'll show you fewer like it."
+    },
+    "comment": {
+      "title": "Sign in to comment",
+      "text": "Comments carry your name."
+    }
   }
 }

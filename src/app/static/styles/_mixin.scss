@@ -104,3 +104,37 @@
   font-weight: var(--font-semibold);
   color: var(--color-text);
 }
+
+// A <dialog> that asks one thing: a card in the middle of a wide screen, a sheet from the bottom on a phone, where the
+// thumb is. Put it on the dialog element, and dialog-body on the one element inside it: a click that lands on the
+// dialog itself is then a click on the backdrop.
+@mixin dialog-panel {
+  width: min(400px, calc(100vw - 2 * var(--space-md)));
+  max-width: none;
+  margin: auto;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-xl);
+  color: var(--color-text);
+
+  &::backdrop {
+    background: var(--color-overlay);
+  }
+
+  @media (max-width: 639px) {
+    width: 100%;
+    margin: auto 0 0;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+}
+
+@mixin dialog-body {
+  position: relative;
+  padding: var(--space-lg);
+
+  @media (max-width: 639px) {
+    padding-bottom: calc(var(--space-lg) + env(safe-area-inset-bottom));
+  }
+}

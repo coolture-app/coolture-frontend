@@ -95,7 +95,7 @@
               <button
                 type="button"
                 class="comment__menu-item comment__menu-item--danger"
-                (click)="openDeleteModal()"
+                (click)="askToDelete()"
                 (keydown.escape)="closeMenu($event)"
               >
                 {{ 'COMMENT.delete-comment' | translate }}
@@ -103,13 +103,6 @@
             </div>
           }
         </div>
-        <app-modal-window
-          #myModal
-          modalType="YESNO"
-          [title]="'COMMENT.modal-delete-title' | translate"
-          [text]="'COMMENT.modal-delete-body' | translate"
-          (modalAction)="handleModalResponse($event)"
-        />
       }
     </div>
   }

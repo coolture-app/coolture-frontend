@@ -109,11 +109,4 @@
       <app-btn variant="primary" (btnClick)="load()">{{ 'INTERESTS.retry' | translate }}</app-btn>
     </div>
   }
-
-  <app-modal-window
-    [title]="'INTERESTS.leave-title' | translate"
-    [text]="'INTERESTS.leave-text' | translate"
-    modalType="YESNO"
-    (modalAction)="onLeaveAnswer($event)"
-  />
 </main>

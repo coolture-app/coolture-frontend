@@ -1,0 +1,15 @@
+<div class="sign-in">
+  <span class="sign-in__icon" aria-hidden="true"><ng-icon [name]="icon()" /></span>
+  <h2 class="sign-in__title" [id]="titleId()">
+    {{ 'SIGN_IN.' + reason() + '.title' | translate }}
+  </h2>
+  <p class="sign-in__text">{{ 'SIGN_IN.' + reason() + '.text' | translate }}</p>
+  <div class="sign-in__buttons">
+    <app-btn variant="primary" [fullWidth]="true" (btnClick)="signIn()">
+      {{ 'SIGN_IN.signIn' | translate }}
+    </app-btn>
+    <app-btn variant="secondary" [fullWidth]="true" (btnClick)="signUp()">
+      {{ 'SIGN_IN.signUp' | translate }}
+    </app-btn>
+  </div>
+</div>

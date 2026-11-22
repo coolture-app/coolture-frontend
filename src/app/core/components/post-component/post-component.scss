@@ -128,28 +128,6 @@
   }
 }
 
-.post__owner-actions {
-  display: flex;
-  flex-shrink: 0;
-  gap: var(--space-xs);
-}
-
-.post__icon-btn {
-  @include center-flex;
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: var(--radius-md);
-  background: none;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  transition: background var(--transition-fast);
-
-  &:hover {
-    background: var(--color-surface-alt);
-  }
-}
-
 .post__title {
   padding: 0 var(--space-md) var(--space-xs);
   font-size: var(--text-title);

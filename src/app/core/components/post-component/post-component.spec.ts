@@ -12,6 +12,7 @@ import { PhotoViewerService } from '../../services/photo-viewer/photo-viewer.ser
 import { PostDetail } from '../../models/posts/post-detail.model';
 import { ViewerStates } from '../../services/viewer-states/viewer-states';
 import { mark } from '../map/map-stubs.testing';
+import { SignInPromptService } from '../../services/sign-in-prompt/sign-in-prompt.service';
 
 function card(overrides: Partial<PostCard> = {}): PostCard {
   return {
@@ -70,21 +71,18 @@ describe('PostComponent', () => {
     expect(() => render(card())).not.toThrow();
   });
 
-  it('offers edit and delete only on your own post', () => {
+  it('offers the owner menu only on your own post', () => {
     render(card());
 
-    expect(element().querySelector('.post__owner-actions')).toBeNull();
+    expect(element().querySelector('app-post-owner-menu')).toBeNull();
   });
 
-  it('offers them on your own post, with names for assistive technology', () => {
+  it('offers it on your own post, named for assistive technology', () => {
     TestBed.inject(AuthService).currentUser.set({ id: 'u1' } as UserProfile);
     render(card());
 
-    const actions = element().querySelectorAll('.post__owner-actions button');
-    expect(Array.from(actions).map((b) => b.getAttribute('aria-label'))).toEqual([
-      'POST.edit',
-      'POST.delete',
-    ]);
+    const toggle = element().querySelector('app-post-owner-menu button');
+    expect(toggle?.getAttribute('aria-label')).toBe('POST.ownerMenu');
   });
 
   it('has five icon actions, each named and pressed when on, and no Share', () => {
@@ -734,18 +732,22 @@ describe('PostComponent', () => {
   });
 
   describe('a guest', () => {
-    it('goes to sign-in from any stance or the like, and back to this page', () => {
-      const auth = TestBed.inject(AuthService);
-      const login = spyOn(auth, 'login').and.resolveTo();
+    it('is asked to sign in by any stance or the like, saying what the tap does', () => {
+      const prompt = TestBed.inject(SignInPromptService);
+      const asked: (string | null)[] = [];
       render(card());
 
-      component.likePost();
-      component.setNotForMe();
-      component.setInterested();
-      component.setTakesPart();
+      for (const tap of [
+        () => component.likePost(),
+        () => component.setNotForMe(),
+        () => component.setInterested(),
+        () => component.setTakesPart(),
+      ]) {
+        tap();
+        asked.push(prompt.reason());
+      }
 
-      expect(login).toHaveBeenCalledTimes(4);
-      expect(login).toHaveBeenCalledWith(TestBed.inject(Router).url);
+      expect(asked).toEqual(['like', 'notForMe', 'interested', 'takesPart']);
       http.expectNone((r) => !r.url.endsWith('/dicts/interests'));
       expect(component.isLiked()).toBeFalse();
       expect(component.stance()).toBeUndefined();
