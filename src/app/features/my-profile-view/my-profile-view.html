@@ -135,11 +135,10 @@
           <h1 class="profile__name">{{ user()?.firstName }} {{ user()?.lastName }}</h1>
           <span class="profile__handle">
             <span class="profile__username">&#64;{{ user()?.username }}</span>
-            @if (!isOwnProfile() && !blocked()) {
-              <app-relation-pill
-                [following]="!!user()?.isFollowing"
-                [followsYou]="!!user()?.followsYou"
-              />
+            @if (since()) {
+              <span class="profile__since">{{
+                'PROFILE.since' | translate: { date: since() }
+              }}</span>
             }
           </span>
         </div>
@@ -170,32 +169,14 @@
         } @else if (user()) {
           <div class="profile__actions">
             <app-follow-btn [following]="!!user()?.isFollowing" (toggled)="toggleFollow()" />
+            <app-relation-pill
+              [following]="!!user()?.isFollowing"
+              [followsYou]="!!user()?.followsYou"
+            />
           </div>
         }
 
-        @if (kinds().length || interests().length) {
-          @if (sharedCount()) {
-            <p class="profile__shared">
-              {{ 'PROFILE.shared' | translate: { count: sharedCount() } }}
-            </p>
-          }
-          <ul class="profile__interests" [attr.aria-label]="'PROFILE.interests' | translate">
-            @for (kind of kinds(); track kind.key) {
-              <li
-                class="profile__interest profile__interest--kind"
-                [class.profile__interest--other]="!kind.shared"
-              >
-                <ng-icon [svg]="kind.icon" aria-hidden="true" />
-                {{ kind.label }}
-              </li>
-            }
-            @for (interest of interests(); track interest.key) {
-              <li class="profile__interest" [class.profile__interest--other]="!interest.shared">
-                {{ interest.label }}
-              </li>
-            }
-          </ul>
-        }
+        <app-profile-interests [groups]="chipGroups()" />
 
         @if (editingBio()) {
           <form
@@ -244,10 +225,6 @@
           >
             {{ 'PROFILE.bioPlaceholder' | translate }}
           </button>
-        }
-
-        @if (since()) {
-          <p class="profile__since">{{ 'PROFILE.since' | translate: { date: since() } }}</p>
         }
       </section>
 

@@ -192,7 +192,7 @@
     "unblockText": "Znów zobaczycie nawzajem swoje profile i wydarzenia. Obserwowanie nie wróci samo.",
     "removeAvatarTitle": "Usunąć zdjęcie profilowe?",
     "loadFailed": "Nie udało się wczytać profilu.",
-    "shared": "Wspólne: {{count}}"
+    "sharedInterests": "Wspólne zainteresowania"
   },
   "SETTINGS": {
     "title": "Ustawienia",
@@ -241,6 +241,7 @@
     "remove-photo": "Usuń zdjęcie",
     "no-current-photos": "Brak dodanych zdjęć.",
     "submit-saving": "Zapisywanie...",
+    "cancel": "Anuluj",
     "submit-create": "Opublikuj wydarzenie",
     "submit-edit": "Zapisz zmiany",
     "photos-title": "Kolejność i okładka",

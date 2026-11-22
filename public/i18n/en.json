@@ -192,7 +192,7 @@
     "unblockText": "You'll see each other's profiles and events again. Follows don't come back by themselves.",
     "removeAvatarTitle": "Remove the profile photo?",
     "loadFailed": "Couldn't load the profile.",
-    "shared": "In common: {{count}}"
+    "sharedInterests": "Interests in common"
   },
   "SETTINGS": {
     "title": "Settings",
@@ -241,6 +241,7 @@
     "remove-photo": "Remove photo",
     "no-current-photos": "No photos added.",
     "submit-saving": "Saving...",
+    "cancel": "Cancel",
     "submit-create": "Publish event",
     "submit-edit": "Save changes",
     "photos-title": "Order and cover",

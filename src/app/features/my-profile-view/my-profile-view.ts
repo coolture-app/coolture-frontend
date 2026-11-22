@@ -17,6 +17,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { catchError, firstValueFrom, map, of } from 'rxjs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
+import { InterestGroup, ProfileInterests } from './profile-interests/profile-interests';
 import {
   lucideCamera,
   lucideEllipsis,
@@ -55,6 +56,7 @@ import { ProfileEvents } from './profile-events/profile-events';
 @Component({
   selector: 'app-user-profile-view',
   imports: [
+    ProfileInterests,
     InitialsPipe,
     TranslatePipe,
     NgIcon,
@@ -140,45 +142,51 @@ export class UserProfileView {
     ),
     { initialValue: [] as Interest[] },
   );
-  /** In the catalogue's order, so every profile lists them the same way. */
-  /**
-   * On someone else's profile, the kinds and interests you picked too. They come first and keep the accent, and the
-   * rest turn grey. On your own, all of them count as shared.
-   */
+  /** On someone else's profile, the kinds and interests you picked too. On your own, all of them count as shared. */
   private readonly mine = computed(() => {
     const me = this.authService.currentUser();
     return this.isOwnProfile() ? null : new Set([...(me?.kinds ?? []), ...(me?.interests ?? [])]);
   });
-  readonly interests = computed(() => {
+  /** In the catalogue's order, so every profile lists them the same way. */
+  private readonly interests = computed(() => {
     const picked = new Set(this.user()?.interests ?? []);
-    return sharedFirst(
-      this.interestCatalog()
-        .filter((interest) => picked.has(interest.key))
-        .map((interest) => ({
-          key: interest.key,
-          label: label(interest, this.lang()),
-          shared: this.mine()?.has(interest.key) ?? true,
-        })),
-    );
+    return this.interestCatalog()
+      .filter((interest) => picked.has(interest.key))
+      .map((interest) => ({
+        key: interest.key,
+        label: label(interest, this.lang()),
+        shared: this.mine()?.has(interest.key) ?? true,
+      }));
   });
   /** Before the interests, also in the catalogue's order. */
-  readonly kinds = computed(() => {
+  private readonly kinds = computed(() => {
     const picked = new Set(this.user()?.kinds ?? []);
-    return sharedFirst(
-      this.kindsService
-        .kinds()
-        .filter((kind) => picked.has(kind.key))
-        .map((kind) => ({
-          key: kind.key,
-          label: this.kindsService.name(kind.key),
-          icon: kindIcon(kind.key),
-          shared: this.mine()?.has(kind.key) ?? true,
-        })),
-    );
+    return this.kindsService
+      .kinds()
+      .filter((kind) => picked.has(kind.key))
+      .map((kind) => ({
+        key: kind.key,
+        label: this.kindsService.name(kind.key),
+        icon: kindIcon(kind.key),
+        shared: this.mine()?.has(kind.key) ?? true,
+      }));
   });
-  readonly sharedCount = computed(() =>
-    this.mine() ? [...this.kinds(), ...this.interests()].filter((chip) => chip.shared).length : 0,
-  );
+  /**
+   * Your own profile lists its chips as they are. Someone else's has a box of the ones you share, when there are any,
+   * and a box of the rest, each with its title.
+   */
+  readonly chipGroups = computed((): InterestGroup[] => {
+    const group = (shared: boolean, title: string | null) => ({
+      title,
+      shared,
+      kinds: this.kinds().filter((chip) => chip.shared === shared),
+      interests: this.interests().filter((chip) => chip.shared === shared),
+    });
+    const groups = this.mine()
+      ? [group(true, 'PROFILE.sharedInterests'), group(false, 'PROFILE.interests')]
+      : [group(true, null)];
+    return groups.filter((g) => g.kinds.length || g.interests.length);
+  });
 
   /** Month and year only. The parts of a full date, because Polish needs the month's genitive. */
   readonly since = computed(() => {
@@ -495,9 +503,4 @@ export class UserProfileView {
     this.showFollowing.set(!this.showFollowing());
     this.showFollowers.set(false);
   }
-}
-
-/** A stable sort: shared chips first, each group in the catalogue's order. */
-function sharedFirst<T extends { shared: boolean }>(chips: T[]): T[] {
-  return [...chips.filter((chip) => chip.shared), ...chips.filter((chip) => !chip.shared)];
 }

@@ -250,7 +250,32 @@ describe('UserProfileView', () => {
     await harness.fixture.whenStable();
     harness.detectChanges();
 
-    expect(text('.profile__handle app-relation-pill')).toBe('PROFILE.friends');
+    expect(text('.profile__actions app-relation-pill')).toBe('PROFILE.friends');
+  });
+
+  describe('someone else’s, with interests you share', () => {
+    beforeEach(async () => {
+      await open('/users/jan');
+      http
+        .expectOne((r) => r.url.endsWith('/users/by-username/jan'))
+        .flush({ ...JAN, kinds: ['stage', 'concerts'], interests: ['jazz', 'opera'] });
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+      await flushCatalog();
+    });
+
+    it('boxes the shared ones under their title, then the rest', () => {
+      const groups = [...element.querySelectorAll('.profile__group')].map((group) => [
+        group.querySelector('.profile__group-title')?.textContent?.trim(),
+        [...group.querySelectorAll('.profile__interest')].map((chip) => chip.textContent?.trim()),
+      ]);
+
+      expect(groups).toEqual([
+        ['PROFILE.sharedInterests', ['Koncerty', 'Scena', 'Jazz']],
+        ['PROFILE.interests', ['Opera']],
+      ]);
+      expect(element.querySelector('.profile__group--shared')).not.toBeNull();
+    });
   });
 
   describe('someone else’s', () => {
