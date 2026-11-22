@@ -230,8 +230,7 @@ export class MainPage implements OnDestroy {
   /** When an empty result could change by looking at past events too. See the contract's table. */
   readonly canOfferPast = computed(() => {
     const { includePast, from, to } = this.activeFilters();
-    const windowApplies = !includePast && !from && !to;
-    return windowApplies && (this.isFeed() || this.sort() !== 'UPCOMING');
+    return !includePast && !from && !to;
   });
   /** Dla Ciebie hides what the user saw or saved, so a search there points to Wszystkie too. */
   readonly canOfferAll = computed(() => this.isFeed() && !!this.activeFilters().q);

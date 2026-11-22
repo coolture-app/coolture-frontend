@@ -797,17 +797,17 @@ describe('MainPage', () => {
       expect(button('MAIN_PAGE.searchPast')).toBeUndefined();
     });
 
-    it('does not offer them where it could not change anything', async () => {
+    it('offers them on Nadchodzące too, and not where a date already shows them', async () => {
       await open();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
       await settle();
 
-      // Wszystkie starts on Nadchodzące, which never shows ended events.
+      // Nadchodzące puts ended events after the rest.
       component.setTab('all');
       await settle();
       expectPosts().flush(page());
       await settle();
-      expect(button('MAIN_PAGE.searchPast')).toBeUndefined();
+      expect(button('MAIN_PAGE.searchPast')).toBeDefined();
 
       void component.setSortBy('RECENT');
       component.filtersForm.controls.fromDay.setValue('2026-01-01');

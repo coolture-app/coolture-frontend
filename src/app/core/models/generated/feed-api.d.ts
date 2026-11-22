@@ -321,7 +321,7 @@ export interface components {
     From: string;
     /** @description Only events running at some moment up to this time: their start is at or before it. Setting this turns the past-events window off. */
     To: string;
-    /** @description When false, ended events are hidden. UPCOMING always hides them. */
+    /** @description When false, ended events are hidden. UPCOMING puts them after every event to come. */
     IncludePast: boolean;
   };
   requestBodies: never;
@@ -341,7 +341,7 @@ export interface operations {
         latitude?: components['parameters']['Latitude'];
         /** @description Send together with latitude. See latitude. */
         longitude?: components['parameters']['Longitude'];
-        /** @description When false, ended events are hidden. UPCOMING always hides them. */
+        /** @description When false, ended events are hidden. UPCOMING puts them after every event to come. */
         includePast?: components['parameters']['IncludePast'];
         /** @description Words separated by spaces; any after the 8th are ignored. Every word must appear in the title, the description, the city or the place's name, in any order, ignoring case and diacritics. A word of 5 or more letters also matches its other Polish forms ("koncertu" finds "koncert"). */
         q?: components['parameters']['Q'];
@@ -387,9 +387,9 @@ export interface operations {
         cursor?: components['parameters']['Cursor'];
         /** @description Page size. Values above 100 are capped. Non-numeric values return 400. */
         limit?: components['parameters']['Limit'];
-        /** @description NEAREST needs latitude and longitude, and shows only posts with a place. STANCE_NEWEST needs participationTypes and puts the viewer's newest of those stances first. UPCOMING mixes events already running into the events to come, every 5th card. PAST shows only ended events, the latest end first. POPULAR orders by likes + Interesuje mnie + Biorę udział (README.md). */
+        /** @description NEAREST needs latitude and longitude, and shows only posts with a place. STANCE_NEWEST needs participationTypes and puts the viewer's newest of those stances first. UPCOMING mixes events already running into the events to come, every 5th card, and with includePast the ended events follow them. PAST shows only ended events, the latest end first. POPULAR orders by likes + Interesuje mnie + Biorę udział (README.md). */
         sortBy?: 'RECENT' | 'POPULAR' | 'UPCOMING' | 'PAST' | 'NEAREST' | 'STANCE_NEWEST';
-        /** @description When false, ended events are hidden. UPCOMING always hides them. */
+        /** @description When false, ended events are hidden. UPCOMING puts them after every event to come. */
         includePast?: components['parameters']['IncludePast'];
         /** @description Words separated by spaces; any after the 8th are ignored. Every word must appear in the title, the description, the city or the place's name, in any order, ignoring case and diacritics. A word of 5 or more letters also matches its other Polish forms ("koncertu" finds "koncert"). */
         q?: components['parameters']['Q'];
@@ -449,7 +449,7 @@ export interface operations {
         'rightBottom.latitude': number;
         /** @description The view's east edge. */
         'rightBottom.longitude': number;
-        /** @description When false, ended events are hidden. UPCOMING always hides them. */
+        /** @description When false, ended events are hidden. UPCOMING puts them after every event to come. */
         includePast?: components['parameters']['IncludePast'];
         /** @description Only posts with a place within this many km of latitude and longitude. Ignored without them. */
         radiusKm?: components['parameters']['RadiusKm'];
