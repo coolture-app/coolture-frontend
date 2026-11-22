@@ -1,4 +1,4 @@
-import { signal, WritableSignal } from '@angular/core';
+import { computed, signal, WritableSignal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, Subject, throwError } from 'rxjs';
 
@@ -7,6 +7,7 @@ import { CommentSummary } from '../../models/comments/comment-summary.model';
 import { PaginatedResponse } from '../../models/common/paginated-response.model';
 import { AuthService } from '../../services/auth/auth.service';
 import { CommentsService } from '../../services/comments/comments.service';
+import { SignInPromptService } from '../../services/sign-in-prompt/sign-in-prompt.service';
 import { ToastService } from '../../services/toast/toast.service';
 
 function comment(id: string, overrides: Partial<CommentSummary> = {}): CommentSummary {
@@ -76,7 +77,12 @@ describe('CommentThread', () => {
     login = jasmine.createSpy('login');
     TestBed.configureTestingModule({
       imports: [CommentThread],
-      providers: [{ provide: AuthService, useValue: { currentUser, login } }],
+      providers: [
+        {
+          provide: AuthService,
+          useValue: { currentUser, isAuthenticated: computed(() => currentUser() !== null), login },
+        },
+      ],
     });
     service = TestBed.inject(CommentsService);
     load = spyOn(service, 'getCommentsOfPost');
@@ -273,13 +279,14 @@ describe('CommentThread', () => {
       expect(component.replyTo()).toBeNull();
     });
 
-    it('asks a guest to sign in instead', async () => {
+    it('asks a guest to sign in instead, in the sheet that says why', async () => {
       await open();
       currentUser.set(null);
 
       component.setReplyTo({ parentId: 'a', username: 'ola', mention: false });
 
-      expect(login).toHaveBeenCalled();
+      expect(TestBed.inject(SignInPromptService).reason()).toBe('comment');
+      expect(login).not.toHaveBeenCalled();
       expect(component.replyTo()).toBeNull();
     });
   });
