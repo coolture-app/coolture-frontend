@@ -560,6 +560,8 @@ export class MainPage implements OnDestroy {
 
   /** Under the map, Wszystkie waits for Lista. Dla Ciebie loads, as its first posts are the map's top picks. */
   private load(): void {
+    // Counted before the early return, so a Dla Ciebie start still waiting for a position is dropped.
+    const run = ++this.loadRun;
     this.listOutdated = this.isMapView() && !this.isFeed();
     if (this.listOutdated) {
       return;
@@ -568,7 +570,6 @@ export class MainPage implements OnDestroy {
       // A new list under the map opens at its top on Lista.
       this.listScrollY = 0;
     }
-    const run = ++this.loadRun;
     if (this.isFeed()) {
       void this.startFeed(run);
     } else {
