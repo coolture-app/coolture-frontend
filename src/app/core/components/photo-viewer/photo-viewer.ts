@@ -88,7 +88,6 @@ export class PhotoViewer {
     }
   }
 
-  /** A click on the dark area around the photo closes, as in most photo viewers. */
   onClick(event: MouseEvent): void {
     const target = event.target as Element;
     if (!this.viewer.open() || target.closest('button')) {

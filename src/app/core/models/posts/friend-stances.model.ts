@@ -26,7 +26,6 @@ export interface PostFriends {
   interested: Friend[];
 }
 
-/** First and last name, or the username when there's no first name. */
 export function fullName(friend: Friend): string {
   return friend.firstName
     ? [friend.firstName, friend.lastName].filter(Boolean).join(' ')

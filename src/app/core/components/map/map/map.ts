@@ -396,7 +396,7 @@ export class Map implements OnDestroy {
     this.searchArea.emit(area);
   }
 
-  /** "Moja lokalizacja": asks the browser only now, then shows where the user is. */
+  /** "Moja lokalizacja". The browser is asked only when the user taps it, then the position shows as a dot. */
   async locate(): Promise<void> {
     this.locating.set(true);
     const position = await this.location.request();

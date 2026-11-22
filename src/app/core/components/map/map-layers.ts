@@ -296,7 +296,6 @@ export const CLUSTER_STAR_LAYOUT: SymbolLayout = {
   ],
 };
 
-/** The user's own position, after "Moja lokalizacja". */
 /** The searched area: a thin line, and the world outside it dimmed, so the area reads as the bright part. */
 export const RADIUS_LINE_PAINT: LinePaint = {
   'line-color': ACCENT,

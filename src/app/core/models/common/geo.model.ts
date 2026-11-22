@@ -3,7 +3,7 @@ export interface GeoPoint {
   longitude: number;
 }
 
-/** The middle of Trójmiasto, where the release starts. */
+/** The middle of Trójmiasto, where the map and the place search start with no position. */
 export const TRICITY: GeoPoint = { latitude: 54.44, longitude: 18.57 };
 
 /** A point with a name to show for it: where someone lives, or what a radius is centred on. */

@@ -36,17 +36,12 @@ export class MediaService {
   private apiUrl = inject(ApiUrlService);
   private http = inject(HttpClient);
 
-  // ===== FIRST STEP: INIT =====
-  // we initate the desire to upload file
-  // we get S3 url and MediaId as a response
   initUpload(payload: MediaUploadInitRequest): Observable<MediaUploadInitResponse> {
     return this.http.post<MediaUploadInitResponse>(
       this.apiUrl.path('/media/uploads/init'),
       payload,
     );
   }
-
-  // ===== SECOND STEP: UPLOADING TO S3=====
 
   uploadToS3(
     uploadUrl: string,
@@ -57,6 +52,7 @@ export class MediaService {
 
     Object.keys(requiredHeaders).forEach((key) => {
       const lowerKey = key.toLowerCase();
+      // The S3 PUT must skip `host` and `content-length`.
       if (lowerKey !== 'host' && lowerKey !== 'content-length') {
         headers = headers.set(key, requiredHeaders[key]);
       }
@@ -68,8 +64,6 @@ export class MediaService {
       responseType: 'text',
     });
   }
-
-  // ===== THIRD STEP: INFORM BACKEND =====
 
   completeUpload(mediaId: string, payload: MediaCompleteRequest = {}): Observable<MediaResource> {
     return this.http.post<MediaResource>(

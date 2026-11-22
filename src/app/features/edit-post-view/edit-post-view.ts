@@ -86,7 +86,8 @@ export class EditPostView implements OnInit {
     this.postService
       .updatePost(post.id, payload)
       .pipe(
-        // Only now: the API refuses to delete a photo still on a post. A failure leaves a file nobody sees.
+        // The API refuses to delete a photo still on a post, so this waits for the save. A failed delete leaves a
+        // file nobody sees.
         switchMap(() =>
           data.removedMediaIds.length > 0
             ? forkJoin(

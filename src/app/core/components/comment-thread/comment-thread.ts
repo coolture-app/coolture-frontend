@@ -86,7 +86,6 @@ export class CommentThread implements OnInit {
   private cursor: string | undefined;
 
   readonly canSend = computed(() => !this.sending() && this.body().length > 0);
-  /** What's left to write, once that's worth showing. */
   readonly remaining = computed(() => {
     const length = this.content().length;
     return length >= COUNTER_FROM ? MAX_LENGTH - length : null;
@@ -133,7 +132,7 @@ export class CommentThread implements OnInit {
       });
   }
 
-  /** Signing in comes back to these comments, and writing is what a guest wanted to do. */
+  /** Comes back to this URL after signing in. */
   signIn(): void {
     void this.authService.login();
   }
@@ -174,7 +173,7 @@ export class CommentThread implements OnInit {
   }
 
   /** Ctrl or Cmd and Enter sends. Enter alone starts a new line, as on a phone's keyboard. */
-  onKeydown(event: Event): void {
+  onSendShortcut(event: Event): void {
     event.preventDefault();
     this.send();
   }

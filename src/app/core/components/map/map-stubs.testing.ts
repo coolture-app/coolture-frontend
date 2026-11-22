@@ -30,7 +30,6 @@ export const WITHOUT_MAPLIBRE = {
   add: { imports: [MapStub, MarkerStub] },
 };
 
-/** A post's mark at (latitude, 18.6) in Gdańsk. */
 export function mark(id: string, latitude = 54.35): PostMark {
   return {
     id,

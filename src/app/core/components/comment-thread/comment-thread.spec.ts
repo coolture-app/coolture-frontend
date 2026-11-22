@@ -113,7 +113,7 @@ describe('CommentThread', () => {
     expect(element().textContent).toContain('COMMENT.empty');
   });
 
-  it('goes past the first 20 comments (finding F2), without repeating any', async () => {
+  it('goes past the first 20 comments, without repeating any', async () => {
     await open(page(['c', 'b'], 'next'));
 
     load.and.returnValue(of(page(['b', 'a'])));
@@ -142,7 +142,7 @@ describe('CommentThread', () => {
   });
 
   describe('writing a comment', () => {
-    it('can’t send an empty or blank comment (finding C2)', async () => {
+    it('can’t send an empty or blank comment', async () => {
       await open();
       const create = spyOn(service, 'createComment');
 
@@ -155,7 +155,7 @@ describe('CommentThread', () => {
       expect(create).not.toHaveBeenCalled();
     });
 
-    it('puts a new comment at the top and clears the box (finding C1)', async () => {
+    it('puts a new comment at the top and clears the box', async () => {
       await open();
       const create = spyOn(service, 'createComment').and.returnValue(of(comment('new')));
 
@@ -197,7 +197,7 @@ describe('CommentThread', () => {
       answer.next(comment('new'));
     });
 
-    it('keeps the text and says so when sending fails (finding C2)', async () => {
+    it('keeps the text and says so when sending fails', async () => {
       await open();
       spyOn(service, 'createComment').and.returnValue(throwError(() => new Error('400')));
       await type('my words');

@@ -142,7 +142,6 @@ export class PlacePicker implements OnInit {
   ]);
 
   private readonly searchBox = viewChild<ElementRef<HTMLInputElement>>('searchBox');
-  /** The map on screen, once it loaded. */
   private mapInstance: MapLibreMap | null = null;
   /** Where the map opens and what a short search is near, until the map can say. */
   private start: GeoPoint = TRICITY;
@@ -240,8 +239,6 @@ export class PlacePicker implements OnInit {
     return centre ? rounded(centre) : this.start;
   }
 
-  // --- Search ---
-
   onType(text: string): void {
     this.setQuery(text);
     this.listOpen.set(true);
@@ -306,8 +303,6 @@ export class PlacePicker implements OnInit {
     this.lookupFailed.set(false);
     this.searchBox()?.nativeElement.focus();
   }
-
-  // --- Map ---
 
   onMapLoad(instance: MapLibreMap): void {
     this.mapInstance = instance;
@@ -382,8 +377,6 @@ export class PlacePicker implements OnInit {
     this.view = { center: lngLat(at), zoom };
     this.mapInstance?.jumpTo({ center: lngLat(at), zoom });
   }
-
-  // --- Fields and offers ---
 
   take(part: keyof PlaceOffer): void {
     this.apply(offerTaken(this.draft(), part));

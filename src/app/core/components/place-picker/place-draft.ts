@@ -24,7 +24,7 @@ export interface PlaceDraft {
 export interface PlaceOffer {
   /** The map's address, when it differs from the address the user typed. */
   address?: Pick<PlaceText, (typeof ADDRESS_FIELDS)[number]>;
-  /** The name at the pin, when the venue name differs. Never filled in, since a click can land on a bus shelter. */
+  /** The name at the pin, when the venue name differs. */
   name?: string;
 }
 

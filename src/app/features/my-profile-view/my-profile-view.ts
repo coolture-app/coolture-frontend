@@ -130,7 +130,6 @@ export class UserProfileView {
   /** A photo picked and being placed in the circle, not uploaded yet. */
   pickedFile = signal<File | null>(null);
   private avatarInput = viewChild<ElementRef<HTMLInputElement>>('avatarInput');
-  /** The follow list open in a sheet, if any. */
   readonly followList = signal<FollowListType | null>(null);
   private followSheet = viewChild(Sheet);
   private router = inject(Router);
@@ -264,7 +263,6 @@ export class UserProfileView {
     this.followingCount.set(user.followingCount ?? 0);
   }
 
-  /** This page's address, /profile or /users/…, with the list after #. */
   followListUrl(list: FollowListType): string {
     return `${this.router.url.split('#')[0]}#${list}`;
   }
@@ -399,7 +397,7 @@ export class UserProfileView {
         await this.loadOtherUserProfile(u.username);
       } else {
         await firstValueFrom(this.relationsService.block(u.id));
-        // What the profile gives from now on. A block ends follows both ways.
+        // The slim profile the API gives now. A block ends follows both ways.
         const { id, username, firstName, lastName, avatar } = u;
         this.user.set({
           id,

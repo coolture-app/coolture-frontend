@@ -39,10 +39,10 @@ export class InterestsView implements OnInit {
   private translate = inject(TranslateService);
   private element = inject<ElementRef<HTMLElement>>(ElementRef);
 
-  /** First selection after sign-in, shown as an overlay in two pages, with no navigation after saving. */
+  /** First selection after sign-in, shown as an overlay: kinds, then topics. Saving doesn't navigate. */
   readonly onboarding = input(false, { transform: booleanAttribute });
   readonly dismissed = output<void>();
-  /** Onboarding is done. */
+  /** The selection is saved; the home step follows. */
   readonly saved = output<void>();
 
   private confirm = inject(ConfirmService);
@@ -91,7 +91,7 @@ export class InterestsView implements OnInit {
           selection: this.interestsService.getUserInterests(this.authService.userId()),
         }),
       );
-      // Only offered topics can be saved, so one held from before that's no longer offered goes with the next save.
+      // The API refuses a topic that isn't offered, so a hidden one the user still holds is dropped on the next save.
       const offered = new Set(catalog.categories.flatMap((c) => c.interests.map((i) => i.key)));
       this.catalog.set(catalog);
       this.kinds.set(new Set(selection.kinds));

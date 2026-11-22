@@ -63,8 +63,8 @@
           (ngModelChange)="content.set($event)"
           (input)="resize()"
           (focus)="composerFocused.emit()"
-          (keydown.control.enter)="onKeydown($event)"
-          (keydown.meta.enter)="onKeydown($event)"
+          (keydown.control.enter)="onSendShortcut($event)"
+          (keydown.meta.enter)="onSendShortcut($event)"
         ></textarea>
         <button
           type="button"

@@ -158,5 +158,5 @@ export class MapPreview {
   }
 }
 
-/** The peek's width with its gap, as in the styles. */
+/** Must equal .preview__peek's width in the scss. */
 const PEEK_WIDTH_PX = 340;

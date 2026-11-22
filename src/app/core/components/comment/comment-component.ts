@@ -29,7 +29,7 @@ import { ConfirmService } from '../../services/confirm/confirm.service';
 import { Tooltip } from '../../directives/tooltip';
 import { commentTime } from './comment-time';
 
-/** Who a reply answers, and where it goes. See `target` below. */
+/** Who a reply answers, and where it goes. */
 export interface ReplyTarget {
   parentId: string;
   username: string;
@@ -47,7 +47,7 @@ const REPLIES_PAGE = 20;
 
 /**
  * One comment and its replies. Replies show as one level under the top comment, and answering a reply
- * mentions its author. Replies deeper than that were written before this rule, and still show.
+ * mentions its author. One written while the top comment was deleted sits a level deeper, and still shows.
  */
 @Component({
   selector: 'app-comment-component',
@@ -93,7 +93,6 @@ export class CommentComponent implements OnInit {
   readonly isMine = computed(() => this.authService.currentUser()?.id === this.comment().author.id);
   readonly content = computed(() => this.savedContent() ?? this.comment().content);
   readonly edited = computed(() => this.wasEdited() || !!this.comment().lastEditedAt);
-  /** A reply's leading @name links to that person. */
   readonly mention = computed(() => {
     const match = this.comment().depth > 0 ? this.content().match(/^@(\S+)\s*([\s\S]*)$/) : null;
     return match ? { username: match[1], text: match[2] } : null;

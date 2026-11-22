@@ -64,8 +64,7 @@ export class ProfileEvents {
   });
 
   /**
-   * Which list is shown, as one value, so a new profile object with the same id loads nothing. The search outlives
-   * the switch between upcoming and past, not a new tab or profile.
+   * Which list is shown, as one value, so a new profile object with the same id loads nothing.
    */
   readonly pages = searchedPages({
     list: computed(() => `${this.user().id} ${this.tab()} ${this.past()}`),

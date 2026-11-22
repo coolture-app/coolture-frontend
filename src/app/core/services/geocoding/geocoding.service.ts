@@ -132,7 +132,7 @@ export class GeocodingService {
   private http = inject(HttpClient);
 
   /**
-   * Suggestions for a search box's text as it changes. Waits for a pause in typing, and asks only from 3 characters.
+   * Suggestions for a search box's text as it changes. Waits for a pause in typing, and asks once the text is long enough.
    * `near` is read for each request, so it can follow the map's centre.
    */
   search(texts: Observable<string>, near: () => GeoPoint): Observable<PlaceSearch> {
@@ -204,7 +204,7 @@ export class GeocodingService {
   }
 
   /**
-   * One search, with no waiting. Errors when the geocoder fails or takes over 3 seconds. `near` is required: without
+   * One search, with no waiting. Errors when the geocoder fails or is too slow. `near` is required: without
    * it a short text matches anywhere in Poland, and "Ergo" gave three offices called Ergo before Ergo Arena.
    */
   suggest(text: string, near: GeoPoint): Observable<PlaceSuggestion[]> {

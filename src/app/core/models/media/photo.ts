@@ -7,7 +7,7 @@ export interface Photo {
   height?: number;
 }
 
-/** The tallest and the widest frame, width over height: 4:5 and 1.91:1, as Instagram's feed. */
+/** The limits of a frame's shape, as Instagram's feed holds them. */
 export const TALLEST_FRAME = 4 / 5;
 export const WIDEST_FRAME = 1.91;
 

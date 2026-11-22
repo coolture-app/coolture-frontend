@@ -1,11 +1,8 @@
-import { commentTime } from './comment-time';
+import { commentTime, DAY, HOUR, MINUTE } from './comment-time';
 
 describe('commentTime', () => {
   const now = new Date('2026-11-09T12:00:00Z').getTime();
   const ago = (ms: number) => new Date(now - ms).toISOString();
-  const MINUTE = 60_000;
-  const HOUR = 60 * MINUTE;
-  const DAY = 24 * HOUR;
 
   it('says now for the first minute', () => {
     expect(commentTime(ago(10_000), 'en', now)).toBe('now');

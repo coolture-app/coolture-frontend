@@ -28,8 +28,8 @@ export type SheetSize = 'half' | 'full';
 const DOCKED_CLASS = 'sheet-docked';
 
 /**
- * From this width the panel sits beside the page. A 560 px column and the panel fit side by side here
- * (560 + 420 px and some margin), so below it there's no room to use both at once.
+ * From this width the panel sits beside the page. Keep it in step with the html.sheet-docked rules in
+ * styles.scss.
  */
 const DOCKED_FROM_PX = 1024;
 
@@ -94,7 +94,6 @@ export class Sheet {
   /** Beside the page, rather than over it. Decided on opening, for as long as it stays open. */
   readonly docked = signal(false);
   readonly size = signal<SheetSize>('half');
-  /** The panel's height in pixels while it's being dragged. */
   readonly dragHeight = signal<number | null>(null);
   private drag: { startY: number; startHeight: number; lastY: number; lastTime: number } | null =
     null;

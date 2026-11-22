@@ -6,7 +6,6 @@ import { PaginatedResponse, PaginationInfo } from '../../models/common/paginated
 import { UserListItem } from '../../models/users/user-summary.model';
 import { ConfirmRequest } from '../confirm/confirm.service';
 
-/** Asked before an unblock, on the profile and in Zablokowani. */
 export function unblockQuestion(username: string): ConfirmRequest {
   return {
     title: 'PROFILE.unblockTitle',
@@ -23,7 +22,7 @@ export class RelationsService {
   private apiUrl = inject(ApiUrlService);
   private http = inject(HttpClient);
 
-  /** By name from A to Z, as getFollowing. `q` keeps those whose names or username hold all its words. */
+  /** Sorted by name, A to Z. `q` keeps names or usernames holding all its words. */
   getFollowers(
     userId: string,
     pagination?: PaginationInfo,
