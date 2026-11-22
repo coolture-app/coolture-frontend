@@ -1,0 +1,11 @@
+<!-- A tap on the backdrop lands on the dialog itself, outside its content; Escape is its keyboard twin. Escape's own close would leave the host's state open. -->
+<!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+<dialog
+  #dialog
+  class="dialog"
+  [attr.aria-labelledby]="titleId()"
+  (cancel)="$event.preventDefault(); dismissed.emit()"
+  (click)="$event.target === dialog && dismissed.emit()"
+>
+  <ng-content />
+</dialog>

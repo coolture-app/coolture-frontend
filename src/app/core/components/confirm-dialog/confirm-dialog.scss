@@ -1,9 +1,5 @@
 @use '_mixin' as *;
 
-.confirm {
-  @include dialog-panel;
-}
-
 .confirm__body {
   @include dialog-body;
 }
