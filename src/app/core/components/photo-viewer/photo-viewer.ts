@@ -7,6 +7,7 @@ import {
   untracked,
   viewChild,
 } from '@angular/core';
+import { A11yModule } from '@angular/cdk/a11y';
 import { TranslatePipe } from '@ngx-translate/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideChevronLeft, lucideChevronRight, lucideX } from '@ng-icons/lucide';
@@ -43,7 +44,7 @@ function onDrawnPhoto(image: HTMLImageElement, event: MouseEvent): boolean {
  */
 @Component({
   selector: 'app-photo-viewer',
-  imports: [TranslatePipe, NgIcon, Tooltip],
+  imports: [A11yModule, TranslatePipe, NgIcon, Tooltip],
   viewProviders: [provideIcons({ lucideChevronLeft, lucideChevronRight, lucideX })],
   templateUrl: './photo-viewer.html',
   styleUrl: './photo-viewer.scss',

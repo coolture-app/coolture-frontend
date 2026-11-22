@@ -131,7 +131,7 @@ describe('ProfileEvents', () => {
 
   it('shows nothing for someone with nothing to show', async () => {
     await render({ posts: 0, upcomingPosts: 0 });
-    http.match(() => true);
+    http.expectNone(() => true);
 
     expect(element().querySelector('.events')).toBeNull();
   });

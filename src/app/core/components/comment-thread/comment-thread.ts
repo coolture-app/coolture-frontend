@@ -212,8 +212,11 @@ export class CommentThread implements OnInit {
     this.sending.set(false);
     this.content.set('');
     this.replyTo.set(null);
+    // NgModel writes the cleared text later, and the height has to be measured on it.
+    const box = this.input()?.nativeElement;
+    if (box) box.value = '';
     this.resize();
-    this.input()?.nativeElement.blur();
+    box?.blur();
     this.countChange.emit(1);
     if (comment.parentCommentId) {
       this.commentsService.commentAdded$.next(comment);

@@ -1,6 +1,7 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { of } from 'rxjs';
 import { TranslatePipe } from '@ngx-translate/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucidePlus, lucideSearch, lucideX } from '@ng-icons/lucide';
@@ -69,7 +70,10 @@ export class ProfileEvents {
   readonly pages = searchedPages({
     list: computed(() => `${this.user().id} ${this.tab()} ${this.past()}`),
     searchScope: computed(() => `${this.user().id} ${this.tab()}`),
-    fetch: ({ q, cursor, limit }) => this.posts.getPosts({ ...this.filters(q), cursor, limit }),
+    fetch: ({ q, cursor, limit }) =>
+      this.tabs().length
+        ? this.posts.getPosts({ ...this.filters(q), cursor, limit })
+        : of({ items: [], page: { limit, hasMore: false } }),
   });
 
   constructor() {
