@@ -31,11 +31,13 @@
             {{ user | initials }}
           </span>
         }
-        <span class="follow-list__name">{{ fullName(user) }}</span>
-        <app-relation-pill
-          [following]="followingIds().has(user.id)"
-          [followsYou]="user.followsYou"
-        />
+        <span class="follow-list__who">
+          <span class="follow-list__name">{{ fullName(user) }}</span>
+          <app-relation-pill
+            [following]="followingIds().has(user.id)"
+            [followsYou]="user.followsYou"
+          />
+        </span>
       </a>
       @if (canFollow(user)) {
         <app-follow-btn

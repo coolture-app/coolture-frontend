@@ -53,15 +53,21 @@
   }
 }
 
-.follow-list__name {
-  @include text-ellipsis;
+// The pill goes under the name, so the name has the row's width and is shown whole, wrapping if it must.
+.follow-list__who {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
   min-width: 0;
-  font-size: var(--text-body);
-  font-weight: var(--font-semibold);
+  padding: var(--space-xs) 0;
 }
 
-app-relation-pill {
-  flex-shrink: 0;
+.follow-list__name {
+  overflow-wrap: anywhere;
+  font-size: var(--text-body);
+  font-weight: var(--font-semibold);
+  line-height: 1.3;
 }
 
 app-follow-btn {
