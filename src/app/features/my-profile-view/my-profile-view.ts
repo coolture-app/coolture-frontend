@@ -146,11 +146,6 @@ export class UserProfileView {
     ),
     { initialValue: [] as Interest[] },
   );
-  /** On someone else's profile, the kinds and interests you picked too. On your own, all of them count as shared. */
-  private readonly mine = computed(() => {
-    const me = this.authService.currentUser();
-    return this.isOwnProfile() ? null : new Set([...(me?.kinds ?? []), ...(me?.interests ?? [])]);
-  });
   /** In the catalogue's order, so every profile lists them the same way. */
   private readonly interests = computed(() => {
     const picked = new Set(this.user()?.interests ?? []);
@@ -159,7 +154,6 @@ export class UserProfileView {
       .map((interest) => ({
         key: interest.key,
         label: label(interest, this.lang()),
-        shared: this.mine()?.has(interest.key) ?? true,
       }));
   });
   /** Before the interests, also in the catalogue's order. */
@@ -172,7 +166,6 @@ export class UserProfileView {
         key: kind.key,
         label: this.kindsService.name(kind.key),
         icon: kindIcon(kind.key),
-        shared: this.mine()?.has(kind.key) ?? true,
       }));
   });
   /**
@@ -180,15 +173,19 @@ export class UserProfileView {
    * and a box of the rest, each with its title.
    */
   readonly chipGroups = computed((): InterestGroup[] => {
-    const group = (shared: boolean, title: string | null) => ({
+    const kinds = this.kinds();
+    const interests = this.interests();
+    const me = this.authService.currentUser();
+    const mine = new Set([...(me?.kinds ?? []), ...(me?.interests ?? [])]);
+    const group = (shared: boolean, title: string): InterestGroup => ({
       title,
       shared,
-      kinds: this.kinds().filter((chip) => chip.shared === shared),
-      interests: this.interests().filter((chip) => chip.shared === shared),
+      kinds: kinds.filter((chip) => mine.has(chip.key) === shared),
+      interests: interests.filter((chip) => mine.has(chip.key) === shared),
     });
-    const groups = this.mine()
-      ? [group(true, 'PROFILE.sharedInterests'), group(false, 'PROFILE.interests')]
-      : [group(true, null)];
+    const groups = this.isOwnProfile()
+      ? [{ title: null, shared: true, kinds, interests }]
+      : [group(true, 'PROFILE.sharedInterests'), group(false, 'PROFILE.interests')];
     return groups.filter((g) => g.kinds.length || g.interests.length);
   });
 

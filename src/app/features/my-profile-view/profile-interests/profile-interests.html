@@ -13,14 +13,14 @@
       @for (kind of group.kinds; track kind.key) {
         <li
           class="profile__interest profile__interest--kind"
-          [class.profile__interest--other]="!kind.shared"
+          [class.profile__interest--other]="!group.shared"
         >
           <ng-icon [svg]="kind.icon!" aria-hidden="true" />
           {{ kind.label }}
         </li>
       }
       @for (interest of group.interests; track interest.key) {
-        <li class="profile__interest" [class.profile__interest--other]="!interest.shared">
+        <li class="profile__interest" [class.profile__interest--other]="!group.shared">
           {{ interest.label }}
         </li>
       }

@@ -5,7 +5,6 @@ import { NgIcon } from '@ng-icons/core';
 export interface InterestChip {
   key: string;
   label: string | null;
-  shared: boolean;
   icon?: string;
 }
 
