@@ -35,6 +35,24 @@ describe('AccountForm', () => {
     expect(form().canSave()).toBeFalse();
   });
 
+  it('saves a name beside a stored username that breaks the rule, until the username is changed', () => {
+    TestBed.inject(AuthService).currentUser.update(
+      (user) => user && { ...user, username: 'Jan-K' },
+    );
+    fixture = TestBed.createComponent(AccountForm);
+    fixture.detectChanges();
+
+    form().firstName.set('Jan');
+    fixture.detectChanges();
+    expect(form().canSave()).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.account__hint--error')).toBeNull();
+
+    form().typeUsername('Jan-Ko');
+    fixture.detectChanges();
+    expect(form().canSave()).toBeFalse();
+    expect(fixture.nativeElement.querySelector('.account__hint--error')).not.toBeNull();
+  });
+
   it('sends only what changed, and shows the new name everywhere', async () => {
     form().firstName.set(' Anna ');
     const saving = form().save();

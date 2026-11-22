@@ -30,7 +30,6 @@ export class AccountForm {
   readonly taken = signal(false);
   readonly saving = signal(false);
 
-  readonly usernameValid = computed(() => USERNAME.test(this.username()));
   private readonly changes = computed<UserProfileUpdateRequest>(() => {
     const user = this.auth.currentUser();
     const changes: UserProfileUpdateRequest = {};
@@ -41,6 +40,10 @@ export class AccountForm {
       changes.lastName = this.lastName().trim();
     return changes;
   });
+  /** A username from sign-up can break the rule, such as "Jan.Kowalski"; it holds nothing back until it's changed. */
+  readonly usernameValid = computed(
+    () => !('username' in this.changes()) || USERNAME.test(this.username()),
+  );
   readonly canSave = computed(
     () => !this.saving() && this.usernameValid() && Object.keys(this.changes()).length > 0,
   );
@@ -72,7 +75,7 @@ export class AccountForm {
         this.taken.set(true);
       } else {
         console.error('Error saving the account', err);
-        this.toast.show(this.translate.instant('PROFILE.saveFailed'));
+        this.toast.failed();
       }
     } finally {
       this.saving.set(false);
