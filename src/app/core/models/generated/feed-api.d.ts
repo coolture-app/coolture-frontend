@@ -48,7 +48,7 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** Map markers. Takes the same filters as /posts, plus the map bounds. Only the newer parameters are listed here. */
+    /** Map markers. Takes the same filters as /posts, plus the map bounds. Only the parameters beyond /posts's are listed here. */
     get: operations['getPostMarks'];
     put?: never;
     post?: never;
@@ -161,7 +161,7 @@ export interface components {
       positiveReactionCount: number;
       /** @description People who marked it Interesuje mnie. */
       interestedCount: number;
-      /** @description People who marked it Wezmę udział. */
+      /** @description People who marked it Biorę udział. */
       goingCount: number;
       coordinates: components['schemas']['GeoPoint'];
       venueName?: string;
@@ -310,7 +310,7 @@ export interface components {
     Q: string;
     AuthorId: string;
     Status: components['schemas']['PostStatus'];
-    /** @description Only posts by people the viewer follows, and posts a friend (a mutual follow) marked Interesuje mnie or Biorę udział, unless that friend stopped sharing their stances. Nothing for a guest. Every post is public, so there's no visibility filter; an older client's visibility parameter is ignored. */
+    /** @description Only posts by people the viewer follows, and posts a friend (a mutual follow) marked Interesuje mnie or Biorę udział, unless that friend stopped sharing their stances. Nothing for a guest. */
     Followed: boolean;
     /** @description Kinds of event as comma-separated keys from /dicts/interests (kinds=concerts,stage); a post matches any of them. A post's kinds are derived from its text after it's saved, so for a few seconds a new post has none and matches no kind. A key no post has matches nothing; a key that isn't lowercase letters and underscores is a 400. */
     Kinds: string;
@@ -347,7 +347,7 @@ export interface operations {
         q?: components['parameters']['Q'];
         authorId?: components['parameters']['AuthorId'];
         status?: components['parameters']['Status'];
-        /** @description Only posts by people the viewer follows, and posts a friend (a mutual follow) marked Interesuje mnie or Biorę udział, unless that friend stopped sharing their stances. Nothing for a guest. Every post is public, so there's no visibility filter; an older client's visibility parameter is ignored. */
+        /** @description Only posts by people the viewer follows, and posts a friend (a mutual follow) marked Interesuje mnie or Biorę udział, unless that friend stopped sharing their stances. Nothing for a guest. */
         followed?: components['parameters']['Followed'];
         /** @description Kinds of event as comma-separated keys from /dicts/interests (kinds=concerts,stage); a post matches any of them. A post's kinds are derived from its text after it's saved, so for a few seconds a new post has none and matches no kind. A key no post has matches nothing; a key that isn't lowercase letters and underscores is a 400. */
         kinds?: components['parameters']['Kinds'];
@@ -395,7 +395,7 @@ export interface operations {
         q?: components['parameters']['Q'];
         authorId?: components['parameters']['AuthorId'];
         status?: components['parameters']['Status'];
-        /** @description Only posts by people the viewer follows, and posts a friend (a mutual follow) marked Interesuje mnie or Biorę udział, unless that friend stopped sharing their stances. Nothing for a guest. Every post is public, so there's no visibility filter; an older client's visibility parameter is ignored. */
+        /** @description Only posts by people the viewer follows, and posts a friend (a mutual follow) marked Interesuje mnie or Biorę udział, unless that friend stopped sharing their stances. Nothing for a guest. */
         followed?: components['parameters']['Followed'];
         /** @description Kinds of event as comma-separated keys from /dicts/interests (kinds=concerts,stage); a post matches any of them. A post's kinds are derived from its text after it's saved, so for a few seconds a new post has none and matches no kind. A key no post has matches nothing; a key that isn't lowercase letters and underscores is a 400. */
         kinds?: components['parameters']['Kinds'];
@@ -453,7 +453,7 @@ export interface operations {
         includePast?: components['parameters']['IncludePast'];
         /** @description Only posts with a place within this many km of latitude and longitude. Ignored without them. */
         radiusKm?: components['parameters']['RadiusKm'];
-        /** @description Only posts by people the viewer follows, and posts a friend (a mutual follow) marked Interesuje mnie or Biorę udział, unless that friend stopped sharing their stances. Nothing for a guest. Every post is public, so there's no visibility filter; an older client's visibility parameter is ignored. */
+        /** @description Only posts by people the viewer follows, and posts a friend (a mutual follow) marked Interesuje mnie or Biorę udział, unless that friend stopped sharing their stances. Nothing for a guest. */
         followed?: components['parameters']['Followed'];
         /** @description Kinds of event as comma-separated keys from /dicts/interests (kinds=concerts,stage); a post matches any of them. A post's kinds are derived from its text after it's saved, so for a few seconds a new post has none and matches no kind. A key no post has matches nothing; a key that isn't lowercase letters and underscores is a 400. */
         kinds?: components['parameters']['Kinds'];
