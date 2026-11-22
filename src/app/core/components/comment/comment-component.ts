@@ -1,3 +1,4 @@
+import { InitialsPipe } from '../../pipes/initials.pipe';
 import {
   afterNextRender,
   Component,
@@ -50,7 +51,7 @@ const REPLIES_PAGE = 20;
  */
 @Component({
   selector: 'app-comment-component',
-  imports: [TranslatePipe, RouterLink, NgIcon, Tooltip],
+  imports: [InitialsPipe, TranslatePipe, RouterLink, NgIcon, Tooltip],
   viewProviders: [provideIcons({ lucideEllipsis })],
   templateUrl: './comment-component.html',
   styleUrl: './comment-component.scss',

@@ -4,7 +4,10 @@ import { Component } from '@angular/core';
 import { provideRouter, Router } from '@angular/router';
 import { of } from 'rxjs';
 
-import { CommentsSheet, settleDrag } from './comments-sheet';
+import { By } from '@angular/platform-browser';
+
+import { CommentsSheet } from './comments-sheet';
+import { Sheet } from '../sheet/sheet';
 import {
   CommentsSheetService,
   SheetPost,
@@ -16,27 +19,6 @@ import { HttpTestingController } from '@angular/common/http/testing';
 @Component({ template: '' })
 class OtherPage {}
 
-describe('settleDrag', () => {
-  const HALF = 400;
-  const FULL = 776;
-
-  it('settles on the nearest size after a slow drag', () => {
-    expect(settleDrag(420, HALF, FULL, 0, 'half')).toBe('half');
-    expect(settleDrag(700, HALF, FULL, 0, 'half')).toBe('full');
-    expect(settleDrag(500, HALF, FULL, 0, 'full')).toBe('half');
-  });
-
-  it('closes when dragged well below half', () => {
-    expect(settleDrag(200, HALF, FULL, 0, 'half')).toBe('close');
-  });
-
-  it('follows a fast flick one step', () => {
-    expect(settleDrag(420, HALF, FULL, 1, 'half')).toBe('full');
-    expect(settleDrag(700, HALF, FULL, -1, 'full')).toBe('half');
-    expect(settleDrag(380, HALF, FULL, -1, 'half')).toBe('close');
-  });
-});
-
 describe('CommentsSheet', () => {
   let fixture: ComponentFixture<CommentsSheet>;
   let service: CommentsSheetService;
@@ -46,6 +28,10 @@ describe('CommentsSheet', () => {
 
   function element(): HTMLElement {
     return fixture.nativeElement;
+  }
+
+  function shell(): Sheet {
+    return fixture.debugElement.query(By.directive(Sheet)).componentInstance;
   }
 
   /** Back, then the frames the sheet waits for the router's scroll. */
@@ -111,7 +97,7 @@ describe('CommentsSheet', () => {
       expect(sheet.getAttribute('aria-modal')).toBeNull();
       expect(element().querySelector('.sheet__scrim')).toBeNull();
       expect(document.documentElement.style.overflow).toBe('');
-      expect(document.documentElement.classList).toContain('comments-docked');
+      expect(document.documentElement.classList).toContain('sheet-docked');
     });
 
     it('heads the panel with the author and the title, linking to each', async () => {
@@ -154,7 +140,7 @@ describe('CommentsSheet', () => {
       await closing();
 
       expect(window.scrollY).toBe(1200);
-      expect(document.documentElement.classList).not.toContain('comments-docked');
+      expect(document.documentElement.classList).not.toContain('sheet-docked');
       document.body.style.height = '';
       window.scrollTo(0, 0);
     });
@@ -193,15 +179,15 @@ describe('CommentsSheet', () => {
       await opened();
       const header = element().querySelector('.sheet__header') as HTMLElement;
 
-      fixture.componentInstance.onDragStart({
+      shell().onDragStart({
         clientY: 300,
         pointerId: 1,
         currentTarget: header,
         timeStamp: 0,
       } as unknown as PointerEvent);
-      fixture.componentInstance.onDragMove({ clientY: 100, timeStamp: 10 } as PointerEvent);
+      shell().onDragMove({ clientY: 100, timeStamp: 10 } as PointerEvent);
 
-      expect(fixture.componentInstance.dragHeight()).toBeNull();
+      expect(shell().dragHeight()).toBeNull();
     });
   });
 
@@ -290,7 +276,7 @@ describe('CommentsSheet', () => {
     document.body.appendChild(dialog);
     dialog.showModal();
 
-    fixture.componentInstance.onEscape();
+    shell().onEscape();
     await closing();
 
     expect(service.post()).not.toBeNull();
@@ -308,7 +294,7 @@ describe('CommentsSheet', () => {
 
   it('opens at half height again next time', async () => {
     await opened();
-    fixture.componentInstance.grow();
+    shell().grow();
     fixture.componentInstance.close();
     await closing();
 

@@ -17,6 +17,8 @@ export interface PostFilterParams {
   longitude?: number;
   radiusKm?: number;
   participationTypes?: ParticipationType[];
+  /** Whose stances participationTypes reads, the viewer when left out. A friend's only while they share them. */
+  participantId?: string;
   reactionType?: ReactionType;
   sortBy?: PostsSort;
   includePast?: boolean;

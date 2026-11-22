@@ -1,0 +1,74 @@
+@use '_mixin' as *;
+
+:host {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-xs);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.row {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  gap: var(--space-md);
+  padding: var(--space-sm) 0;
+  color: inherit;
+  text-decoration: none;
+
+  &:hover .row__title {
+    text-decoration: underline;
+  }
+}
+
+.row__cover {
+  @include center-flex;
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-alt);
+  color: var(--color-text-tertiary);
+  font-size: 24px;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.row__text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  min-height: 64px;
+  gap: 2px;
+}
+
+.row__title {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  color: var(--color-text);
+  font-size: var(--text-body);
+  font-weight: var(--font-semibold);
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.row__meta {
+  color: var(--color-text-secondary);
+  font-size: var(--text-meta);
+}
+
+.row__place {
+  @include text-ellipsis;
+}
+
+.row__menu {
+  margin-top: var(--space-sm);
+}

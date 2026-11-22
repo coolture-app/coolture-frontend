@@ -6,13 +6,14 @@ import { lucideBookmark } from '@ng-icons/lucide';
 import { Subscription } from 'rxjs';
 
 import { appTicket } from '../../icons/ticket';
-import { fullName, initial, PostFriends } from '../../models/posts/friend-stances.model';
+import { fullName, PostFriends } from '../../models/posts/friend-stances.model';
+import { InitialsPipe } from '../../pipes/initials.pipe';
 import { PostService } from '../../services/post/post.service';
 
 /** Every friend who goes to a post or is interested in it, in the comments' place. */
 @Component({
   selector: 'app-post-friends',
-  imports: [RouterLink, TranslatePipe, NgIcon],
+  imports: [RouterLink, TranslatePipe, NgIcon, InitialsPipe],
   viewProviders: [provideIcons({ appTicket, lucideBookmark })],
   templateUrl: './post-friends.html',
   styleUrl: './post-friends.scss',
@@ -26,7 +27,6 @@ export class PostFriendsList {
   readonly friends = signal<PostFriends | null>(null);
   readonly failed = signal(false);
   readonly fullName = fullName;
-  readonly initial = initial;
 
   constructor() {
     effect((onCleanup) => {

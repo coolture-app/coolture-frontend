@@ -242,36 +242,8 @@
   &__actions {
     display: flex;
     flex-wrap: wrap;
+    align-items: center;
     gap: var(--space-sm);
-  }
-
-  &__interests {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  &__interest {
-    padding: var(--space-xs) 10px;
-    border-radius: var(--radius-full);
-    background: var(--color-accent-light);
-    font-size: var(--text-meta);
-    color: var(--color-accent-hover);
-
-    &--kind {
-      display: inline-flex;
-      align-items: center;
-      gap: var(--space-xs);
-      background: var(--color-accent);
-      color: var(--color-text-inverse);
-
-      ng-icon {
-        display: flex;
-      }
-    }
   }
 
   &__bio {
@@ -353,9 +325,13 @@
   }
 
   &__since {
-    margin: var(--space-xs) 0 0;
     font-size: var(--text-meta);
     color: var(--color-text-tertiary);
+
+    &::before {
+      content: '·';
+      margin-right: var(--space-sm);
+    }
   }
 
   &__modal-overlay {

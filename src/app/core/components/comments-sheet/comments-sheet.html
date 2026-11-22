@@ -1,82 +1,50 @@
 @if (sheet.post(); as post) {
   @let friends = sheet.content() === 'friends';
-  @if (!docked()) {
-    <div class="sheet__scrim" aria-hidden="true" (click)="close()"></div>
-  }
-  <div
-    #panel
-    class="sheet"
-    tabindex="-1"
-    role="dialog"
-    aria-labelledby="comments-sheet-title"
-    [cdkTrapFocus]="!docked()"
-    [attr.aria-modal]="docked() ? null : 'true'"
-    [class.sheet--docked]="docked()"
-    [class.sheet--full]="size() === 'full'"
-    [class.sheet--dragging]="dragHeight() !== null"
-    [style.height.px]="dragHeight()"
+  <app-sheet
+    #shell
+    [url]="'/posts/' + post.id + '#' + sheet.content()"
+    [title]="
+      friends
+        ? ('FRIENDS.title' | translate)
+        : ('COMMENT.title' | translate) + ' (' + sheet.count() + ')'
+    "
+    [closeLabel]="(friends ? 'FRIENDS.close' : 'COMMENT.close') | translate"
+    (closed)="sheet.close()"
   >
-    <div
-      class="sheet__header"
-      (pointerdown)="onDragStart($event)"
-      (pointermove)="onDragMove($event)"
-      (pointerup)="onDragEnd()"
-      (pointercancel)="onDragEnd()"
-    >
-      <span class="sheet__handle" aria-hidden="true"></span>
-      <div class="sheet__heading">
-        @if (docked()) {
-          <div class="sheet__post">
-            @if (post.author; as author) {
-              <a
-                class="sheet__avatar-link"
-                tabindex="-1"
-                aria-hidden="true"
-                [routerLink]="['/users', author.username]"
-                [replaceUrl]="true"
-              >
-                @if (author.avatar; as avatar) {
-                  <img [src]="avatar.url" alt="" class="sheet__avatar" />
-                } @else {
-                  <span class="sheet__avatar sheet__avatar--placeholder">
-                    {{ author.firstName?.charAt(0) }}{{ author.lastName?.charAt(0) }}
-                  </span>
-                }
-              </a>
+    @if (shell.docked()) {
+      <div sheetHeading class="sheet__post">
+        @if (post.author; as author) {
+          <a
+            class="sheet__avatar-link"
+            tabindex="-1"
+            aria-hidden="true"
+            [routerLink]="['/users', author.username]"
+            [replaceUrl]="true"
+          >
+            @if (author.avatar; as avatar) {
+              <img [src]="avatar.url" alt="" class="sheet__avatar" />
+            } @else {
+              <span class="sheet__avatar sheet__avatar--placeholder">
+                {{ author | initials }}
+              </span>
             }
-            <div class="sheet__post-text">
-              @if (post.author; as author) {
-                <a
-                  class="sheet__author"
-                  [routerLink]="['/users', author.username]"
-                  [replaceUrl]="true"
-                  >{{ author.username }}</a
-                >
-              }
-              <a class="sheet__post-title" [routerLink]="['/posts', post.id]" [replaceUrl]="true">{{
-                post.title
-              }}</a>
-            </div>
-          </div>
+          </a>
         }
-        <h2 id="comments-sheet-title" class="sheet__title">
-          @if (friends) {
-            {{ 'FRIENDS.title' | translate }}
-          } @else {
-            {{ 'COMMENT.title' | translate }} ({{ sheet.count() }})
+        <div class="sheet__post-text">
+          @if (post.author; as author) {
+            <a
+              class="sheet__author"
+              [routerLink]="['/users', author.username]"
+              [replaceUrl]="true"
+              >{{ author.username }}</a
+            >
           }
-        </h2>
+          <a class="sheet__post-title" [routerLink]="['/posts', post.id]" [replaceUrl]="true">{{
+            post.title
+          }}</a>
+        </div>
       </div>
-      <button
-        type="button"
-        class="sheet__close"
-        [appTooltip]="(friends ? 'FRIENDS.close' : 'COMMENT.close') | translate"
-        (pointerdown)="$event.stopPropagation()"
-        (click)="close()"
-      >
-        <ng-icon name="lucideX" />
-      </button>
-    </div>
+    }
     @if (friends) {
       <app-post-friends [postId]="post.id" />
     } @else {
@@ -86,9 +54,9 @@
           [postId]="current.id"
           [inSheet]="true"
           (countChange)="sheet.changeCount($event)"
-          (composerFocused)="grow()"
+          (composerFocused)="shell.grow()"
         />
       }
     }
-  </div>
+  </app-sheet>
 }

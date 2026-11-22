@@ -1,0 +1,101 @@
+@if (tabs().length) {
+  <section class="events" [attr.aria-label]="'PROFILE_EVENTS.title' | translate">
+    @if (tabs().length > 1) {
+      <div class="events__tabs" role="tablist">
+        @for (t of tabs(); track t) {
+          <button
+            type="button"
+            role="tab"
+            class="events__tab"
+            [class.events__tab--on]="tab() === t"
+            [attr.aria-selected]="tab() === t"
+            (click)="show(t)"
+          >
+            {{ 'PROFILE_EVENTS.' + t | translate }}
+          </button>
+        }
+      </div>
+    } @else {
+      <h2 class="events__title">{{ 'PROFILE_EVENTS.' + tab() | translate }}</h2>
+    }
+
+    @if (tab() === 'posts') {
+      <div class="events__tools">
+        <div
+          class="events__switch"
+          role="group"
+          [attr.aria-label]="'PROFILE_EVENTS.when' | translate"
+        >
+          <button
+            type="button"
+            class="events__switch-option"
+            [attr.aria-pressed]="!past()"
+            (click)="showPast(false)"
+          >
+            {{ 'PROFILE_EVENTS.upcoming' | translate }}
+          </button>
+          <button
+            type="button"
+            class="events__switch-option"
+            [attr.aria-pressed]="past()"
+            (click)="showPast(true)"
+          >
+            {{ 'PROFILE_EVENTS.past' | translate }}
+          </button>
+        </div>
+        <label class="events__search">
+          <ng-icon name="lucideSearch" aria-hidden="true" />
+          <input
+            type="search"
+            [placeholder]="'PROFILE_EVENTS.search' | translate"
+            [attr.aria-label]="'PROFILE_EVENTS.search' | translate"
+            [value]="pages.typed()"
+            (input)="pages.search($any($event.target).value)"
+            (keydown.escape)="pages.clearSearch()"
+          />
+          @if (pages.typed()) {
+            <button
+              type="button"
+              class="events__search-clear"
+              [attr.aria-label]="'PROFILE_EVENTS.clearSearch' | translate"
+              (click)="pages.clearSearch()"
+            >
+              <ng-icon name="lucideX" aria-hidden="true" />
+            </button>
+          }
+        </label>
+      </div>
+    }
+
+    <div class="events__list">
+      @for (post of pages.items(); track post.id) {
+        <app-event-row [post]="post" [own]="own()" (deleted)="removed($event)" />
+      }
+    </div>
+    <div
+      [appInfiniteScroll]="pages.hasMore() && !pages.loading() && !pages.failed()"
+      (reachedEnd)="pages.loadMore()"
+    ></div>
+
+    @if (pages.failed()) {
+      <app-load-state [failed]="true" (retry)="pages.retry()" />
+    } @else if (pages.loading()) {
+      <app-load-state />
+    } @else if (!pages.items().length) {
+      @if (pages.typed()) {
+        <p class="events__empty">
+          {{ 'PROFILE_EVENTS.noMatch' | translate: { q: pages.typed() } }}
+        </p>
+      } @else if (own() && tab() === 'posts' && !past()) {
+        <a class="events__add" routerLink="/posts/new">
+          <ng-icon name="lucidePlus" aria-hidden="true" />
+          {{ 'PROFILE_EVENTS.add' | translate }}
+        </a>
+      } @else {
+        <p class="events__empty">
+          {{ (past() ? 'PROFILE_EVENTS.noPast' : 'PROFILE_EVENTS.noUpcoming') | translate }}
+        </p>
+      }
+    }
+  </section>
+}

@@ -1,3 +1,4 @@
+import { AccountForm } from './account-form/account-form';
 import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -13,7 +14,7 @@ import { Users } from '../../core/services/users/users.service';
 
 @Component({
   selector: 'app-settings-view',
-  imports: [RouterLink, TranslatePipe, NgIcon, BackLink, Switch],
+  imports: [AccountForm, RouterLink, TranslatePipe, NgIcon, BackLink, Switch],
   viewProviders: [provideIcons({ lucideChevronRight })],
   templateUrl: './settings-view.html',
   styleUrl: './settings-view.scss',

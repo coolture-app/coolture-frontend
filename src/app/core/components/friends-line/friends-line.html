@@ -23,7 +23,7 @@
             @if (friend.avatarUrl) {
               <img class="friends__face" [src]="friend.avatarUrl" alt="" loading="lazy" />
             } @else {
-              <span class="friends__face friends__face--initials">{{ initial(friend) }}</span>
+              <span class="friends__face friends__face--initials">{{ friend | initials }}</span>
             }
           }
         </span>

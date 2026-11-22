@@ -4,12 +4,8 @@ import { lucideBookmark } from '@ng-icons/lucide';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { appTicket } from '../../icons/ticket';
-import {
-  Friend,
-  FriendGroup,
-  FriendStances,
-  initial,
-} from '../../models/posts/friend-stances.model';
+import { Friend, FriendGroup, FriendStances } from '../../models/posts/friend-stances.model';
+import { InitialsPipe } from '../../pipes/initials.pipe';
 
 const FACES = 2;
 
@@ -19,7 +15,7 @@ const FACES = 2;
  */
 @Component({
   selector: 'app-friends-line',
-  imports: [NgIcon, TranslatePipe],
+  imports: [NgIcon, TranslatePipe, InitialsPipe],
   viewProviders: [provideIcons({ appTicket, lucideBookmark })],
   templateUrl: './friends-line.html',
   styleUrl: './friends-line.scss',
@@ -28,7 +24,6 @@ const FACES = 2;
 export class FriendsLine {
   readonly stances = input<FriendStances | undefined>();
   readonly opened = output<void>();
-  readonly initial = initial;
 
   readonly groups = computed(() => {
     const { going, interested } = this.stances() ?? {};

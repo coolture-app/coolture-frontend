@@ -27,7 +27,7 @@
           />
         } @else {
           <div class="post__avatar post__avatar--placeholder">
-            {{ data.author.firstName?.charAt(0) }}{{ data.author.lastName?.charAt(0) }}
+            {{ data.author | initials }}
           </div>
         }
         <div class="post__author">

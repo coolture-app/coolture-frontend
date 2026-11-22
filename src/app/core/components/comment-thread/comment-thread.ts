@@ -1,3 +1,4 @@
+import { InitialsPipe } from '../../pipes/initials.pipe';
 import {
   afterNextRender,
   Component,
@@ -40,7 +41,15 @@ const COUNTER_FROM = 400;
  */
 @Component({
   selector: 'app-comment-thread',
-  imports: [FormsModule, TranslatePipe, NgIcon, CommentComponent, InfiniteScroll, Tooltip],
+  imports: [
+    InitialsPipe,
+    FormsModule,
+    TranslatePipe,
+    NgIcon,
+    CommentComponent,
+    InfiniteScroll,
+    Tooltip,
+  ],
   viewProviders: [provideIcons({ lucideSendHorizontal, lucideX })],
   templateUrl: './comment-thread.html',
   styleUrl: './comment-thread.scss',

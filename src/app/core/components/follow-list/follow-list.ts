@@ -1,78 +1,76 @@
-import {
-  Component,
-  inject,
-  signal,
-  input,
-  output,
-  computed,
-  OnInit,
-  DestroyRef,
-} from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { firstValueFrom } from 'rxjs';
-import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Component, computed, inject, input, output, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { heroXMark } from '@ng-icons/heroicons/outline';
+import { lucideSearch, lucideX } from '@ng-icons/lucide';
+import { firstValueFrom } from 'rxjs';
 
+import { InitialsPipe } from '../../pipes/initials.pipe';
+import { InfiniteScroll } from '../../directives/infinite-scroll';
+import { fullName } from '../../models/posts/friend-stances.model';
+import { UserListItem } from '../../models/users/user-summary.model';
 import { AuthService } from '../../services/auth/auth.service';
 import { RelationsService } from '../../services/relations/relations.service';
-import { UserListItem } from '../../models/users/user-summary.model';
-import { PaginationInfo } from '../../models/common/paginated-response.model';
-import { Btn } from '../btn/btn';
+import { ToastService } from '../../services/toast/toast.service';
 import { FollowBtn } from '../follow-btn/follow-btn';
+import { LoadState } from '../load-state/load-state';
 import { RelationPill } from '../relation-pill/relation-pill';
+import { searchedPages } from '../../utils/searched-pages';
 
 export type FollowListType = 'followers' | 'following';
 
+/** Who follows a user, or whom they follow, by name from A to Z, with a search over all of them. */
 @Component({
   selector: 'app-follow-list',
-  standalone: true,
-  imports: [CommonModule, TranslatePipe, NgIcon, RouterModule, Btn, FollowBtn, RelationPill],
-  viewProviders: [provideIcons({ heroXMark })],
+  imports: [
+    InitialsPipe,
+    RouterLink,
+    TranslatePipe,
+    NgIcon,
+    InfiniteScroll,
+    FollowBtn,
+    LoadState,
+    RelationPill,
+  ],
+  viewProviders: [provideIcons({ lucideSearch, lucideX })],
   templateUrl: './follow-list.html',
   styleUrl: './follow-list.scss',
 })
-export class FollowListComponent implements OnInit {
+export class FollowListComponent {
   private authService = inject(AuthService);
   private relationsService = inject(RelationsService);
-  private destroyRef = inject(DestroyRef);
+  private toast = inject(ToastService);
 
-  userId = input.required<string>();
-  type = input.required<FollowListType>();
-  isOwnProfile = input<boolean>(false);
+  readonly userId = input.required<string>();
+  readonly type = input.required<FollowListType>();
+  readonly isOwnProfile = input(false);
 
-  closeList = output<void>();
-  followChanged = output<{ deltaFollowers: number; deltaFollowing: number }>();
+  /** Your own following count's change, on your own profile. */
+  readonly followChanged = output<number>();
 
-  users = signal<UserListItem[]>([]);
-  followingIds = signal<Set<string>>(new Set());
-  isLoadingInitial = signal(false);
-  isLoadingMore = signal(false);
-  nextCursor = signal<string | null>(null);
-  hasMore = signal(false);
+  readonly fullName = fullName;
+  readonly followingIds = signal<Set<string>>(new Set());
+  readonly busyId = signal<string | null>(null);
 
-  actionUserId = signal<string | null>(null);
+  readonly pages = searchedPages({
+    list: computed(() => `${this.userId()} ${this.type()}`),
+    fetch: ({ q, cursor, limit }) => {
+      const page = { limit, cursor: cursor ?? '' };
+      return this.type() === 'followers'
+        ? this.relationsService.getFollowers(this.userId(), page, q)
+        : this.relationsService.getFollowing(this.userId(), page, q);
+    },
+  });
 
-  isFollowersPanel = computed(() => this.type() === 'followers');
-
-  ngOnInit(): void {
-    this.loadFollowingIds();
-    this.loadInitial();
+  constructor() {
+    void this.loadFollowingIds();
   }
 
-  private async loadFollowingIds(): Promise<void> {
-    try {
-      const currentUserId = this.authService.currentUser()?.id;
-      if (!currentUserId) return;
-
-      const res = await firstValueFrom(
-        this.relationsService.getFollowing(currentUserId, { limit: 100, cursor: '' }),
-      );
-      this.followingIds.set(new Set(res.items.map((u) => u.id)));
-    } catch {
-      // ignore
+  /** The first Esc empties the search, and the next one is the sheet's, to close it. */
+  escapeSearch(event: Event): void {
+    if (this.pages.typed()) {
+      event.stopPropagation();
+      this.pages.clearSearch();
     }
   }
 
@@ -84,13 +82,13 @@ export class FollowListComponent implements OnInit {
   /** The row stays after an unfollow, so a mistaken tap can be undone. */
   async toggleFollow(user: UserListItem): Promise<void> {
     const following = this.followingIds().has(user.id);
-    this.actionUserId.set(user.id);
+    this.busyId.set(user.id);
     try {
       await firstValueFrom(
         following ? this.relationsService.unfollow(user.id) : this.relationsService.follow(user.id),
       );
-      this.followingIds.update((set) => {
-        const next = new Set(set);
+      this.followingIds.update((ids) => {
+        const next = new Set(ids);
         if (following) {
           next.delete(user.id);
         } else {
@@ -98,71 +96,28 @@ export class FollowListComponent implements OnInit {
         }
         return next;
       });
-      this.updateUserFollowState(user.id, !following);
       // Only your own counts are on screen; someone else's following count doesn't change.
       if (this.isOwnProfile()) {
-        this.followChanged.emit({ deltaFollowers: 0, deltaFollowing: following ? -1 : 1 });
+        this.followChanged.emit(following ? -1 : 1);
       }
     } catch (err) {
       console.error('Error toggling follow', err);
+      this.toast.failed();
     } finally {
-      this.actionUserId.set(null);
+      this.busyId.set(null);
     }
   }
 
-  private loadInitial(): void {
-    this.users.set([]);
-    this.nextCursor.set(null);
-    this.hasMore.set(false);
-    this.isLoadingInitial.set(true);
-    this.fetchPage(null, (items, more, cursor) => {
-      this.users.set(items);
-      this.hasMore.set(more);
-      this.nextCursor.set(cursor);
-      this.isLoadingInitial.set(false);
-    });
-  }
-
-  loadMore(): void {
-    if (!this.hasMore() || this.isLoadingMore()) return;
-    this.isLoadingMore.set(true);
-    this.fetchPage(this.nextCursor(), (items, more, cursor) => {
-      this.users.update((prev) => [...prev, ...items]);
-      this.hasMore.set(more);
-      this.nextCursor.set(cursor);
-      this.isLoadingMore.set(false);
-    });
-  }
-
-  private fetchPage(
-    cursor: string | null,
-    onSuccess: (items: UserListItem[], hasMore: boolean, nextCursor: string | null) => void,
-  ): void {
-    const pagination: PaginationInfo = { limit: 20, cursor: cursor ?? '' };
-
-    const request$ = this.isFollowersPanel()
-      ? this.relationsService.getFollowers(this.userId(), pagination)
-      : this.relationsService.getFollowing(this.userId(), pagination);
-
-    request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (res) => onSuccess(res.items, res.page.hasMore, res.page.nextCursor ?? null),
-      error: (err) => {
-        console.error('Error loading users', err);
-        this.isLoadingInitial.set(false);
-        this.isLoadingMore.set(false);
-      },
-    });
-  }
-
-  onClose(): void {
-    this.closeList.emit();
-  }
-
-  private updateUserFollowState(userId: string, isFollowing: boolean): void {
-    this.users.update((list) =>
-      list.map((u) =>
-        u.id === userId ? { ...u, followersCount: u.followersCount + (isFollowing ? 1 : -1) } : u,
-      ),
-    );
+  private async loadFollowingIds(): Promise<void> {
+    const currentUserId = this.authService.currentUser()?.id;
+    if (!currentUserId) return;
+    try {
+      const res = await firstValueFrom(
+        this.relationsService.getFollowing(currentUserId, { limit: 100, cursor: '' }),
+      );
+      this.followingIds.set(new Set(res.items.map((u) => u.id)));
+    } catch {
+      // The buttons then offer Obserwuj, and the follow itself says if it's already there.
+    }
   }
 }

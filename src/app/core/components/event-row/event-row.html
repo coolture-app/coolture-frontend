@@ -1,0 +1,26 @@
+<a class="row" [routerLink]="['/posts', post().id]">
+  <span class="row__cover">
+    @if (cover(); as url) {
+      <img [src]="url" alt="" loading="lazy" />
+    } @else {
+      <ng-icon name="lucideCalendarDays" aria-hidden="true" />
+    }
+  </span>
+  <span class="row__text">
+    <span class="row__title">{{ post().title }}</span>
+    <span class="row__meta">{{ time() }}</span>
+    @if (post().type === 'ONLINE') {
+      <span class="row__meta">{{ 'POST.online' | translate }}</span>
+    } @else if (place()) {
+      <span class="row__meta row__place">{{ place() }}</span>
+    }
+  </span>
+</a>
+@if (own()) {
+  <app-post-owner-menu
+    class="row__menu"
+    [postId]="post().id"
+    [postTitle]="post().title"
+    (deleted)="deleted.emit($event)"
+  />
+}

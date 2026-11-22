@@ -24,7 +24,7 @@
                   <img class="friends__avatar" [src]="friend.avatarUrl" alt="" loading="lazy" />
                 } @else {
                   <span class="friends__avatar friends__avatar--initial" aria-hidden="true">{{
-                    initial(friend)
+                    friend | initials
                   }}</span>
                 }
                 <span class="friends__name">{{ fullName(friend) }}</span>

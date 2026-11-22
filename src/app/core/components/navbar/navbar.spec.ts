@@ -143,10 +143,12 @@ describe('Navbar', () => {
       expect(account()!.querySelector('ng-icon')).toBeNull();
     });
 
-    it('shows the first letter of the handle when there is no photo', () => {
+    it('shows the first letter of the name, else of the handle, when there is no photo', () => {
       signIn({});
+      expect(account()!.querySelector('.navbar__avatar')!.textContent!.trim()).toBe('K');
 
-      expect(account()!.querySelector('.navbar__avatar')!.textContent!.trim()).toBe('k');
+      signIn({ firstName: 'Iga' });
+      expect(account()!.querySelector('.navbar__avatar')!.textContent!.trim()).toBe('I');
     });
   });
 });

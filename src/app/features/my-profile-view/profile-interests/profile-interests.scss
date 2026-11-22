@@ -1,0 +1,70 @@
+// Its boxes and chips are items of the profile's header column.
+:host {
+  display: contents;
+}
+
+.profile__group {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-sm) 12px 12px;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-alt);
+
+  // On the box's tint, the topics need a background of their own.
+  .profile__interest:not(.profile__interest--kind),
+  .profile__interest--other {
+    background: var(--color-surface);
+  }
+
+  &--shared {
+    background: var(--color-accent-light);
+
+    .profile__group-title {
+      color: var(--color-accent-hover);
+    }
+  }
+}
+
+.profile__group-title {
+  margin: 0;
+  font-size: var(--text-meta);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-secondary);
+}
+
+.profile__interests {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.profile__interest {
+  padding: var(--space-xs) 10px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent-light);
+  font-size: var(--text-meta);
+  color: var(--color-accent-hover);
+
+  &--kind {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    background: var(--color-accent);
+    color: var(--color-text-inverse);
+
+    ng-icon {
+      display: flex;
+    }
+  }
+
+  // Someone else's pick that isn't yours, so the shared ones stand out.
+  &--other {
+    background: var(--color-surface-alt);
+    color: var(--color-text-secondary);
+  }
+}

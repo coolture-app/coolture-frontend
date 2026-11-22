@@ -64,7 +64,7 @@
               </button>
             } @else {
               <div class="profile__avatar profile__avatar--placeholder">
-                {{ user()?.firstName?.charAt(0) }}{{ user()?.lastName?.charAt(0) }}
+                {{ user() | initials }}
               </div>
             }
             @if (isOwnProfile()) {
@@ -119,11 +119,11 @@
 
           @if (!blocked()) {
             <div class="profile__stats">
-              <button type="button" class="profile__stat" (click)="toggleFollowers()">
+              <button type="button" class="profile__stat" (click)="followList.set('followers')">
                 <span class="profile__stat-value">{{ followersCount() }}</span>
                 <span class="profile__stat-label">{{ 'PROFILE.followers' | translate }}</span>
               </button>
-              <button type="button" class="profile__stat" (click)="toggleFollowing()">
+              <button type="button" class="profile__stat" (click)="followList.set('following')">
                 <span class="profile__stat-value">{{ followingCount() }}</span>
                 <span class="profile__stat-label">{{ 'PROFILE.following' | translate }}</span>
               </button>
@@ -135,11 +135,10 @@
           <h1 class="profile__name">{{ user()?.firstName }} {{ user()?.lastName }}</h1>
           <span class="profile__handle">
             <span class="profile__username">&#64;{{ user()?.username }}</span>
-            @if (!isOwnProfile() && !blocked()) {
-              <app-relation-pill
-                [following]="!!user()?.isFollowing"
-                [followsYou]="!!user()?.followsYou"
-              />
+            @if (since()) {
+              <span class="profile__since">{{
+                'PROFILE.since' | translate: { date: since() }
+              }}</span>
             }
           </span>
         </div>
@@ -170,22 +169,14 @@
         } @else if (user()) {
           <div class="profile__actions">
             <app-follow-btn [following]="!!user()?.isFollowing" (toggled)="toggleFollow()" />
+            <app-relation-pill
+              [following]="!!user()?.isFollowing"
+              [followsYou]="!!user()?.followsYou"
+            />
           </div>
         }
 
-        @if (kinds().length || interests().length) {
-          <ul class="profile__interests" [attr.aria-label]="'PROFILE.interests' | translate">
-            @for (kind of kinds(); track kind.key) {
-              <li class="profile__interest profile__interest--kind">
-                <ng-icon [svg]="kind.icon" aria-hidden="true" />
-                {{ kind.label }}
-              </li>
-            }
-            @for (interest of interests(); track interest.key) {
-              <li class="profile__interest">{{ interest.label }}</li>
-            }
-          </ul>
-        }
+        <app-profile-interests [groups]="chipGroups()" />
 
         @if (editingBio()) {
           <form
@@ -235,13 +226,11 @@
             {{ 'PROFILE.bioPlaceholder' | translate }}
           </button>
         }
-
-        @if (since()) {
-          <p class="profile__since">{{ 'PROFILE.since' | translate: { date: since() } }}</p>
-        }
       </section>
 
-      <!-- The user's own posts go here, as a section after the header. -->
+      @if (!blocked() && user()?.events) {
+        <app-profile-events [user]="user()!" [own]="isOwnProfile()" />
+      }
     </div>
   </div>
 
@@ -263,14 +252,22 @@
     </div>
   }
 
-  @if (showFollowers() || showFollowing()) {
-    <app-follow-list
-      [userId]="user()?.id ?? ''"
-      [type]="showFollowers() ? 'followers' : 'following'"
-      [isOwnProfile]="isOwnProfile()"
-      (closeList)="showFollowers.set(false); showFollowing.set(false)"
-      (followChanged)="onFollowChanged($event)"
-    />
+  @if (followList(); as list) {
+    @if (user(); as shown) {
+      <app-sheet
+        [url]="followListUrl(list)"
+        [title]="(list === 'followers' ? 'PROFILE.followers' : 'PROFILE.following') | translate"
+        [closeLabel]="'FOLLOW_LIST.close' | translate"
+        (closed)="followList.set(null)"
+      >
+        <app-follow-list
+          [userId]="shown.id"
+          [type]="list"
+          [isOwnProfile]="isOwnProfile()"
+          (followChanged)="onFollowChanged($event)"
+        />
+      </app-sheet>
+    }
   }
 
   @if (pickedFile(); as file) {

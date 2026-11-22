@@ -1,0 +1,40 @@
+@if (!docked()) {
+  <div class="sheet__scrim" aria-hidden="true" (click)="close()"></div>
+}
+<div
+  #panel
+  class="sheet"
+  tabindex="-1"
+  role="dialog"
+  [attr.aria-labelledby]="titleId"
+  [cdkTrapFocus]="!docked()"
+  [attr.aria-modal]="docked() ? null : 'true'"
+  [class.sheet--docked]="docked()"
+  [class.sheet--full]="size() === 'full'"
+  [class.sheet--dragging]="dragHeight() !== null"
+  [style.height.px]="dragHeight()"
+>
+  <div
+    class="sheet__header"
+    (pointerdown)="onDragStart($event)"
+    (pointermove)="onDragMove($event)"
+    (pointerup)="onDragEnd()"
+    (pointercancel)="onDragEnd()"
+  >
+    <span class="sheet__handle" aria-hidden="true"></span>
+    <div class="sheet__heading">
+      <ng-content select="[sheetHeading]" />
+      <h2 class="sheet__title" [id]="titleId">{{ title() }}</h2>
+    </div>
+    <button
+      type="button"
+      class="sheet__close"
+      [appTooltip]="closeLabel()"
+      (pointerdown)="$event.stopPropagation()"
+      (click)="close()"
+    >
+      <ng-icon name="lucideX" />
+    </button>
+  </div>
+  <ng-content />
+</div>
