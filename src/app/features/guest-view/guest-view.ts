@@ -2,7 +2,8 @@ import { isPlatformBrowser } from '@angular/common';
 import { Component, inject, PLATFORM_ID } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { LoadState } from '../../core/components/load-state/load-state';
-import { SignInCard, SignInReason } from '../../core/components/sign-in-card/sign-in-card';
+import { SignInCard } from '../../core/components/sign-in-card/sign-in-card';
+import { SignInReason } from '../../core/models/common/sign-in-reason';
 
 /**
  * A page that needs an account, for a guest, at the page's own URL (the routes' `signedIn`). The server can't tell who is

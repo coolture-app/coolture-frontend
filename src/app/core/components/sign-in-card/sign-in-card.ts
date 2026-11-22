@@ -18,22 +18,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { Btn } from '../btn/btn';
 import { AuthService } from '../../services/auth/auth.service';
 import { appTicket } from '../../icons/ticket';
-
-/** Why a guest is asked to sign in: a page that needs it, or something they tapped. */
-export type SignInReason =
-  | 'addPost'
-  | 'editPost'
-  | 'plans'
-  | 'profile'
-  | 'user'
-  | 'people'
-  | 'settings'
-  | 'interests'
-  | 'like'
-  | 'interested'
-  | 'takesPart'
-  | 'notForMe'
-  | 'comment';
+import { SignInReason } from '../../models/common/sign-in-reason';
 
 const ICONS: Record<SignInReason, string> = {
   addPost: 'lucidePlus',
