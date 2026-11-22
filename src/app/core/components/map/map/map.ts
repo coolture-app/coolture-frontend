@@ -155,6 +155,8 @@ export class Map implements OnDestroy {
   readonly opened = signal<string | null>(null);
   readonly hovered = signal<Place | null>(null);
 
+  // The pins read `today`, `tomorrow`, `now`, `from`, `todayFrom` and `tomorrowFrom` of MAP by name, so a search for
+  // `MAP.today` finds no use.
   private readonly words = toSignal(this.translate.stream('MAP'), { initialValue: {} });
   readonly places = computed(() => {
     const focused = this.focused();
