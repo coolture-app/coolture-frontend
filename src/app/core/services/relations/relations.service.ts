@@ -4,6 +4,17 @@ import { Observable } from 'rxjs';
 import { ApiUrlService } from '../api-url.service';
 import { PaginatedResponse, PaginationInfo } from '../../models/common/paginated-response.model';
 import { UserListItem } from '../../models/users/user-summary.model';
+import { ConfirmRequest } from '../confirm/confirm.service';
+
+/** Asked before an unblock, on the profile and in Zablokowani. */
+export function unblockQuestion(username: string): ConfirmRequest {
+  return {
+    title: 'PROFILE.unblockTitle',
+    text: 'PROFILE.unblockText',
+    confirm: 'PROFILE.unblock',
+    params: { username },
+  };
+}
 
 @Injectable({
   providedIn: 'root',

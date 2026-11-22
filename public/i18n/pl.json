@@ -86,8 +86,6 @@
     "photo-alt": "Zdjęcie z wydarzenia",
     "edit": "Edytuj post",
     "delete": "Usuń post",
-    "modal-delete-title": "Czy na pewno chcesz usunąć swój post?",
-    "modal-delete-body": "Tej akcji nie da się cofnąć.",
     "interested": "Interesuje mnie",
     "takes_part": "Biorę udział",
     "online": "Online",
@@ -112,7 +110,12 @@
     "ended": "Zakończone",
     "endedHint": "Wydarzenie się zakończyło",
     "links": "Linki",
-    "opens-in-new-tab": "otwiera się w nowej karcie"
+    "opens-in-new-tab": "otwiera się w nowej karcie",
+    "ownerMenu": "Więcej",
+    "deleteTitle": "Usunąć „{{title}}”?",
+    "deleteText": "Wydarzenie zniknie z Coolture razem z komentarzami. Tego nie da się cofnąć.",
+    "deleteFailed": "Nie udało się usunąć wydarzenia. Spróbuj ponownie.",
+    "loadFailed": "Nie udało się wczytać wydarzenia."
   },
   "NAVBAR": {
     "main-page": "Strona główna",
@@ -169,7 +172,6 @@
     "homeHint": "Widoczne tylko dla Ciebie",
     "shareStances": "Pokazuj znajomym, co mnie interesuje i gdzie idę",
     "shareStancesHint": "Znajomi to osoby, które obserwujesz i które obserwują Ciebie.",
-    "saveFailed": "Nie udało się zapisać. Spróbuj ponownie.",
     "more": "Więcej",
     "followingThem": "Obserwujesz",
     "friends": "Znajomi",
@@ -178,14 +180,17 @@
     "addAvatar": "Dodaj zdjęcie",
     "showAvatar": "Powiększ zdjęcie",
     "removeAvatar": "Usuń zdjęcie",
-    "removeAvatarConfirm": "Usunąć zdjęcie profilowe?",
-    "blockConfirm": "Zablokować tę osobę?",
-    "unblockConfirm": "Odblokować tę osobę?",
     "bioPlaceholder": "Dodaj kilka słów o sobie",
     "since": "Na Coolture od {{date}}",
     "blockedLoadError": "Nie udało się wczytać zablokowanych.",
     "retry": "Spróbuj ponownie",
-    "youBlocked": "Zablokowałeś tego użytkownika"
+    "youBlocked": "Zablokowałeś tego użytkownika",
+    "blockTitle": "Zablokować @{{username}}?",
+    "blockText": "Nie zobaczycie nawzajem swoich profili, wydarzeń ani komentarzy, a obserwowanie skończy się w obie strony.",
+    "unblockTitle": "Odblokować @{{username}}?",
+    "unblockText": "Znów zobaczycie nawzajem swoje profile i wydarzenia. Obserwowanie nie wróci samo.",
+    "removeAvatarTitle": "Usunąć zdjęcie profilowe?",
+    "loadFailed": "Nie udało się wczytać profilu."
   },
   "SETTINGS": {
     "title": "Ustawienia",
@@ -288,9 +293,9 @@
     "earlier-replies": "Wcześniejsze odpowiedzi",
     "edit-comment": "Edytuj",
     "delete-comment": "Usuń",
-    "modal-delete-title": "Czy na pewno chcesz usunąć swój komentarz?",
-    "modal-delete-body": "Tej akcji nie da się cofnąć.",
-    "deleted-comment": "Komentarz usunięty"
+    "deleted-comment": "Komentarz usunięty",
+    "deleteTitle": "Usunąć komentarz?",
+    "deleteText": "Tego nie da się cofnąć."
   },
   "FRIENDS": {
     "title": "Znajomi",
@@ -303,11 +308,6 @@
   },
   "EVENT_CARD": {
     "by": "przez"
-  },
-  "MODAL": {
-    "yes": "Tak",
-    "no": "Nie",
-    "ok": "Okej"
   },
   "MY_EVENTS": {
     "title": "Plany",
@@ -340,7 +340,8 @@
     "retry": "Spróbuj ponownie",
     "skip": "Pomiń na razie",
     "leave-title": "Niezapisane zmiany",
-    "leave-text": "Czy zatwierdzić zmiany przed wyjściem?"
+    "leave-text": "Zapisać zmiany przed wyjściem?",
+    "leave-discard": "Nie zapisuj"
   },
   "KINDS": {
     "more": "+{{count}} więcej",
@@ -476,5 +477,73 @@
     "untilFurtherNotice": "do odwołania",
     "runsUntil": "trwa do",
     "runsUntilFurtherNotice": "trwa do odwołania"
+  },
+  "CONFIRM": {
+    "cancel": "Anuluj"
+  },
+  "TOAST": {
+    "failed": "Nie udało się zapisać. Spróbuj ponownie."
+  },
+  "LOAD": {
+    "loading": "Wczytywanie",
+    "failed": "Nie udało się wczytać.",
+    "retry": "Spróbuj ponownie"
+  },
+  "SIGN_IN": {
+    "signIn": "Zaloguj się",
+    "signUp": "Załóż konto",
+    "close": "Zamknij",
+    "addPost": {
+      "title": "Zaloguj się, aby dodać wydarzenie",
+      "text": "Dodane wydarzenie zobaczą wszyscy w Coolture."
+    },
+    "editPost": {
+      "title": "Zaloguj się, aby edytować wydarzenie",
+      "text": "Edytować możesz tylko wydarzenia dodane przez siebie."
+    },
+    "plans": {
+      "title": "Zaloguj się, aby zobaczyć swoje plany",
+      "text": "Tu znajdziesz wydarzenia, które Cię interesują i na które idziesz."
+    },
+    "profile": {
+      "title": "Zaloguj się, aby zobaczyć swój profil",
+      "text": "Twoje zdjęcie, zainteresowania i wydarzenia w jednym miejscu."
+    },
+    "user": {
+      "title": "Zaloguj się, aby zobaczyć profil",
+      "text": "Zobaczysz, czym ta osoba się interesuje i jakie wydarzenia dodaje."
+    },
+    "people": {
+      "title": "Zaloguj się, aby znaleźć znajomych",
+      "text": "Obserwuj znajomych i zobacz, na co się wybierają."
+    },
+    "settings": {
+      "title": "Zaloguj się, aby zmienić ustawienia",
+      "text": "Ustawienia dotyczą Twojego konta."
+    },
+    "interests": {
+      "title": "Zaloguj się, aby wybrać zainteresowania",
+      "text": "Na ich podstawie układamy dla Ciebie zakładkę Dla Ciebie."
+    },
+    "like": {
+      "title": "Zaloguj się, aby polubić",
+      "text": "Polubienia pomagają nam dobierać wydarzenia dla Ciebie."
+    },
+    "interested": {
+      "title": "Zaloguj się, aby zapisać wydarzenie",
+      "text": "Wydarzenia, które Cię interesują, trafią do Twoich planów."
+    },
+    "takesPart": {
+      "title": "Zaloguj się, aby dać znać, że idziesz",
+      "text": "Wydarzenie trafi do Twoich planów, a znajomi zobaczą, że się wybierasz."
+    },
+    "notForMe": {
+      "title": "Zaloguj się, aby ukryć wydarzenie",
+      "text": "Pokażemy Ci mniej takich wydarzeń."
+    },
+    "comment": {
+      "title": "Zaloguj się, aby skomentować",
+      "text": "Komentarze są podpisane Twoją nazwą."
+    }
   }
 }

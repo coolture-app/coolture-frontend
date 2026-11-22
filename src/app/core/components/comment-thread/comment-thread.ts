@@ -23,6 +23,7 @@ import { CommentComponent, DeletedComment, ReplyTarget } from '../comment/commen
 import { CommentSummary } from '../../models/comments/comment-summary.model';
 import { CommentsService } from '../../services/comments/comments.service';
 import { AuthService } from '../../services/auth/auth.service';
+import { SignInPromptService } from '../../services/sign-in-prompt/sign-in-prompt.service';
 import { ToastService } from '../../services/toast/toast.service';
 import { InfiniteScroll } from '../../directives/infinite-scroll';
 import { Tooltip } from '../../directives/tooltip';
@@ -55,6 +56,7 @@ export class CommentThread implements OnInit {
 
   private commentsService = inject(CommentsService);
   private toast = inject(ToastService);
+  private signInPrompt = inject(SignInPromptService);
   private translate = inject(TranslateService);
   private destroyRef = inject(DestroyRef);
   private injector = inject(Injector);
@@ -128,8 +130,7 @@ export class CommentThread implements OnInit {
   }
 
   setReplyTo(target: ReplyTarget): void {
-    if (!this.user()) {
-      this.signIn();
+    if (!this.signInPrompt.allows('comment')) {
       return;
     }
     const previous = this.mentionPrefix();

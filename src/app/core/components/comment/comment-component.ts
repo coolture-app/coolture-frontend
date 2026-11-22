@@ -24,7 +24,7 @@ import { CommentSummary } from '../../models/comments/comment-summary.model';
 import { CommentsService } from '../../services/comments/comments.service';
 import { AuthService } from '../../services/auth/auth.service';
 import { ToastService } from '../../services/toast/toast.service';
-import { ModalWindow } from '../modal/modal-window/modal-window';
+import { ConfirmService } from '../../services/confirm/confirm.service';
 import { Tooltip } from '../../directives/tooltip';
 import { commentTime } from './comment-time';
 
@@ -50,7 +50,7 @@ const REPLIES_PAGE = 20;
  */
 @Component({
   selector: 'app-comment-component',
-  imports: [TranslatePipe, ModalWindow, RouterLink, NgIcon, Tooltip],
+  imports: [TranslatePipe, RouterLink, NgIcon, Tooltip],
   viewProviders: [provideIcons({ lucideEllipsis })],
   templateUrl: './comment-component.html',
   styleUrl: './comment-component.scss',
@@ -72,7 +72,7 @@ export class CommentComponent implements OnInit {
   private translate = inject(TranslateService);
   private document = inject(DOCUMENT);
   private host: HTMLElement = inject(ElementRef).nativeElement;
-  private myModal = viewChild<ModalWindow>('myModal');
+  private confirm = inject(ConfirmService);
   private editInput = viewChild<ElementRef<HTMLTextAreaElement>>('editInput');
 
   readonly isShowingReplies = signal(false);
@@ -216,12 +216,14 @@ export class CommentComponent implements OnInit {
       });
   }
 
-  openDeleteModal(): void {
-    this.myModal()?.open();
-  }
-
-  handleModalResponse(action: string): void {
-    if (action === 'YES') {
+  async askToDelete(): Promise<void> {
+    const confirmed = await this.confirm.ask({
+      title: 'COMMENT.deleteTitle',
+      text: 'COMMENT.deleteText',
+      confirm: 'COMMENT.delete-comment',
+      danger: true,
+    });
+    if (confirmed) {
       this.deleteComment();
     }
   }

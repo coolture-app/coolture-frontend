@@ -1,8 +1,8 @@
 import { inject, Injectable } from '@angular/core';
-import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { catchError, concatMap, EMPTY, Observable, Subject, tap } from 'rxjs';
-import { AuthService } from '../../services/auth/auth.service';
+import { SignInPromptService } from '../../services/sign-in-prompt/sign-in-prompt.service';
+import { STANCE_SIGN_IN_REASONS } from '../../models/common/sign-in-reason';
 import { PostMark } from '../../models/posts/post-mark.model';
 import { viewerState, ViewerState, withLike, withStance } from '../../models/posts/viewer-state';
 import { InteractionsService } from '../../services/interactions/interactions.service';
@@ -16,8 +16,7 @@ import { ViewerStates } from '../../services/viewer-states/viewer-states';
 @Injectable({ providedIn: 'root' })
 export class MapReactions {
   private interactions = inject(InteractionsService);
-  private auth = inject(AuthService);
-  private router = inject(Router);
+  private signInPrompt = inject(SignInPromptService);
   private states = inject(ViewerStates);
   private toast = inject(ToastService);
   private translate = inject(TranslateService);
@@ -35,7 +34,7 @@ export class MapReactions {
   }
 
   like(post: PostMark): void {
-    if (!this.signedIn()) {
+    if (!this.signInPrompt.allows('like')) {
       return;
     }
     const before = viewerState(this.shown(post));
@@ -52,7 +51,7 @@ export class MapReactions {
 
   /** Interesuje mnie or Biorę udział: on, off, or in place of the other. */
   stance(post: PostMark, type: 'INTERESTED' | 'TAKES_PART'): void {
-    if (!this.signedIn()) {
+    if (!this.signInPrompt.allows(STANCE_SIGN_IN_REASONS[type])) {
       return;
     }
     const before = viewerState(this.shown(post));
@@ -80,14 +79,5 @@ export class MapReactions {
         catchError(() => EMPTY),
       ),
     );
-  }
-
-  /** A guest's tap signs in, and comes back to this page. */
-  private signedIn(): boolean {
-    if (this.auth.isAuthenticated()) {
-      return true;
-    }
-    void this.auth.login(this.router.url);
-    return false;
   }
 }

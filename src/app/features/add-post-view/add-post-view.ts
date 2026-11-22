@@ -8,6 +8,7 @@ import { PostService } from '../../core/services/post/post.service';
 import { PostForm } from '../../core/components/post-form/post-form';
 import { PostFormData } from '../../core/models/posts/post-form-data.model';
 import { PostCreateRequest } from '../../core/models/posts/post-create-request.model';
+import { ToastService } from '../../core/services/toast/toast.service';
 
 @Component({
   selector: 'app-add-post-view',
@@ -18,6 +19,7 @@ import { PostCreateRequest } from '../../core/models/posts/post-create-request.m
 export class AddPostView {
   private postService = inject(PostService);
   private router = inject(Router);
+  private toast = inject(ToastService);
 
   @ViewChild(PostForm) postFormComponent!: PostForm;
 
@@ -42,6 +44,7 @@ export class AddPostView {
     } catch (err) {
       console.error(err);
       this.postFormComponent.resetSubmitting();
+      this.toast.failed();
     }
   }
 }

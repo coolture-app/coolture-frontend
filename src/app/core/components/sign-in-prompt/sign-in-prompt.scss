@@ -1,0 +1,25 @@
+@use '_mixin' as *;
+
+.prompt__body {
+  @include dialog-body;
+  padding-top: var(--space-xl);
+}
+
+.prompt__close {
+  @include center-flex;
+  position: absolute;
+  top: var(--space-xs);
+  right: var(--space-xs);
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: none;
+  color: var(--color-text-secondary);
+  font-size: 20px;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--color-surface-alt);
+  }
+}

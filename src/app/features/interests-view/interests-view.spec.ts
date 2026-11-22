@@ -1,3 +1,4 @@
+import { ConfirmAnswer, ConfirmService } from '../../core/services/confirm/confirm.service';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
@@ -51,8 +52,7 @@ describe('InterestsView', () => {
       (button) => button.textContent?.trim() === text,
     )!;
   const save = () => footerButton('INTERESTS.save');
-  const modalButton = (index: number) =>
-    element.querySelectorAll<HTMLButtonElement>('app-modal-window button')[index];
+  const answer = (choice: ConfirmAnswer) => TestBed.inject(ConfirmService).answer(choice);
   const error = () => element.querySelector('.interests__error');
 
   async function render(
@@ -215,7 +215,7 @@ describe('InterestsView', () => {
     it('drops a held topic that is no longer offered, without counting it', async () => {
       await render({ kinds: ['concerts'], interests: ['astrology', 'jazz'] });
       spyOn(TestBed.inject(Router), 'navigateByUrl').and.resolveTo(true);
-      expect(fixture.componentInstance.confirmLeave()).toBeTrue();
+      expect(await fixture.componentInstance.confirmLeave()).toBeTrue();
 
       await click(topic('rock'));
       await click(topic('opera'));
@@ -254,7 +254,7 @@ describe('InterestsView', () => {
         kinds: ['concerts'],
         interests: ['rock'],
       });
-      expect(fixture.componentInstance.confirmLeave()).toBeTrue();
+      expect(await fixture.componentInstance.confirmLeave()).toBeTrue();
     });
 
     it('sends one request when save is clicked twice at once', async () => {
@@ -304,15 +304,15 @@ describe('InterestsView', () => {
       await render({ kinds: ['concerts'], interests: ['jazz'] });
     });
 
-    it('leaves without asking when nothing changed', () => {
-      expect(fixture.componentInstance.confirmLeave()).toBeTrue();
+    it('leaves without asking when nothing changed', async () => {
+      expect(await fixture.componentInstance.confirmLeave()).toBeTrue();
     });
 
     it('saves and leaves when the user agrees', async () => {
       await click(kind('stage'));
 
       const leave = fixture.componentInstance.confirmLeave();
-      await click(modalButton(0));
+      answer('confirm');
 
       expect(await leave).toBeTrue();
       expect(interestsService.replaceUserInterests).toHaveBeenCalledTimes(1);
@@ -322,17 +322,17 @@ describe('InterestsView', () => {
       await click(topic('rock'));
 
       const leave = fixture.componentInstance.confirmLeave();
-      await click(modalButton(1));
+      answer('other');
 
       expect(await leave).toBeTrue();
       expect(interestsService.replaceUserInterests).not.toHaveBeenCalled();
     });
 
-    it('stays on the page when the modal is dismissed with Escape', async () => {
+    it('stays on the page when the question is cancelled', async () => {
       await click(topic('rock'));
 
       const leave = fixture.componentInstance.confirmLeave();
-      element.querySelector('dialog')!.dispatchEvent(new Event('cancel'));
+      answer('cancel');
 
       expect(await leave).toBeFalse();
     });
@@ -341,9 +341,10 @@ describe('InterestsView', () => {
       await click(kind('concerts'));
 
       const leave = fixture.componentInstance.confirmLeave();
-      await click(modalButton(0));
+      answer('confirm');
 
       expect(await leave).toBeFalse();
+      fixture.detectChanges();
       expect(error()?.textContent).toContain('INTERESTS.selection-error');
       expect(interestsService.replaceUserInterests).not.toHaveBeenCalled();
     });
@@ -353,16 +354,17 @@ describe('InterestsView', () => {
       await click(topic('rock'));
 
       const leave = fixture.componentInstance.confirmLeave();
-      await click(modalButton(0));
+      answer('confirm');
 
       expect(await leave).toBeFalse();
+      fixture.detectChanges();
       expect(error()?.textContent).toContain('INTERESTS.save-error');
     });
 
     it('clears the error when the picks change', async () => {
       await click(kind('concerts'));
       const leave = fixture.componentInstance.confirmLeave();
-      await click(modalButton(0));
+      answer('confirm');
       await leave;
 
       await click(kind('stage'));

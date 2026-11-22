@@ -8,7 +8,6 @@ import {
   OnInit,
   output,
   signal,
-  viewChild,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { CanDeactivateFn, Router } from '@angular/router';
@@ -17,7 +16,7 @@ import { firstValueFrom, forkJoin, map } from 'rxjs';
 import { BackLink } from '../../core/components/back-link/back-link';
 import { Btn } from '../../core/components/btn/btn';
 import { KindGrid } from '../../core/components/kind-grid/kind-grid';
-import { ModalWindow } from '../../core/components/modal/modal-window/modal-window';
+import { ConfirmService } from '../../core/services/confirm/confirm.service';
 import { Interest, InterestCatalog, label } from '../../core/models/interests/interest.model';
 import { AuthService } from '../../core/services/auth/auth.service';
 import { InterestsService } from '../../core/services/interests/interests.service';
@@ -29,7 +28,7 @@ type Section = 'kinds' | 'topics';
 
 @Component({
   selector: 'app-interests-view',
-  imports: [TranslatePipe, BackLink, Btn, KindGrid, ModalWindow],
+  imports: [TranslatePipe, BackLink, Btn, KindGrid],
   templateUrl: './interests-view.html',
   styleUrl: './interests-view.scss',
 })
@@ -46,8 +45,7 @@ export class InterestsView implements OnInit {
   /** Onboarding is done. */
   readonly saved = output<void>();
 
-  private leaveModal = viewChild.required(ModalWindow);
-  private resolveLeave: ((leave: boolean) => void) | null = null;
+  private confirm = inject(ConfirmService);
   private savedSnapshot = '';
 
   private currentLang = toSignal(this.translate.onLangChange.pipe(map((event) => event.lang)), {
@@ -168,16 +166,17 @@ export class InterestsView implements OnInit {
     }
   }
 
-  confirmLeave(): boolean | Promise<boolean> {
+  async confirmLeave(): Promise<boolean> {
     if (this.snapshot() === this.savedSnapshot) {
       return true;
     }
-    this.leaveModal().open();
-    return new Promise((resolve) => (this.resolveLeave = resolve));
-  }
-
-  protected async onLeaveAnswer(action: string): Promise<void> {
-    this.resolveLeave?.(action === 'YES' ? await this.persist() : action === 'NO');
+    const answer = await this.confirm.choose({
+      title: 'INTERESTS.leave-title',
+      text: 'INTERESTS.leave-text',
+      confirm: 'INTERESTS.save',
+      other: 'INTERESTS.leave-discard',
+    });
+    return answer === 'confirm' ? this.persist() : answer === 'other';
   }
 }
 

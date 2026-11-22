@@ -1,3 +1,4 @@
+import { ConfirmService } from '../../core/services/confirm/confirm.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpTestingController } from '@angular/common/http/testing';
 
@@ -37,8 +38,10 @@ describe('BlockedUsersView', () => {
     });
     expect(element.querySelectorAll('.blocked__user').length).toBe(2);
 
-    spyOn(window, 'confirm').and.returnValue(true);
+    spyOn(TestBed.inject(ConfirmService), 'ask').and.resolveTo(true);
     element.querySelector<HTMLButtonElement>('.blocked__user button')!.click();
+    // The answer comes back as a promise.
+    await new Promise((resolve) => setTimeout(resolve));
     const unblock = http.expectOne((r) => r.method === 'DELETE');
     expect(unblock.request.url).toMatch(/\/users\/jan-1\/block$/);
     unblock.flush(null);

@@ -28,7 +28,8 @@ import {
 
 import { AuthService } from '../../core/services/auth/auth.service';
 import { Users } from '../../core/services/users/users.service';
-import { RelationsService } from '../../core/services/relations/relations.service';
+import { RelationsService, unblockQuestion } from '../../core/services/relations/relations.service';
+import { ConfirmService } from '../../core/services/confirm/confirm.service';
 import { MediaService } from '../../core/services/media/media.service';
 import { InterestsService } from '../../core/services/interests/interests.service';
 import { KindsService } from '../../core/services/interests/kinds.service';
@@ -46,6 +47,7 @@ import { HomeArea } from '../home-area/home-area';
 import { PhotoViewerService } from '../../core/services/photo-viewer/photo-viewer.service';
 import { AvatarCropper } from '../../core/components/avatar-cropper/avatar-cropper';
 import { NotFoundView } from '../not-found-view/not-found-view';
+import { LoadState } from '../../core/components/load-state/load-state';
 
 /** Your own profile at `/profile`, and anyone's at `/users/:username`. */
 @Component({
@@ -63,6 +65,7 @@ import { NotFoundView } from '../not-found-view/not-found-view';
     Tooltip,
     HomeArea,
     NotFoundView,
+    LoadState,
   ],
   viewProviders: [
     provideIcons({
@@ -87,6 +90,7 @@ export class UserProfileView {
   private interestsService = inject(InterestsService);
   private kindsService = inject(KindsService);
   private toast = inject(ToastService);
+  private confirm = inject(ConfirmService);
   private translate = inject(TranslateService);
   private document = inject(DOCUMENT);
   private injector = inject(Injector);
@@ -100,6 +104,9 @@ export class UserProfileView {
   isOwnProfile = signal(true);
   /** Someone missing, or who blocked you. The URL stays, as for any page that isn't there. */
   notFound = signal(false);
+  readonly failed = signal(false);
+  /** The profile asked for, null for your own; for Spróbuj ponownie. */
+  private username: string | null = null;
   /** Someone you blocked: only who they are, and Odblokuj. */
   readonly blocked = computed(() => !this.isOwnProfile() && !!this.user()?.isBlocked);
   followersCount = signal(0);
@@ -178,6 +185,8 @@ export class UserProfileView {
     this.avatarMenuOpen.set(false);
     this.editingBio.set(false);
     this.notFound.set(false);
+    this.failed.set(false);
+    this.username = username;
 
     const currentUser = this.authService.currentUser();
     if (username && currentUser && username !== currentUser.username) {
@@ -207,8 +216,13 @@ export class UserProfileView {
         this.notFound.set(true);
       } else {
         console.error('Error loading user profile', err);
+        this.failed.set(true);
       }
     }
+  }
+
+  retry(): void {
+    void this.load(this.username);
   }
 
   private showUser(user: UserProfile, own: boolean) {
@@ -256,7 +270,7 @@ export class UserProfileView {
       }
     } catch (err) {
       console.error('Error updating profile', err);
-      this.toast.show(this.translate.instant('PROFILE.saveFailed'));
+      this.toast.failed();
     } finally {
       this.savingBio.set(false);
     }
@@ -278,6 +292,7 @@ export class UserProfileView {
       }
     } catch (err) {
       console.error('Error toggling follow', err);
+      this.toast.failed();
     }
   }
 
@@ -328,8 +343,18 @@ export class UserProfileView {
     if (!u || this.isOwnProfile()) return;
 
     const isCurrentlyBlocked = u.isBlocked;
-    const question = isCurrentlyBlocked ? 'PROFILE.unblockConfirm' : 'PROFILE.blockConfirm';
-    if (!confirm(this.translate.instant(question))) return;
+    const confirmed = await this.confirm.ask(
+      isCurrentlyBlocked
+        ? unblockQuestion(u.username)
+        : {
+            title: 'PROFILE.blockTitle',
+            text: 'PROFILE.blockText',
+            confirm: 'PROFILE.block',
+            params: { username: u.username },
+            danger: true,
+          },
+    );
+    if (!confirmed) return;
 
     try {
       if (isCurrentlyBlocked) {
@@ -355,6 +380,7 @@ export class UserProfileView {
       }
     } catch (err) {
       console.error('Error blocking user', err);
+      this.toast.failed();
     }
   }
 
@@ -406,7 +432,7 @@ export class UserProfileView {
       }
     } catch (err) {
       console.error('Error uploading avatar', err);
-      this.toast.show(this.translate.instant('PROFILE.saveFailed'));
+      this.toast.failed();
     } finally {
       this.isUploadingAvatar.set(false);
     }
@@ -416,7 +442,12 @@ export class UserProfileView {
     const userId = this.user()?.id;
     if (!userId || !this.isOwnProfile()) return;
 
-    if (!confirm(this.translate.instant('PROFILE.removeAvatarConfirm'))) return;
+    const confirmed = await this.confirm.ask({
+      title: 'PROFILE.removeAvatarTitle',
+      confirm: 'PROFILE.removeAvatar',
+      danger: true,
+    });
+    if (!confirmed) return;
 
     try {
       await firstValueFrom(this.usersService.deleteProfileImage(userId));
@@ -427,7 +458,7 @@ export class UserProfileView {
       }
     } catch (err) {
       console.error('Error removing avatar', err);
-      this.toast.show(this.translate.instant('PROFILE.saveFailed'));
+      this.toast.failed();
     }
   }
 

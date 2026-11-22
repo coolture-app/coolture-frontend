@@ -1,5 +1,9 @@
 @if (notFound()) {
   <app-not-found-view />
+} @else if (!user()) {
+  <div class="page">
+    <app-load-state [failed]="failed()" message="PROFILE.loadFailed" (retry)="retry()" />
+  </div>
 } @else {
   <div class="page">
     <div class="profile">

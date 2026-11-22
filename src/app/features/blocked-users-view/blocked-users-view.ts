@@ -1,12 +1,14 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { BackLink } from '../../core/components/back-link/back-link';
 import { Btn } from '../../core/components/btn/btn';
 import { UserListItem } from '../../core/models/users/user-summary.model';
 import { AuthService } from '../../core/services/auth/auth.service';
-import { RelationsService } from '../../core/services/relations/relations.service';
+import { RelationsService, unblockQuestion } from '../../core/services/relations/relations.service';
+import { ConfirmService } from '../../core/services/confirm/confirm.service';
+import { ToastService } from '../../core/services/toast/toast.service';
 
 @Component({
   selector: 'app-blocked-users-view',
@@ -17,7 +19,8 @@ import { RelationsService } from '../../core/services/relations/relations.servic
 export class BlockedUsersView implements OnInit {
   private authService = inject(AuthService);
   private relationsService = inject(RelationsService);
-  private translate = inject(TranslateService);
+  private confirm = inject(ConfirmService);
+  private toast = inject(ToastService);
 
   readonly users = signal<UserListItem[]>([]);
   readonly loading = signal(true);
@@ -45,13 +48,14 @@ export class BlockedUsersView implements OnInit {
     }
   }
 
-  async unblock(userId: string): Promise<void> {
-    if (!confirm(this.translate.instant('PROFILE.unblockConfirm'))) return;
+  async unblock(user: { id: string; username: string }): Promise<void> {
+    if (!(await this.confirm.ask(unblockQuestion(user.username)))) return;
     try {
-      await firstValueFrom(this.relationsService.unblock(userId));
-      this.users.update((list) => list.filter((u) => u.id !== userId));
+      await firstValueFrom(this.relationsService.unblock(user.id));
+      this.users.update((list) => list.filter((u) => u.id !== user.id));
     } catch (err) {
       console.error('Error unblocking user', err);
+      this.toast.failed();
     }
   }
 }

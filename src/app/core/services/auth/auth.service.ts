@@ -118,7 +118,16 @@ export class AuthService {
     this.shareStances.set(true);
   }
 
-  async login(returnUrl?: string): Promise<void> {
+  login(returnUrl?: string): Promise<void> {
+    return this.signIn('oauth2/authorize', returnUrl);
+  }
+
+  /** Cognito's sign-up page, which comes back through the same callback as a sign-in. */
+  signUp(returnUrl?: string): Promise<void> {
+    return this.signIn('signup', returnUrl);
+  }
+
+  private async signIn(page: 'oauth2/authorize' | 'signup', returnUrl?: string): Promise<void> {
     if (!isPlatformBrowser(this.platformId)) {
       return;
     }
@@ -150,7 +159,7 @@ export class AuthService {
       code_challenge: await sha256Base64Url(verifier),
       code_challenge_method: 'S256',
     });
-    window.location.assign(`${environment.cognito.domain}/oauth2/authorize?${params}`);
+    window.location.assign(`${environment.cognito.domain}/${page}?${params}`);
   }
 
   async completeLogin(code: string | null, state: string | null): Promise<string> {

@@ -1,3 +1,4 @@
+import { ConfirmService } from '../../core/services/confirm/confirm.service';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController } from '@angular/common/http/testing';
 import { provideRouter, Router } from '@angular/router';
@@ -342,11 +343,13 @@ describe('UserProfileView', () => {
     });
 
     it('loads the whole profile after Odblokuj', async () => {
-      spyOn(window, 'confirm').and.returnValue(true);
       await open('/users/jan');
+      spyOn(TestBed.inject(ConfirmService), 'ask').and.resolveTo(true);
       await answer(SLIM);
 
       element.querySelector<HTMLButtonElement>('.profile__actions button')!.click();
+      // The answer comes back as a promise.
+      await new Promise((resolve) => setTimeout(resolve));
       http
         .expectOne((r) => r.method === 'DELETE' && r.url.endsWith('/users/jan-1/block'))
         .flush(null);
@@ -359,11 +362,12 @@ describe('UserProfileView', () => {
     });
 
     it('turns slim right after Zablokuj', async () => {
-      spyOn(window, 'confirm').and.returnValue(true);
       await open('/users/jan');
+      spyOn(TestBed.inject(ConfirmService), 'ask').and.resolveTo(true);
       await answer({ ...JAN, bio: 'Opera', isFollowing: true });
 
       const blocking = view().onBlock();
+      await new Promise((resolve) => setTimeout(resolve));
       http
         .expectOne((r) => r.method === 'POST' && r.url.endsWith('/users/jan-1/block'))
         .flush(null);

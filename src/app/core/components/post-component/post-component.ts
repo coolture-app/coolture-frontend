@@ -9,7 +9,6 @@ import {
   signal,
   inject,
   OnInit,
-  ViewChild,
   viewChild,
   Output,
   EventEmitter,
@@ -21,13 +20,7 @@ import { MapFocus } from '../map/map-focus';
 import { Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import {
-  heroCalendar,
-  heroGlobeAlt,
-  heroMapPin,
-  heroPencilSquare,
-  heroTrash,
-} from '@ng-icons/heroicons/outline';
+import { heroCalendar, heroGlobeAlt, heroMapPin } from '@ng-icons/heroicons/outline';
 import {
   lucideBookmark,
   lucideChevronLeft,
@@ -47,9 +40,10 @@ import { KindsService } from '../../services/interests/kinds.service';
 import { FriendsLine } from '../friends-line/friends-line';
 import { InteractionsService } from '../../services/interactions/interactions.service';
 import { AuthService } from '../../services/auth/auth.service';
-import { ModalWindow } from '../modal/modal-window/modal-window';
+import { SignInPromptService } from '../../services/sign-in-prompt/sign-in-prompt.service';
+import { STANCE_SIGN_IN_REASONS } from '../../models/common/sign-in-reason';
+import { PostOwnerMenu } from '../post-owner-menu/post-owner-menu';
 import { Btn } from '../btn/btn';
-import { PostService } from '../../services/post/post.service';
 import { CommentsSheetService } from '../../services/comments-sheet/comments-sheet.service';
 import { EventWhenService } from '../../services/event-when/event-when.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -95,7 +89,7 @@ export type PostFold = 'marked' | 'unmarked' | null;
     NgIcon,
     CountedIcon,
     TranslatePipe,
-    ModalWindow,
+    PostOwnerMenu,
     Btn,
     Tooltip,
     FriendsLine,
@@ -108,8 +102,6 @@ export type PostFold = 'marked' | 'unmarked' | null;
       heroCalendar,
       heroGlobeAlt,
       heroMapPin,
-      heroPencilSquare,
-      heroTrash,
       lucideBookmark,
       lucideChevronLeft,
       lucideChevronRight,
@@ -149,11 +141,11 @@ export class PostComponent implements OnInit {
   private router = inject(Router);
   private interactions = inject(InteractionsService);
   private authService = inject(AuthService);
+  private signInPrompt = inject(SignInPromptService);
   /** Friends see the viewer's Interesuje mnie and Biorę udział, so the buttons say so. */
   readonly sharesStances = computed(
     () => this.authService.isAuthenticated() && this.authService.shareStances(),
   );
-  private postService = inject(PostService);
   private destroyRef = inject(DestroyRef);
   private injector = inject(Injector);
   private host: HTMLElement = inject(ElementRef).nativeElement;
@@ -200,8 +192,6 @@ export class PostComponent implements OnInit {
   }
 
   @Output() deleteRequest = new EventEmitter<string>();
-
-  @ViewChild('myModal') myModal?: ModalWindow;
 
   constructor() {
     afterNextRender(() => this.watchDescription());
@@ -347,7 +337,7 @@ export class PostComponent implements OnInit {
 
   /** A like takes back "Nie dla mnie", on the server too. */
   likePost(): void {
-    if (!this.signedIn()) {
+    if (!this.signInPrompt.allows('like')) {
       return;
     }
     const liked = !this.isLiked();
@@ -385,7 +375,7 @@ export class PostComponent implements OnInit {
   /** Cofnij on a folded card: back to the stance and like from before the fold. */
   undoFold(): void {
     const undo = undoable.get(this.data.id);
-    if (!undo || !this.signedIn()) {
+    if (!undo || !this.signInPrompt.allows('notForMe')) {
       return;
     }
     undoable.delete(this.data.id);
@@ -407,15 +397,6 @@ export class PostComponent implements OnInit {
     }
   }
 
-  /** A guest's tap signs in, and comes back to this page. */
-  private signedIn(): boolean {
-    if (this.authService.isAuthenticated()) {
-      return true;
-    }
-    void this.authService.login(this.router.url);
-    return false;
-  }
-
   private send(request: Observable<unknown>, revert: () => void, done?: () => void): void {
     this.requests.next(
       request.pipe(
@@ -432,7 +413,7 @@ export class PostComponent implements OnInit {
 
   /** "Nie dla mnie" takes back the like, on the server too. */
   private toggleParticipation(type: ParticipationType): void {
-    if (!this.signedIn()) {
+    if (!this.signInPrompt.allows(STANCE_SIGN_IN_REASONS[type])) {
       return;
     }
     const previous = this.data.myParticipation;
@@ -472,34 +453,6 @@ export class PostComponent implements OnInit {
   private update(state: ViewerState): void {
     Object.assign(this.data, state, { participantCount: participants(state) });
     this.viewerStates.remember(this.data.id, state);
-  }
-
-  editPost(): void {
-    this.router.navigate(['/posts', this.data.id, 'edit']);
-  }
-
-  deletePost(): void {
-    this.postService
-      .deletePost(this.data.id)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: () => {
-          this.deleteRequest.emit(this.data.id);
-        },
-        error: (err) => {
-          console.error('Error while deleting post.', err);
-        },
-      });
-  }
-
-  handleModalResponse(action: string): void {
-    if (action === 'YES') {
-      this.deletePost();
-    }
-  }
-
-  openModal(): void {
-    this.myModal?.open();
   }
 
   goToFullPost(): void {

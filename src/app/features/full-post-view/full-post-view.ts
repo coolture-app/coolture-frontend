@@ -21,10 +21,20 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { BackService } from '../../core/services/back/back.service';
 import { PostListStore } from '../../core/services/post-list/post-list.store';
 import { NotFoundView } from '../not-found-view/not-found-view';
+import { LoadState } from '../../core/components/load-state/load-state';
+import { PostSkeleton } from '../../core/components/post-skeleton/post-skeleton';
 
 @Component({
   selector: 'app-full-post-view',
-  imports: [PostComponent, CommentThread, TranslatePipe, BackLink, NotFoundView],
+  imports: [
+    PostComponent,
+    CommentThread,
+    TranslatePipe,
+    BackLink,
+    NotFoundView,
+    LoadState,
+    PostSkeleton,
+  ],
   templateUrl: './full-post-view.html',
   styleUrl: './full-post-view.scss',
 })
@@ -43,6 +53,7 @@ export class FullPostView implements OnInit {
   post = this.postService.activePost;
   /** Deleted, missing, or by someone in a block with the viewer: the API doesn't say which. The URL stays. */
   notFound = signal(false);
+  failed = signal(false);
 
   constructor() {
     effect(() => {
@@ -71,28 +82,39 @@ export class FullPostView implements OnInit {
     this.isScrolling =
       this.route.snapshot.fragment === 'comments' &&
       this.router.currentNavigation()?.trigger !== 'popstate';
-    if (id) {
-      if (!this.post() || this.post()?.id !== id) {
-        this.postService
-          .getPost(id)
-          .pipe(takeUntilDestroyed(this.destroyRef))
-          .subscribe({
-            next: (data) => {
-              this.postService.setActivePost(data);
-              this.title.setTitle(data.title);
-            },
-            error: (error) => {
-              if (error instanceof HttpErrorResponse && error.status === 404) {
-                this.notFound.set(true);
-              } else {
-                console.error(error);
-              }
-            },
-          });
-      }
-    } else {
-      console.error('NO ID IN URL ERRRR');
+    if (id && this.post()?.id !== id) {
+      // A post from another page would show until this one comes.
+      this.postService.clearActivePost();
+      this.load(id);
     }
+  }
+
+  retry(): void {
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) {
+      this.load(id);
+    }
+  }
+
+  private load(id: string): void {
+    this.failed.set(false);
+    this.postService
+      .getPost(id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (data) => {
+          this.postService.setActivePost(data);
+          this.title.setTitle(data.title);
+        },
+        error: (error) => {
+          if (error instanceof HttpErrorResponse && error.status === 404) {
+            this.notFound.set(true);
+          } else {
+            console.error(error);
+            this.failed.set(true);
+          }
+        },
+      });
   }
 
   changeCount(by: number): void {
