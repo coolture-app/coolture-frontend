@@ -178,8 +178,21 @@
   </section>
 
   <div class="post-form__actions">
+    @if (mode === 'edit' && initialData) {
+      <app-btn
+        variant="secondary"
+        size="lg"
+        [fullWidth]="true"
+        [routerLink]="['/posts', initialData.id]"
+        tabindex="-1"
+      >
+        {{ 'POST_FORM.cancel' | translate }}
+      </app-btn>
+    }
     <app-btn
       variant="primary"
+      size="lg"
+      [fullWidth]="true"
       type="submit"
       [disabled]="isSubmitting || photos().hasUploading || startsAtControl.hasError('past')"
     >

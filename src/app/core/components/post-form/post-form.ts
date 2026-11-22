@@ -1,3 +1,4 @@
+import { RouterLink } from '@angular/router';
 import {
   Component,
   Input,
@@ -81,6 +82,7 @@ function endAfterStart(form: AbstractControl): ValidationErrors | null {
     Btn,
     PlacePicker,
     PostPhotos,
+    RouterLink,
   ],
   templateUrl: './post-form.html',
   styleUrl: './post-form.scss',
