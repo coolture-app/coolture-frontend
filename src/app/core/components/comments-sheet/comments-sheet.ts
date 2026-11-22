@@ -1,3 +1,4 @@
+import { InitialsPipe } from '../../pipes/initials.pipe';
 import { A11yModule } from '@angular/cdk/a11y';
 import { Location } from '@angular/common';
 import {
@@ -72,7 +73,16 @@ export function settleDrag(
  */
 @Component({
   selector: 'app-comments-sheet',
-  imports: [A11yModule, RouterLink, TranslatePipe, NgIcon, Tooltip, CommentThread, PostFriendsList],
+  imports: [
+    InitialsPipe,
+    A11yModule,
+    RouterLink,
+    TranslatePipe,
+    NgIcon,
+    Tooltip,
+    CommentThread,
+    PostFriendsList,
+  ],
   viewProviders: [provideIcons({ lucideX })],
   templateUrl: './comments-sheet.html',
   styleUrl: './comments-sheet.scss',

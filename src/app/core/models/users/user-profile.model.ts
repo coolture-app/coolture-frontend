@@ -18,6 +18,15 @@ export interface UserProfile extends Omit<UserSummary, 'followersCount' | 'follo
   interests?: string[];
   /** Kind keys, in the catalogue's order. */
   kinds?: string[];
+  events?: ProfileEvents;
+}
+
+/** What a profile's event tabs hold. The stance counts come only to the user and to friends they share them with. */
+export interface ProfileEvents {
+  posts: number;
+  upcomingPosts: number;
+  takesPart?: number;
+  interested?: number;
 }
 
 /** The `/auth/me` response: the caller's profile plus account state only the caller sees. */

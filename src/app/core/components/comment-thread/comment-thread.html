@@ -47,7 +47,7 @@
           <img [src]="avatar.url" alt="" class="composer__avatar" />
         } @else {
           <span class="composer__avatar composer__avatar--placeholder" aria-hidden="true">
-            {{ me.firstName?.charAt(0) }}{{ me.lastName?.charAt(0) }}
+            {{ me | initials }}
           </span>
         }
         <textarea

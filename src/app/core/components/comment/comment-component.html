@@ -20,7 +20,7 @@
           <img [src]="avatar.url" alt="" class="comment__avatar" loading="lazy" />
         } @else {
           <span class="comment__avatar comment__avatar--placeholder">
-            {{ c.author.firstName?.charAt(0) }}{{ c.author.lastName?.charAt(0) }}
+            {{ c.author | initials }}
           </span>
         }
       </a>

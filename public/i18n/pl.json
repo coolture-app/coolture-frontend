@@ -191,11 +191,19 @@
     "unblockTitle": "Odblokować @{{username}}?",
     "unblockText": "Znów zobaczycie nawzajem swoje profile i wydarzenia. Obserwowanie nie wróci samo.",
     "removeAvatarTitle": "Usunąć zdjęcie profilowe?",
-    "loadFailed": "Nie udało się wczytać profilu."
+    "loadFailed": "Nie udało się wczytać profilu.",
+    "shared": "Wspólne: {{count}}"
   },
   "SETTINGS": {
     "title": "Ustawienia",
-    "privacy": "Prywatność"
+    "privacy": "Prywatność",
+    "account": "Konto",
+    "username": "Nazwa użytkownika",
+    "firstName": "Imię",
+    "lastName": "Nazwisko",
+    "usernameRule": "3–32 znaki: małe litery, cyfry, kropka i podkreślenie.",
+    "usernameTaken": "Ta nazwa jest zajęta.",
+    "saved": "Zapisano."
   },
   "DISCOVER": {
     "title": "Odkrywaj",
@@ -543,5 +551,20 @@
       "title": "Zaloguj się, aby skomentować",
       "text": "Komentarze są podpisane Twoją nazwą."
     }
+  },
+  "PROFILE_EVENTS": {
+    "title": "Wydarzenia",
+    "posts": "Wydarzenia",
+    "going": "Bierze udział",
+    "interested": "Interesuje się",
+    "when": "Kiedy",
+    "upcoming": "Nadchodzące",
+    "past": "Minione",
+    "search": "Szukaj w wydarzeniach",
+    "clearSearch": "Wyczyść",
+    "noMatch": "Nic nie pasuje do „{{q}}”.",
+    "add": "Dodaj wydarzenie",
+    "noUpcoming": "Brak nadchodzących wydarzeń.",
+    "noPast": "Brak minionych wydarzeń."
   }
 }

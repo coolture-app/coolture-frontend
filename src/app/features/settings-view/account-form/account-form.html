@@ -1,0 +1,53 @@
+<form class="account" (submit)="$event.preventDefault(); save()">
+  <label class="account__field">
+    <span class="account__label">{{ 'SETTINGS.username' | translate }}</span>
+    <span class="account__input account__input--handle">
+      <span aria-hidden="true">&#64;</span>
+      <input
+        name="username"
+        autocomplete="username"
+        autocapitalize="none"
+        spellcheck="false"
+        maxlength="32"
+        [value]="username()"
+        [attr.aria-invalid]="!usernameValid() || taken()"
+        [attr.aria-describedby]="'account-username-hint'"
+        (input)="typeUsername($any($event.target).value)"
+      />
+    </span>
+    <span
+      id="account-username-hint"
+      class="account__hint"
+      [class.account__hint--error]="!usernameValid() || taken()"
+    >
+      {{ (taken() ? 'SETTINGS.usernameTaken' : 'SETTINGS.usernameRule') | translate }}
+    </span>
+  </label>
+  <label class="account__field">
+    <span class="account__label">{{ 'SETTINGS.firstName' | translate }}</span>
+    <input
+      class="account__input"
+      name="firstName"
+      autocomplete="given-name"
+      maxlength="128"
+      [value]="firstName()"
+      (input)="firstName.set($any($event.target).value)"
+    />
+  </label>
+  <label class="account__field">
+    <span class="account__label">{{ 'SETTINGS.lastName' | translate }}</span>
+    <input
+      class="account__input"
+      name="lastName"
+      autocomplete="family-name"
+      maxlength="128"
+      [value]="lastName()"
+      (input)="lastName.set($any($event.target).value)"
+    />
+  </label>
+  <div class="account__buttons">
+    <app-btn variant="primary" size="sm" type="submit" [disabled]="!canSave()">
+      {{ 'PROFILE.save' | translate }}
+    </app-btn>
+  </div>
+</form>

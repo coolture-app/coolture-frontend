@@ -1,3 +1,4 @@
+import { InitialsPipe } from '../../pipes/initials.pipe';
 import {
   Component,
   inject,
@@ -29,7 +30,16 @@ export type FollowListType = 'followers' | 'following';
 @Component({
   selector: 'app-follow-list',
   standalone: true,
-  imports: [CommonModule, TranslatePipe, NgIcon, RouterModule, Btn, FollowBtn, RelationPill],
+  imports: [
+    InitialsPipe,
+    CommonModule,
+    TranslatePipe,
+    NgIcon,
+    RouterModule,
+    Btn,
+    FollowBtn,
+    RelationPill,
+  ],
   viewProviders: [provideIcons({ heroXMark })],
   templateUrl: './follow-list.html',
   styleUrl: './follow-list.scss',

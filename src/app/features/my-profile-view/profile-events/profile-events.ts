@@ -1,0 +1,206 @@
+import {
+  Component,
+  computed,
+  DestroyRef,
+  effect,
+  inject,
+  input,
+  signal,
+  untracked,
+} from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { TranslatePipe } from '@ngx-translate/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucidePlus, lucideSearch, lucideX } from '@ng-icons/lucide';
+import { PostCard } from '../../../core/models/posts/post-card.model';
+import { PostFilterParams } from '../../../core/models/posts/post-filter-params.model';
+import { UserProfile } from '../../../core/models/users/user-profile.model';
+import { PostService } from '../../../core/services/post/post.service';
+import { EventRow } from '../../../core/components/event-row/event-row';
+import { LoadState } from '../../../core/components/load-state/load-state';
+import { InfiniteScroll } from '../../../core/directives/infinite-scroll';
+
+export type ProfileTab = 'posts' | 'going' | 'interested';
+
+const PAGE = 20;
+const SEARCH_DELAY_MS = 300;
+
+/**
+ * A profile's events under its header: what the user posted, upcoming or past, and, for a friend who shares them,
+ * what they go to and are interested in. The tab and the past switch are in the URL, so Back from a post returns to
+ * them.
+ */
+@Component({
+  selector: 'app-profile-events',
+  imports: [TranslatePipe, NgIcon, RouterLink, EventRow, LoadState, InfiniteScroll],
+  viewProviders: [provideIcons({ lucidePlus, lucideSearch, lucideX })],
+  templateUrl: './profile-events.html',
+  styleUrl: './profile-events.scss',
+})
+export class ProfileEvents {
+  readonly user = input.required<UserProfile>();
+  readonly own = input(false);
+
+  private posts = inject(PostService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  private destroyRef = inject(DestroyRef);
+
+  /** Your own stances are in Plany, so your profile has only what you posted. */
+  readonly tabs = computed<ProfileTab[]>(() => {
+    const events = this.user().events;
+    if (this.own()) {
+      return ['posts'];
+    }
+    return (
+      [
+        ['posts', events?.posts],
+        ['going', events?.takesPart],
+        ['interested', events?.interested],
+      ] as const
+    )
+      .filter(([, count]) => !!count)
+      .map(([tab]) => tab);
+  });
+
+  private readonly params = signal(this.route.snapshot.queryParamMap);
+  readonly tab = computed<ProfileTab>(() => {
+    const asked = this.params().get('tab') as ProfileTab | null;
+    return asked && this.tabs().includes(asked) ? asked : this.tabs()[0];
+  });
+  /** Minione: asked for, or all there is from someone whose posts have all ended. */
+  readonly past = computed(() => {
+    const asked = this.params().get('past');
+    const events = this.user().events;
+    return asked === null ? !!events?.posts && events.upcomingPosts === 0 : asked === '1';
+  });
+
+  /** Which list is shown, as one value, so a new profile object with the same id loads nothing. */
+  private readonly list = computed(() => `${this.user().id} ${this.tab()} ${this.past()}`);
+
+  readonly typed = signal('');
+  private readonly q = signal('');
+  readonly items = signal<PostCard[]>([]);
+  readonly loading = signal(false);
+  readonly failed = signal(false);
+  readonly hasMore = signal(false);
+  /** Once shown for a list, the search stays, so emptying it doesn't take the field away mid-typing. */
+  readonly searchShown = signal(false);
+  private cursor: string | undefined;
+  private request = 0;
+  private searchTimer: ReturnType<typeof setTimeout> | undefined;
+
+  constructor() {
+    this.route.queryParamMap
+      .pipe(takeUntilDestroyed())
+      .subscribe((params) => this.params.set(params));
+
+    effect(() => {
+      this.list();
+      untracked(() => {
+        this.typed.set('');
+        this.q.set('');
+        this.searchShown.set(false);
+      });
+    });
+    effect(() => {
+      this.list();
+      this.q();
+      untracked(() => this.load(true));
+    });
+    this.destroyRef.onDestroy(() => clearTimeout(this.searchTimer));
+  }
+
+  show(tab: ProfileTab): void {
+    this.navigate({ tab: tab === this.tabs()[0] ? null : tab, past: null });
+  }
+
+  showPast(past: boolean): void {
+    this.navigate({ past: past ? '1' : '0' });
+  }
+
+  search(text: string): void {
+    this.typed.set(text);
+    clearTimeout(this.searchTimer);
+    this.searchTimer = setTimeout(() => this.q.set(text.trim()), SEARCH_DELAY_MS);
+  }
+
+  clearSearch(): void {
+    clearTimeout(this.searchTimer);
+    this.typed.set('');
+    this.q.set('');
+  }
+
+  loadMore(): void {
+    if (this.hasMore() && !this.loading()) {
+      this.load(false);
+    }
+  }
+
+  retry(): void {
+    this.load(this.items().length === 0);
+  }
+
+  removed(id: string): void {
+    this.items.update((items) => items.filter((post) => post.id !== id));
+  }
+
+  private navigate(queryParams: Record<string, string | null>): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams,
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
+
+  private filters(): PostFilterParams {
+    const user = this.user();
+    switch (this.tab()) {
+      case 'going':
+        return { participantId: user.id, participationTypes: ['TAKES_PART'], sortBy: 'UPCOMING' };
+      case 'interested':
+        return { participantId: user.id, participationTypes: ['INTERESTED'], sortBy: 'UPCOMING' };
+      default:
+        return {
+          authorId: user.id,
+          sortBy: this.past() ? 'PAST' : 'UPCOMING',
+          q: this.q() || undefined,
+        };
+    }
+  }
+
+  /** A newer request wins: an answer for a list that changed since is dropped. */
+  private load(fresh: boolean): void {
+    const request = fresh ? ++this.request : this.request;
+    if (fresh) {
+      this.items.set([]);
+      this.cursor = undefined;
+      this.hasMore.set(false);
+    }
+    this.loading.set(true);
+    this.failed.set(false);
+    this.posts
+      .getPosts({ ...this.filters(), cursor: this.cursor, limit: PAGE })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (page) => {
+          if (request !== this.request) return;
+          this.items.update((items) => [...items, ...page.items]);
+          this.cursor = page.page.nextCursor;
+          this.hasMore.set(page.page.hasMore);
+          this.loading.set(false);
+          if (page.page.hasMore || this.q()) {
+            this.searchShown.set(true);
+          }
+        },
+        error: (err) => {
+          if (request !== this.request) return;
+          console.error('Error loading profile events', err);
+          this.failed.set(true);
+          this.loading.set(false);
+        },
+      });
+  }
+}

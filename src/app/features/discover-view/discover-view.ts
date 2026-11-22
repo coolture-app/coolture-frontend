@@ -1,3 +1,4 @@
+import { InitialsPipe } from '../../core/pipes/initials.pipe';
 import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -32,6 +33,7 @@ import { ToastService } from '../../core/services/toast/toast.service';
 @Component({
   selector: 'app-discover-view',
   imports: [
+    InitialsPipe,
     TranslatePipe,
     NgIcon,
     ReactiveFormsModule,

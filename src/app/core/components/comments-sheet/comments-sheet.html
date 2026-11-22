@@ -39,7 +39,7 @@
                   <img [src]="avatar.url" alt="" class="sheet__avatar" />
                 } @else {
                   <span class="sheet__avatar sheet__avatar--placeholder">
-                    {{ author.firstName?.charAt(0) }}{{ author.lastName?.charAt(0) }}
+                    {{ author | initials }}
                   </span>
                 }
               </a>

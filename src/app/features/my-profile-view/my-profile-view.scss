@@ -245,6 +245,12 @@
     gap: var(--space-sm);
   }
 
+  &__shared {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: var(--text-meta);
+  }
+
   &__interests {
     display: flex;
     flex-wrap: wrap;
@@ -271,6 +277,12 @@
       ng-icon {
         display: flex;
       }
+    }
+
+    // Someone else's pick that isn't yours, so the shared ones stand out.
+    &--other {
+      background: var(--color-surface-alt);
+      color: var(--color-text-secondary);
     }
   }
 

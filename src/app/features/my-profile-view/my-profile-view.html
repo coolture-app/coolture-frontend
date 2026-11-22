@@ -64,7 +64,7 @@
               </button>
             } @else {
               <div class="profile__avatar profile__avatar--placeholder">
-                {{ user()?.firstName?.charAt(0) }}{{ user()?.lastName?.charAt(0) }}
+                {{ user() | initials }}
               </div>
             }
             @if (isOwnProfile()) {
@@ -174,15 +174,25 @@
         }
 
         @if (kinds().length || interests().length) {
+          @if (sharedCount()) {
+            <p class="profile__shared">
+              {{ 'PROFILE.shared' | translate: { count: sharedCount() } }}
+            </p>
+          }
           <ul class="profile__interests" [attr.aria-label]="'PROFILE.interests' | translate">
             @for (kind of kinds(); track kind.key) {
-              <li class="profile__interest profile__interest--kind">
+              <li
+                class="profile__interest profile__interest--kind"
+                [class.profile__interest--other]="!kind.shared"
+              >
                 <ng-icon [svg]="kind.icon" aria-hidden="true" />
                 {{ kind.label }}
               </li>
             }
             @for (interest of interests(); track interest.key) {
-              <li class="profile__interest">{{ interest.label }}</li>
+              <li class="profile__interest" [class.profile__interest--other]="!interest.shared">
+                {{ interest.label }}
+              </li>
             }
           </ul>
         }
@@ -241,7 +251,9 @@
         }
       </section>
 
-      <!-- The user's own posts go here, as a section after the header. -->
+      @if (!blocked() && user()?.events) {
+        <app-profile-events [user]="user()!" [own]="isOwnProfile()" />
+      }
     </div>
   </div>
 

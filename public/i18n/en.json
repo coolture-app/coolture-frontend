@@ -191,11 +191,19 @@
     "unblockTitle": "Unblock @{{username}}?",
     "unblockText": "You'll see each other's profiles and events again. Follows don't come back by themselves.",
     "removeAvatarTitle": "Remove the profile photo?",
-    "loadFailed": "Couldn't load the profile."
+    "loadFailed": "Couldn't load the profile.",
+    "shared": "In common: {{count}}"
   },
   "SETTINGS": {
     "title": "Settings",
-    "privacy": "Privacy"
+    "privacy": "Privacy",
+    "account": "Account",
+    "username": "Username",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "usernameRule": "3–32 characters: lowercase letters, digits, dots and underscores.",
+    "usernameTaken": "That name is taken.",
+    "saved": "Saved."
   },
   "DISCOVER": {
     "title": "Discover",
@@ -543,5 +551,20 @@
       "title": "Sign in to comment",
       "text": "Comments carry your name."
     }
+  },
+  "PROFILE_EVENTS": {
+    "title": "Events",
+    "posts": "Events",
+    "going": "Going",
+    "interested": "Interested",
+    "when": "When",
+    "upcoming": "Upcoming",
+    "past": "Past",
+    "search": "Search events",
+    "clearSearch": "Clear",
+    "noMatch": "Nothing matches “{{q}}”.",
+    "add": "Add an event",
+    "noUpcoming": "No upcoming events.",
+    "noPast": "No past events."
   }
 }

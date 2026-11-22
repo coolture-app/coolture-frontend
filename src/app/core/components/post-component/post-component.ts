@@ -1,3 +1,4 @@
+import { InitialsPipe } from '../../pipes/initials.pipe';
 import {
   afterNextRender,
   Component,
@@ -92,6 +93,7 @@ export type PostFold = 'marked' | 'unmarked' | null;
 @Component({
   selector: 'app-post-component',
   imports: [
+    InitialsPipe,
     NgIcon,
     CountedIcon,
     TranslatePipe,

@@ -1,3 +1,4 @@
+import { InitialsPipe } from '../../core/pipes/initials.pipe';
 import {
   afterNextRender,
   Component,
@@ -48,11 +49,13 @@ import { PhotoViewerService } from '../../core/services/photo-viewer/photo-viewe
 import { AvatarCropper } from '../../core/components/avatar-cropper/avatar-cropper';
 import { NotFoundView } from '../not-found-view/not-found-view';
 import { LoadState } from '../../core/components/load-state/load-state';
+import { ProfileEvents } from './profile-events/profile-events';
 
 /** Your own profile at `/profile`, and anyone's at `/users/:username`. */
 @Component({
   selector: 'app-user-profile-view',
   imports: [
+    InitialsPipe,
     TranslatePipe,
     NgIcon,
     AvatarCropper,
@@ -66,6 +69,7 @@ import { LoadState } from '../../core/components/load-state/load-state';
     HomeArea,
     NotFoundView,
     LoadState,
+    ProfileEvents,
   ],
   viewProviders: [
     provideIcons({
@@ -137,24 +141,44 @@ export class UserProfileView {
     { initialValue: [] as Interest[] },
   );
   /** In the catalogue's order, so every profile lists them the same way. */
+  /**
+   * On someone else's profile, the kinds and interests you picked too. They come first and keep the accent, and the
+   * rest turn grey. On your own, all of them count as shared.
+   */
+  private readonly mine = computed(() => {
+    const me = this.authService.currentUser();
+    return this.isOwnProfile() ? null : new Set([...(me?.kinds ?? []), ...(me?.interests ?? [])]);
+  });
   readonly interests = computed(() => {
     const picked = new Set(this.user()?.interests ?? []);
-    return this.interestCatalog()
-      .filter((interest) => picked.has(interest.key))
-      .map((interest) => ({ key: interest.key, label: label(interest, this.lang()) }));
+    return sharedFirst(
+      this.interestCatalog()
+        .filter((interest) => picked.has(interest.key))
+        .map((interest) => ({
+          key: interest.key,
+          label: label(interest, this.lang()),
+          shared: this.mine()?.has(interest.key) ?? true,
+        })),
+    );
   });
   /** Before the interests, also in the catalogue's order. */
   readonly kinds = computed(() => {
     const picked = new Set(this.user()?.kinds ?? []);
-    return this.kindsService
-      .kinds()
-      .filter((kind) => picked.has(kind.key))
-      .map((kind) => ({
-        key: kind.key,
-        label: this.kindsService.name(kind.key),
-        icon: kindIcon(kind.key),
-      }));
+    return sharedFirst(
+      this.kindsService
+        .kinds()
+        .filter((kind) => picked.has(kind.key))
+        .map((kind) => ({
+          key: kind.key,
+          label: this.kindsService.name(kind.key),
+          icon: kindIcon(kind.key),
+          shared: this.mine()?.has(kind.key) ?? true,
+        })),
+    );
   });
+  readonly sharedCount = computed(() =>
+    this.mine() ? [...this.kinds(), ...this.interests()].filter((chip) => chip.shared).length : 0,
+  );
 
   /** Month and year only. The parts of a full date, because Polish needs the month's genitive. */
   readonly since = computed(() => {
@@ -471,4 +495,9 @@ export class UserProfileView {
     this.showFollowing.set(!this.showFollowing());
     this.showFollowers.set(false);
   }
+}
+
+/** A stable sort: shared chips first, each group in the catalogue's order. */
+function sharedFirst<T extends { shared: boolean }>(chips: T[]): T[] {
+  return [...chips.filter((chip) => chip.shared), ...chips.filter((chip) => !chip.shared)];
 }

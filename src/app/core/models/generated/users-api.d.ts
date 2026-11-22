@@ -280,7 +280,7 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
-    /** @description followersCount, followingCount, bio, createdAt, interests and kinds are left out of a blocker's slim profile, and only there. */
+    /** @description followersCount, followingCount, bio, createdAt, interests, kinds and events are left out of a blocker's slim profile, and only there. */
     UserProfile: {
       /** Format: uuid */
       id: string;
@@ -301,6 +301,18 @@ export interface components {
       interests?: string[];
       /** @description The kinds of event picked, in the catalogue's order, empty if none. */
       kinds?: string[];
+      events?: components['schemas']['ProfileEvents'];
+    };
+    /** @description What the profile's event tabs hold, so an empty tab can be left out without asking for it. */
+    ProfileEvents: {
+      /** @description The user's posts, ended or not. */
+      posts: number;
+      /** @description The user's posts whose event hasn't ended. */
+      upcomingPosts: number;
+      /** @description Events not ended that the user marked Biorę udział. Only for the user themselves, or a friend they share their stances with (as on cards); left out otherwise. */
+      takesPart?: number;
+      /** @description The same for Interesuje mnie. */
+      interested?: number;
     };
     /** @description UserProfile's fields, plus what only the caller sees. */
     Me: {
@@ -321,6 +333,7 @@ export interface components {
       followsYou: boolean;
       interests: string[];
       kinds: string[];
+      events?: components['schemas']['ProfileEvents'];
       /** @description Whether the caller has picked their kinds of event. False until onboarding is saved, and for accounts from before kinds, which onboarding then asks again. */
       onboarded: boolean;
       /** @description Whether friends (mutual follows) see the caller's Interesuje mnie and Biorę udział. True until turned off. */
@@ -334,8 +347,11 @@ export interface components {
       coordinates: components['schemas']['GeoPoint'];
     };
     UserProfileUpdate: {
+      /** @description Trimmed, then 3-32 lowercase letters, digits, dots or underscores, else 400. Unique, else 409. */
       username?: string;
+      /** @description Trimmed. */
       firstName?: string;
+      /** @description Trimmed. */
       lastName?: string;
       bio?: string | null;
       shareStances?: boolean;
@@ -519,7 +535,7 @@ export interface operations {
   searchUsers: {
     parameters: {
       query?: {
-        /** @description Matches the username, first and last name. Without it, everyone. */
+        /** @description Words separated by spaces; any after the 8th are ignored. Every word must appear in the username, the first or the last name, ignoring case and diacritics ("jan kowalski"). Without it, everyone. */
         q?: string;
         /** @description The nextCursor of the previous page, unchanged. Opaque, don't parse it. */
         cursor?: components['parameters']['Cursor'];
@@ -595,6 +611,15 @@ export interface operations {
       400: components['responses']['BadRequest'];
       401: components['responses']['Unauthorized'];
       403: components['responses']['Forbidden'];
+      /** @description The username is taken */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
     };
   };
   getUserByUsername: {
