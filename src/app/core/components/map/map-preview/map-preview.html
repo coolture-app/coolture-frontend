@@ -104,8 +104,8 @@
             <span class="mini__ended">{{ 'POST.ended' | translate }}</span>
           }
         </span>
-        @if (placeName()) {
-          <span class="mini__meta">{{ placeName() }}</span>
+        @if (placeOf(post); as name) {
+          <span class="mini__meta">{{ name }}</span>
         }
       </div>
     </div>

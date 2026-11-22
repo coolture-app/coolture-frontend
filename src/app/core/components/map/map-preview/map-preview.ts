@@ -99,6 +99,7 @@ export class MapPreview {
     return this.many() ? (posts.find((post) => post.id === this.opened()) ?? null) : posts[0];
   });
   readonly placeName = computed(() => placeLine(this.place().posts[0]));
+  protected readonly placeOf = (post: PostMark) => placeLine(post);
   readonly directions = computed(() =>
     directionsUrl(
       this.place().coordinates,
