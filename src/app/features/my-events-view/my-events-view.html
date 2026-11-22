@@ -27,12 +27,33 @@
   </div>
 
   <div class="my-events__list">
-    @if (posts().items.length === 0) {
-      <p class="my-events__empty">{{ 'MY_EVENTS.no-events' | translate }}</p>
-    } @else {
-      @for (post of posts().items; track post.id) {
-        <app-event-card [post]="post" (cardClick)="goToPost($event)" />
+    @for (post of list.items(); track post.id) {
+      @if ($index === nextPageTrigger()) {
+        <div
+          class="my-events__trigger"
+          [appInfiniteScroll]="list.canLoadMore()"
+          (reachedEnd)="list.loadMore()"
+        ></div>
       }
+      <app-event-card [post]="post" (cardClick)="goToPost($event)" />
+    }
+    <div
+      class="my-events__trigger"
+      [appInfiniteScroll]="list.canLoadMore()"
+      (reachedEnd)="list.loadMore()"
+    ></div>
+
+    @if (list.failed()) {
+      <div class="my-events__empty" role="alert">
+        <span>{{ 'MY_EVENTS.load-error' | translate }}</span>
+        <app-btn variant="secondary" size="sm" (btnClick)="list.retry()">{{
+          'MY_EVENTS.retry' | translate
+        }}</app-btn>
+      </div>
+    } @else if (list.loading()) {
+      <p class="my-events__empty" role="status">{{ 'MY_EVENTS.loading' | translate }}</p>
+    } @else if (list.items().length === 0) {
+      <p class="my-events__empty">{{ 'MY_EVENTS.no-events' | translate }}</p>
     }
   </div>
 </div>

@@ -95,6 +95,14 @@ html.comments-docked app-full-post-view {
   }
 }
 
+// An inline SVG sits on its icon's text baseline, a few pixels below the icon's box, and the box
+// clips what's below. An SVG's own clip snaps to whole pixels, so at a fractional height a small
+// icon also loses the top row of its stroke, such as the calendar's rings.
+ng-icon svg {
+  display: block;
+  overflow: visible;
+}
+
 // An outline icon drawn filled, for the "on" state of a toggle.
 ng-icon.icon--filled svg {
   fill: currentColor;

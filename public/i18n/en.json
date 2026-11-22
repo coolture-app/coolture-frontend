@@ -110,7 +110,9 @@
     "friendsInterested": "Interested: {{names}}",
     "friendsSee": "Friends will see it",
     "ended": "Ended",
-    "endedHint": "The event has ended"
+    "endedHint": "The event has ended",
+    "links": "Links",
+    "opens-in-new-tab": "opens in a new tab"
   },
   "NAVBAR": {
     "main-page": "Home",
@@ -215,8 +217,6 @@
     "starts-at": "Start",
     "starts-at-error": "Say when it starts.",
     "ends-at": "End",
-    "event-url": "Event link",
-    "event-url-placeholder": "https://...",
     "description": "Event description",
     "description-placeholder": "Describe your event...",
     "description-error-required": "Description is required.",
@@ -254,7 +254,15 @@
     "remove-end": "Remove the end",
     "where": "Where?",
     "online-hint": "You can add the stream or meeting link at the bottom.",
-    "starts-at-past": "The start can't be in the past"
+    "starts-at-past": "The start can't be in the past",
+    "links": "Links ({{count}}/{{max}})",
+    "link-url": "Address",
+    "link-url-placeholder": "e.g. tickets.com/concert",
+    "link-url-error": "Enter a web address, e.g. tickets.com/concert.",
+    "link-label": "Name",
+    "link-label-placeholder": "e.g. Tickets",
+    "add-link": "Add a link",
+    "remove-link": "Remove the link"
   },
   "COMMENT": {
     "title": "Comments",
@@ -306,7 +314,10 @@
     "no-events": "You don't have any events yet... Sad face.",
     "all": "All",
     "interested": "Interested",
-    "takes_part": "Going"
+    "takes_part": "Going",
+    "loading": "Loading your plans…",
+    "load-error": "Couldn't load your plans.",
+    "retry": "Try again"
   },
   "INTERESTS": {
     "title": "Your interests",

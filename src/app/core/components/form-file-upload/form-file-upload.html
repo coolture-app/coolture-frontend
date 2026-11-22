@@ -1,5 +1,5 @@
 <div class="form-file-upload">
-  <label *ngIf="label" for="fileUploadInput" class="form-file-upload__label">
+  <label *ngIf="label" for="fileUploadInput" class="form-file-upload__label" [class.form-file-upload__label--heading]="heading">
     {{ label }}
     <span *ngIf="!required" class="form-file-upload__optional">{{
       optionalLabel | translate

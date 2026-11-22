@@ -19,6 +19,8 @@ export class FormTextarea {
   @Input() maxLength?: number;
   @Input() inputId = '';
   @Input() optionalLabel = 'POST_FORM.optional';
+  /** Labels a whole part of the form, not a field inside one. */
+  @Input() heading = false;
   @Input() errorMessages: Record<string, string> = {};
 
   get currentLength(): number {

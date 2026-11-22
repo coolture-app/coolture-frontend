@@ -212,6 +212,17 @@ describe('PostForm editing an existing post', () => {
     expect(component.startsAtControl.hasError('past')).toBeFalse();
   });
 
+  it('shows the saved links, and sends an empty list once they are removed', () => {
+    load({
+      ...post('2030-05-01T17:00:00Z'),
+      links: [{ url: 'https://a.example', label: 'Bilety' }],
+    });
+
+    expect(component.links.getRawValue()).toEqual([{ url: 'https://a.example', label: 'Bilety' }]);
+    component.removeLink(0);
+    expect(submit().links).toEqual([]);
+  });
+
   it('leaves the end empty for a post without one', () => {
     load(post(SUMMER_START));
 
@@ -340,14 +351,14 @@ describe('PostForm fields', () => {
     fixture.detectChanges();
 
     expect(element.querySelector('#endsAt')).toBeNull();
-    expect(element.querySelector('.post-form__add')).toBeNull();
+    expect(element.querySelector('.post-form__end-options .post-form__add')).toBeNull();
     expect(submit()).toEqual(jasmine.objectContaining({ endsAt: null, openEnded: true }));
 
     component.resetSubmitting();
     checkbox.click();
     fixture.detectChanges();
 
-    expect(element.querySelector('.post-form__add')).not.toBeNull();
+    expect(element.querySelector('.post-form__end-options .post-form__add')).not.toBeNull();
     expect(element.querySelector('#endsAt')).toBeNull();
     expect(submit()!.openEnded).toBeFalse();
   });
@@ -379,5 +390,46 @@ describe('PostForm fields', () => {
     component.removeEnd();
 
     expect(submit()!.endsAt).toBeNull();
+  });
+
+  it('adds up to three links, with an address needed and a name not', () => {
+    fillEventFields();
+    component.postForm.controls.type.setValue('ONLINE');
+    fixture.detectChanges();
+    const adds = () =>
+      Array.from(
+        fixture.nativeElement.querySelectorAll('.post-form__add') as NodeListOf<HTMLElement>,
+      ).map((button) => button.textContent!.trim());
+
+    component.addLink();
+    component.addLink();
+    component.addLink();
+    component.addLink();
+    fixture.detectChanges();
+
+    expect(component.links.length).toBe(3);
+    expect(adds()).not.toContain('+ POST_FORM.add-link');
+    expect(submit()).toBeUndefined();
+
+    component.links.at(0).setValue({ url: 'bilety.pl/koncert', label: ' Bilety ' });
+    component.links.at(1).setValue({ url: 'https://fb.com/events/1', label: '   ' });
+    component.removeLink(2);
+
+    expect(submit()!.links).toEqual([
+      { url: 'https://bilety.pl/koncert', label: ' Bilety ' },
+      { url: 'https://fb.com/events/1', label: '   ' },
+    ]);
+  });
+
+  it('refuses an address that is not one', () => {
+    component.addLink();
+    const url = component.links.at(0).controls.url;
+
+    for (const typed of ['bilety', 'bilety pl', 'javascript:alert(1)']) {
+      url.setValue(typed);
+      expect(url.valid).withContext(typed).toBeFalse();
+    }
+    url.setValue('www.bilety.pl');
+    expect(url.valid).toBeTrue();
   });
 });

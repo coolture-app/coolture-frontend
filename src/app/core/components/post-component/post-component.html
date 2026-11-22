@@ -44,6 +44,8 @@
                       routerLink="/"
                       [queryParams]="kindParams(kind.key)"
                       [appTooltip]="'POST.kindHint' | translate: { kind: kind.name }"
+                      (click)="$event.stopPropagation()"
+                      (keydown.enter)="$event.stopPropagation()"
                       >{{ kind.name }}</a
                     >
                   }
@@ -148,6 +150,9 @@
           </button>
         }
       </div>
+    }
+    @if (data.links?.length) {
+      <app-post-links [links]="data.links!" />
     }
     @if (photos.length > 0) {
       <!-- The first photo's shape, from the data, so the frame never changes as photos load. -->

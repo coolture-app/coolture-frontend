@@ -574,6 +574,18 @@ describe('PostComponent', () => {
       ]);
     });
 
+    it('opens the kind, not the author’s profile, by click or Enter', async () => {
+      render(detail(['stage']), true);
+      await flushKinds();
+      const navigate = spyOn(TestBed.inject(Router), 'navigate');
+      const link = element().querySelector<HTMLAnchorElement>('.post__kind')!;
+
+      link.click();
+      link.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+
+      expect(navigate).not.toHaveBeenCalledWith(['/users', jasmine.anything()]);
+    });
+
     it('shows nothing before a kind is derived', async () => {
       render(detail([]), true);
       await new Promise((resolve) => setTimeout(resolve));
@@ -586,6 +598,37 @@ describe('PostComponent', () => {
       await new Promise((resolve) => setTimeout(resolve));
 
       expect(element().querySelector('.post__kinds')).toBeNull();
+    });
+  });
+
+  describe('links', () => {
+    const links = () =>
+      Array.from(element().querySelectorAll<HTMLAnchorElement>('.post-links__link')).map((link) => [
+        link.textContent!.trim(),
+        link.getAttribute('href'),
+        link.target,
+      ]);
+
+    it('shows each by its name or domain, in a new tab, on cards too', () => {
+      render(
+        card({
+          links: [
+            { url: 'https://bilety.example/k', label: 'Bilety' },
+            { url: 'https://www.fb.com/e' },
+          ],
+        }),
+      );
+
+      expect(links()).toEqual([
+        ['Bilety', 'https://bilety.example/k', '_blank'],
+        ['fb.com', 'https://www.fb.com/e', '_blank'],
+      ]);
+    });
+
+    it('leaves no line when there are none', () => {
+      render(card());
+
+      expect(element().querySelector('app-post-links')).toBeNull();
     });
   });
 

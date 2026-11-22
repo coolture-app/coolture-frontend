@@ -95,3 +95,12 @@
   font-size: calc($size * 0.4);
   user-select: none;
 }
+
+// A form's top-level part, such as a post's title, date or photos. The fields inside a part keep
+// their smaller labels, so a reader sees two levels.
+@mixin section-title {
+  margin: 0;
+  font-size: var(--text-base);
+  font-weight: var(--font-semibold);
+  color: var(--color-text);
+}

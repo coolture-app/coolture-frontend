@@ -1,0 +1,43 @@
+// One line that wraps like a sentence, so links read as text, not as the kinds' or filters' pills.
+// Grey like the date and place, so they don't outshine the post; the arrow says they're links.
+.post-links {
+  margin: 0;
+  padding: 0 var(--space-md) var(--space-sm);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: var(--color-text-tertiary);
+  overflow-wrap: anywhere;
+}
+
+.post-links__icon {
+  --ng-icon__size: 14px;
+  margin-right: 4px;
+  vertical-align: -2px;
+}
+
+.post-links__link {
+  color: var(--color-text-secondary);
+  text-decoration: none;
+
+  ng-icon {
+    --ng-icon__size: 12px;
+    margin-left: 1px;
+    vertical-align: -1px;
+  }
+
+  &:hover,
+  &:focus-visible {
+    color: var(--color-accent);
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+}
+
+.post-links__dot {
+  margin: 0 var(--space-sm);
+}
