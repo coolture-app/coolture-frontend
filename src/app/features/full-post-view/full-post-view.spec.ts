@@ -38,7 +38,7 @@ describe('FullPostView', () => {
     } as PostDetail);
     TestBed.tick();
 
-    expect(TestBed.inject(BackService).label('/posts/p1')).toEqual({ text: 'Koncert' });
+    expect(TestBed.inject(BackService).target('/posts/p1').label).toEqual({ text: 'Koncert' });
   });
 });
 

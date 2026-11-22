@@ -15,6 +15,7 @@ import { ConfirmDialog } from './core/components/confirm-dialog/confirm-dialog';
 import { SignInPrompt } from './core/components/sign-in-prompt/sign-in-prompt';
 import { distinctUntilChanged, filter, first, map } from 'rxjs';
 import { devTools } from '../environments/dev-tools';
+import { pathOf } from './core/services/back/back.service';
 
 @Component({
   selector: 'app-root',
@@ -61,7 +62,7 @@ export class App implements OnInit {
     this.router.events
       .pipe(
         filter((event) => event instanceof NavigationEnd),
-        map((event) => event.urlAfterRedirects.split(/[?#]/)[0]),
+        map((event) => pathOf(event.urlAfterRedirects)),
         distinctUntilChanged(),
       )
       .subscribe(() => {

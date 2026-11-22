@@ -67,12 +67,12 @@ describe('BackService', () => {
       ['/nowhere', { key: 'BACK.previous' }],
     ];
     for (const [url, label] of cases) {
-      it(`${url}`, () => expect(back.label(url)).toEqual(label as never));
+      it(`${url}`, () => expect(back.target(url).label).toEqual(label as never));
     }
 
     it('a post by its title, once the post page knows it', () => {
       back.rememberPostTitle('p1', 'Koncert w parku');
-      expect(back.label('/posts/p1')).toEqual({ text: 'Koncert w parku' });
+      expect(back.target('/posts/p1').label).toEqual({ text: 'Koncert w parku' });
     });
   });
 

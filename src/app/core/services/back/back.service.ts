@@ -99,7 +99,7 @@ export class BackService {
   }
 
   /** Reads the post titles, so a name shown updates once its title is known. */
-  label(url: string): PageLabel {
+  private label(url: string): PageLabel {
     const tree = this.router.parseUrl(url);
     const [first = '', second = '', third] =
       tree.root.children['primary']?.segments.map((segment) => segment.path) ?? [];
@@ -185,6 +185,6 @@ const PROFILE_PAGES: Record<string, string> = {
   interests: 'PROFILE.interests',
 };
 
-function pathOf(url: string): string {
+export function pathOf(url: string): string {
   return url.split(/[?#]/)[0];
 }

@@ -17,6 +17,7 @@ import { AuthService } from '../../services/auth/auth.service';
 import { HomeTapService } from '../../services/home-tap/home-tap.service';
 import { Btn } from '../btn/btn';
 import { Tooltip } from '../../directives/tooltip';
+import { pathOf } from '../../services/back/back.service';
 
 @Component({
   selector: 'app-navbar',
@@ -80,7 +81,7 @@ export class Navbar {
    * an ordinary link.
    */
   homeTapped(event: MouseEvent): void {
-    if (this.router.url.split(/[?#]/)[0] !== '/') {
+    if (pathOf(this.router.url) !== '/') {
       return;
     }
     event.preventDefault();
