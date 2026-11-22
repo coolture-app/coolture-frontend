@@ -133,7 +133,6 @@ describe('LocationService', () => {
 
       service.measureFrom({ latitude: 54.35, longitude: 18.65 });
 
-      expect(service.known()).toBeTrue();
       expect(service.metersTo({ latitude: 54.35, longitude: 18.65 })).toBe(0);
       const gdynia = service.metersTo({ latitude: 54.52, longitude: 18.53 })!;
       expect(gdynia).toBeGreaterThan(20_000);

@@ -1,4 +1,4 @@
-import { computed, inject, Injectable, PLATFORM_ID, signal } from '@angular/core';
+import { inject, Injectable, PLATFORM_ID, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { GeoPoint } from '../../models/common/geo.model';
 
@@ -53,9 +53,6 @@ export class LocationService {
    * inside the radius never shows more than the radius, even if the browser's later readings moved.
    */
   private readonly listCentre = signal<GeoPoint | null>(null);
-  /** Whether a position is known, so cards can show distances. */
-  readonly known = computed(() => (this.listCentre() ?? this.precise()) !== null);
-
   /** Metres from the user to a point. Null when no position is known. */
   metersTo(point: GeoPoint): number | null {
     const from = this.listCentre() ?? this.precise();

@@ -66,13 +66,6 @@ export class PostListStore {
     this.fetch();
   }
 
-  refresh(): void {
-    const query = this.query();
-    if (query) {
-      this.start(query);
-    }
-  }
-
   /**
    * A new session, like `start`, that keeps what's shown until its first page arrives. Resolves false
    * only if that page failed, so the list is still the old one. A list started meanwhile wins.

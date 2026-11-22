@@ -168,7 +168,7 @@ describe('PostListStore', () => {
       store.start({ kind: 'feed' });
       expectFeedRequest().flush(page(['a']));
 
-      store.refresh();
+      store.start({ kind: 'feed' });
       expect(ids()).toEqual([]);
       expectFeedRequest().flush(page(['a']));
 
