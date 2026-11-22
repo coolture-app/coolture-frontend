@@ -17,14 +17,12 @@
 
 .events__tabs {
   display: flex;
-  gap: var(--space-md);
-  overflow-x: auto;
   border-bottom: 1px solid var(--color-border);
-  scrollbar-width: none;
 }
 
 .events__tab {
-  flex-shrink: 0;
+  flex: 1 1 0;
+  min-width: 0;
   min-height: 44px;
   padding: 0 var(--space-xs);
   border: none;
@@ -34,6 +32,7 @@
   font: inherit;
   font-size: var(--text-body);
   font-weight: var(--font-medium);
+  text-align: center;
   cursor: pointer;
 
   &--on {

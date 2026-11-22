@@ -110,11 +110,23 @@ describe('ProfileEvents', () => {
     expect(element().querySelector('.events__add')).not.toBeNull();
   });
 
-  it('offers the search once the list has more than a page', async () => {
-    await render({ posts: 40, upcomingPosts: 40 });
-    answer([post('a')], true);
+  it('searches a short list too, and keeps the words from Nadchodzące to Minione', async () => {
+    await render({ posts: 2, upcomingPosts: 1 });
+    answer([post('a')]);
+    const input = element().querySelector<HTMLInputElement>('.events__search input')!;
 
-    expect(element().querySelector('.events__search')).not.toBeNull();
+    input.value = 'jazz';
+    input.dispatchEvent(new Event('input'));
+    await new Promise((resolve) => setTimeout(resolve, 350));
+    expect(answer([]).request.params.get('q')).toBe('jazz');
+
+    element().querySelectorAll<HTMLButtonElement>('.events__switch-option')[1].click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const past = answer([]).request.params;
+    expect([past.get('sortBy'), past.get('q')]).toEqual(['PAST', 'jazz']);
+    expect(element().querySelector<HTMLInputElement>('.events__search input')!.value).toBe('jazz');
   });
 
   it('shows nothing for someone with nothing to show', async () => {

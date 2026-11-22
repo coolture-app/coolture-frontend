@@ -43,29 +43,27 @@
             {{ 'PROFILE_EVENTS.past' | translate }}
           </button>
         </div>
-        @if (searchShown()) {
-          <label class="events__search">
-            <ng-icon name="lucideSearch" aria-hidden="true" />
-            <input
-              type="search"
-              [placeholder]="'PROFILE_EVENTS.search' | translate"
-              [attr.aria-label]="'PROFILE_EVENTS.search' | translate"
-              [value]="typed()"
-              (input)="search($any($event.target).value)"
-              (keydown.escape)="clearSearch()"
-            />
-            @if (typed()) {
-              <button
-                type="button"
-                class="events__search-clear"
-                [attr.aria-label]="'PROFILE_EVENTS.clearSearch' | translate"
-                (click)="clearSearch()"
-              >
-                <ng-icon name="lucideX" aria-hidden="true" />
-              </button>
-            }
-          </label>
-        }
+        <label class="events__search">
+          <ng-icon name="lucideSearch" aria-hidden="true" />
+          <input
+            type="search"
+            [placeholder]="'PROFILE_EVENTS.search' | translate"
+            [attr.aria-label]="'PROFILE_EVENTS.search' | translate"
+            [value]="typed()"
+            (input)="search($any($event.target).value)"
+            (keydown.escape)="clearSearch()"
+          />
+          @if (typed()) {
+            <button
+              type="button"
+              class="events__search-clear"
+              [attr.aria-label]="'PROFILE_EVENTS.clearSearch' | translate"
+              (click)="clearSearch()"
+            >
+              <ng-icon name="lucideX" aria-hidden="true" />
+            </button>
+          }
+        </label>
       </div>
     }
 

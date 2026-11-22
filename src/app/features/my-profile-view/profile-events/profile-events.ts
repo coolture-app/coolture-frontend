@@ -76,8 +76,12 @@ export class ProfileEvents {
     return asked === null ? !!events?.posts && events.upcomingPosts === 0 : asked === '1';
   });
 
-  /** Which list is shown, as one value, so a new profile object with the same id loads nothing. */
+  /**
+   * Which list is shown, as one value, so a new profile object with the same id loads nothing. The search outlives
+   * the switch between upcoming and past, not a new tab or profile.
+   */
   private readonly list = computed(() => `${this.user().id} ${this.tab()} ${this.past()}`);
+  private readonly searched = computed(() => `${this.user().id} ${this.tab()}`);
 
   readonly typed = signal('');
   private readonly q = signal('');
@@ -85,8 +89,6 @@ export class ProfileEvents {
   readonly loading = signal(false);
   readonly failed = signal(false);
   readonly hasMore = signal(false);
-  /** Once shown for a list, the search stays, so emptying it doesn't take the field away mid-typing. */
-  readonly searchShown = signal(false);
   private cursor: string | undefined;
   private request = 0;
   private searchTimer: ReturnType<typeof setTimeout> | undefined;
@@ -97,11 +99,11 @@ export class ProfileEvents {
       .subscribe((params) => this.params.set(params));
 
     effect(() => {
-      this.list();
+      this.searched();
       untracked(() => {
+        clearTimeout(this.searchTimer);
         this.typed.set('');
         this.q.set('');
-        this.searchShown.set(false);
       });
     });
     effect(() => {
@@ -191,9 +193,6 @@ export class ProfileEvents {
           this.cursor = page.page.nextCursor;
           this.hasMore.set(page.page.hasMore);
           this.loading.set(false);
-          if (page.page.hasMore || this.q()) {
-            this.searchShown.set(true);
-          }
         },
         error: (err) => {
           if (request !== this.request) return;
