@@ -95,9 +95,11 @@ html.comments-docked app-full-post-view {
   }
 }
 
-// An SVG clips to its box, and that clip snaps to whole pixels. A card at a fractional height
-// then loses the top row of a small icon's stroke, such as the calendar's rings.
+// An inline SVG sits on its icon's text baseline, a few pixels below the icon's box, and the box
+// clips what's below. An SVG's own clip snaps to whole pixels, so at a fractional height a small
+// icon also loses the top row of its stroke, such as the calendar's rings.
 ng-icon svg {
+  display: block;
   overflow: visible;
 }
 

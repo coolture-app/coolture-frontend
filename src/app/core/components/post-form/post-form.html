@@ -119,7 +119,7 @@
 
   <section class="post-form__section" aria-labelledby="links-label">
     <h3 class="post-form__section-title" id="links-label">
-      {{ 'POST_FORM.links' | translate: { max: maxLinks } }}
+      {{ 'POST_FORM.links' | translate: { count: links.length, max: maxLinks } }}
     </h3>
     @for (link of links.controls; track link; let i = $index) {
       <div class="post-form__link">

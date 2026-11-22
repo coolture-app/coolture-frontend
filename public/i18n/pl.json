@@ -255,7 +255,7 @@
     "where": "Gdzie?",
     "online-hint": "Link do transmisji lub spotkania możesz dodać na dole.",
     "starts-at-past": "Początek nie może być w przeszłości",
-    "links": "Linki (do {{max}})",
+    "links": "Linki ({{count}}/{{max}})",
     "link-url": "Adres",
     "link-url-placeholder": "np. bilety.pl/koncert",
     "link-url-error": "Wpisz adres strony, np. bilety.pl/koncert.",

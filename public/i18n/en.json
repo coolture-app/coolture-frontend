@@ -255,7 +255,7 @@
     "where": "Where?",
     "online-hint": "You can add the stream or meeting link at the bottom.",
     "starts-at-past": "The start can't be in the past",
-    "links": "Links (up to {{max}})",
+    "links": "Links ({{count}}/{{max}})",
     "link-url": "Address",
     "link-url-placeholder": "e.g. tickets.com/concert",
     "link-url-error": "Enter a web address, e.g. tickets.com/concert.",
