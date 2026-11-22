@@ -57,7 +57,6 @@ export class DiscoverView implements OnInit, OnDestroy {
   private retries = new Subject<void>();
   readonly loading = signal(true);
   readonly failed = signal(false);
-  followingIds = signal<Set<string>>(new Set());
 
   users = signal<PaginatedResponse<UserListItem>>({
     items: [],
@@ -65,7 +64,6 @@ export class DiscoverView implements OnInit, OnDestroy {
   });
 
   ngOnInit() {
-    this.loadFollowingIds();
     const typed = this.searchControl.valueChanges.pipe(
       startWith(''),
       debounceTime(400),
@@ -104,37 +102,18 @@ export class DiscoverView implements OnInit, OnDestroy {
     this.retries.next();
   }
 
-  private async loadFollowingIds(): Promise<void> {
-    try {
-      const currentUserId = this.authService.currentUser()?.id;
-      if (!currentUserId) return;
-      const res = await firstValueFrom(
-        this.relationsService.getFollowing(currentUserId, { limit: 100, cursor: '' }),
-      );
-      this.followingIds.set(new Set(res.items.map((u) => u.id)));
-    } catch {
-      // ignore
-    }
-  }
-
   async toggleFollow(user: UserListItem) {
-    const isCurrentlyFollowing = this.followingIds().has(user.id);
+    const following = !user.isFollowing;
     try {
-      if (isCurrentlyFollowing) {
-        await firstValueFrom(this.relationsService.unfollow(user.id));
-        this.followingIds.update((set) => {
-          const newSet = new Set(set);
-          newSet.delete(user.id);
-          return newSet;
-        });
-      } else {
-        await firstValueFrom(this.relationsService.follow(user.id));
-        this.followingIds.update((set) => {
-          const newSet = new Set(set);
-          newSet.add(user.id);
-          return newSet;
-        });
-      }
+      await firstValueFrom(
+        following ? this.relationsService.follow(user.id) : this.relationsService.unfollow(user.id),
+      );
+      this.users.update((shown) => ({
+        ...shown,
+        items: shown.items.map((item) =>
+          item.id === user.id ? { ...item, isFollowing: following } : item,
+        ),
+      }));
     } catch (err) {
       console.error('Error toggling follow', err);
       this.toast.failed();

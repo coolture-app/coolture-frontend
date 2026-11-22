@@ -373,6 +373,8 @@ export interface components {
       createdAt?: string;
       followersCount: number;
       followingCount: number;
+      /** @description Whether you follow this user, so a list needs no second request for who you follow. False for yourself and for a guest. */
+      isFollowing: boolean;
       /** @description Whether this user follows you. False for a guest. */
       followsYou: boolean;
     };

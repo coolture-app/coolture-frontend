@@ -49,7 +49,6 @@ export class FollowListComponent {
   readonly followChanged = output<number>();
 
   readonly fullName = fullName;
-  readonly followingIds = signal<Set<string>>(new Set());
   readonly busyId = signal<string | null>(null);
 
   readonly pages = searchedPages({
@@ -61,10 +60,6 @@ export class FollowListComponent {
         : this.relationsService.getFollowing(this.userId(), page, q);
     },
   });
-
-  constructor() {
-    void this.loadFollowingIds();
-  }
 
   /** The first Esc empties the search, and the next one is the sheet's, to close it. */
   escapeSearch(event: Event): void {
@@ -81,21 +76,15 @@ export class FollowListComponent {
 
   /** The row stays after an unfollow, so a mistaken tap can be undone. */
   async toggleFollow(user: UserListItem): Promise<void> {
-    const following = this.followingIds().has(user.id);
+    const following = user.isFollowing;
     this.busyId.set(user.id);
     try {
       await firstValueFrom(
         following ? this.relationsService.unfollow(user.id) : this.relationsService.follow(user.id),
       );
-      this.followingIds.update((ids) => {
-        const next = new Set(ids);
-        if (following) {
-          next.delete(user.id);
-        } else {
-          next.add(user.id);
-        }
-        return next;
-      });
+      this.pages.items.update((shown) =>
+        shown.map((item) => (item.id === user.id ? { ...item, isFollowing: !following } : item)),
+      );
       // Only your own counts are on screen; someone else's following count doesn't change.
       if (this.isOwnProfile()) {
         this.followChanged.emit(following ? -1 : 1);
@@ -105,19 +94,6 @@ export class FollowListComponent {
       this.toast.failed();
     } finally {
       this.busyId.set(null);
-    }
-  }
-
-  private async loadFollowingIds(): Promise<void> {
-    const currentUserId = this.authService.currentUser()?.id;
-    if (!currentUserId) return;
-    try {
-      const res = await firstValueFrom(
-        this.relationsService.getFollowing(currentUserId, { limit: 100, cursor: '' }),
-      );
-      this.followingIds.set(new Set(res.items.map((u) => u.id)));
-    } catch {
-      // The buttons then offer Obserwuj, and the follow itself says if it's already there.
     }
   }
 }
