@@ -16,7 +16,7 @@
         }
       </div>
     } @else {
-      <h2 class="events__title">{{ 'PROFILE_EVENTS.posts' | translate }}</h2>
+      <h2 class="events__title">{{ 'PROFILE_EVENTS.' + tab() | translate }}</h2>
     }
 
     @if (tab() === 'posts') {

@@ -1,5 +1,10 @@
 @use '_mixin' as *;
 
+:host {
+  display: block;
+  margin-top: var(--space-lg);
+}
+
 .events {
   display: flex;
   flex-direction: column;
