@@ -41,6 +41,19 @@ describe('MapReactions', () => {
     );
   });
 
+  it('takes back "Nie dla mnie" when the post is liked, as the server does', () => {
+    reactions.like({ ...post, myParticipation: 'NOT_INTERESTED' });
+
+    expect(reactions.shown(post)).toEqual(
+      jasmine.objectContaining({
+        myReaction: 'LIKE',
+        myParticipation: undefined,
+        positiveReactionCount: 1,
+      }),
+    );
+    http.match(() => true).forEach((r) => r.flush(null));
+  });
+
   it('keeps one stance at a time, with both counts in step', () => {
     reactions.stance(post, 'INTERESTED');
     reactions.stance(post, 'TAKES_PART');
