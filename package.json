@@ -5,13 +5,11 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
-    "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "serve:ssr:frontend": "node dist/frontend/server/server.mjs",
     "lint": "eslint \"src/**/*.{ts,html}\" --ext .ts,.html",
     "format": "prettier --write \"src/**/*.{ts,html,scss,css,json,md}\"",
     "prepare": "husky",
-    "api-types": "openapi-typescript ../coolture-aws/aws/lambdas/post-read/contracts/feed-api.yaml -o src/app/core/models/generated/feed-api.d.ts && openapi-typescript ../coolture-aws/aws/lambdas/user/contracts/users-api.yaml -o src/app/core/models/generated/users-api.d.ts && prettier --write src/app/core/models/generated && tsc -p tsconfig.api-types.json"
+    "api-types": "node scripts/api-types.mjs && prettier --write src/app/core/models/generated && tsc -p tsconfig.api-types.json"
   },
   "prettier": {
     "printWidth": 100,
