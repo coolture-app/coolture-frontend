@@ -159,7 +159,11 @@ export class AvatarCropper implements OnDestroy {
     canvas.width = OUTPUT;
     canvas.height = OUTPUT;
     const { sx, sy, side } = sourceSquare(view, VIEWPORT);
-    canvas.getContext('2d')!.drawImage(image, sx, sy, side, side, 0, 0, OUTPUT, OUTPUT);
+    const context = canvas.getContext('2d')!;
+    // JPEG has no transparency, so a transparent PNG or WebP would turn black.
+    context.fillStyle = '#fff';
+    context.fillRect(0, 0, OUTPUT, OUTPUT);
+    context.drawImage(image, sx, sy, side, side, 0, 0, OUTPUT, OUTPUT);
     this.saving.set(true);
     canvas.toBlob(
       (blob) => {
