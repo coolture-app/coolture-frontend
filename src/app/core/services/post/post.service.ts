@@ -10,6 +10,7 @@ import { PaginatedResponse } from '../../models/common/paginated-response.model'
 import { PostFilterParams } from '../../models/posts/post-filter-params.model';
 import { FeedPage } from '../../models/posts/feed-page.model';
 import { GeoPoint } from '../../models/common/geo.model';
+import { MapBounds } from '../../models/posts/map-bounds.model';
 import { PostMark } from '../../models/posts/post-mark.model';
 import { PostFriends } from '../../models/posts/friend-stances.model';
 
@@ -96,18 +97,15 @@ export class PostService {
   /** With excludeMine, the map leaves out what the feed leaves out: the viewer's own and reacted posts. */
   getMapMarks(
     filters: PostFilterParams = {},
-    bounds: {
-      leftUpper: { latitude: number; longitude: number };
-      rightBottom: { latitude: number; longitude: number };
-    },
+    bounds: MapBounds,
     excludeMine = false,
   ): Observable<PostMark[]> {
     let params = filterParams(filters);
     if (excludeMine) params = params.set('excludeMine', true);
-    params = params.set('leftUpper.latitude', bounds.leftUpper.latitude.toString());
-    params = params.set('leftUpper.longitude', bounds.leftUpper.longitude.toString());
-    params = params.set('rightBottom.latitude', bounds.rightBottom.latitude.toString());
-    params = params.set('rightBottom.longitude', bounds.rightBottom.longitude.toString());
+    params = params.set('leftUpper.latitude', bounds.leftUpper.latitude);
+    params = params.set('leftUpper.longitude', bounds.leftUpper.longitude);
+    params = params.set('rightBottom.latitude', bounds.rightBottom.latitude);
+    params = params.set('rightBottom.longitude', bounds.rightBottom.longitude);
 
     return this.http.get<PostMark[]>(this.apiUrl.path('/posts/map'), { params });
   }
