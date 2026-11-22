@@ -1,6 +1,6 @@
 import { Component, inject, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { lastValueFrom } from 'rxjs';
 
@@ -20,7 +20,6 @@ export class AddPostView {
   private postService = inject(PostService);
   private router = inject(Router);
   private toast = inject(ToastService);
-  private translate = inject(TranslateService);
 
   @ViewChild(PostForm) postFormComponent!: PostForm;
 
@@ -45,7 +44,7 @@ export class AddPostView {
     } catch (err) {
       console.error(err);
       this.postFormComponent.resetSubmitting();
-      this.toast.show(this.translate.instant('PROFILE.saveFailed'));
+      this.toast.failed();
     }
   }
 }

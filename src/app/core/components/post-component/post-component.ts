@@ -42,7 +42,7 @@ import { FriendsLine } from '../friends-line/friends-line';
 import { InteractionsService } from '../../services/interactions/interactions.service';
 import { AuthService } from '../../services/auth/auth.service';
 import { SignInPromptService } from '../../services/sign-in-prompt/sign-in-prompt.service';
-import { SignInReason } from '../sign-in-card/sign-in-card';
+import { STANCE_SIGN_IN_REASONS } from '../../models/common/sign-in-reason';
 import { PostOwnerMenu } from '../post-owner-menu/post-owner-menu';
 import { Btn } from '../btn/btn';
 import { CommentsSheetService } from '../../services/comments-sheet/comments-sheet.service';
@@ -64,12 +64,6 @@ import {
 } from '../../models/posts/viewer-state';
 import { ViewerStates } from '../../services/viewer-states/viewer-states';
 import { ToastService } from '../../services/toast/toast.service';
-
-const STANCE_REASONS: Record<ParticipationType, SignInReason> = {
-  INTERESTED: 'interested',
-  TAKES_PART: 'takesPart',
-  NOT_INTERESTED: 'notForMe',
-};
 
 /**
  * Ids of posts whose text someone expanded, so a card keeps its height when the list comes back,
@@ -345,7 +339,7 @@ export class PostComponent implements OnInit {
 
   /** A like takes back "Nie dla mnie", on the server too. */
   likePost(): void {
-    if (!this.signedIn('like')) {
+    if (!this.signInPrompt.allows('like')) {
       return;
     }
     const liked = !this.isLiked();
@@ -383,7 +377,7 @@ export class PostComponent implements OnInit {
   /** Cofnij on a folded card: back to the stance and like from before the fold. */
   undoFold(): void {
     const undo = undoable.get(this.data.id);
-    if (!undo || !this.signedIn('notForMe')) {
+    if (!undo || !this.signInPrompt.allows('notForMe')) {
       return;
     }
     undoable.delete(this.data.id);
@@ -405,15 +399,6 @@ export class PostComponent implements OnInit {
     }
   }
 
-  /** A guest's tap asks them to sign in, saying what it would have done. */
-  private signedIn(reason: SignInReason): boolean {
-    if (this.authService.isAuthenticated()) {
-      return true;
-    }
-    this.signInPrompt.ask(reason);
-    return false;
-  }
-
   private send(request: Observable<unknown>, revert: () => void, done?: () => void): void {
     this.requests.next(
       request.pipe(
@@ -430,7 +415,7 @@ export class PostComponent implements OnInit {
 
   /** "Nie dla mnie" takes back the like, on the server too. */
   private toggleParticipation(type: ParticipationType): void {
-    if (!this.signedIn(STANCE_REASONS[type])) {
+    if (!this.signInPrompt.allows(STANCE_SIGN_IN_REASONS[type])) {
       return;
     }
     const previous = this.data.myParticipation;

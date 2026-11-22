@@ -2,7 +2,7 @@ import { AccountForm } from './account-form/account-form';
 import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideChevronRight } from '@ng-icons/lucide';
 
@@ -23,7 +23,6 @@ export class SettingsView {
   private authService = inject(AuthService);
   private usersService = inject(Users);
   private toast = inject(ToastService);
-  private translate = inject(TranslateService);
 
   readonly shareStances = this.authService.shareStances;
 
@@ -36,7 +35,7 @@ export class SettingsView {
       await firstValueFrom(this.usersService.updateProfile(userId, { shareStances: share }));
     } catch {
       this.authService.markShareStances(!share);
-      this.toast.show(this.translate.instant('PROFILE.saveFailed'));
+      this.toast.failed();
     }
   }
 }

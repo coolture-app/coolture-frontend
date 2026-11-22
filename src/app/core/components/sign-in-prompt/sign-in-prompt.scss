@@ -1,9 +1,5 @@
 @use '_mixin' as *;
 
-.prompt {
-  @include dialog-panel;
-}
-
 .prompt__body {
   @include dialog-body;
   padding-top: var(--space-xl);

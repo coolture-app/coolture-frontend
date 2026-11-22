@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, signal, DestroyRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { catchError, forkJoin, of, switchMap } from 'rxjs';
@@ -32,7 +32,6 @@ export class EditPostView implements OnInit {
   private destroyRef = inject(DestroyRef);
   private backService = inject(BackService);
   private toast = inject(ToastService);
-  private translate = inject(TranslateService);
 
   @ViewChild(PostForm) postFormComponent!: PostForm;
 
@@ -113,7 +112,7 @@ export class EditPostView implements OnInit {
         error: (err) => {
           console.error('Error while updating post', err);
           this.postFormComponent.resetSubmitting();
-          this.toast.show(this.translate.instant('PROFILE.saveFailed'));
+          this.toast.failed();
         },
       });
   }

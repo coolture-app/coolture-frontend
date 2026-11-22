@@ -1,0 +1,21 @@
+.dialog {
+  width: min(400px, calc(100vw - 2 * var(--space-md)));
+  max-width: none;
+  margin: auto;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-xl);
+  color: var(--color-text);
+
+  &::backdrop {
+    background: var(--color-overlay);
+  }
+
+  @media (max-width: 639px) {
+    width: 100%;
+    margin: auto 0 0;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+}

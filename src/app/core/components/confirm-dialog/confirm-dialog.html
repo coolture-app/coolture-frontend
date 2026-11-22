@@ -1,8 +1,7 @@
-<dialog
-  #dialog
-  class="confirm"
-  aria-labelledby="confirm-title"
-  (cancel)="$event.preventDefault(); confirm.answer('cancel')"
+<app-dialog
+  [open]="!!confirm.request()"
+  titleId="confirm-title"
+  (dismissed)="confirm.answer('cancel')"
 >
   @if (confirm.request(); as request) {
     <div class="confirm__body">
@@ -31,4 +30,4 @@
       </div>
     </div>
   }
-</dialog>
+</app-dialog>

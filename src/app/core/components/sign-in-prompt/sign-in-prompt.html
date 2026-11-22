@@ -1,9 +1,4 @@
-<dialog
-  #dialog
-  class="prompt"
-  aria-labelledby="sign-in-prompt-title"
-  (cancel)="$event.preventDefault(); prompt.close()"
->
+<app-dialog [open]="!!prompt.reason()" titleId="sign-in-prompt-title" (dismissed)="prompt.close()">
   @if (prompt.reason(); as reason) {
     <div class="prompt__body">
       <button
@@ -17,4 +12,4 @@
       <app-sign-in-card [reason]="reason" titleId="sign-in-prompt-title" />
     </div>
   }
-</dialog>
+</app-dialog>

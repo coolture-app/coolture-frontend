@@ -9,7 +9,7 @@ import { DiscoverView } from './features/discover-view/discover-view';
 import { UserProfileView } from './features/my-profile-view/my-profile-view';
 import { signedIn } from './core/auth/auth.guard';
 import { GuestView } from './features/guest-view/guest-view';
-import { SignInReason } from './core/components/sign-in-card/sign-in-card';
+import { SignInReason } from './core/models/common/sign-in-reason';
 import { EditPostView } from './features/edit-post-view/edit-post-view';
 import { MyEventsView } from './features/my-events-view/my-events-view';
 import { AuthCallbackView } from './features/auth-callback-view/auth-callback-view';
