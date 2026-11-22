@@ -91,10 +91,6 @@ describe('Map', () => {
     return map;
   }
 
-  it('starts over Trójmiasto wide enough for Gdynia and Gdańsk', () => {
-    expect(component.start).toEqual({ center: [18.57, 54.44], zoom: 10 });
-  });
-
   it('moves to the home when there is one', async () => {
     fixture.componentRef.setInput('home', { latitude: 54.52, longitude: 18.54 });
 

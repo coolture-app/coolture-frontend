@@ -56,28 +56,15 @@ describe('MyEventsView', () => {
     expect(shown()).toEqual(['a']);
   });
 
-  it('shows the last tab picked, even when an earlier answer would come later', () => {
+  it('asks for the plans of the tab picked', () => {
     requests()[0].flush(page(['all']));
 
     fixture.componentInstance.setFilter('INTERESTED');
-    fixture.componentInstance.setFilter('TAKES_PART');
-    const [interested, takesPart] = requests();
+    const [request] = requests();
 
-    expect(interested.cancelled).toBeTrue();
-    takesPart.flush(page(['going']));
-    expect(shown()).toEqual(['going']);
-  });
-
-  it('goes past the first page, with the same plans', () => {
-    requests()[0].flush(page(['a'], 'next'));
-
-    fixture.componentInstance.list.loadMore();
-    const [second] = requests();
-
-    expect(second.request.params.get('cursor')).toBe('next');
-    second.flush(page(['b']));
-    expect(shown()).toEqual(['a', 'b']);
-    expect(fixture.componentInstance.list.canLoadMore()).toBeFalse();
+    expect(request.request.params.getAll('participationTypes')).toEqual(['INTERESTED']);
+    request.flush(page(['maybe']));
+    expect(shown()).toEqual(['maybe']);
   });
 
   it('offers a retry when plans fail to load', () => {

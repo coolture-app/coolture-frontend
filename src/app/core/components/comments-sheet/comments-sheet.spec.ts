@@ -15,6 +15,7 @@ import {
 import { CommentsService } from '../../services/comments/comments.service';
 import { AuthService } from '../../services/auth/auth.service';
 import { HttpTestingController } from '@angular/common/http/testing';
+import { until } from '../../testing/until.testing';
 
 @Component({ template: '' })
 class OtherPage {}
@@ -36,7 +37,7 @@ describe('CommentsSheet', () => {
 
   /** Back, then the frames the sheet waits for the router's scroll. */
   async function closing(): Promise<void> {
-    await new Promise((resolve) => setTimeout(resolve, 150));
+    await until(() => service.post() === null, 'the sheet to close');
     await fixture.whenStable();
   }
 
@@ -147,10 +148,11 @@ describe('CommentsSheet', () => {
 
     it('doesn’t close on a click in the feed', async () => {
       await opened();
+      const back = spyOn(history, 'back').and.callThrough();
 
       document.body.click();
-      await closing();
 
+      expect(back).not.toHaveBeenCalled();
       expect(service.post()).not.toBeNull();
     });
 
@@ -276,9 +278,11 @@ describe('CommentsSheet', () => {
     document.body.appendChild(dialog);
     dialog.showModal();
 
-    shell().onEscape();
-    await closing();
+    const back = spyOn(history, 'back').and.callThrough();
 
+    shell().onEscape();
+
+    expect(back).not.toHaveBeenCalled();
     expect(service.post()).not.toBeNull();
     dialog.remove();
   });

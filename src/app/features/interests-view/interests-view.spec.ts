@@ -104,6 +104,7 @@ describe('InterestsView', () => {
       expect(kind('concerts')).toBeDefined();
       expect(topic('jazz')).toBeUndefined();
       expect(footerButton('INTERESTS.next').disabled).toBeTrue();
+      expect(element.querySelector('app-back-link')).toBeNull();
     });
 
     it('goes on to the topics once a kind is picked, and back with the picks kept', async () => {
@@ -138,7 +139,6 @@ describe('InterestsView', () => {
 
       expect(interestsService.getUserInterests).toHaveBeenCalledWith('user-1');
       expect(topic('jazz').getAttribute('aria-pressed')).toBe('true');
-      expect(save()).toBeDefined();
     });
 
     it('goes on to the next step instead of leaving the page', async () => {
@@ -168,12 +168,6 @@ describe('InterestsView', () => {
       await click(footerButton('INTERESTS.skip'));
 
       expect(dismissed).toHaveBeenCalledTimes(1);
-    });
-
-    it('has no link back to the profile', async () => {
-      await render({}, true);
-
-      expect(element.querySelector('app-back-link')).toBeNull();
     });
   });
 
@@ -241,18 +235,9 @@ describe('InterestsView', () => {
         interests: ['jazz'],
       });
       expect(navigate).toHaveBeenCalledOnceWith('/profile');
-    });
-
-    it('marks the selection as made after saving', async () => {
-      await render({ kinds: ['concerts'] });
-      spyOn(TestBed.inject(Router), 'navigateByUrl').and.resolveTo(true);
-      await click(topic('rock'));
-
-      await click(save());
-
-      expect(authService.markOnboarded).toHaveBeenCalledWith({
-        kinds: ['concerts'],
-        interests: ['rock'],
+      expect(authService.markOnboarded).toHaveBeenCalledOnceWith({
+        kinds: jasmine.arrayWithExactContents(['concerts', 'stage']),
+        interests: ['jazz'],
       });
       expect(await fixture.componentInstance.confirmLeave()).toBeTrue();
     });

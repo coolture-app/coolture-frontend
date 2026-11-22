@@ -98,12 +98,9 @@ describe('the home URL', () => {
     expect(state.sort).toBe('UPCOMING');
   });
 
-  it('reads an old link’s type=offline as Wszędzie, or as its radius', () => {
+  it('reads an old link’s type=offline as Wszędzie, and a radius with no point as the reader’s own position', () => {
     expect(fromHomeParams({ type: 'offline' })).toEqual(DEFAULT);
     expect(fromHomeParams({ type: 'offline', radius: '10' }).filters.place).toBe('mine');
-  });
-
-  it('asks for the reader’s own position when a radius comes with no point', () => {
     expect(fromHomeParams({ radius: '10' }).filters.place).toBe('mine');
   });
 

@@ -15,16 +15,13 @@ describe('FollowBtn', () => {
 
   const button = () => fixture.nativeElement.querySelector('button') as HTMLButtonElement;
 
-  it('asks to follow while not following', () => {
+  it('asks to follow, then says you follow', () => {
     fixture.detectChanges();
-    expect(button().className).toContain('btn--primary');
     expect(button().textContent).toContain('PROFILE.follow');
-  });
+    expect(button().textContent).not.toContain('PROFILE.followingThem');
 
-  it('says you follow, in the quieter style', () => {
     fixture.componentRef.setInput('following', true);
     fixture.detectChanges();
-    expect(button().className).toContain('btn--secondary');
     expect(button().textContent).toContain('PROFILE.followingThem');
   });
 

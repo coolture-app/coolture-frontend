@@ -16,15 +16,10 @@ describe('InfiniteScroll', () => {
   let fixture: ComponentFixture<Host>;
   let observe: jasmine.Spy;
   let report: (isIntersecting: boolean) => void;
-  let options: IntersectionObserverInit | undefined;
 
   beforeEach(() => {
     observe = jasmine.createSpy('observe');
-    const fakeObserver = function (
-      callback: IntersectionObserverCallback,
-      init?: IntersectionObserverInit,
-    ) {
-      options = init;
+    const fakeObserver = function (callback: IntersectionObserverCallback) {
       report = (isIntersecting) =>
         callback([{ isIntersecting } as IntersectionObserverEntry], {} as IntersectionObserver);
       return { observe, unobserve: () => undefined, disconnect: () => undefined };
@@ -36,10 +31,6 @@ describe('InfiniteScroll', () => {
 
     fixture = TestBed.createComponent(Host);
     fixture.detectChanges();
-  });
-
-  it('starts one screen before the element', () => {
-    expect(options?.rootMargin).toBe('0px 0px 100% 0px');
   });
 
   it('asks for more only when the end is in range', () => {

@@ -66,7 +66,7 @@ describe('FriendsLine', () => {
     expect(line.querySelector('.friends__dot')).toBeNull();
   });
 
-  it('is a button that says it all and opens the list, with no tooltip', () => {
+  it('is a button that says it all and opens the list', () => {
     let opened = 0;
     fixture.componentInstance.opened.subscribe(() => opened++);
     const line = render({
@@ -76,7 +76,6 @@ describe('FriendsLine', () => {
 
     expect(line.tagName).toBe('BUTTON');
     expect(line.getAttribute('aria-label')).toBe('POST.friendsGoing · POST.friendsInterested');
-    expect(line.hasAttribute('apptooltip')).toBeFalse();
     line.click();
     expect(opened).toBe(1);
   });

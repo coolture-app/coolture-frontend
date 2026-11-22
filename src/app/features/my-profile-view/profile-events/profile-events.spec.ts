@@ -115,9 +115,15 @@ describe('ProfileEvents', () => {
     answer([post('a')]);
     const input = element().querySelector<HTMLInputElement>('.events__search input')!;
 
-    input.value = 'jazz';
-    input.dispatchEvent(new Event('input'));
-    await new Promise((resolve) => setTimeout(resolve, 350));
+    jasmine.clock().install();
+    try {
+      input.value = 'jazz';
+      input.dispatchEvent(new Event('input'));
+      jasmine.clock().tick(300);
+    } finally {
+      jasmine.clock().uninstall();
+    }
+    fixture.detectChanges();
     expect(answer([]).request.params.get('q')).toBe('jazz');
 
     element().querySelectorAll<HTMLButtonElement>('.events__switch-option')[1].click();

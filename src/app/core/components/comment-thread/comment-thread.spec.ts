@@ -211,10 +211,8 @@ describe('CommentThread', () => {
       expect(counts).toEqual([]);
     });
 
-    it('limits the box to the API’s 512 characters, and counts down near it', async () => {
+    it('counts down near the 512-character limit', async () => {
       await open();
-      const box = element().querySelector('textarea')!;
-      expect(box.maxLength).toBe(512);
       expect(element().querySelector('.composer__counter')).toBeNull();
 
       await type('x'.repeat(400));

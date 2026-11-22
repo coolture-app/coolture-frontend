@@ -9,7 +9,6 @@ import { PostService } from '../../core/services/post/post.service';
 import { PostDetail } from '../../core/models/posts/post-detail.model';
 
 describe('FullPostView', () => {
-  let component: FullPostView;
   let fixture: ComponentFixture<FullPostView>;
 
   beforeEach(async () => {
@@ -18,12 +17,7 @@ describe('FullPostView', () => {
     }).compileComponents();
 
     fixture = TestBed.createComponent(FullPostView);
-    component = fixture.componentInstance;
     fixture.detectChanges();
-  });
-
-  it('should create', () => {
-    expect(component).toBeTruthy();
   });
 
   it('links back to the home page when the tab came straight here', () => {
@@ -69,5 +63,6 @@ describe('FullPostView of a post that isn’t there', () => {
     const element = await openAndAnswer(500);
 
     expect(element.querySelector('app-not-found-view')).toBeNull();
+    expect(element.querySelector('app-load-state')).not.toBeNull();
   });
 });

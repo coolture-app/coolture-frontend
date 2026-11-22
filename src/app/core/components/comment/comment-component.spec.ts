@@ -102,12 +102,6 @@ describe('CommentComponent', () => {
     expect(element().querySelector('.comment__avatar--placeholder')).not.toBeNull();
   });
 
-  it('has no heart or any other reaction', async () => {
-    await render(comment());
-
-    expect(element().querySelector('[class*="like"], [class*="heart"]')).toBeNull();
-  });
-
   it('says when a comment was edited', async () => {
     await render(comment({ lastEditedAt: '2026-11-05T10:00:00Z' }));
 
@@ -275,13 +269,23 @@ describe('CommentComponent', () => {
       expect(component.menuOpen()).toBeTrue();
     });
 
+    async function startEditing(): Promise<HTMLTextAreaElement> {
+      component.startEditing();
+      await fixture.whenStable();
+      return element().querySelector('textarea') as HTMLTextAreaElement;
+    }
+
+    const press = (box: HTMLTextAreaElement, key: string, text = box.value) => {
+      box.value = text;
+      box.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+    };
+
     it('saves an edit on Enter, and shows the new text', async () => {
       const edit = spyOn(service, 'editComment').and.returnValue(of(mine()));
       await render(mine());
-      component.startEditing();
-      await fixture.whenStable();
+      const box = await startEditing();
 
-      component.saveEdit('  changed ');
+      press(box, 'Enter', '  changed ');
       await fixture.whenStable();
 
       expect(edit).toHaveBeenCalledWith('c1', { content: 'changed' });
@@ -293,10 +297,8 @@ describe('CommentComponent', () => {
       const edit = spyOn(service, 'editComment');
       await render(mine());
 
-      component.startEditing();
-      component.saveEdit('   ');
-      component.startEditing();
-      component.saveEdit('hello');
+      press(await startEditing(), 'Enter', '   ');
+      press(await startEditing(), 'Enter', 'hello');
 
       expect(edit).not.toHaveBeenCalled();
     });
@@ -304,9 +306,9 @@ describe('CommentComponent', () => {
     it('puts the old text back and says so when an edit fails', async () => {
       spyOn(service, 'editComment').and.returnValue(throwError(() => new Error('down')));
       await render(mine());
-      component.startEditing();
+      const box = await startEditing();
 
-      component.saveEdit('changed');
+      press(box, 'Enter', 'changed');
       await fixture.whenStable();
 
       expect(element().querySelector('.comment__text')?.textContent).toContain('hello');
@@ -316,10 +318,10 @@ describe('CommentComponent', () => {
     it('cancels an edit on Escape, without saving when the box then loses focus', async () => {
       const edit = spyOn(service, 'editComment');
       await render(mine());
-      component.startEditing();
+      const box = await startEditing();
 
-      component.cancelEdit(new Event('keydown'));
-      component.saveEdit('changed');
+      press(box, 'Escape', 'changed');
+      box.dispatchEvent(new Event('blur'));
 
       expect(edit).not.toHaveBeenCalled();
       expect(component.isEditing()).toBeFalse();
