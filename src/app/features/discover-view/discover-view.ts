@@ -15,7 +15,7 @@ import {
   tap,
   firstValueFrom,
 } from 'rxjs';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { heroMagnifyingGlass } from '@ng-icons/heroicons/outline';
 
@@ -49,7 +49,6 @@ export class DiscoverView implements OnInit, OnDestroy {
   private relationsService = inject(RelationsService);
   private authService = inject(AuthService);
   private toast = inject(ToastService);
-  private translate = inject(TranslateService);
 
   searchControl = new FormControl('');
   private destroy$ = new Subject<void>();
@@ -136,7 +135,7 @@ export class DiscoverView implements OnInit, OnDestroy {
       }
     } catch (err) {
       console.error('Error toggling follow', err);
-      this.toast.show(this.translate.instant('PROFILE.saveFailed'));
+      this.toast.failed();
     }
   }
 

@@ -270,7 +270,7 @@ export class UserProfileView {
       }
     } catch (err) {
       console.error('Error updating profile', err);
-      this.toast.show(this.translate.instant('PROFILE.saveFailed'));
+      this.toast.failed();
     } finally {
       this.savingBio.set(false);
     }
@@ -292,7 +292,7 @@ export class UserProfileView {
       }
     } catch (err) {
       console.error('Error toggling follow', err);
-      this.toast.show(this.translate.instant('PROFILE.saveFailed'));
+      this.toast.failed();
     }
   }
 
@@ -380,7 +380,7 @@ export class UserProfileView {
       }
     } catch (err) {
       console.error('Error blocking user', err);
-      this.toast.show(this.translate.instant('PROFILE.saveFailed'));
+      this.toast.failed();
     }
   }
 
@@ -432,7 +432,7 @@ export class UserProfileView {
       }
     } catch (err) {
       console.error('Error uploading avatar', err);
-      this.toast.show(this.translate.instant('PROFILE.saveFailed'));
+      this.toast.failed();
     } finally {
       this.isUploadingAvatar.set(false);
     }
@@ -458,7 +458,7 @@ export class UserProfileView {
       }
     } catch (err) {
       console.error('Error removing avatar', err);
-      this.toast.show(this.translate.instant('PROFILE.saveFailed'));
+      this.toast.failed();
     }
   }
 

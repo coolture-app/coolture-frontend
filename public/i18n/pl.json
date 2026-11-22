@@ -172,7 +172,6 @@
     "homeHint": "Widoczne tylko dla Ciebie",
     "shareStances": "Pokazuj znajomym, co mnie interesuje i gdzie idę",
     "shareStancesHint": "Znajomi to osoby, które obserwujesz i które obserwują Ciebie.",
-    "saveFailed": "Nie udało się zapisać. Spróbuj ponownie.",
     "more": "Więcej",
     "followingThem": "Obserwujesz",
     "friends": "Znajomi",
@@ -481,6 +480,9 @@
   },
   "CONFIRM": {
     "cancel": "Anuluj"
+  },
+  "TOAST": {
+    "failed": "Nie udało się zapisać. Spróbuj ponownie."
   },
   "LOAD": {
     "loading": "Wczytywanie",

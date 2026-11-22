@@ -172,7 +172,6 @@
     "homeHint": "Only you can see this",
     "shareStances": "Show friends what I’m interested in and where I go",
     "shareStancesHint": "Friends are people you follow who follow you back.",
-    "saveFailed": "Couldn’t save. Try again.",
     "more": "More",
     "followingThem": "Following",
     "friends": "Friends",
@@ -481,6 +480,9 @@
   },
   "CONFIRM": {
     "cancel": "Cancel"
+  },
+  "TOAST": {
+    "failed": "Couldn’t save. Try again."
   },
   "LOAD": {
     "loading": "Loading",

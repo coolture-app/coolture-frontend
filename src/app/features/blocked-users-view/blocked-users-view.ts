@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { BackLink } from '../../core/components/back-link/back-link';
 import { Btn } from '../../core/components/btn/btn';
@@ -19,7 +19,6 @@ import { ToastService } from '../../core/services/toast/toast.service';
 export class BlockedUsersView implements OnInit {
   private authService = inject(AuthService);
   private relationsService = inject(RelationsService);
-  private translate = inject(TranslateService);
   private confirm = inject(ConfirmService);
   private toast = inject(ToastService);
 
@@ -56,7 +55,7 @@ export class BlockedUsersView implements OnInit {
       this.users.update((list) => list.filter((u) => u.id !== user.id));
     } catch (err) {
       console.error('Error unblocking user', err);
-      this.toast.show(this.translate.instant('PROFILE.saveFailed'));
+      this.toast.failed();
     }
   }
 }
