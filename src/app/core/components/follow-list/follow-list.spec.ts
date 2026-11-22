@@ -8,7 +8,12 @@ import { AuthService } from '../../services/auth/auth.service';
 import { RelationsService } from '../../services/relations/relations.service';
 import { UserListItem } from '../../models/users/user-summary.model';
 
-function person(id: string, firstName?: string, followsYou = false): UserListItem {
+function person(
+  id: string,
+  firstName?: string,
+  followsYou = false,
+  isFollowing = false,
+): UserListItem {
   return {
     id,
     username: `${id}_demo`,
@@ -16,6 +21,7 @@ function person(id: string, firstName?: string, followsYou = false): UserListIte
     lastName: firstName ? 'Nowak' : undefined,
     followersCount: 3,
     followingCount: 4,
+    isFollowing,
     followsYou,
   };
 }
@@ -39,10 +45,8 @@ describe('FollowListComponent', () => {
       'follow',
       'unfollow',
     ]);
-    // The viewer's own follows, asked once for the buttons.
-    relations.getFollowing.and.returnValue(page([person('anna', 'Anna')]));
     relations.getFollowers.and.returnValue(
-      page([person('anna', 'Anna', true), person('bartek', undefined, true)]),
+      page([person('anna', 'Anna', true, true), person('bartek', undefined, true)]),
     );
     relations.follow.and.returnValue(of(undefined));
     relations.unfollow.and.returnValue(of(undefined));
@@ -71,6 +75,7 @@ describe('FollowListComponent', () => {
     const rows = element().querySelectorAll('.follow-list__row');
 
     expect(rows.length).toBe(2);
+    expect(relations.getFollowing).not.toHaveBeenCalled();
     expect(rows[0].querySelector('.follow-list__name')?.textContent).toContain('Anna Nowak');
     expect(rows[0].textContent).toContain('PROFILE.friends');
     expect(rows[1].querySelector('.follow-list__name')?.textContent).toContain('bartek_demo');
@@ -126,10 +131,44 @@ describe('FollowListComponent', () => {
     const bartek = fixture.componentInstance.pages.items()[1];
 
     await fixture.componentInstance.toggleFollow(bartek);
+    fixture.detectChanges();
 
     expect(relations.follow).toHaveBeenCalledWith('bartek');
     expect(changed).toHaveBeenCalledWith(1);
-    expect(fixture.componentInstance.followingIds().has('bartek')).toBeTrue();
+    expect(fixture.componentInstance.pages.items()[1].isFollowing).toBeTrue();
+    expect(element().querySelectorAll('app-follow-btn')[1].textContent).toContain(
+      'PROFILE.followingThem',
+    );
+  });
+
+  it('keeps a row after an unfollow, so a mistaken tap can be undone', async () => {
+    create();
+    const changed = jasmine.createSpy('followChanged');
+    fixture.componentInstance.followChanged.subscribe(changed);
+
+    await fixture.componentInstance.toggleFollow(fixture.componentInstance.pages.items()[0]);
+    fixture.detectChanges();
+
+    expect(relations.unfollow).toHaveBeenCalledWith('anna');
+    expect(changed).toHaveBeenCalledWith(-1);
+    expect(element().querySelectorAll('.follow-list__row').length).toBe(2);
+    expect(element().querySelectorAll('app-follow-btn')[0].textContent).toContain('PROFILE.follow');
+    expect(element().querySelectorAll('app-follow-btn')[0].textContent).not.toContain(
+      'PROFILE.followingThem',
+    );
+  });
+
+  it('shows who you follow from each person, however many people you follow', () => {
+    const followed = Array.from({ length: 130 }, (_, i) => person(`p${i}`, `P${i}`, false, true));
+    relations.getFollowers.and.returnValue(page([...followed, person('last', 'Last')]));
+    create();
+
+    const buttons = Array.from(element().querySelectorAll('app-follow-btn'));
+    expect(buttons.length).toBe(131);
+    expect(buttons.filter((b) => b.textContent?.includes('PROFILE.followingThem')).length).toBe(
+      130,
+    );
+    expect(relations.getFollowing).not.toHaveBeenCalled();
   });
 
   it('offers Spróbuj ponownie when the list doesn’t load', () => {
