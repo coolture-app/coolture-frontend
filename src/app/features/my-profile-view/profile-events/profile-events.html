@@ -49,16 +49,16 @@
             type="search"
             [placeholder]="'PROFILE_EVENTS.search' | translate"
             [attr.aria-label]="'PROFILE_EVENTS.search' | translate"
-            [value]="typed()"
-            (input)="search($any($event.target).value)"
-            (keydown.escape)="clearSearch()"
+            [value]="pages.typed()"
+            (input)="pages.search($any($event.target).value)"
+            (keydown.escape)="pages.clearSearch()"
           />
-          @if (typed()) {
+          @if (pages.typed()) {
             <button
               type="button"
               class="events__search-clear"
               [attr.aria-label]="'PROFILE_EVENTS.clearSearch' | translate"
-              (click)="clearSearch()"
+              (click)="pages.clearSearch()"
             >
               <ng-icon name="lucideX" aria-hidden="true" />
             </button>
@@ -68,19 +68,24 @@
     }
 
     <div class="events__list">
-      @for (post of items(); track post.id) {
+      @for (post of pages.items(); track post.id) {
         <app-event-row [post]="post" [own]="own()" (deleted)="removed($event)" />
       }
     </div>
-    <div [appInfiniteScroll]="hasMore() && !loading() && !failed()" (reachedEnd)="loadMore()"></div>
+    <div
+      [appInfiniteScroll]="pages.hasMore() && !pages.loading() && !pages.failed()"
+      (reachedEnd)="pages.loadMore()"
+    ></div>
 
-    @if (failed()) {
-      <app-load-state [failed]="true" (retry)="retry()" />
-    } @else if (loading()) {
+    @if (pages.failed()) {
+      <app-load-state [failed]="true" (retry)="pages.retry()" />
+    } @else if (pages.loading()) {
       <app-load-state />
-    } @else if (!items().length) {
-      @if (typed()) {
-        <p class="events__empty">{{ 'PROFILE_EVENTS.noMatch' | translate: { q: typed() } }}</p>
+    } @else if (!pages.items().length) {
+      @if (pages.typed()) {
+        <p class="events__empty">
+          {{ 'PROFILE_EVENTS.noMatch' | translate: { q: pages.typed() } }}
+        </p>
       } @else if (own() && tab() === 'posts' && !past()) {
         <a class="events__add" routerLink="/posts/new">
           <ng-icon name="lucidePlus" aria-hidden="true" />

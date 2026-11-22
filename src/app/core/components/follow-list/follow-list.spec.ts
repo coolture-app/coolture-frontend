@@ -83,7 +83,7 @@ describe('FollowListComponent', () => {
     jasmine.clock().install();
     try {
       create();
-      fixture.componentInstance.search(' nowak ');
+      fixture.componentInstance.pages.search(' nowak ');
       jasmine.clock().tick(299);
       expect(relations.getFollowers).toHaveBeenCalledTimes(1);
 
@@ -109,7 +109,7 @@ describe('FollowListComponent', () => {
     create();
 
     relations.getFollowers.and.returnValue(page([person('ola', 'Ola')]));
-    fixture.componentInstance.loadMore();
+    fixture.componentInstance.pages.loadMore();
     fixture.detectChanges();
 
     expect(relations.getFollowers.calls.mostRecent().args[1]).toEqual({
@@ -123,7 +123,7 @@ describe('FollowListComponent', () => {
     create();
     const changed = jasmine.createSpy('followChanged');
     fixture.componentInstance.followChanged.subscribe(changed);
-    const bartek = fixture.componentInstance.users()[1];
+    const bartek = fixture.componentInstance.pages.items()[1];
 
     await fixture.componentInstance.toggleFollow(bartek);
 

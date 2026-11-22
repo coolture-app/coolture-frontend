@@ -4,16 +4,16 @@
     type="search"
     [placeholder]="'FOLLOW_LIST.search' | translate"
     [attr.aria-label]="'FOLLOW_LIST.search' | translate"
-    [value]="typed()"
-    (input)="search($any($event.target).value)"
+    [value]="pages.typed()"
+    (input)="pages.search($any($event.target).value)"
     (keydown.escape)="escapeSearch($event)"
   />
-  @if (typed()) {
+  @if (pages.typed()) {
     <button
       type="button"
       class="follow-list__search-clear"
       [attr.aria-label]="'FOLLOW_LIST.clearSearch' | translate"
-      (click)="clearSearch()"
+      (click)="pages.clearSearch()"
     >
       <ng-icon name="lucideX" aria-hidden="true" />
     </button>
@@ -21,7 +21,7 @@
 </label>
 
 <ul class="follow-list__rows">
-  @for (user of users(); track user.id) {
+  @for (user of pages.items(); track user.id) {
     <li class="follow-list__row">
       <a class="follow-list__person" [routerLink]="['/users', user.username]" [replaceUrl]="true">
         @if (user.avatar; as avatar) {
@@ -49,16 +49,19 @@
     </li>
   }
 </ul>
-<div [appInfiniteScroll]="hasMore() && !loading() && !failed()" (reachedEnd)="loadMore()"></div>
+<div
+  [appInfiniteScroll]="pages.hasMore() && !pages.loading() && !pages.failed()"
+  (reachedEnd)="pages.loadMore()"
+></div>
 
-@if (failed()) {
-  <app-load-state [failed]="true" (retry)="retry()" />
-} @else if (loading()) {
+@if (pages.failed()) {
+  <app-load-state [failed]="true" (retry)="pages.retry()" />
+} @else if (pages.loading()) {
   <app-load-state />
-} @else if (!users().length) {
+} @else if (!pages.items().length) {
   <p class="follow-list__empty">
-    @if (typed()) {
-      {{ 'FOLLOW_LIST.noMatch' | translate: { q: typed() } }}
+    @if (pages.typed()) {
+      {{ 'FOLLOW_LIST.noMatch' | translate: { q: pages.typed() } }}
     } @else if (type() === 'followers') {
       {{ 'FOLLOW_LIST.noFollowers' | translate }}
     } @else {
