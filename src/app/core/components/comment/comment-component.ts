@@ -4,7 +4,6 @@ import {
   Component,
   computed,
   DestroyRef,
-  DOCUMENT,
   ElementRef,
   inject,
   Injector,
@@ -55,6 +54,7 @@ const REPLIES_PAGE = 20;
   viewProviders: [provideIcons({ lucideEllipsis })],
   templateUrl: './comment-component.html',
   styleUrl: './comment-component.scss',
+  host: { '(document:click)': 'menuOpen.set(false)' },
 })
 export class CommentComponent implements OnInit {
   readonly comment = input.required<CommentSummary>();
@@ -71,7 +71,6 @@ export class CommentComponent implements OnInit {
   private injector = inject(Injector);
   private toast = inject(ToastService);
   private translate = inject(TranslateService);
-  private document = inject(DOCUMENT);
   private host: HTMLElement = inject(ElementRef).nativeElement;
   private confirm = inject(ConfirmService);
   private editInput = viewChild<ElementRef<HTMLTextAreaElement>>('editInput');
@@ -157,16 +156,10 @@ export class CommentComponent implements OnInit {
       });
   }
 
-  /** The next click anywhere closes the menu, including on one of its items. */
-  toggleMenu(): void {
-    const opening = !this.menuOpen();
-    this.menuOpen.set(opening);
-    if (opening) {
-      // After this click has finished, so that it doesn't count as the next one.
-      setTimeout(() =>
-        this.document.addEventListener('click', () => this.menuOpen.set(false), { once: true }),
-      );
-    }
+  /** Any other click closes the menu, including one on its items, through the host's document listener. */
+  toggleMenu(event: Event): void {
+    event.stopPropagation();
+    this.menuOpen.update((open) => !open);
   }
 
   closeMenu(event: Event): void {

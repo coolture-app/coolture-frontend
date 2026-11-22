@@ -30,7 +30,7 @@
               [attr.aria-expanded]="menuOpen()"
               [attr.aria-label]="'PROFILE.more' | translate"
               [appTooltip]="'PROFILE.more' | translate"
-              (click)="toggleMenu()"
+              (click)="toggleMenu($event)"
               (keydown.escape)="closeMenu($event)"
             >
               <ng-icon name="lucideEllipsis" aria-hidden="true" />
@@ -79,7 +79,7 @@
                 [attr.aria-expanded]="hasPhoto ? avatarMenuOpen() : null"
                 [appTooltip]="(hasPhoto ? 'PROFILE.changeAvatar' : 'PROFILE.addAvatar') | translate"
                 [disabled]="isUploadingAvatar()"
-                (click)="onAvatarTap()"
+                (click)="onAvatarTap($event)"
               >
                 <ng-icon [name]="hasPhoto ? 'lucideCamera' : 'lucidePlus'" aria-hidden="true" />
               </button>
@@ -168,7 +168,11 @@
           </div>
         } @else if (user()) {
           <div class="profile__actions">
-            <app-follow-btn [following]="!!user()?.isFollowing" (toggled)="toggleFollow()" />
+            <app-follow-btn
+              [following]="!!user()?.isFollowing"
+              [busy]="followBusy()"
+              (toggled)="toggleFollow()"
+            />
             <app-relation-pill
               [following]="!!user()?.isFollowing"
               [followsYou]="!!user()?.followsYou"

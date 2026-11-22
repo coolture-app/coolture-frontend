@@ -3,13 +3,11 @@ import {
   afterNextRender,
   Component,
   computed,
-  DOCUMENT,
   ElementRef,
   inject,
   Injector,
   signal,
   viewChild,
-  WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -88,6 +86,7 @@ import { ProfileEvents } from './profile-events/profile-events';
   ],
   templateUrl: './my-profile-view.html',
   styleUrl: './my-profile-view.scss',
+  host: { '(document:click)': 'closeMenus()' },
 })
 export class UserProfileView {
   private authService = inject(AuthService);
@@ -100,7 +99,6 @@ export class UserProfileView {
   private toast = inject(ToastService);
   private confirm = inject(ConfirmService);
   private translate = inject(TranslateService);
-  private document = inject(DOCUMENT);
   private injector = inject(Injector);
   private bioInput = viewChild<ElementRef<HTMLTextAreaElement>>('bioInput');
 
@@ -126,6 +124,7 @@ export class UserProfileView {
   bioDraft = signal('');
 
   menuOpen = signal(false);
+  readonly followBusy = signal(false);
   avatarMenuOpen = signal(false);
   /** A photo picked and being placed in the circle, not uploaded yet. */
   pickedFile = signal<File | null>(null);
@@ -312,8 +311,9 @@ export class UserProfileView {
 
   async toggleFollow() {
     const u = this.user();
-    if (!u || this.isOwnProfile()) return;
+    if (!u || this.isOwnProfile() || this.followBusy()) return;
 
+    this.followBusy.set(true);
     try {
       if (u.isFollowing) {
         await firstValueFrom(this.relationsService.unfollow(u.id));
@@ -327,11 +327,16 @@ export class UserProfileView {
     } catch (err) {
       console.error('Error toggling follow', err);
       this.toast.failed();
+    } finally {
+      this.followBusy.set(false);
     }
   }
 
-  toggleMenu() {
-    this.toggle(this.menuOpen);
+  /** The toggles stop the click, so the host's document listener closes the menus on any other. */
+  toggleMenu(event: Event) {
+    event.stopPropagation();
+    this.avatarMenuOpen.set(false);
+    this.menuOpen.update((open) => !open);
   }
 
   showAvatar() {
@@ -342,9 +347,11 @@ export class UserProfileView {
   }
 
   /** Without a photo there's nothing to choose between, so the file picker opens at once. */
-  onAvatarTap() {
+  onAvatarTap(event: Event) {
     if (this.user()?.avatar) {
-      this.toggle(this.avatarMenuOpen);
+      event.stopPropagation();
+      this.menuOpen.set(false);
+      this.avatarMenuOpen.update((open) => !open);
     } else {
       this.avatarInput()?.nativeElement.click();
     }
@@ -355,16 +362,9 @@ export class UserProfileView {
     this.avatarMenuOpen.set(false);
   }
 
-  /** The next click anywhere closes the menu, including on one of its items. */
-  private toggle(open: WritableSignal<boolean>) {
-    const opening = !open();
-    open.set(opening);
-    if (opening) {
-      // After this click has finished, so that it doesn't count as the next one.
-      setTimeout(() =>
-        this.document.addEventListener('click', () => open.set(false), { once: true }),
-      );
-    }
+  protected closeMenus() {
+    this.menuOpen.set(false);
+    this.avatarMenuOpen.set(false);
   }
 
   closeMenu(event: Event) {

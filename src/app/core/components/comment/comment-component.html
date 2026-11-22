@@ -77,7 +77,7 @@
             aria-haspopup="true"
             [attr.aria-expanded]="menuOpen()"
             [appTooltip]="'COMMENT.more' | translate"
-            (click)="toggleMenu()"
+            (click)="toggleMenu($event)"
             (keydown.escape)="closeMenu($event)"
           >
             <ng-icon name="lucideEllipsis" />

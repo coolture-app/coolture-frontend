@@ -256,12 +256,23 @@ describe('CommentComponent', () => {
     it('closes the menu on the next click anywhere', async () => {
       await render(mine());
       (element().querySelector('.comment__menu-btn') as HTMLButtonElement).click();
-      await new Promise((resolve) => setTimeout(resolve));
 
       document.body.click();
       await fixture.whenStable();
 
       expect(component.menuOpen()).toBeFalse();
+    });
+
+    it('opens again with one click after Esc closed it', async () => {
+      await render(mine());
+      const button = element().querySelector('.comment__menu-btn') as HTMLButtonElement;
+      button.click();
+      button.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      expect(component.menuOpen()).toBeFalse();
+
+      button.click();
+
+      expect(component.menuOpen()).toBeTrue();
     });
 
     it('saves an edit on Enter, and shows the new text', async () => {
