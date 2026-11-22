@@ -32,8 +32,3 @@ export function fullName(friend: Friend): string {
     ? [friend.firstName, friend.lastName].filter(Boolean).join(' ')
     : friend.username;
 }
-
-/** One letter, for a friend with no photo. */
-export function initial(friend: Friend): string {
-  return (friend.firstName?.charAt(0) || friend.username.charAt(0)).toUpperCase();
-}

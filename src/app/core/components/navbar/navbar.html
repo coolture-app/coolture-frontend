@@ -1,11 +1,10 @@
 @let user = authService.currentUser();
-<!-- The signed-in user's photo, or the first letter of their handle. -->
 <ng-template #avatar>
   @if (user?.avatar?.url; as url) {
     <img class="navbar__avatar" [src]="url" alt="" />
   } @else {
     <span class="navbar__avatar navbar__avatar--letter" aria-hidden="true">{{
-      user?.username?.charAt(0)
+      user | initials
     }}</span>
   }
 </ng-template>

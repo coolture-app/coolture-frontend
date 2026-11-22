@@ -11,6 +11,7 @@ import {
   lucideUserRound,
   lucideUsers,
 } from '@ng-icons/lucide';
+import { InitialsPipe } from '../../pipes/initials.pipe';
 
 import { AuthService } from '../../services/auth/auth.service';
 import { HomeTapService } from '../../services/home-tap/home-tap.service';
@@ -19,7 +20,16 @@ import { Tooltip } from '../../directives/tooltip';
 
 @Component({
   selector: 'app-navbar',
-  imports: [TranslateModule, Btn, RouterLink, RouterLinkActive, NgIcon, Tooltip, NgTemplateOutlet],
+  imports: [
+    TranslateModule,
+    Btn,
+    RouterLink,
+    RouterLinkActive,
+    NgIcon,
+    Tooltip,
+    NgTemplateOutlet,
+    InitialsPipe,
+  ],
   viewProviders: [
     provideIcons({
       lucideCalendarDays,
