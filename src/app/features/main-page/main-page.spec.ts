@@ -1672,6 +1672,33 @@ describe('MainPage', () => {
       await debounce();
     });
 
+    it('restores Moja lokalizacja, and Wszystkie’s order kept on Dla Ciebie, which the URL doesn’t hold', async () => {
+      askedLocation = { latitude: 54.35, longitude: 18.65 };
+      component.setTab('all');
+      await settle();
+      expectPosts().flush(page());
+      await component.setSortBy('POPULAR');
+      await settle();
+      expectPosts().flush(page());
+      component.setTab('forYou');
+      await settle();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      await openPlace();
+      option('MAIN_PAGE.myLocation').click();
+      await debounce();
+      expectFeed().flush({ ...page(['n']), mode: 'RANKED' });
+      await settle();
+      await leaveAfterScrolling();
+
+      await comeBack({ trigger: 'popstate', extras: {} });
+
+      expect(shownTitles()).toEqual(['Post n']);
+      expect(pill()).toBe('MAIN_PAGE.nearMe · MAIN_PAGE.km');
+      component.setTab('all');
+      await settle();
+      expect(param(expectPosts(), 'sortBy')).toBe('POPULAR');
+    });
+
     it('shows on the card what happened on the post page', async () => {
       await leaveAfterScrolling();
       TestBed.inject(PostService).setActivePost({

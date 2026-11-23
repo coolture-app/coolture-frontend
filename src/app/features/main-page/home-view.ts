@@ -21,7 +21,6 @@ export const NO_FILTERS = {
   toDay: '',
   /** Only people I follow, and what friends are interested in or go to. */
   followed: false,
-  status: '',
   includePast: false,
   /** The radius filter's centre or Online, as a place from `PlaceFilter`, or '' for "Wszędzie". */
   place: '' as PlaceFilter,
@@ -45,7 +44,6 @@ export function createFiltersForm() {
     fromDay: new FormControl(NO_FILTERS.fromDay, { nonNullable: true }),
     toDay: new FormControl(NO_FILTERS.toDay, { nonNullable: true }),
     followed: new FormControl(NO_FILTERS.followed, { nonNullable: true }),
-    status: new FormControl(NO_FILTERS.status, { nonNullable: true }),
     includePast: new FormControl(NO_FILTERS.includePast, { nonNullable: true }),
     place: new FormControl(NO_FILTERS.place, { nonNullable: true }),
     radiusKm: new FormControl(NO_FILTERS.radiusKm, { nonNullable: true }),
@@ -53,21 +51,20 @@ export function createFiltersForm() {
 }
 export type FiltersForm = ReturnType<typeof createFiltersForm>;
 
-/** What the home page needs to look the same when the user comes back to it. */
+/** What the home page needs, beyond its URL, to look the same when the user comes back to it. */
 export interface HomeView {
-  search: string;
-  filters: FilterValues;
-  tab: HomeTab;
+  /** The query string this view had, to tell whether a return to the page is a return to this view. */
+  url: Params;
+  /** "Moja lokalizacja" or a picked place, which the URL's point doesn't tell apart. */
+  place: PlaceFilter;
+  /** Wszystkie's order, which the URL leaves out while on Dla Ciebie. */
   sort: PostsSort;
-  isMapView: boolean;
   /** Where the list under the map was scrolled to. The router restores only the page's own scroll. */
   listScrollY: number;
   /** The position the location filter used. Kept in memory for this visit only. */
   nearPosition: GeoPoint | null;
   /** The place the filter can centre on instead of the position. */
   pickedPlace: NamedPlace | null;
-  /** The query string this view had, to tell whether a return to the page is a return to this view. */
-  url: Params;
 }
 
 /**

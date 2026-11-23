@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 
@@ -7,9 +7,6 @@ import { Btn } from '../../core/components/btn/btn';
 import { InfiniteScroll } from '../../core/directives/infinite-scroll';
 import { PostListStore } from '../../core/services/post-list/post-list.store';
 import { ParticipationType } from '../../core/models/common/enums';
-
-/** As on the home page: the next page is asked for this many cards before the end. */
-const CARDS_BEFORE_END = 15;
 
 /** Its own list, so the home page's survives a visit here. */
 @Component({
@@ -24,9 +21,6 @@ export class MyEventsView implements OnInit {
   private router = inject(Router);
 
   selectedFilter = signal<ParticipationType | 'all'>('all');
-  readonly nextPageTrigger = computed(() =>
-    Math.max(0, this.list.items().length - CARDS_BEFORE_END),
-  );
 
   ngOnInit() {
     this.load(this.selectedFilter());

@@ -29,7 +29,7 @@
 
     <div class="my-events__list">
       @for (post of list.items(); track post.id) {
-        @if ($index === nextPageTrigger()) {
+        @if ($index === list.loadMoreAt()) {
           <div
             class="my-events__trigger"
             [appInfiniteScroll]="list.canLoadMore()"

@@ -64,7 +64,7 @@
       <p class="list-note">{{ 'MAIN_PAGE.nearestFromHome' | translate: { place: name } }}</p>
     }
     @for (item of list.items(); track item.id) {
-      @if ($index === nextPageTrigger()) {
+      @if ($index === list.loadMoreAt()) {
         <div
           class="list-trigger"
           [appInfiniteScroll]="list.canLoadMore()"

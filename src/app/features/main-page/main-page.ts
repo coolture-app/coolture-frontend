@@ -34,7 +34,7 @@ import { AuthService } from '../../core/services/auth/auth.service';
 import { LocationService } from '../../core/services/location/location.service';
 import { PostListStore } from '../../core/services/post-list/post-list.store';
 import { HomeTapService } from '../../core/services/home-tap/home-tap.service';
-import { PostStatus, PostsSort } from '../../core/models/common/enums';
+import { PostsSort } from '../../core/models/common/enums';
 import { Map, type MapArea } from '../../core/components/map/map/map';
 import { MapFocus } from '../../core/components/map/map-focus';
 import { PostMark } from '../../core/models/posts/post-mark.model';
@@ -51,7 +51,7 @@ import {
   START_SORT,
   dayWindow,
 } from './home-view';
-import { fromHomeParams, sameHomeParams, toHomeParams } from './home-url';
+import { fromHomeParams, HomeUrlState, sameHomeParams, toHomeParams } from './home-url';
 import { FeedFilters } from './feed-filters/feed-filters';
 import { HomePlace } from './home-place';
 import { PlacePanel } from './place-panel/place-panel';
@@ -60,12 +60,6 @@ import { HomeBar } from './home-bar/home-bar';
 const LOCATION_WAIT_MS = 1500;
 /** How long the first page waits for an answer to the browser's location prompt. */
 const LOCATION_ANSWER_MS = 8000;
-/**
- * How many cards before the end the next page is requested. Counted in cards, not pixels, so it means
- * the same on any screen, and it's under the page size of 20, so a new page can't ask for the next one
- * by itself. A page took about 1.1 s locally, and a fast flick covers about 6000 px a second.
- */
-const CARDS_BEFORE_END = 15;
 /** How many of the feed's first posts the map lights up as top picks on Dla Ciebie. */
 const MAP_PICKS = 30;
 /** Wszystkie's orders. Dla Ciebie has no menu: its order is the ranking. */
@@ -169,18 +163,14 @@ export class MainPage implements OnDestroy {
    * when it isn't the first. Not the search or the place, Online included.
    */
   readonly activeFilterCount = computed(() => {
-    const { kinds, kids, from, to, followed, status, includePast } = this.activeFilters();
+    const { kinds, kids, from, to, followed, includePast } = this.activeFilters();
     const sort = this.listSort();
     const resorted = sort !== null && sort !== START_SORT;
-    return [kinds, kids, from || to, followed, status, includePast, resorted].filter(Boolean)
-      .length;
+    return [kinds, kids, from || to, followed, includePast, resorted].filter(Boolean).length;
   });
   /** A screenful for the first page. After that one is enough, and the posts stay what's on screen. */
   readonly skeletons = computed(() => Array(this.list.items().length > 0 ? 1 : 3));
   readonly pullThreshold = PULL_THRESHOLD;
-  readonly nextPageTrigger = computed(() =>
-    Math.max(0, this.list.items().length - CARDS_BEFORE_END),
-  );
 
   /** When an empty result could change by looking at past events too. See the contract's table. */
   readonly canOfferPast = computed(() => {
@@ -224,11 +214,10 @@ export class MainPage implements OnDestroy {
   private listOutdated = false;
 
   constructor() {
-    const restored = this.restoreView();
-    if (!restored) {
-      // Read now, not with the rest of the URL, so a reload on Mapa never starts Lista first.
-      this.isMapView.set(fromHomeParams(this.route.snapshot.queryParams).map);
-    }
+    const url = fromHomeParams(this.route.snapshot.queryParams);
+    // Set now, not with the rest of the URL, so a reload on Mapa never starts Lista first.
+    this.isMapView.set(url.map);
+    const restored = this.restoreView(url);
     this.postService.clearActivePost();
     this.mapResumes.set(restored && this.isMapView());
     const focus = this.mapFocus.take();
@@ -249,7 +238,7 @@ export class MainPage implements OnDestroy {
       if (restored) {
         this.ready.set(true);
       } else {
-        void this.openFromUrl().then(() => this.ready.set(true));
+        void this.openFromUrl(url).then(() => this.ready.set(true));
       }
     });
 
@@ -510,14 +499,11 @@ export class MainPage implements OnDestroy {
    * Puts the page in the state its URL describes. A radius or Najbliższe with no point in the link
    * needs the reader's position, and without it they fall back as they do when picked by hand.
    */
-  private async openFromUrl(): Promise<void> {
+  private async openFromUrl(url: HomeUrlState): Promise<void> {
     // After this render's own check has finished, which the form's values would otherwise change under.
     await Promise.resolve();
-    const { search, filters, tab, sort, point } = fromHomeParams(this.route.snapshot.queryParams);
-    this.searchControl.setValue(search, { emitEvent: false });
-    this.filtersForm.setValue(filters, { emitEvent: false });
-    this.tab.set(tab);
-    this.sort.set(sort);
+    const { filters, sort, point } = url;
+    this.setControls(url);
     this.place.pickPoint(point);
 
     // On a reload /auth/me may not have answered yet, and the filter means nothing for a guest.
@@ -540,6 +526,13 @@ export class MainPage implements OnDestroy {
     }
     this.applyFilters();
     this.showInUrl();
+  }
+
+  private setControls({ search, filters, tab, sort }: HomeUrlState): void {
+    this.searchControl.setValue(search, { emitEvent: false });
+    this.filtersForm.setValue(filters, { emitEvent: false });
+    this.tab.set(tab);
+    this.sort.set(sort);
   }
 
   private async signedIn(): Promise<boolean> {
@@ -600,7 +593,7 @@ export class MainPage implements OnDestroy {
 
   private readFilters(): PostFilterParams {
     const search = this.searchControl.value.trim();
-    const { kinds, kids, fromDay, toDay, followed, status, includePast, place, radiusKm } =
+    const { kinds, kids, fromDay, toDay, followed, includePast, place, radiusKm } =
       this.filtersForm.getRawValue();
     const position = this.place.centre(place);
 
@@ -611,7 +604,6 @@ export class MainPage implements OnDestroy {
       ...(place === 'online' && { type: 'ONLINE' as const }),
       ...dayWindow(fromDay, toDay),
       ...(followed && this.authService.isAuthenticated() && { followed }),
-      ...(status && { status: status as PostStatus }),
       ...(includePast && { includePast }),
       ...(position && { ...position, radiusKm }),
     };
@@ -619,15 +611,12 @@ export class MainPage implements OnDestroy {
 
   private saveView(): void {
     this.memory.save({
-      search: this.searchControl.value,
-      filters: this.filtersForm.getRawValue(),
-      tab: this.tab(),
+      url: this.urlParams(),
+      place: this.filtersForm.controls.place.value,
       sort: this.sort(),
-      isMapView: this.isMapView(),
       listScrollY: this.listScrollY,
       nearPosition: this.place.position(),
       pickedPlace: this.place.picked(),
-      url: this.urlParams(),
     });
   }
 
@@ -636,7 +625,7 @@ export class MainPage implements OnDestroy {
    * router's scroll restoration lands on the same card. Otherwise a new list will start, from the URL.
    * Memory holds the last home page left, which may not be the entry Back landed on, so the URL decides.
    */
-  private restoreView(): boolean {
+  private restoreView(url: HomeUrlState): boolean {
     const comingBack = this.router.currentNavigation()?.trigger === 'popstate';
     const view = comingBack ? this.memory.restore() : null;
     if (!view || !sameHomeParams(view.url, this.route.snapshot.queryParams)) {
@@ -644,13 +633,9 @@ export class MainPage implements OnDestroy {
       return false;
     }
 
-    this.searchControl.setValue(view.search, { emitEvent: false });
-    this.filtersForm.setValue(view.filters, { emitEvent: false });
-    this.tab.set(view.tab);
-    this.sort.set(view.sort);
+    this.setControls({ ...url, filters: { ...url.filters, place: view.place }, sort: view.sort });
     this.place.position.set(view.nearPosition);
     this.place.picked.set(view.pickedPlace);
-    this.isMapView.set(view.isMapView);
     this.listScrollY = view.listScrollY;
     this.applyFilters();
 

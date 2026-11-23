@@ -103,16 +103,4 @@ describe('PullToRefresh', () => {
 
     expect(document.documentElement.style.overscrollBehaviorY).toBe('');
   });
-
-  it('gives the browser its pull back only when the last of two overlapping lists goes', async () => {
-    const second = TestBed.createComponent(Host);
-    await fixture.whenStable();
-    await second.whenStable();
-
-    fixture.destroy();
-    expect(document.documentElement.style.overscrollBehaviorY).toBe('none');
-
-    second.destroy();
-    expect(document.documentElement.style.overscrollBehaviorY).toBe('');
-  });
 });

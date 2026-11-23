@@ -7,7 +7,7 @@
     <p class="hidden-posts__intro">{{ 'HIDDEN.intro' | translate }}</p>
 
     @for (item of list.items(); track item.id) {
-      @if ($index === nextPageTrigger()) {
+      @if ($index === list.loadMoreAt()) {
         <div
           class="hidden-posts__trigger"
           [appInfiniteScroll]="list.canLoadMore()"

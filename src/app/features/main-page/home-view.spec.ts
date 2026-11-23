@@ -1,19 +1,16 @@
 import { HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
-import { HomeView, HomeViewMemory, NO_FILTERS } from './home-view';
+import { HomeView, HomeViewMemory } from './home-view';
 import { PostListStore } from '../../core/services/post-list/post-list.store';
 
 const VIEW: HomeView = {
-  search: 'jazz',
-  filters: NO_FILTERS,
-  tab: 'forYou',
+  url: { q: 'jazz' },
+  place: '',
   sort: 'UPCOMING',
-  isMapView: false,
   listScrollY: 0,
   nearPosition: null,
   pickedPlace: null,
-  url: { q: 'jazz' },
 };
 
 describe('HomeViewMemory', () => {
