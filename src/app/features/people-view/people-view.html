@@ -6,40 +6,45 @@
         <ng-icon class="searchbar__icon" name="heroMagnifyingGlass" />
         <input
           class="searchbar__input"
-          type="text"
-          [formControl]="searchControl"
-          placeholder="{{ 'PEOPLE.searchbar' | translate }}"
+          type="search"
+          [placeholder]="'PEOPLE.searchbar' | translate"
+          [attr.aria-label]="'PEOPLE.searchbar' | translate"
+          [value]="pages.typed()"
+          (input)="pages.search($any($event.target).value)"
         />
       </span>
     </div>
   </div>
-  @if (failed()) {
-    <app-load-state [failed]="true" (retry)="retry()" />
-  } @else if (loading() && !users().items.length) {
-    <app-load-state />
-  } @else {
-    @for (item of users().items; track item.id) {
-      <div class="user-card">
-        <div class="user-card__avatar">
-          @if (item.avatar; as avatar) {
-            <img [src]="avatar.url" [alt]="item.username" class="user-card__avatar-img" />
-          } @else {
-            <div class="user-card__avatar--placeholder">
-              {{ item | initials }}
-            </div>
-          }
-        </div>
-        <div class="user-card__info" [routerLink]="['/users', item.username]">
-          <span class="user-card__name">{{ item.firstName }} {{ item.lastName }}</span>
-          <span class="user-card__handle">
-            <span class="user-card__username">&#64;{{ item.username }}</span>
-            <app-relation-pill [following]="item.isFollowing" [followsYou]="item.followsYou" />
-          </span>
-        </div>
-        <app-follow-btn [following]="item.isFollowing" (toggled)="toggleFollow(item)" />
+  @for (item of pages.items(); track item.id) {
+    <div class="user-card">
+      <div class="user-card__avatar">
+        @if (item.avatar; as avatar) {
+          <img [src]="avatar.url" [alt]="item.username" class="user-card__avatar-img" />
+        } @else {
+          <div class="user-card__avatar--placeholder">
+            {{ item | initials }}
+          </div>
+        }
       </div>
-    } @empty {
-      <p class="empty">{{ 'PEOPLE.no-users' | translate }}</p>
-    }
+      <div class="user-card__info" [routerLink]="['/users', item.username]">
+        <span class="user-card__name">{{ item.firstName }} {{ item.lastName }}</span>
+        <span class="user-card__handle">
+          <span class="user-card__username">&#64;{{ item.username }}</span>
+          <app-relation-pill [following]="item.isFollowing" [followsYou]="item.followsYou" />
+        </span>
+      </div>
+      <app-follow-btn [following]="item.isFollowing" (toggled)="toggleFollow(item)" />
+    </div>
+  }
+  <div
+    [appInfiniteScroll]="pages.hasMore() && !pages.loading() && !pages.failed()"
+    (reachedEnd)="pages.loadMore()"
+  ></div>
+  @if (pages.failed()) {
+    <app-load-state [failed]="true" (retry)="pages.retry()" />
+  } @else if (pages.loading()) {
+    <app-load-state />
+  } @else if (!pages.items().length) {
+    <p class="empty">{{ 'PEOPLE.no-users' | translate }}</p>
   }
 </div>

@@ -1,21 +1,7 @@
 import { InitialsPipe } from '../../core/pipes/initials.pipe';
-import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { Component, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import {
-  EMPTY,
-  Subject,
-  catchError,
-  debounceTime,
-  distinctUntilChanged,
-  map,
-  merge,
-  switchMap,
-  startWith,
-  takeUntil,
-  tap,
-  firstValueFrom,
-} from 'rxjs';
+import { firstValueFrom, map } from 'rxjs';
 import { TranslatePipe } from '@ngx-translate/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { heroMagnifyingGlass } from '@ng-icons/heroicons/outline';
@@ -24,11 +10,12 @@ import { AuthService } from '../../core/services/auth/auth.service';
 import { Users } from '../../core/services/users/users.service';
 import { RelationsService } from '../../core/services/relations/relations.service';
 import { UserListItem } from '../../core/models/users/user-summary.model';
-import { PaginatedResponse } from '../../core/models/common/paginated-response.model';
 import { FollowBtn } from '../../core/components/follow-btn/follow-btn';
 import { RelationPill } from '../../core/components/relation-pill/relation-pill';
 import { LoadState } from '../../core/components/load-state/load-state';
+import { InfiniteScroll } from '../../core/directives/infinite-scroll';
 import { ToastService } from '../../core/services/toast/toast.service';
+import { searchedPages } from '../../core/utils/searched-pages';
 
 @Component({
   selector: 'app-people-view',
@@ -36,71 +23,32 @@ import { ToastService } from '../../core/services/toast/toast.service';
     InitialsPipe,
     TranslatePipe,
     NgIcon,
-    ReactiveFormsModule,
     RouterModule,
     FollowBtn,
     RelationPill,
     LoadState,
+    InfiniteScroll,
   ],
   viewProviders: [provideIcons({ heroMagnifyingGlass })],
   templateUrl: './people-view.html',
   styleUrl: './people-view.scss',
 })
-export class PeopleView implements OnInit, OnDestroy {
+export class PeopleView {
   private usersService = inject(Users);
   private relationsService = inject(RelationsService);
   private authService = inject(AuthService);
   private toast = inject(ToastService);
 
-  searchControl = new FormControl('');
-  private destroy$ = new Subject<void>();
-  private retries = new Subject<void>();
-  readonly loading = signal(true);
-  readonly failed = signal(false);
-
-  users = signal<PaginatedResponse<UserListItem>>({
-    items: [],
-    page: { limit: 20, hasMore: false },
+  readonly pages = searchedPages({
+    list: () => null,
+    fetch: ({ q, cursor, limit }) =>
+      this.usersService.searchForUsers(q, { limit, cursor: cursor ?? '' }).pipe(
+        map((page) => ({
+          ...page,
+          items: page.items.filter((user) => user.id !== this.authService.currentUser()?.id),
+        })),
+      ),
   });
-
-  ngOnInit() {
-    const typed = this.searchControl.valueChanges.pipe(
-      startWith(''),
-      debounceTime(400),
-      distinctUntilChanged(),
-    );
-    merge(typed, this.retries.pipe(map(() => this.searchControl.value)))
-      .pipe(
-        tap(() => {
-          this.loading.set(true);
-          this.failed.set(false);
-        }),
-        // A failed search stays inside, so the next one still runs.
-        switchMap((query) =>
-          this.usersService.searchForUsers(query || undefined).pipe(
-            catchError((err) => {
-              console.error('Error while searching users', err);
-              this.failed.set(true);
-              this.loading.set(false);
-              return EMPTY;
-            }),
-          ),
-        ),
-        takeUntil(this.destroy$),
-      )
-      .subscribe((data) => {
-        const currentUserId = this.authService.currentUser()?.id;
-        this.users.set({
-          ...data,
-          items: data.items.filter((user) => user.id !== currentUserId),
-        });
-        this.loading.set(false);
-      });
-  }
-
-  retry(): void {
-    this.retries.next();
-  }
 
   async toggleFollow(user: UserListItem) {
     const following = !user.isFollowing;
@@ -108,20 +56,12 @@ export class PeopleView implements OnInit, OnDestroy {
       await firstValueFrom(
         following ? this.relationsService.follow(user.id) : this.relationsService.unfollow(user.id),
       );
-      this.users.update((shown) => ({
-        ...shown,
-        items: shown.items.map((item) =>
-          item.id === user.id ? { ...item, isFollowing: following } : item,
-        ),
-      }));
+      this.pages.items.update((shown) =>
+        shown.map((item) => (item.id === user.id ? { ...item, isFollowing: following } : item)),
+      );
     } catch (err) {
       console.error('Error toggling follow', err);
       this.toast.failed();
     }
-  }
-
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 }

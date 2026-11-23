@@ -126,8 +126,6 @@ export class ProfileView {
   private username: string | null = null;
   /** Someone you blocked: only who they are, and Odblokuj. */
   readonly blocked = computed(() => !this.isOwnProfile() && !!this.user()?.isBlocked);
-  followersCount = signal(0);
-  followingCount = signal(0);
   isUploadingAvatar = signal(false);
 
   editingBio = signal(false);
@@ -277,8 +275,6 @@ export class ProfileView {
   private showUser(user: UserProfile, own: boolean) {
     this.user.set(user);
     this.isOwnProfile.set(own);
-    this.followersCount.set(user.followersCount ?? 0);
-    this.followingCount.set(user.followingCount ?? 0);
   }
 
   followListUrl(list: FollowListType): string {
@@ -286,7 +282,7 @@ export class ProfileView {
   }
 
   onFollowChanged(by: number) {
-    this.followingCount.update((c) => c + by);
+    this.user.update((u) => u && { ...u, followingCount: (u.followingCount ?? 0) + by });
   }
 
   startEditingBio() {
@@ -337,11 +333,9 @@ export class ProfileView {
       if (u.isFollowing) {
         await firstValueFrom(this.relationsService.unfollow(u.id));
         this.user.set({ ...u, isFollowing: false, followersCount: (u.followersCount ?? 0) - 1 });
-        this.followersCount.update((c) => c - 1);
       } else {
         await firstValueFrom(this.relationsService.follow(u.id));
         this.user.set({ ...u, isFollowing: true, followersCount: (u.followersCount ?? 0) + 1 });
-        this.followersCount.update((c) => c + 1);
       }
     } catch (err) {
       console.error('Error toggling follow', err);

@@ -130,7 +130,6 @@
     "block": "Block",
     "unblock": "Unblock",
     "no-blocked": "No blocked users",
-    "loading": "Loading...",
     "addHome": "Add your area",
     "homeHint": "Only you can see this",
     "shareStances": "Show friends what I’m interested in and where I go",
@@ -145,8 +144,6 @@
     "removeAvatar": "Remove photo",
     "bioPlaceholder": "Add a few words about yourself",
     "since": "On Coolture since {{date}}",
-    "blockedLoadError": "Couldn’t load blocked people.",
-    "retry": "Try again",
     "youBlocked": "You blocked this person",
     "blockTitle": "Block @{{username}}?",
     "blockText": "You won't see each other's profiles, events or comments, and follows end both ways.",
@@ -388,9 +385,7 @@
   "HIDDEN": {
     "title": "Hidden events",
     "intro": "Events you marked “Not for me”. Only you see them.",
-    "empty": "You haven't hidden any events yet.",
-    "load-error": "Couldn't load your hidden events.",
-    "retry": "Try again"
+    "empty": "You haven't hidden any events yet."
   },
   "MAP": {
     "searchArea": "Search this area",

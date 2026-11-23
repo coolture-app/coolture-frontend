@@ -1,10 +1,6 @@
 @if (notFound()) {
   <app-not-found-view />
-} @else if (!user()) {
-  <div class="page">
-    <app-load-state [failed]="failed()" message="PROFILE.loadFailed" (retry)="retry()" />
-  </div>
-} @else {
+} @else if (user(); as u) {
   <div class="page">
     <div class="profile">
       <section class="profile__header">
@@ -22,7 +18,7 @@
             >
               <ng-icon name="lucideSettings" aria-hidden="true" />
             </a>
-          } @else if (user()) {
+          } @else {
             <app-menu #menu>
               <button
                 menuTrigger
@@ -36,7 +32,7 @@
               >
                 <ng-icon name="lucideEllipsis" aria-hidden="true" />
               </button>
-              @if (user()?.isBlocked) {
+              @if (u.isBlocked) {
                 <app-menu-item icon="lucideUserCheck" (click)="onBlock()">{{
                   'PROFILE.unblock' | translate
                 }}</app-menu-item>
@@ -51,22 +47,22 @@
 
         <div class="profile__top" [class.profile__top--own]="isOwnProfile()">
           <div class="profile__avatar-wrapper">
-            @if (user()?.avatar; as avatar) {
+            @if (u.avatar; as avatar) {
               <button
                 type="button"
                 class="profile__avatar-view"
                 [attr.aria-label]="'PROFILE.showAvatar' | translate"
                 (click)="showAvatar()"
               >
-                <img [src]="avatar.url" [alt]="user()?.username" class="profile__avatar" />
+                <img [src]="avatar.url" [alt]="u.username" class="profile__avatar" />
               </button>
             } @else {
               <div class="profile__avatar profile__avatar--placeholder">
-                {{ user() | initials }}
+                {{ u | initials }}
               </div>
             }
             @if (isOwnProfile()) {
-              @let hasPhoto = !!user()?.avatar;
+              @let hasPhoto = !!u.avatar;
               <app-menu #avatarMenu align="start">
                 <button
                   menuTrigger
@@ -107,11 +103,11 @@
           @if (!blocked()) {
             <div class="profile__stats">
               <button type="button" class="profile__stat" (click)="followList.set('followers')">
-                <span class="profile__stat-value">{{ followersCount() }}</span>
+                <span class="profile__stat-value">{{ u.followersCount ?? 0 }}</span>
                 <span class="profile__stat-label">{{ 'PROFILE.followers' | translate }}</span>
               </button>
               <button type="button" class="profile__stat" (click)="followList.set('following')">
-                <span class="profile__stat-value">{{ followingCount() }}</span>
+                <span class="profile__stat-value">{{ u.followingCount ?? 0 }}</span>
                 <span class="profile__stat-label">{{ 'PROFILE.following' | translate }}</span>
               </button>
             </div>
@@ -119,9 +115,9 @@
         </div>
 
         <div class="profile__names">
-          <h1 class="profile__name">{{ user()?.firstName }} {{ user()?.lastName }}</h1>
+          <h1 class="profile__name">{{ u.firstName }} {{ u.lastName }}</h1>
           <span class="profile__handle">
-            <span class="profile__username">&#64;{{ user()?.username }}</span>
+            <span class="profile__username">&#64;{{ u.username }}</span>
             @if (since()) {
               <span class="profile__since">{{
                 'PROFILE.since' | translate: { date: since() }
@@ -153,17 +149,14 @@
               {{ 'PROFILE.unblock' | translate }}
             </app-btn>
           </div>
-        } @else if (user()) {
+        } @else {
           <div class="profile__actions">
             <app-follow-btn
-              [following]="!!user()?.isFollowing"
+              [following]="u.isFollowing"
               [busy]="followBusy()"
               (toggled)="toggleFollow()"
             />
-            <app-relation-pill
-              [following]="!!user()?.isFollowing"
-              [followsYou]="!!user()?.followsYou"
-            />
+            <app-relation-pill [following]="u.isFollowing" [followsYou]="u.followsYou" />
           </div>
         }
 
@@ -193,9 +186,9 @@
               </app-btn>
             </div>
           </form>
-        } @else if (user()?.bio) {
+        } @else if (u.bio) {
           <div class="profile__bio">
-            <p class="profile__bio-text">{{ user()?.bio }}</p>
+            <p class="profile__bio-text">{{ u.bio }}</p>
             @if (isOwnProfile()) {
               <button
                 type="button"
@@ -208,7 +201,7 @@
               </button>
             }
           </div>
-        } @else if (isOwnProfile() && user()) {
+        } @else if (isOwnProfile()) {
           <button
             type="button"
             class="profile__bio profile__bio--empty"
@@ -219,8 +212,8 @@
         }
       </section>
 
-      @if (!blocked() && user()?.events) {
-        <app-profile-events [user]="user()!" [own]="isOwnProfile()" />
+      @if (!blocked() && u.events) {
+        <app-profile-events [user]="u" [own]="isOwnProfile()" />
       }
     </div>
   </div>
@@ -244,21 +237,19 @@
   }
 
   @if (followList(); as list) {
-    @if (user(); as shown) {
-      <app-sheet
-        [url]="followListUrl(list)"
-        [title]="(list === 'followers' ? 'PROFILE.followers' : 'PROFILE.following') | translate"
-        [closeLabel]="'FOLLOW_LIST.close' | translate"
-        (closed)="followList.set(null)"
-      >
-        <app-follow-list
-          [userId]="shown.id"
-          [type]="list"
-          [isOwnProfile]="isOwnProfile()"
-          (followChanged)="onFollowChanged($event)"
-        />
-      </app-sheet>
-    }
+    <app-sheet
+      [url]="followListUrl(list)"
+      [title]="(list === 'followers' ? 'PROFILE.followers' : 'PROFILE.following') | translate"
+      [closeLabel]="'FOLLOW_LIST.close' | translate"
+      (closed)="followList.set(null)"
+    >
+      <app-follow-list
+        [userId]="u.id"
+        [type]="list"
+        [isOwnProfile]="isOwnProfile()"
+        (followChanged)="onFollowChanged($event)"
+      />
+    </app-sheet>
   }
 
   @if (pickedFile(); as file) {
@@ -268,4 +259,8 @@
       (cancelled)="pickedFile.set(null)"
     />
   }
+} @else {
+  <div class="page">
+    <app-load-state [failed]="failed()" message="PROFILE.loadFailed" (retry)="retry()" />
+  </div>
 }

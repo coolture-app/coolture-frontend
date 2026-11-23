@@ -4,7 +4,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { BackLink } from '../../core/components/back-link/back-link';
 import { PostComponent } from '../../core/components/post-component/post-component';
 import { PostSkeleton } from '../../core/components/post-skeleton/post-skeleton';
-import { Btn } from '../../core/components/btn/btn';
+import { LoadState } from '../../core/components/load-state/load-state';
 import { InfiniteScroll } from '../../core/directives/infinite-scroll';
 import { PostListStore } from '../../core/services/post-list/post-list.store';
 
@@ -14,7 +14,7 @@ import { PostListStore } from '../../core/services/post-list/post-list.store';
  */
 @Component({
   selector: 'app-hidden-posts-view',
-  imports: [TranslatePipe, BackLink, PostComponent, PostSkeleton, Btn, InfiniteScroll],
+  imports: [TranslatePipe, BackLink, PostComponent, PostSkeleton, LoadState, InfiniteScroll],
   providers: [PostListStore],
   templateUrl: './hidden-posts-view.html',
   styleUrl: './hidden-posts-view.scss',

@@ -130,7 +130,6 @@
     "block": "Zablokuj",
     "unblock": "Odblokuj",
     "no-blocked": "Brak zablokowanych użytkowników",
-    "loading": "Ładowanie...",
     "addHome": "Dodaj miejsce",
     "homeHint": "Widoczne tylko dla Ciebie",
     "shareStances": "Pokazuj znajomym, co mnie interesuje i gdzie idę",
@@ -145,8 +144,6 @@
     "removeAvatar": "Usuń zdjęcie",
     "bioPlaceholder": "Dodaj kilka słów o sobie",
     "since": "Na Coolture od {{date}}",
-    "blockedLoadError": "Nie udało się wczytać zablokowanych.",
-    "retry": "Spróbuj ponownie",
     "youBlocked": "Zablokowałeś tego użytkownika",
     "blockTitle": "Zablokować @{{username}}?",
     "blockText": "Nie zobaczycie nawzajem swoich profili, wydarzeń ani komentarzy, a obserwowanie skończy się w obie strony.",
@@ -388,9 +385,7 @@
   "HIDDEN": {
     "title": "Ukryte wydarzenia",
     "intro": "Wydarzenia oznaczone „Nie dla mnie”. Widzisz je tylko Ty.",
-    "empty": "Nie ukryto jeszcze żadnego wydarzenia.",
-    "load-error": "Nie udało się wczytać ukrytych wydarzeń.",
-    "retry": "Spróbuj ponownie"
+    "empty": "Nie ukryto jeszcze żadnego wydarzenia."
   },
   "MAP": {
     "searchArea": "Szukaj w tym obszarze",

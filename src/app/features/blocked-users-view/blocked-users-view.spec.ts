@@ -34,7 +34,7 @@ describe('BlockedUsersView', () => {
         { id: 'jan-1', username: 'jan', firstName: 'Jan', lastName: 'Kowalski' },
         { id: 'ola-1', username: 'ola', firstName: 'Ola', lastName: 'Wiśniewska' },
       ],
-      page: { limit: 100, hasMore: false },
+      page: { limit: 20, hasMore: false },
     });
     expect(element.querySelectorAll('.blocked__user').length).toBe(2);
 
@@ -53,7 +53,7 @@ describe('BlockedUsersView', () => {
   });
 
   it('says so when nobody is blocked', async () => {
-    await flush({ items: [], page: { limit: 100, hasMore: false } });
+    await flush({ items: [], page: { limit: 20, hasMore: false } });
 
     expect(element.querySelector('.blocked__empty')?.textContent).toContain('PROFILE.no-blocked');
   });
@@ -61,8 +61,21 @@ describe('BlockedUsersView', () => {
   it('offers a retry when the list can’t be read', async () => {
     await flush(null, 500);
 
-    expect(element.querySelector('[role="alert"]')?.textContent).toContain(
-      'BLOCKED.titleLoadError',
-    );
+    expect(element.querySelector('app-load-state [role="alert"]')).not.toBeNull();
+  });
+
+  it('reads 20 at a time, and the next 20 from the cursor', async () => {
+    const first = http.expectOne((r) => r.url.endsWith('/users/me-1/blocking'));
+    expect(first.request.params.get('limit')).toBe('20');
+    first.flush({
+      items: [{ id: 'jan-1', username: 'jan' }],
+      page: { limit: 20, hasMore: true, nextCursor: 'c2' },
+    });
+    await fixture.whenStable();
+
+    fixture.componentInstance.pages.loadMore();
+
+    const next = http.expectOne((r) => r.url.endsWith('/users/me-1/blocking'));
+    expect(next.request.params.get('cursor')).toBe('c2');
   });
 });
