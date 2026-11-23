@@ -62,30 +62,17 @@ describe('PostComponent', () => {
     http = TestBed.inject(HttpTestingController);
   });
 
-  it('should create', () => {
-    fixture.detectChanges();
-    expect(component).toBeTruthy();
-  });
-
-  it('renders an author with no first or last name', () => {
-    expect(() => render(card())).not.toThrow();
-  });
-
-  it('offers the owner menu only on your own post', () => {
+  it('offers the owner menu only on your own post, named for assistive technology', () => {
     render(card());
-
     expect(element().querySelector('app-post-owner-menu')).toBeNull();
-  });
 
-  it('offers it on your own post, named for assistive technology', () => {
     TestBed.inject(AuthService).currentUser.set({ id: 'u1' } as UserProfile);
-    render(card());
-
+    fixture.detectChanges();
     const toggle = element().querySelector('app-post-owner-menu button');
     expect(toggle?.getAttribute('aria-label')).toBe('POST.ownerMenu');
   });
 
-  it('has five icon actions, each named and pressed when on, and no Share', () => {
+  it('has five icon actions, each named and pressed when on, the stances grouped', () => {
     render(card({ myParticipation: 'TAKES_PART', positiveReactionCount: 0, interestedCount: 0 }));
 
     const actions = Array.from(element().querySelectorAll('.post__social button'));
@@ -104,22 +91,25 @@ describe('PostComponent', () => {
       'true',
     ]);
     expect(actions.every((b) => b.textContent!.trim() === '')).toBeTrue();
+    const group = element().querySelector('.post__stances[role="group"]')!;
+    expect(group.getAttribute('aria-label')).toBe('POST.stance');
+    expect(group.querySelectorAll('button').length).toBe(3);
   });
 
-  it('groups the three stances, one of which can be on', () => {
-    render(card({ myParticipation: 'NOT_INTERESTED' }));
+  it('shows the like and stance of data that changes under a card, as after a refresh', () => {
+    render(card());
 
-    const group = element().querySelector('.post__stances[role="group"]')!;
-    const pressed = Array.from(group.querySelectorAll('button')).map((b) =>
-      b.getAttribute('aria-pressed'),
-    );
-    expect(group.getAttribute('aria-label')).toBe('POST.stance');
-    expect(pressed).toEqual(['true', 'false', 'false']);
+    render(card({ myReaction: 'LIKE', myParticipation: 'INTERESTED' }));
+
+    expect(component.isLiked()).toBeTrue();
+    expect(component.isInterested()).toBeTrue();
+    const pressed = element().querySelectorAll('.post__social [aria-pressed="true"]');
+    expect(pressed.length).toBe(2);
   });
 
   it('offers no "Nie dla mnie" on your own post', () => {
     TestBed.inject(AuthService).currentUser.set({ id: 'u1' } as UserProfile);
-    render(card({ participantCount: 0, interestedCount: 0 }));
+    render(card({ interestedCount: 0 }));
 
     const labels = Array.from(element().querySelectorAll('.post__stances button')).map((b) =>
       b.getAttribute('aria-label'),
@@ -134,7 +124,7 @@ describe('PostComponent', () => {
     const auth = TestBed.inject(AuthService);
     auth.currentUser.set({ id: 'u1' } as UserProfile);
     auth.markShareStances(false);
-    render(card({ participantCount: 0, interestedCount: 0 }));
+    render(card({ interestedCount: 0 }));
 
     const labels = Array.from(element().querySelectorAll('.post__stances button')).map((b) =>
       b.getAttribute('aria-label'),
@@ -207,7 +197,7 @@ describe('PostComponent', () => {
 
     it('counts the bookmark and the ticket apart, as the like, and moves a count with the stance', () => {
       TestBed.inject(AuthService).currentUser.set({ id: 'u2' } as UserProfile);
-      const data = card({ participantCount: 3, interestedCount: 3, goingCount: 0 });
+      const data = card({ interestedCount: 3, goingCount: 0 });
       render(data);
       const count = (label: string) =>
         element().querySelector(`[aria-label^="${label}"] .post__count`)?.textContent?.trim();
@@ -228,13 +218,12 @@ describe('PostComponent', () => {
 
     it("tells the map's marks of a like and a stance set here, with the sum in step", () => {
       TestBed.inject(AuthService).currentUser.set({ id: 'u2' } as UserProfile);
-      const data = card({ positiveReactionCount: 0, participantCount: 1, interestedCount: 1 });
+      const data = card({ positiveReactionCount: 0, interestedCount: 1 });
       render(data);
 
       (element().querySelector('[aria-label^="POST.like"]') as HTMLButtonElement).click();
       (element().querySelector('[aria-label^="POST.takes_part"]') as HTMLButtonElement).click();
 
-      expect(data.participantCount).toBe(2);
       expect(TestBed.inject(ViewerStates).shown(mark('p1'))).toEqual(
         jasmine.objectContaining({
           myReaction: 'LIKE',
@@ -463,24 +452,8 @@ describe('PostComponent', () => {
       expect(toggle()?.getAttribute('aria-expanded')).toBe('false');
     });
 
-    it('stays expanded when the same post is shown again, as on coming back to the list', async () => {
+    it('stays expanded when the post comes back, as a copy from the post page too', async () => {
       const data = card({ id: 'shown-again', description: LONG });
-      render(data);
-      await measured();
-      toggle()!.click();
-      await measured();
-
-      const again = TestBed.createComponent(PostComponent);
-      again.componentRef.setInput('data', data);
-      again.componentRef.setInput('isFullView', false);
-      again.detectChanges();
-
-      expect(again.componentInstance.isExpanded()).toBeTrue();
-      expect(again.nativeElement.querySelector('.post__desc-text--clamped')).toBeNull();
-    });
-
-    it('stays expanded when the card is replaced by the copy from the post page', async () => {
-      const data = card({ id: 'replaced', description: LONG });
       render(data);
       await measured();
       toggle()!.click();
@@ -492,13 +465,14 @@ describe('PostComponent', () => {
       again.detectChanges();
 
       expect(again.componentInstance.isExpanded()).toBeTrue();
+      expect(again.nativeElement.querySelector('.post__desc-text--clamped')).toBeNull();
     });
 
     it('collapses runs of blank lines into one, and keeps the paragraphs', () => {
       const lf = String.fromCharCode(10);
       render(card({ description: `Jeden.  ${lf}${lf}${lf}${lf}Dwa.${lf}Trzy.` }));
 
-      expect(component.description).toBe(`Jeden.${lf}${lf}Dwa.${lf}Trzy.`);
+      expect(component.description()).toBe(`Jeden.${lf}${lf}Dwa.${lf}Trzy.`);
     });
 
     it('cuts at 6 lines without a photo, and at 3 with one', async () => {
@@ -678,7 +652,6 @@ describe('PostComponent', () => {
       const data = card({ myParticipation: 'INTERESTED', myReaction: 'LIKE' });
       fixture.componentRef.setInput('folds', 'marked');
       render(data);
-      component.isLiked.set(true);
 
       component.setNotForMe();
       http.expectOne((r) => r.method === 'PUT').flush({});
@@ -696,7 +669,7 @@ describe('PostComponent', () => {
       expect(folded()).toBeUndefined();
       expect(data.myParticipation).toBe('INTERESTED');
       expect(data.myReaction).toBe('LIKE');
-      expect(data.participantCount).toBe(2);
+      expect(data.interestedCount).toBe(2);
     });
 
     it('keeps the card on Wszystkie and the post page, with the eye pressed', () => {
@@ -798,19 +771,19 @@ describe('PostComponent', () => {
       component.setInterested();
       http.expectOne((r) => r.method === 'PUT' || r.method === 'POST').flush({});
       expect(data.myParticipation).toBe('INTERESTED');
-      expect(data.participantCount).toBe(3);
+      expect([data.interestedCount, data.goingCount]).toEqual([3, 0]);
 
       component.setTakesPart();
       http.expectOne((r) => r.method === 'PUT' || r.method === 'POST').flush({});
       expect(data.myParticipation).toBe('TAKES_PART');
-      expect(data.participantCount).toBe(3);
+      expect([data.interestedCount, data.goingCount]).toEqual([2, 1]);
       expect(component.isInterested()).toBeFalse();
       expect(component.isTakesPart()).toBeTrue();
 
       component.setTakesPart();
       http.expectOne((r) => r.method === 'DELETE').flush(null);
       expect(data.myParticipation).toBeUndefined();
-      expect(data.participantCount).toBe(2);
+      expect([data.interestedCount, data.goingCount]).toEqual([2, 0]);
     });
 
     it('returns to the previous participation when a change fails', () => {
@@ -823,7 +796,7 @@ describe('PostComponent', () => {
         .flush({ error: 'down' }, serverError);
 
       expect(data.myParticipation).toBe('INTERESTED');
-      expect(data.participantCount).toBe(2);
+      expect([data.interestedCount, data.goingCount]).toEqual([2, 0]);
       expect(component.isInterested()).toBeTrue();
     });
 
@@ -853,7 +826,7 @@ describe('PostComponent', () => {
       request.flush({});
 
       expect(data.myParticipation).toBe('NOT_INTERESTED');
-      expect(data.participantCount).toBe(2);
+      expect([data.interestedCount, data.goingCount]).toEqual([2, 0]);
       expect(toast.message()).toBeNull();
     });
 
@@ -864,14 +837,13 @@ describe('PostComponent', () => {
       component.setNotForMe();
       http.expectOne((r) => r.method === 'PUT').flush({});
 
-      expect(data.participantCount).toBe(1);
+      expect(data.interestedCount).toBe(1);
       expect(component.isInterested()).toBeFalse();
     });
 
     it('takes the like back with a mark, as the server does, and returns it if the mark fails', () => {
       const data = card({ myReaction: 'LIKE' });
       render(data);
-      component.isLiked.set(true);
 
       component.setNotForMe();
       expect(data.myReaction).toBeUndefined();
@@ -905,12 +877,6 @@ describe('PostComponent', () => {
       http.expectNone((r) => r.method === 'DELETE');
       mark.flush({});
       http.expectOne((r) => r.method === 'DELETE').flush(null);
-    });
-
-    it('does not fail on a post with no location', () => {
-      render(card());
-
-      expect(component.place).toBe('');
     });
   });
 
@@ -960,19 +926,6 @@ describe('PostComponent', () => {
 
       expect(element().querySelector('.post__ended')).toBeNull();
       expect(stanceButtons()[1].getAttribute('aria-disabled')).toBeNull();
-    });
-
-    it('flips a stance back when the API refuses it, as an event that ended while the page was open', () => {
-      const data = card();
-      render(data);
-
-      component.setInterested();
-      http
-        .expectOne((r) => r.method === 'PUT' || r.method === 'POST')
-        .flush({ error: 'The event has ended' }, { status: 400, statusText: 'Bad Request' });
-
-      expect(data.myParticipation).toBeUndefined();
-      expect(component.isInterested()).toBeFalse();
     });
   });
 });

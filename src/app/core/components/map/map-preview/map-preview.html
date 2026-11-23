@@ -68,7 +68,7 @@
 </div>
 
 <ng-template #mini let-mark>
-  @let post = reactions.shown(mark);
+  @let post = states.shown(mark);
   <div class="mini">
     @if (post.friendStances; as friends) {
       <app-friends-line
@@ -121,7 +121,7 @@
         [attr.aria-pressed]="post.myReaction === 'LIKE'"
         [attr.aria-label]="'MAP.likes' | translate: { count: post.positiveReactionCount }"
         [appTooltip]="'POST.like' | translate"
-        (click)="reactions.like(mark)"
+        (click)="states.like(post)"
       >
         <ng-icon
           name="lucideThumbsUp"
@@ -142,7 +142,7 @@
           ('POST.interested' | translate) +
           (stanceNote(post) ? ' · ' + (stanceNote(post)! | translate) : '')
         "
-        (click)="stance(mark, 'INTERESTED')"
+        (click)="stance(post, 'INTERESTED')"
       >
         <ng-icon
           name="lucideBookmark"
@@ -163,7 +163,7 @@
           ('POST.takes_part' | translate) +
           (stanceNote(post) ? ' · ' + (stanceNote(post)! | translate) : '')
         "
-        (click)="stance(mark, 'TAKES_PART')"
+        (click)="stance(post, 'TAKES_PART')"
       >
         <ng-icon
           name="appTicket"

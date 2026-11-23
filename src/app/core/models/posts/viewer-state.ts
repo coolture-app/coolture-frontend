@@ -47,8 +47,3 @@ export function withStance(state: ViewerState, next: ParticipationType | undefin
     goingCount: state.goingCount + change('TAKES_PART'),
   };
 }
-
-/** `participantCount`, which the API counts the same way. */
-export function participants(state: ViewerState): number {
-  return state.interestedCount + state.goingCount;
-}
