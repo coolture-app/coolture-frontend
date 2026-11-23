@@ -99,6 +99,11 @@ export class AuthService {
     this.currentUser.update((user) => user && { ...user, kinds, interests });
   }
 
+  /** After the profile was saved, so the navbar and every page show it. */
+  markProfile(profile: UserProfile): void {
+    this.currentUser.set(profile);
+  }
+
   /** After the home was saved or removed. */
   markHome(home: NamedPlace | null): void {
     this.homeChanges++;

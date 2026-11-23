@@ -9,10 +9,9 @@ import {
   output,
   signal,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { CanDeactivateFn, Router } from '@angular/router';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { firstValueFrom, forkJoin, map } from 'rxjs';
+import { TranslatePipe } from '@ngx-translate/core';
+import { firstValueFrom, forkJoin } from 'rxjs';
 import { BackLink } from '../../core/components/back-link/back-link';
 import { Btn } from '../../core/components/btn/btn';
 import { KindGrid } from '../../core/components/kind-grid/kind-grid';
@@ -20,6 +19,7 @@ import { ConfirmService } from '../../core/services/confirm/confirm.service';
 import { Interest, InterestCatalog, label } from '../../core/models/interests/interest.model';
 import { AuthService } from '../../core/services/auth/auth.service';
 import { InterestsService } from '../../core/services/interests/interests.service';
+import { currentLang } from '../../core/utils/current-lang';
 
 export const unsavedInterestsGuard: CanDeactivateFn<InterestsView> = (component) =>
   component.confirmLeave();
@@ -36,7 +36,6 @@ export class InterestsView implements OnInit {
   private authService = inject(AuthService);
   private interestsService = inject(InterestsService);
   private router = inject(Router);
-  private translate = inject(TranslateService);
   private element = inject<ElementRef<HTMLElement>>(ElementRef);
 
   /** First selection after sign-in, shown as an overlay: kinds, then topics. Saving doesn't navigate. */
@@ -48,9 +47,7 @@ export class InterestsView implements OnInit {
   private confirm = inject(ConfirmService);
   private savedSnapshot = '';
 
-  private currentLang = toSignal(this.translate.onLangChange.pipe(map((event) => event.lang)), {
-    initialValue: this.translate.getCurrentLang(),
-  });
+  private currentLang = currentLang();
   protected catalog = signal<InterestCatalog | null>(null);
   protected kinds = signal<ReadonlySet<string>>(new Set());
   protected interests = signal<ReadonlySet<string>>(new Set());

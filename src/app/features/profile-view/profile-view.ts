@@ -57,6 +57,7 @@ import { NotFoundView } from '../not-found-view/not-found-view';
 import { LoadState } from '../../core/components/load-state/load-state';
 import { ProfileEvents } from './profile-events/profile-events';
 import { Menu, MenuItem } from '../../core/components/menu/menu';
+import { currentLang } from '../../core/utils/current-lang';
 
 /** Your own profile at `/profile`, and anyone's at `/users/:username`. */
 @Component({
@@ -113,9 +114,7 @@ export class ProfileView {
   private injector = inject(Injector);
   private bioInput = viewChild<ElementRef<HTMLTextAreaElement>>('bioInput');
 
-  private lang = toSignal(this.translate.onLangChange.pipe(map((event) => event.lang)), {
-    initialValue: this.translate.getCurrentLang(),
-  });
+  private lang = currentLang();
 
   user = signal<UserProfile | null>(null);
   isOwnProfile = signal(true);
@@ -312,7 +311,7 @@ export class ProfileView {
         this.usersService.updateProfile(userValue.id, { bio: this.bioDraft().trim() || null }),
       );
       if (updated) {
-        this.authService.currentUser.set(updated);
+        this.authService.markProfile(updated);
         this.user.set(updated);
         this.editingBio.set(false);
       }
@@ -423,7 +422,7 @@ export class ProfileView {
 
       const updatedUser = await firstValueFrom(this.usersService.getUserById(userId));
       if (updatedUser) {
-        this.authService.currentUser.set(updatedUser);
+        this.authService.markProfile(updatedUser);
         this.user.set(updatedUser);
       }
     } catch (err) {
@@ -449,7 +448,7 @@ export class ProfileView {
       await firstValueFrom(this.usersService.deleteProfileImage(userId));
       const updatedUser = await firstValueFrom(this.usersService.getUserById(userId));
       if (updatedUser) {
-        this.authService.currentUser.set(updatedUser);
+        this.authService.markProfile(updatedUser);
         this.user.set(updatedUser);
       }
     } catch (err) {

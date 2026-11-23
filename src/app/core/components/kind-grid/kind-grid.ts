@@ -3,18 +3,16 @@ import {
   Component,
   computed,
   forwardRef,
-  inject,
   input,
   model,
   signal,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { map } from 'rxjs';
+import { TranslatePipe } from '@ngx-translate/core';
 import { kindIcon } from '../../icons/kind-icons';
 import { Kind, label } from '../../models/interests/interest.model';
+import { currentLang } from '../../utils/current-lang';
 
 /**
  * Kinds of event to pick, several at once. `large` is onboarding's and the profile's: tiles in two columns, each with
@@ -33,10 +31,7 @@ import { Kind, label } from '../../models/interests/interest.model';
   providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => KindGrid), multi: true }],
 })
 export class KindGrid implements ControlValueAccessor {
-  private translate = inject(TranslateService);
-  private lang = toSignal(this.translate.onLangChange.pipe(map((event) => event.lang)), {
-    initialValue: this.translate.getCurrentLang(),
-  });
+  private lang = currentLang();
 
   readonly kinds = input.required<readonly Kind[]>();
   readonly selected = model<ReadonlySet<string>>(new Set());

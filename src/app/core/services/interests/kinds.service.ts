@@ -5,6 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { catchError, map, of } from 'rxjs';
 import { Kind } from '../../models/interests/interest.model';
 import { InterestsService } from './interests.service';
+import { currentLang } from '../../utils/current-lang';
 
 /** The kind that Filtry shows as a switch rather than a tile: it narrows the other kinds instead of adding to them. */
 export const KIDS_KIND = 'kids';
@@ -17,9 +18,7 @@ export class KindsService {
   private interests = inject(InterestsService);
   private translate = inject(TranslateService);
 
-  private lang = toSignal(this.translate.onLangChange.pipe(map((event) => event.lang)), {
-    initialValue: this.translate.getCurrentLang(),
-  });
+  private lang = currentLang();
 
   /** In the catalogue's order. Empty on the server and if loading failed, so a kind then shows no name. */
   readonly kinds = isPlatformBrowser(inject(PLATFORM_ID))
