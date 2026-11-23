@@ -14,6 +14,11 @@ export interface FriendGroup {
   people: Friend[];
 }
 
+export const STANCES = [
+  { key: 'going', icon: 'appTicket', title: 'FRIENDS.going' },
+  { key: 'interested', icon: 'lucideBookmark', title: 'FRIENDS.interested' },
+] as const;
+
 /** The viewer's friends who marked a post Biorę udział (going) or Interesuje mnie (interested). */
 export interface FriendStances {
   going?: FriendGroup;

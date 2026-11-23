@@ -1,19 +1,14 @@
 @if (friends(); as friends) {
-  @for (
-    section of [
-      { people: friends.going, icon: 'appTicket', title: 'FRIENDS.going' },
-      { people: friends.interested, icon: 'lucideBookmark', title: 'FRIENDS.interested' },
-    ];
-    track section.icon
-  ) {
-    @if (section.people.length > 0) {
+  @for (section of stances; track section.key) {
+    @let people = friends[section.key];
+    @if (people.length > 0) {
       <section class="friends__section">
         <h3 class="friends__heading">
           <ng-icon [name]="section.icon" aria-hidden="true" />
-          {{ section.title | translate }} · {{ section.people.length }}
+          {{ section.title | translate }} · {{ people.length }}
         </h3>
         <ul class="friends__list">
-          @for (friend of section.people; track friend.id) {
+          @for (friend of people; track friend.id) {
             <li>
               <a
                 class="friends__row"

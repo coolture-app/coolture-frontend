@@ -4,10 +4,13 @@ import { lucideBookmark } from '@ng-icons/lucide';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { appTicket } from '../../icons/ticket';
-import { Friend, FriendGroup, FriendStances } from '../../models/posts/friend-stances.model';
+import {
+  Friend,
+  FriendGroup,
+  FriendStances,
+  STANCES,
+} from '../../models/posts/friend-stances.model';
 import { InitialsPipe } from '../../pipes/initials.pipe';
-
-const FACES = 2;
 
 /**
  * Which friends go to a post or are interested in it, each stance with its own faces. Icons stand for the stances
@@ -25,15 +28,12 @@ export class FriendsLine {
   readonly stances = input<FriendStances | undefined>();
   readonly opened = output<void>();
 
-  readonly groups = computed(() => {
-    const { going, interested } = this.stances() ?? {};
-    return [
-      { name: 'going', icon: 'appTicket', stance: going },
-      { name: 'interested', icon: 'lucideBookmark', stance: interested },
-    ]
-      .filter((group): group is typeof group & { stance: FriendGroup } => !!group.stance)
-      .map((group) => ({ ...group, faces: group.stance.people.slice(0, FACES) }));
-  });
+  readonly groups = computed(() =>
+    STANCES.flatMap(({ key, icon }) => {
+      const stance = this.stances()?.[key];
+      return stance ? [{ key, icon, stance }] : [];
+    }),
+  );
 
   names(group: FriendGroup): string {
     const listed = group.people.map(nameOf).join(', ');

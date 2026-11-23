@@ -8,8 +8,8 @@ export interface Photo {
 }
 
 /** The limits of a frame's shape, as Instagram's feed holds them. */
-export const TALLEST_FRAME = 4 / 5;
-export const WIDEST_FRAME = 1.91;
+const TALLEST_FRAME = 4 / 5;
+const WIDEST_FRAME = 1.91;
 
 export function toPhoto(media: MediaResource | undefined): Photo | null {
   return media?.url ? { url: media.url, width: media.width, height: media.height } : null;
