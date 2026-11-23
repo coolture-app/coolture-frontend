@@ -63,11 +63,11 @@ img {
 
 // Keeps a centred column clear of a docked sheet and 16 px from it, moving it only as far as a screen needs.
 html.sheet-docked app-main-page,
-html.sheet-docked app-user-profile-view {
+html.sheet-docked app-profile-view {
   padding-right: max(0px, calc(var(--feed-column) + 2 * (var(--docked-sheet) + 16px) - 100vw));
 }
 
-html.sheet-docked app-user-profile-view {
+html.sheet-docked app-profile-view {
   display: block;
 }
 

@@ -31,7 +31,7 @@ import { LoadState } from '../../core/components/load-state/load-state';
 import { ToastService } from '../../core/services/toast/toast.service';
 
 @Component({
-  selector: 'app-discover-view',
+  selector: 'app-people-view',
   imports: [
     InitialsPipe,
     TranslatePipe,
@@ -43,10 +43,10 @@ import { ToastService } from '../../core/services/toast/toast.service';
     LoadState,
   ],
   viewProviders: [provideIcons({ heroMagnifyingGlass })],
-  templateUrl: './discover-view.html',
-  styleUrl: './discover-view.scss',
+  templateUrl: './people-view.html',
+  styleUrl: './people-view.scss',
 })
-export class DiscoverView implements OnInit, OnDestroy {
+export class PeopleView implements OnInit, OnDestroy {
   private usersService = inject(Users);
   private relationsService = inject(RelationsService);
   private authService = inject(AuthService);

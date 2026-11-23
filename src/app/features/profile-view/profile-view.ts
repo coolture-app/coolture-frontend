@@ -57,7 +57,7 @@ import { Menu, MenuItem } from '../../core/components/menu/menu';
 
 /** Your own profile at `/profile`, and anyone's at `/users/:username`. */
 @Component({
-  selector: 'app-user-profile-view',
+  selector: 'app-profile-view',
   imports: [
     ProfileInterests,
     InitialsPipe,
@@ -93,10 +93,10 @@ import { Menu, MenuItem } from '../../core/components/menu/menu';
       lucideUserX,
     }),
   ],
-  templateUrl: './my-profile-view.html',
-  styleUrl: './my-profile-view.scss',
+  templateUrl: './profile-view.html',
+  styleUrl: './profile-view.scss',
 })
-export class UserProfileView {
+export class ProfileView {
   private authService = inject(AuthService);
   private photoViewer = inject(PhotoViewerService);
   private usersService = inject(Users);

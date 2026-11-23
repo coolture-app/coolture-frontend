@@ -5,13 +5,13 @@ import { TranslateService } from '@ngx-translate/core';
 import { inject } from '@angular/core';
 import { NotFoundView } from './features/not-found-view/not-found-view';
 import { AddPostView } from './features/add-post-view/add-post-view';
-import { DiscoverView } from './features/discover-view/discover-view';
-import { UserProfileView } from './features/my-profile-view/my-profile-view';
+import { PeopleView } from './features/people-view/people-view';
+import { ProfileView } from './features/profile-view/profile-view';
 import { signedIn } from './core/auth/auth.guard';
 import { GuestView } from './features/guest-view/guest-view';
 import { SignInReason } from './core/models/common/sign-in-reason';
 import { EditPostView } from './features/edit-post-view/edit-post-view';
-import { MyEventsView } from './features/my-events-view/my-events-view';
+import { PlansView } from './features/plans-view/plans-view';
 import { AuthCallbackView } from './features/auth-callback-view/auth-callback-view';
 import { HiddenPostsView } from './features/hidden-posts-view/hidden-posts-view';
 import { InterestsView, unsavedInterestsGuard } from './features/interests-view/interests-view';
@@ -109,27 +109,27 @@ export const routes: Routes = [
   ...needsSignIn('settings', {
     path: 'profile/blocked',
     component: BlockedUsersView,
-    title: titled('PROFILE.blocked'),
+    title: titled('BLOCKED.title'),
   }),
   ...needsSignIn('profile', {
     path: 'profile',
-    component: UserProfileView,
+    component: ProfileView,
     title: titled('PROFILE.title'),
   }),
   ...needsSignIn('user', {
     path: 'users/:username',
-    component: UserProfileView,
+    component: ProfileView,
     title: titled('PROFILE.title'),
   }),
   ...needsSignIn('people', {
     path: 'people',
-    component: DiscoverView,
-    title: titled('DISCOVER.title'),
+    component: PeopleView,
+    title: titled('PEOPLE.title'),
   }),
   ...needsSignIn('plans', {
     path: 'plans',
-    component: MyEventsView,
-    title: titled('MY_EVENTS.title'),
+    component: PlansView,
+    title: titled('PLANS.title'),
   }),
   {
     path: 'auth/callback',

@@ -62,7 +62,7 @@ describe('BlockedUsersView', () => {
     await flush(null, 500);
 
     expect(element.querySelector('[role="alert"]')?.textContent).toContain(
-      'PROFILE.blockedLoadError',
+      'BLOCKED.titleLoadError',
     );
   });
 });

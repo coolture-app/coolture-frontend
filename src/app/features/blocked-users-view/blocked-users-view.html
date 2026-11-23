@@ -2,12 +2,12 @@
   <div class="blocked">
     <div class="blocked__head">
       <app-back-link fallback="/profile/settings" />
-      <h1 class="blocked__title">{{ 'PROFILE.blocked' | translate }}</h1>
+      <h1 class="blocked__title">{{ 'BLOCKED.title' | translate }}</h1>
     </div>
 
     @if (failed()) {
       <div class="blocked__empty" role="alert">
-        <span>{{ 'PROFILE.blockedLoadError' | translate }}</span>
+        <span>{{ 'BLOCKED.titleLoadError' | translate }}</span>
         <app-btn variant="secondary" size="sm" (btnClick)="load()">
           {{ 'PROFILE.retry' | translate }}
         </app-btn>

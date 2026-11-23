@@ -115,9 +115,9 @@ export class BackService {
         };
       }
       case 'people':
-        return { key: 'NAVBAR.friends' };
+        return { key: 'NAVBAR.people' };
       case 'plans':
-        return { key: 'NAVBAR.my-events' };
+        return { key: 'NAVBAR.plans' };
       case 'users':
         return second ? { text: `@${second}` } : { key: 'BACK.previous' };
       case 'profile':
@@ -178,9 +178,9 @@ export class BackService {
 }
 
 const PROFILE_PAGES: Record<string, string> = {
-  '': 'NAVBAR.my-profile',
+  '': 'NAVBAR.profile',
   settings: 'SETTINGS.title',
-  blocked: 'PROFILE.blocked',
+  blocked: 'BLOCKED.title',
   hidden: 'HIDDEN.title',
   interests: 'PROFILE.interests',
 };

@@ -7,7 +7,7 @@
           class="searchbar__input"
           type="text"
           [formControl]="searchControl"
-          placeholder="{{ 'DISCOVER.searchbar' | translate }}"
+          placeholder="{{ 'PEOPLE.searchbar' | translate }}"
         />
       </span>
     </div>
@@ -38,7 +38,7 @@
         <app-follow-btn [following]="item.isFollowing" (toggled)="toggleFollow(item)" />
       </div>
     } @empty {
-      <p class="empty">{{ 'DISCOVER.no-users' | translate }}</p>
+      <p class="empty">{{ 'PEOPLE.no-users' | translate }}</p>
     }
   }
 </div>

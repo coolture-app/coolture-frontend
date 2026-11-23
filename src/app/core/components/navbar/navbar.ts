@@ -43,11 +43,11 @@ export class Navbar {
   currentLang = signal(this.translate.currentLang);
 
   readonly links = [
-    { path: '/', icon: 'lucideHouse', labelKey: 'NAVBAR.main-page' },
-    { path: '/people', icon: 'lucideUsers', labelKey: 'NAVBAR.friends' },
+    { path: '/', icon: 'lucideHouse', labelKey: 'NAVBAR.home' },
+    { path: '/people', icon: 'lucideUsers', labelKey: 'NAVBAR.people' },
     { path: '/posts/new', icon: 'lucidePlus', labelKey: 'NAVBAR.addPost' },
-    { path: '/plans', icon: 'lucideCalendarDays', labelKey: 'NAVBAR.my-events' },
-    { path: '/profile', icon: 'lucideUserRound', labelKey: 'NAVBAR.my-profile' },
+    { path: '/plans', icon: 'lucideCalendarDays', labelKey: 'NAVBAR.plans' },
+    { path: '/profile', icon: 'lucideUserRound', labelKey: 'NAVBAR.profile' },
   ];
 
   /** Home is active on its own path alone, whatever search or filters its URL holds. */

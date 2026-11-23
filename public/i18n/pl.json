@@ -104,10 +104,10 @@
     "loadFailed": "Nie udało się wczytać wydarzenia."
   },
   "NAVBAR": {
-    "main-page": "Strona główna",
-    "friends": "Ludzie",
-    "my-events": "Plany",
-    "my-profile": "Profil",
+    "home": "Strona główna",
+    "people": "Ludzie",
+    "plans": "Plany",
+    "profile": "Profil",
     "addPost": "Dodaj post",
     "logout": "Wyloguj się",
     "login": "Zaloguj się",
@@ -131,7 +131,6 @@
     "follow": "Obserwuj",
     "block": "Zablokuj",
     "unblock": "Odblokuj",
-    "blocked": "Zablokowani",
     "no-blocked": "Brak zablokowanych użytkowników",
     "loading": "Ładowanie...",
     "hidden-posts": "Ukryte posty",
@@ -160,6 +159,9 @@
     "loadFailed": "Nie udało się wczytać profilu.",
     "sharedInterests": "Wspólne zainteresowania"
   },
+  "BLOCKED": {
+    "title": "Zablokowani"
+  },
   "SETTINGS": {
     "title": "Ustawienia",
     "privacy": "Prywatność",
@@ -171,7 +173,7 @@
     "usernameTaken": "Ta nazwa jest zajęta.",
     "saved": "Zapisano."
   },
-  "DISCOVER": {
+  "PEOPLE": {
     "title": "Odkrywaj",
     "searchbar": "Szukaj ludzi",
     "no-users": "Nie znaleziono uzytkownikow"
@@ -285,7 +287,7 @@
   "EVENT_CARD": {
     "by": "przez"
   },
-  "MY_EVENTS": {
+  "PLANS": {
     "title": "Plany",
     "no-events": "Nie masz jeszcze żadnych wydarzeń... Smutno.",
     "all": "Wszystkie",

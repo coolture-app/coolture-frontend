@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
-import { DiscoverView } from './discover-view';
+import { PeopleView } from './people-view';
 import { AuthService } from '../../core/services/auth/auth.service';
 import { RelationsService } from '../../core/services/relations/relations.service';
 import { ToastService } from '../../core/services/toast/toast.service';
@@ -23,8 +23,8 @@ function person(id: string, isFollowing: boolean): UserListItem {
   };
 }
 
-describe('DiscoverView', () => {
-  let fixture: ComponentFixture<DiscoverView>;
+describe('PeopleView', () => {
+  let fixture: ComponentFixture<PeopleView>;
   let users: jasmine.SpyObj<Users>;
   let relations: jasmine.SpyObj<RelationsService>;
   let toast: jasmine.SpyObj<ToastService>;
@@ -35,7 +35,7 @@ describe('DiscoverView', () => {
 
   function create(items: UserListItem[]): void {
     users.searchForUsers.and.returnValue(of({ items, page: { limit: 20, hasMore: false } }));
-    fixture = TestBed.createComponent(DiscoverView);
+    fixture = TestBed.createComponent(PeopleView);
     fixture.detectChanges();
     jasmine.clock().tick(400);
     fixture.detectChanges();
@@ -55,7 +55,7 @@ describe('DiscoverView', () => {
     relations.unfollow.and.returnValue(of(undefined));
     toast = jasmine.createSpyObj<ToastService>('ToastService', ['failed']);
     TestBed.configureTestingModule({
-      imports: [DiscoverView],
+      imports: [PeopleView],
       providers: [
         provideRouter([]),
         { provide: Users, useValue: users },

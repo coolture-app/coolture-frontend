@@ -36,11 +36,11 @@
     <span class="event-card__date">{{ when.card(post) }}</span>
     @if (post.myParticipation === 'TAKES_PART') {
       <span class="event-card__badge event-card__badge--going">{{
-        'MY_EVENTS.takes_part' | translate
+        'PLANS.takes_part' | translate
       }}</span>
     } @else if (post.myParticipation === 'INTERESTED') {
       <span class="event-card__badge event-card__badge--interested">{{
-        'MY_EVENTS.interested' | translate
+        'PLANS.interested' | translate
       }}</span>
     }
   </div>

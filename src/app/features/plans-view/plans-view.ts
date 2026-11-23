@@ -10,13 +10,13 @@ import { ParticipationType } from '../../core/models/common/enums';
 
 /** Its own list, so the home page's survives a visit here. */
 @Component({
-  selector: 'app-my-events-view',
+  selector: 'app-plans-view',
   imports: [TranslatePipe, EventCard, Btn, InfiniteScroll],
   providers: [PostListStore],
-  templateUrl: './my-events-view.html',
-  styleUrl: './my-events-view.scss',
+  templateUrl: './plans-view.html',
+  styleUrl: './plans-view.scss',
 })
-export class MyEventsView implements OnInit {
+export class PlansView implements OnInit {
   readonly list = inject(PostListStore);
   private router = inject(Router);
 

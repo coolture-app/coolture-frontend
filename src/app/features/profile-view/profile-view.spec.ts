@@ -5,7 +5,7 @@ import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { TranslateService } from '@ngx-translate/core';
 
-import { UserProfileView } from './my-profile-view';
+import { ProfileView } from './profile-view';
 import { AuthService } from '../../core/services/auth/auth.service';
 import { PhotoViewerService } from '../../core/services/photo-viewer/photo-viewer.service';
 import { UserProfile } from '../../core/models/users/user-profile.model';
@@ -65,7 +65,7 @@ const CATALOG: InterestCatalog = {
   ],
 };
 
-describe('UserProfileView', () => {
+describe('ProfileView', () => {
   let harness: RouterTestingHarness;
   let http: HttpTestingController;
   let element: HTMLElement;
@@ -74,8 +74,8 @@ describe('UserProfileView', () => {
     TestBed.configureTestingModule({
       providers: [
         provideRouter([
-          { path: 'profile', component: UserProfileView },
-          { path: 'users/:username', component: UserProfileView },
+          { path: 'profile', component: ProfileView },
+          { path: 'users/:username', component: ProfileView },
         ]),
       ],
     });
@@ -94,8 +94,8 @@ describe('UserProfileView', () => {
 
   const text = (selector: string) => element.querySelector(selector)?.textContent?.trim();
   const view = () =>
-    harness.fixture.debugElement.query((d) => d.componentInstance instanceof UserProfileView)
-      .componentInstance as UserProfileView;
+    harness.fixture.debugElement.query((d) => d.componentInstance instanceof ProfileView)
+      .componentInstance as ProfileView;
 
   describe('your own', () => {
     beforeEach(async () => {
@@ -106,7 +106,7 @@ describe('UserProfileView', () => {
       const gear = element.querySelector<HTMLAnchorElement>('.profile__corner a');
       expect(gear?.getAttribute('href')).toBe('/profile/settings');
       expect(gear?.getAttribute('aria-label')).toBe('SETTINGS.title');
-      expect(element.textContent).not.toContain('PROFILE.blocked');
+      expect(element.textContent).not.toContain('BLOCKED.title');
       expect(element.textContent).not.toContain('PROFILE.hidden-posts');
       expect(element.querySelector('app-switch')).toBeNull();
       expect(element.querySelector('app-back-link')).toBeNull();
@@ -289,7 +289,7 @@ describe('UserProfileView', () => {
     it('links back to Ludzie when the tab came straight here', () => {
       const back = element.querySelector('app-back-link a');
       expect(back?.getAttribute('href')).toBe('/people');
-      expect(back?.textContent?.trim()).toBe('NAVBAR.friends');
+      expect(back?.textContent?.trim()).toBe('NAVBAR.people');
     });
 
     it('has Obserwuj as its only button and Zablokuj in the ⋯ menu', () => {

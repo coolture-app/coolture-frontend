@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpTestingController, TestRequest } from '@angular/common/http/testing';
-import { MyEventsView } from './my-events-view';
+import { PlansView } from './plans-view';
 import { PostCard } from '../../core/models/posts/post-card.model';
 
 function card(id: string): PostCard {
@@ -21,8 +21,8 @@ function card(id: string): PostCard {
   };
 }
 
-describe('MyEventsView', () => {
-  let fixture: ComponentFixture<MyEventsView>;
+describe('PlansView', () => {
+  let fixture: ComponentFixture<PlansView>;
   let http: HttpTestingController;
 
   function page(ids: string[], nextCursor?: string) {
@@ -38,7 +38,7 @@ describe('MyEventsView', () => {
   }
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(MyEventsView);
+    fixture = TestBed.createComponent(PlansView);
     http = TestBed.inject(HttpTestingController);
     fixture.detectChanges();
   });
@@ -72,7 +72,7 @@ describe('MyEventsView', () => {
     fixture.detectChanges();
 
     const alert = fixture.nativeElement.querySelector('[role="alert"]') as HTMLElement;
-    expect(alert.textContent).toContain('MY_EVENTS.load-error');
+    expect(alert.textContent).toContain('PLANS.load-error');
     alert.querySelector('button')!.click();
     requests()[0].flush(page(['a']));
     expect(shown()).toEqual(['a']);

@@ -104,10 +104,10 @@
     "loadFailed": "Couldn't load the event."
   },
   "NAVBAR": {
-    "main-page": "Home",
-    "friends": "People",
-    "my-events": "Plans",
-    "my-profile": "Profile",
+    "home": "Home",
+    "people": "People",
+    "plans": "Plans",
+    "profile": "Profile",
     "addPost": "Add post",
     "logout": "Log out",
     "login": "Log in",
@@ -131,7 +131,6 @@
     "follow": "Follow",
     "block": "Block",
     "unblock": "Unblock",
-    "blocked": "Blocked",
     "no-blocked": "No blocked users",
     "loading": "Loading...",
     "hidden-posts": "Hidden posts",
@@ -160,6 +159,9 @@
     "loadFailed": "Couldn't load the profile.",
     "sharedInterests": "Interests in common"
   },
+  "BLOCKED": {
+    "title": "Blocked"
+  },
   "SETTINGS": {
     "title": "Settings",
     "privacy": "Privacy",
@@ -171,7 +173,7 @@
     "usernameTaken": "That name is taken.",
     "saved": "Saved."
   },
-  "DISCOVER": {
+  "PEOPLE": {
     "title": "Discover",
     "searchbar": "Search for people",
     "no-users": "No users found"
@@ -285,7 +287,7 @@
   "EVENT_CARD": {
     "by": "by"
   },
-  "MY_EVENTS": {
+  "PLANS": {
     "title": "Plans",
     "no-events": "You don't have any events yet... Sad face.",
     "all": "All",

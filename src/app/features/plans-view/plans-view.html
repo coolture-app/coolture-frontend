@@ -1,13 +1,13 @@
 <div class="page">
-  <div class="my-events">
-    <div class="my-events__filters">
+  <div class="plans">
+    <div class="plans__filters">
       <app-btn
         variant="secondary"
         size="sm"
         [class]="selectedFilter() === 'all' ? 'active' : ''"
         (btnClick)="setFilter('all')"
       >
-        {{ 'MY_EVENTS.all' | translate }}
+        {{ 'PLANS.all' | translate }}
       </app-btn>
       <app-btn
         variant="secondary"
@@ -15,7 +15,7 @@
         [class]="selectedFilter() === 'INTERESTED' ? 'active' : ''"
         (btnClick)="setFilter('INTERESTED')"
       >
-        {{ 'MY_EVENTS.interested' | translate }}
+        {{ 'PLANS.interested' | translate }}
       </app-btn>
       <app-btn
         variant="secondary"
@@ -23,15 +23,15 @@
         [class]="selectedFilter() === 'TAKES_PART' ? 'active' : ''"
         (btnClick)="setFilter('TAKES_PART')"
       >
-        {{ 'MY_EVENTS.takes_part' | translate }}
+        {{ 'PLANS.takes_part' | translate }}
       </app-btn>
     </div>
 
-    <div class="my-events__list">
+    <div class="plans__list">
       @for (post of list.items(); track post.id) {
         @if ($index === list.loadMoreAt()) {
           <div
-            class="my-events__trigger"
+            class="plans__trigger"
             [appInfiniteScroll]="list.canLoadMore()"
             (reachedEnd)="list.loadMore()"
           ></div>
@@ -39,22 +39,22 @@
         <app-event-card [post]="post" (cardClick)="goToPost($event)" />
       }
       <div
-        class="my-events__trigger"
+        class="plans__trigger"
         [appInfiniteScroll]="list.canLoadMore()"
         (reachedEnd)="list.loadMore()"
       ></div>
 
       @if (list.failed()) {
-        <div class="my-events__empty" role="alert">
-          <span>{{ 'MY_EVENTS.load-error' | translate }}</span>
+        <div class="plans__empty" role="alert">
+          <span>{{ 'PLANS.load-error' | translate }}</span>
           <app-btn variant="secondary" size="sm" (btnClick)="list.retry()">{{
-            'MY_EVENTS.retry' | translate
+            'PLANS.retry' | translate
           }}</app-btn>
         </div>
       } @else if (list.loading()) {
-        <p class="my-events__empty" role="status">{{ 'MY_EVENTS.loading' | translate }}</p>
+        <p class="plans__empty" role="status">{{ 'PLANS.loading' | translate }}</p>
       } @else if (list.items().length === 0) {
-        <p class="my-events__empty">{{ 'MY_EVENTS.no-events' | translate }}</p>
+        <p class="plans__empty">{{ 'PLANS.no-events' | translate }}</p>
       }
     </div>
   </div>
