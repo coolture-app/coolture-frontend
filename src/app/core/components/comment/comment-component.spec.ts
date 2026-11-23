@@ -243,8 +243,13 @@ describe('CommentComponent', () => {
 
       (element().querySelector('.comment__menu-btn') as HTMLButtonElement).click();
       await fixture.whenStable();
-      expect(buttonNamed('COMMENT.edit-comment')).toBeDefined();
-      expect(buttonNamed('COMMENT.delete-comment')).toBeDefined();
+      const rows = [...document.querySelectorAll('[role="menuitem"]')].map((b) => b.textContent);
+      expect(rows.map((text) => text?.trim())).toEqual([
+        'COMMENT.edit-comment',
+        'COMMENT.delete-comment',
+      ]);
+      document.body.click();
+      await fixture.whenStable();
     });
 
     async function startEditing(): Promise<HTMLTextAreaElement> {

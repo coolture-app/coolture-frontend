@@ -9,7 +9,7 @@ describe('PostOwnerMenu', () => {
   let fixture: ComponentFixture<PostOwnerMenu>;
   let http: HttpTestingController;
   const element = () => fixture.nativeElement as HTMLElement;
-  const items = () => [...element().querySelectorAll<HTMLButtonElement>('[role="menuitem"]')];
+  const items = () => [...document.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')];
 
   beforeEach(() => {
     fixture = TestBed.createComponent(PostOwnerMenu);

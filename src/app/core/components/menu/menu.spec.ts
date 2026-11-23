@@ -48,10 +48,48 @@ describe('Menu', () => {
     trigger('a').click();
     fixture.detectChanges();
 
-    element().querySelector<HTMLButtonElement>('[role="menuitem"]')!.click();
+    document.querySelector<HTMLButtonElement>('[role="menuitem"]')!.click();
 
     expect(fixture.componentInstance.picked).toEqual(['a']);
     expect(open()).toEqual([false, false]);
+  });
+
+  it('opens in body, below its trigger, or above it with no room below', () => {
+    trigger('a').click();
+    fixture.detectChanges();
+    const panel = document.querySelector<HTMLElement>('[role="menu"]')!;
+    expect(panel.parentElement).toBe(document.body);
+    expect(panel.getBoundingClientRect().top).toBeGreaterThanOrEqual(
+      trigger('a').getBoundingClientRect().bottom,
+    );
+    trigger('a').click();
+    fixture.detectChanges();
+
+    const low = trigger('b');
+    low.style.position = 'fixed';
+    low.style.bottom = '0';
+    low.click();
+    fixture.detectChanges();
+
+    const above = document.querySelector<HTMLElement>('[role="menu"]')!;
+    expect(above.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+      low.getBoundingClientRect().top,
+    );
+  });
+
+  it('closes on Esc without passing it on, so a sheet around it stays open', () => {
+    const reached = jasmine.createSpy('document Escape');
+    document.addEventListener('keydown', reached);
+    trigger('a').click();
+    fixture.detectChanges();
+
+    document
+      .querySelector('[role="menuitem"]')!
+      .dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+
+    expect(open()).toEqual([false, false]);
+    expect(reached).not.toHaveBeenCalled();
+    document.removeEventListener('keydown', reached);
   });
 
   it('opens again with one click after Esc closed it', () => {
