@@ -21,6 +21,33 @@ describe('KindsService', () => {
     expect(kinds.eventName('concerts')).toBeNull();
   });
 
+  it('loads the kinds on a later try after one failure', () => {
+    jasmine.clock().install();
+    const concerts = { key: 'concerts', labelPl: 'Koncerty', labelEn: 'Concerts' };
+    let calls = 0;
+    TestBed.configureTestingModule({
+      providers: [
+        {
+          provide: InterestsService,
+          useValue: {
+            getCatalog: () =>
+              ++calls === 1 ? throwError(() => new Error('down')) : of({ kinds: [concerts] }),
+          },
+        },
+      ],
+    });
+    const kinds = TestBed.inject(KindsService);
+
+    try {
+      expect(kinds.name('concerts')).toBeNull();
+      jasmine.clock().tick(1000);
+
+      expect(kinds.name('concerts')).toBe('Koncerty');
+    } finally {
+      jasmine.clock().uninstall();
+    }
+  });
+
   it('names a kind from the catalogue', () => {
     const concerts = { key: 'concerts', labelPl: 'Koncerty', labelEn: 'Concerts' };
     TestBed.configureTestingModule({

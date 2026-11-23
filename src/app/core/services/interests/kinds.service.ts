@@ -2,7 +2,7 @@ import { computed, inject, Injectable, PLATFORM_ID, signal } from '@angular/core
 import { isPlatformBrowser } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslateService } from '@ngx-translate/core';
-import { catchError, map, of } from 'rxjs';
+import { defer, map, retry, timer } from 'rxjs';
 import { Kind } from '../../models/interests/interest.model';
 import { InterestsService } from './interests.service';
 import { currentLang } from '../../utils/current-lang';
@@ -20,12 +20,12 @@ export class KindsService {
 
   private lang = currentLang();
 
-  /** In the catalogue's order. Empty on the server and if loading failed, so a kind then shows no name. */
+  /** In the catalogue's order. Empty on the server and until it loads, so a kind then shows no name. A failed load is tried again. */
   readonly kinds = isPlatformBrowser(inject(PLATFORM_ID))
     ? toSignal(
-        this.interests.getCatalog().pipe(
+        defer(() => this.interests.getCatalog()).pipe(
           map((catalog) => catalog.kinds as readonly Kind[]),
-          catchError(() => of([] as readonly Kind[])),
+          retry({ delay: (_error, attempt) => timer(Math.min(1000 * 2 ** (attempt - 1), 30_000)) }),
         ),
         { initialValue: [] as readonly Kind[] },
       )
