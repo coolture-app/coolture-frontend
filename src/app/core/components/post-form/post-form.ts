@@ -35,6 +35,7 @@ import { PlacePicker } from '../place-picker/place-picker';
 import { locationForm } from '../place-picker/location-form';
 import { PostPhotos } from '../post-photos/post-photos';
 import { BackService } from '../../services/back/back.service';
+import { ConfirmService } from '../../services/confirm/confirm.service';
 
 import { PostDetail } from '../../models/posts/post-detail.model';
 import { PostCreateRequest } from '../../models/posts/post-create-request.model';
@@ -94,6 +95,7 @@ export class PostForm implements OnInit, OnChanges, OnDestroy {
   private injector = inject(Injector);
   private host = inject(ElementRef);
   private backService = inject(BackService);
+  private confirm = inject(ConfirmService);
 
   private readonly placePicker = viewChild<PlacePicker>('placePicker');
   readonly photos = viewChild.required(PostPhotos);
@@ -108,6 +110,8 @@ export class PostForm implements OnInit, OnChanges, OnDestroy {
 
   /** The start as an edit loaded it. It may have passed, and sending it back unchanged is fine. */
   private initialStart = '';
+  /** The fields as loaded, to tell whether leaving loses anything. */
+  private loaded = '';
 
   /** The API refuses a start moved to the past, to the minute, as the input holds it. */
   private startNotInPast = (startsAt: AbstractControl): ValidationErrors | null => {
@@ -159,6 +163,9 @@ export class PostForm implements OnInit, OnChanges, OnDestroy {
   }
 
   ngOnInit(): void {
+    if (!this.initialData) {
+      this.loaded = this.fields();
+    }
     this.postForm.controls.type.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((type) => this.matchLocationTo(type));
@@ -210,6 +217,32 @@ export class PostForm implements OnInit, OnChanges, OnDestroy {
     this.showEnd = !!post.endsAt;
     this.openEnded = post.openEnded;
     this.matchLocationTo(post.type);
+    this.loaded = this.fields();
+  }
+
+  private fields(): string {
+    return JSON.stringify([this.postForm.getRawValue(), this.showEnd, this.openEnded]);
+  }
+
+  /**
+   * Asked when the page is left with changes: `save` them and go on, go on without them, or stay. A form that can't
+   * be saved stays, showing why.
+   */
+  async confirmLeave(save: (data: PostFormSubmit) => Promise<boolean>): Promise<boolean> {
+    if (this.isSubmitting || (this.fields() === this.loaded && !this.photos().changed())) {
+      return true;
+    }
+    const answer = await this.confirm.choose({
+      title: 'LEAVE.title',
+      text: this.mode === 'create' ? 'LEAVE.textNew' : 'LEAVE.text',
+      confirm: this.mode === 'create' ? 'POST_FORM.submit-create' : 'POST_FORM.submit-edit',
+      other: 'LEAVE.discard',
+    });
+    if (answer !== 'confirm') {
+      return answer === 'other';
+    }
+    const data = this.submit();
+    return !!data && save(data);
   }
 
   addEnd(): void {
@@ -259,19 +292,27 @@ export class PostForm implements OnInit, OnChanges, OnDestroy {
   }
 
   onSubmit(): void {
+    const data = this.submit();
+    if (data) {
+      this.formSubmit.emit(data);
+    }
+  }
+
+  /** What to save, or null while it can't be saved: invalid, uploading or already saving. */
+  private submit(): PostFormSubmit | null {
     const photos = this.photos();
     if (this.isSubmitting || photos.hasUploading()) {
-      return;
+      return null;
     }
     if (this.postForm.invalid) {
       this.postForm.markAllAsTouched();
       this.revealFirstError();
-      return;
+      return null;
     }
 
     this.isSubmitting = true;
     const form = this.postForm.getRawValue();
-    this.formSubmit.emit({
+    return {
       request: {
         title: form.title,
         type: form.type,
@@ -285,7 +326,7 @@ export class PostForm implements OnInit, OnChanges, OnDestroy {
         mediaIds: photos.mediaIds(),
       },
       removedMediaIds: photos.removedMediaIds(),
-    });
+    };
   }
 
   private locationRequest(): EventLocationRequest {

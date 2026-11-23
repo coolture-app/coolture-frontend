@@ -42,18 +42,18 @@ function formData(removedMediaIds: string[] = []): PostFormSubmit {
 }
 
 describe('EditPostView, after saving', () => {
-  it('goes back to where the edit was opened, so the form leaves history', () => {
+  it('goes back to where the edit was opened, so the form leaves history', async () => {
     const back = spyOn(TestBed.inject(BackService), 'back');
     spyOn(TestBed.inject(PostService), 'updatePost').and.returnValue(of({} as PostDetail));
     const fixture = TestBed.createComponent(EditPostView);
     fixture.componentInstance.currentPost.set({ id: 'p1' } as PostDetail);
 
-    fixture.componentInstance.onFormSubmit(formData());
+    await fixture.componentInstance.onFormSubmit(formData());
 
     expect(back).toHaveBeenCalledWith('/posts/p1');
   });
 
-  it('deletes the removed photos only once the post no longer holds them', () => {
+  it('deletes the removed photos only once the post no longer holds them', async () => {
     const saving = new Subject<PostDetail>();
     spyOn(TestBed.inject(BackService), 'back');
     spyOn(TestBed.inject(PostService), 'updatePost').and.returnValue(saving);
@@ -63,15 +63,16 @@ describe('EditPostView, after saving', () => {
     const fixture = TestBed.createComponent(EditPostView);
     fixture.componentInstance.currentPost.set({ id: 'p1' } as PostDetail);
 
-    fixture.componentInstance.onFormSubmit(formData(['m1']));
+    const saved = fixture.componentInstance.onFormSubmit(formData(['m1']));
     expect(deleted).not.toHaveBeenCalled();
 
     saving.next({} as PostDetail);
     saving.complete();
+    await saved;
     expect(deleted).toHaveBeenCalledOnceWith('m1');
   });
 
-  it('still goes back when a removed photo could not be deleted', () => {
+  it('still goes back when a removed photo could not be deleted', async () => {
     const back = spyOn(TestBed.inject(BackService), 'back');
     spyOn(console, 'error');
     spyOn(TestBed.inject(PostService), 'updatePost').and.returnValue(of({} as PostDetail));
@@ -81,12 +82,12 @@ describe('EditPostView, after saving', () => {
     const fixture = TestBed.createComponent(EditPostView);
     fixture.componentInstance.currentPost.set({ id: 'p1' } as PostDetail);
 
-    fixture.componentInstance.onFormSubmit(formData(['m1']));
+    await fixture.componentInstance.onFormSubmit(formData(['m1']));
 
     expect(back).toHaveBeenCalledWith('/posts/p1');
   });
 
-  it('keeps the photos when the save fails', () => {
+  it('keeps the photos when the save fails', async () => {
     spyOn(console, 'error');
     spyOn(TestBed.inject(PostService), 'updatePost').and.returnValue(
       throwError(() => new Error('nope')),
@@ -98,7 +99,7 @@ describe('EditPostView, after saving', () => {
       resetSubmitting: () => undefined,
     } as PostForm;
 
-    fixture.componentInstance.onFormSubmit(formData(['m1']));
+    await fixture.componentInstance.onFormSubmit(formData(['m1']));
 
     expect(deleted).not.toHaveBeenCalled();
   });

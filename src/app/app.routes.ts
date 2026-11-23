@@ -14,7 +14,8 @@ import { EditPostView } from './features/edit-post-view/edit-post-view';
 import { PlansView } from './features/plans-view/plans-view';
 import { AuthCallbackView } from './features/auth-callback-view/auth-callback-view';
 import { HiddenPostsView } from './features/hidden-posts-view/hidden-posts-view';
-import { InterestsView, unsavedInterestsGuard } from './features/interests-view/interests-view';
+import { InterestsView } from './features/interests-view/interests-view';
+import { unsavedChangesGuard } from './core/auth/unsaved-changes.guard';
 import { SettingsView } from './features/settings-view/settings-view';
 import { BlockedUsersView } from './features/blocked-users-view/blocked-users-view';
 
@@ -79,11 +80,13 @@ export const routes: Routes = [
     // Before posts/:id, which would take "new" for an id.
     path: 'posts/new',
     component: AddPostView,
+    canDeactivate: [unsavedChangesGuard],
     title: titled('ADD_POST.title'),
   }),
   ...needsSignIn('editPost', {
     path: 'posts/:id/edit',
     component: EditPostView,
+    canDeactivate: [unsavedChangesGuard],
     title: titled('EDIT_POST.title'),
   }),
   {
@@ -93,7 +96,7 @@ export const routes: Routes = [
   ...needsSignIn('interests', {
     path: 'profile/interests',
     component: InterestsView,
-    canDeactivate: [unsavedInterestsGuard],
+    canDeactivate: [unsavedChangesGuard],
     title: titled('INTERESTS.title'),
   }),
   ...needsSignIn('settings', {

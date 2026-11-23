@@ -7,6 +7,7 @@ import { WITHOUT_MAPLIBRE } from '../map/map-stubs.testing';
 import { PostDetail, PostMedia } from '../../models/posts/post-detail.model';
 import { PostCreateRequest } from '../../models/posts/post-create-request.model';
 import { MediaService } from '../../services/media/media.service';
+import { ConfirmAnswer, ConfirmService } from '../../services/confirm/confirm.service';
 
 const SUMMER_START = '2026-07-10T17:00:00Z';
 const SUMMER_END = '2026-07-10T19:30:00Z';
@@ -113,6 +114,85 @@ describe('PostForm photos', () => {
     fixture.destroy();
 
     expect(media.deleteMedia).not.toHaveBeenCalled();
+  });
+});
+
+describe('PostForm when its page is left', () => {
+  let component: PostForm;
+  let fixture: ComponentFixture<PostForm>;
+  let choose: jasmine.Spy;
+  let save: jasmine.Spy;
+
+  function load(data: PostDetail): void {
+    fixture.componentRef.setInput('mode', 'edit');
+    fixture.componentRef.setInput('initialData', data);
+    fixture.detectChanges();
+  }
+
+  function answer(reply: ConfirmAnswer): void {
+    choose.and.resolveTo(reply);
+  }
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({ imports: [PostForm] })
+      .overrideComponent(PlacePicker, WITHOUT_MAPLIBRE)
+      .compileComponents();
+    choose = spyOn(TestBed.inject(ConfirmService), 'choose');
+    save = jasmine.createSpy('save').and.resolveTo(true);
+    fixture = TestBed.createComponent(PostForm);
+    component = fixture.componentInstance;
+    load({ ...post('2030-05-01T17:00:00Z'), media: [saved('a', 0), saved('b', 1)] });
+  });
+
+  it('leaves without asking when nothing changed', async () => {
+    expect(await component.confirmLeave(save)).toBeTrue();
+    expect(choose).not.toHaveBeenCalled();
+  });
+
+  it('saves the changes and leaves, or stays, as answered', async () => {
+    component.titleControl.setValue('Koncert w parku');
+
+    answer('confirm');
+    expect(await component.confirmLeave(save)).toBeTrue();
+    expect(save).toHaveBeenCalledOnceWith(
+      jasmine.objectContaining({ request: jasmine.objectContaining({ title: 'Koncert w parku' }) }),
+    );
+    expect(choose.calls.mostRecent().args[0].confirm).toBe('POST_FORM.submit-edit');
+
+    component.resetSubmitting();
+    answer('cancel');
+    expect(await component.confirmLeave(save)).toBeFalse();
+    answer('other');
+    expect(await component.confirmLeave(save)).toBeTrue();
+    expect(save).toHaveBeenCalledTimes(1);
+  });
+
+  it('asks after the photos were only moved, and after the end options changed', async () => {
+    answer('cancel');
+    component.photos().movePhoto(1, -1);
+    expect(await component.confirmLeave(save)).toBeFalse();
+
+    component.photos().movePhoto(1, -1);
+    expect(await component.confirmLeave(save)).toBeTrue();
+    component.setOpenEnded(true);
+    expect(await component.confirmLeave(save)).toBeFalse();
+  });
+
+  it('stays, showing why, when the changes can’t be saved', async () => {
+    component.titleControl.setValue('');
+    answer('confirm');
+
+    expect(await component.confirmLeave(save)).toBeFalse();
+    expect(save).not.toHaveBeenCalled();
+    expect(component.titleControl.touched).toBeTrue();
+  });
+
+  it('stays when the save fails', async () => {
+    component.titleControl.setValue('Inny');
+    answer('confirm');
+    save.and.resolveTo(false);
+
+    expect(await component.confirmLeave(save)).toBeFalse();
   });
 });
 

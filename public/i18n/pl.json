@@ -308,10 +308,7 @@
     "loading": "Wczytywanie...",
     "load-error": "Nie udało się wczytać zainteresowań.",
     "retry": "Spróbuj ponownie",
-    "skip": "Pomiń na razie",
-    "leave-title": "Niezapisane zmiany",
-    "leave-text": "Zapisać zmiany przed wyjściem?",
-    "leave-discard": "Nie zapisuj"
+    "skip": "Pomiń na razie"
   },
   "KINDS": {
     "more": "+{{count}} więcej",
@@ -537,5 +534,11 @@
     "noFollowing": "Nikogo jeszcze nie obserwuje.",
     "noFollowingOwn": "Nie obserwujesz jeszcze nikogo.",
     "close": "Zamknij listę"
+  },
+  "LEAVE": {
+    "title": "Niezapisane zmiany",
+    "text": "Zapisać zmiany przed wyjściem?",
+    "textNew": "Opublikować wydarzenie przed wyjściem?",
+    "discard": "Nie zapisuj"
   }
 }

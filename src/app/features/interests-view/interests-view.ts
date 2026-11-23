@@ -9,7 +9,7 @@ import {
   output,
   signal,
 } from '@angular/core';
-import { CanDeactivateFn, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { firstValueFrom, forkJoin } from 'rxjs';
 import { BackLink } from '../../core/components/back-link/back-link';
@@ -20,9 +20,6 @@ import { Interest, InterestCatalog, label } from '../../core/models/interests/in
 import { AuthService } from '../../core/services/auth/auth.service';
 import { InterestsService } from '../../core/services/interests/interests.service';
 import { currentLang } from '../../core/utils/current-lang';
-
-export const unsavedInterestsGuard: CanDeactivateFn<InterestsView> = (component) =>
-  component.confirmLeave();
 
 type Section = 'kinds' | 'topics';
 
@@ -168,10 +165,10 @@ export class InterestsView implements OnInit {
       return true;
     }
     const answer = await this.confirm.choose({
-      title: 'INTERESTS.leave-title',
-      text: 'INTERESTS.leave-text',
+      title: 'LEAVE.title',
+      text: 'LEAVE.text',
       confirm: 'INTERESTS.save',
-      other: 'INTERESTS.leave-discard',
+      other: 'LEAVE.discard',
     });
     return answer === 'confirm' ? this.persist() : answer === 'other';
   }

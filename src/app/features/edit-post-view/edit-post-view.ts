@@ -4,7 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslatePipe } from '@ngx-translate/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
-import { catchError, from, mergeMap, of, switchMap, toArray } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 
 import { PostService } from '../../core/services/post/post.service';
 import { MediaService } from '../../core/services/media/media.service';
@@ -63,41 +63,39 @@ export class EditPostView implements OnInit {
       });
   }
 
-  onFormSubmit({ request, removedMediaIds }: PostFormSubmit): void {
+  async onFormSubmit(data: PostFormSubmit): Promise<void> {
     const post = this.currentPost();
-    if (!post) return;
+    if (post && (await this.save(data))) {
+      // Back to where the edit was opened from, so "Wróć" there never lands on this form.
+      this.backService.back(`/posts/${post.id}`);
+    }
+  }
 
-    this.postService
-      .updatePost(post.id, request)
-      .pipe(
-        // The API refuses to delete a photo still on a post, so this waits for the save. A failed delete leaves a
-        // file nobody sees.
-        switchMap(() =>
-          from(removedMediaIds).pipe(
-            mergeMap((id) =>
-              this.mediaService.deleteMedia(id).pipe(
-                catchError((err) => {
-                  console.error('Could not delete removed image', err);
-                  return of(undefined);
-                }),
-              ),
-            ),
-            toArray(),
-          ),
+  confirmLeave(): Promise<boolean> {
+    return this.postFormComponent?.confirmLeave((data) => this.save(data)) ?? Promise.resolve(true);
+  }
+
+  private async save({ request, removedMediaIds }: PostFormSubmit): Promise<boolean> {
+    const post = this.currentPost();
+    if (!post) return false;
+    try {
+      await firstValueFrom(this.postService.updatePost(post.id, request));
+    } catch (err) {
+      console.error('Error while updating post', err);
+      this.postFormComponent.resetSubmitting();
+      this.toast.failed();
+      return false;
+    }
+    // The API refuses to delete a photo still on a post, so this waits for the save. A failed delete leaves a file
+    // nobody sees.
+    await Promise.all(
+      removedMediaIds.map((id) =>
+        firstValueFrom(this.mediaService.deleteMedia(id)).catch((err) =>
+          console.error('Could not delete removed image', err),
         ),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe({
-        next: () => {
-          // Back to where the edit was opened from, so "Wróć" there never lands on this form.
-          this.postService.clearActivePost();
-          this.backService.back(`/posts/${post.id}`);
-        },
-        error: (err) => {
-          console.error('Error while updating post', err);
-          this.postFormComponent.resetSubmitting();
-          this.toast.failed();
-        },
-      });
+      ),
+    );
+    this.postService.clearActivePost();
+    return true;
   }
 }

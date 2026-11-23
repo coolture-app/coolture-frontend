@@ -80,6 +80,17 @@ export class PostPhotos implements OnDestroy {
   readonly hasUploading = computed(() => this.photos().some((photo) => photo.isUploading));
   readonly photosFull = computed(() => this.photos().length >= MAX_POST_PHOTOS);
   readonly mediaIds = computed(() => this.photos().flatMap((photo) => photo.mediaId ?? []));
+  /** Added, removed or moved since `saved`. */
+  readonly changed = computed(
+    () =>
+      this.photos()
+        .map((photo) => photo.key)
+        .join() !==
+      [...this.saved()]
+        .sort((a, b) => a.position - b.position)
+        .map((item) => item.media.id)
+        .join(),
+  );
 
   readonly maxPhotos = MAX_POST_PHOTOS;
 

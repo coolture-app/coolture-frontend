@@ -308,10 +308,7 @@
     "loading": "Loading...",
     "load-error": "Could not load the interests.",
     "retry": "Try again",
-    "skip": "Skip for now",
-    "leave-title": "Unsaved changes",
-    "leave-text": "Save your changes before leaving?",
-    "leave-discard": "Don't save"
+    "skip": "Skip for now"
   },
   "KINDS": {
     "more": "+{{count}} more",
@@ -537,5 +534,11 @@
     "noFollowing": "Not following anyone yet.",
     "noFollowingOwn": "You're not following anyone yet.",
     "close": "Close the list"
+  },
+  "LEAVE": {
+    "title": "Unsaved changes",
+    "text": "Save your changes before leaving?",
+    "textNew": "Publish the event before leaving?",
+    "discard": "Don't save"
   }
 }
