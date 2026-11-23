@@ -1,4 +1,4 @@
-import { Component, computed, signal, inject, OnInit } from '@angular/core';
+import { Component, computed, DOCUMENT, signal, inject, OnInit } from '@angular/core';
 import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
 import { NgComponentOutlet } from '@angular/common';
 import { Navbar } from './core/components/navbar/navbar';
@@ -16,6 +16,7 @@ import { SignInPrompt } from './core/components/sign-in-prompt/sign-in-prompt';
 import { distinctUntilChanged, filter, first, map } from 'rxjs';
 import { devTools } from '../environments/dev-tools';
 import { pathOf } from './core/services/back/back.service';
+import { trackKeyboardInset } from './core/utils/keyboard-inset';
 
 @Component({
   selector: 'app-root',
@@ -54,6 +55,7 @@ export class App implements OnInit {
     this.translate.setTranslation('pl', translationPL);
     this.translate.setFallbackLang('pl');
     this.translate.use('pl');
+    trackKeyboardInset(inject(DOCUMENT));
   }
   ngOnInit(): void {
     this.authService.checkSession().pipe(first()).subscribe();

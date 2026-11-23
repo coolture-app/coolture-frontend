@@ -2,7 +2,9 @@ import { computed, signal, WritableSignal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, Subject, throwError } from 'rxjs';
 
+import { By } from '@angular/platform-browser';
 import { CommentThread } from './comment-thread';
+import { CommentComponent } from '../comment/comment-component';
 import { CommentSummary } from '../../models/comments/comment-summary.model';
 import { PaginatedResponse } from '../../models/common/paginated-response.model';
 import { AuthService } from '../../services/auth/auth.service';
@@ -301,7 +303,7 @@ describe('CommentThread', () => {
     expect(login).toHaveBeenCalled();
   });
 
-  it('reports a deleted comment, keeping it in place if it has replies', async () => {
+  it('reports a deleted comment or reply, keeping a comment in place if it has replies', async () => {
     await open({
       items: [comment('a', { repliesCount: 1 }), comment('b')],
       page: { limit: 20, hasMore: false },
@@ -309,9 +311,12 @@ describe('CommentThread', () => {
 
     component.onDeleted({ id: 'a', hasReplies: true });
     component.onDeleted({ id: 'b', hasReplies: false });
+    fixture.debugElement
+      .query(By.directive(CommentComponent))
+      .componentInstance.replyDeleted.emit();
     await fixture.whenStable();
 
     expect(component.comments().map((c) => [c.id, c.status])).toEqual([['a', 'DELETED']]);
-    expect(counts).toEqual([-1, -1]);
+    expect(counts).toEqual([-1, -1, -1]);
   });
 });

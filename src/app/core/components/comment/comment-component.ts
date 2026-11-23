@@ -26,6 +26,7 @@ import { AuthService } from '../../services/auth/auth.service';
 import { ToastService } from '../../services/toast/toast.service';
 import { ConfirmService } from '../../services/confirm/confirm.service';
 import { Tooltip } from '../../directives/tooltip';
+import { Sheet } from '../sheet/sheet';
 import { commentTime } from './comment-time';
 
 /** Who a reply answers, and where it goes. */
@@ -40,6 +41,23 @@ export interface ReplyTarget {
 export interface DeletedComment {
   id: string;
   hasReplies: boolean;
+}
+
+/** The API's limit on a comment. */
+export const MAX_COMMENT_LENGTH = 512;
+
+/** A deleted comment stays only as the note above its replies. */
+export function isShown(comment: CommentSummary): boolean {
+  return comment.status !== 'DELETED' || comment.repliesCount > 0;
+}
+
+export function afterDelete(
+  comments: CommentSummary[],
+  { id, hasReplies }: DeletedComment,
+): CommentSummary[] {
+  return hasReplies
+    ? comments.map((c) => (c.id === id ? { ...c, status: 'DELETED' as const } : c))
+    : comments.filter((c) => c.id !== id);
 }
 
 const REPLIES_PAGE = 20;
@@ -60,10 +78,14 @@ export class CommentComponent implements OnInit {
   readonly comment = input.required<CommentSummary>();
   /** Whether the top comment can still take replies. A deleted one can't. */
   readonly rootActive = input(true);
-  /** In the sheet, a profile link replaces the sheet's history entry, so Back returns to the feed. */
-  readonly inSheet = input(false);
   readonly replyClicked = output<ReplyTarget>();
   readonly commentDeleted = output<DeletedComment>();
+  /** A reply below this one, at any depth, was deleted. */
+  readonly replyDeleted = output<void>();
+
+  /** In the sheet, a profile link replaces the sheet's history entry, so Back returns to the feed. */
+  readonly inSheet = !!inject(Sheet, { optional: true });
+  readonly maxLength = MAX_COMMENT_LENGTH;
 
   private authService = inject(AuthService);
   private commentsService = inject(CommentsService);
@@ -143,7 +165,7 @@ export class CommentComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
-          const shown = res.items.filter((c) => c.status !== 'DELETED' || c.repliesCount > 0);
+          const shown = res.items.filter(isShown);
           const known = new Set(this.replies().map((c) => c.id));
           const older = shown.filter((c) => !known.has(c.id)).reverse();
           this.replies.update((replies) => [...older, ...replies]);
@@ -222,14 +244,9 @@ export class CommentComponent implements OnInit {
   }
 
   onReplyDeleted(deleted: DeletedComment): void {
-    const { id, hasReplies } = deleted;
-    this.replies.update((replies) =>
-      hasReplies
-        ? replies.map((c) => (c.id === id ? { ...c, status: 'DELETED' as const } : c))
-        : replies.filter((c) => c.id !== id),
-    );
+    this.replies.update((replies) => afterDelete(replies, deleted));
     this.repliesCount.update((count) => Math.max(0, count - 1));
-    this.commentDeleted.emit({ id, hasReplies: true });
+    this.replyDeleted.emit();
   }
 
   private deleteComment(): void {

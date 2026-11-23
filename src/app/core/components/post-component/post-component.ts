@@ -184,7 +184,7 @@ export class PostComponent {
   commentCount(): number {
     const open = this.commentsSheet.commentsOf();
     const data = this.data();
-    return open?.id === data.id ? this.commentsSheet.count() : (data.commentsCount ?? 0);
+    return open?.id === data.id ? this.commentsSheet.count() : data.commentsCount;
   }
 
   /** The sheet over the list. On the post page, the comments are already there, under the post. */

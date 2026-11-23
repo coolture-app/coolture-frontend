@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { computed, Injectable, signal } from '@angular/core';
 import { UserSummary } from '../../models/users/user-summary.model';
 
 /** What the sheet needs of a post. The card's own object, so its count stays right. */
@@ -12,7 +12,9 @@ export interface SheetPost {
 /** The map's marks have no author, and the friends list needs none. */
 export type FriendsPost = Pick<SheetPost, 'id' | 'title'> & { author?: UserSummary };
 
-export type SheetContent = 'comments' | 'friends';
+type SheetState =
+  | { content: 'comments'; post: SheetPost }
+  | { content: 'friends'; post: FriendsPost };
 
 /**
  * A post's comments or its friends list, beside or over the feed: a card asks for them, and the app shell shows
@@ -22,25 +24,23 @@ export type SheetContent = 'comments' | 'friends';
   providedIn: 'root',
 })
 export class CommentsSheetService {
-  readonly post = signal<SheetPost | FriendsPost | null>(null);
-  readonly content = signal<SheetContent>('comments');
+  private readonly state = signal<SheetState | null>(null);
+  readonly post = computed(() => this.state()?.post ?? null);
+  readonly content = computed(() => this.state()?.content ?? 'comments');
+  /** The comments' post, while they're what's shown. */
+  readonly commentsOf = computed(() => {
+    const state = this.state();
+    return state?.content === 'comments' ? state.post : null;
+  });
   readonly count = signal(0);
 
   show(post: SheetPost): void {
-    this.count.set(post.commentsCount ?? 0);
-    this.content.set('comments');
-    this.post.set(post);
+    this.count.set(post.commentsCount);
+    this.state.set({ content: 'comments', post });
   }
 
   showFriends(post: FriendsPost): void {
-    this.content.set('friends');
-    this.post.set(post);
-  }
-
-  /** The comments' post, while they're what's shown. */
-  commentsOf(): SheetPost | null {
-    const post = this.post();
-    return this.content() === 'comments' ? (post as SheetPost | null) : null;
+    this.state.set({ content: 'friends', post });
   }
 
   changeCount(by: number): void {
@@ -52,6 +52,6 @@ export class CommentsSheetService {
   }
 
   close(): void {
-    this.post.set(null);
+    this.state.set(null);
   }
 }

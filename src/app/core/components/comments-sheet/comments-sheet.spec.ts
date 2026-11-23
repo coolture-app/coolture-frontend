@@ -80,7 +80,7 @@ describe('CommentsSheet', () => {
 
   afterEach(async () => {
     if (service.post()) {
-      fixture.componentInstance.close();
+      shell().close();
       await closing();
     }
     document.documentElement.style.overflow = '';
@@ -200,11 +200,9 @@ describe('CommentsSheet', () => {
     expect(element().querySelector('.sheet--docked')).toBeNull();
   });
 
-  it('shows nothing until a post is opened', () => {
+  it('opens over the page at half height, as a dialog with the count, and not before', async () => {
     expect(element().querySelector('.sheet')).toBeNull();
-  });
 
-  it('opens over the page at half height, as a dialog with the count', async () => {
     await opened();
 
     const sheet = element().querySelector('.sheet')!;
@@ -299,7 +297,7 @@ describe('CommentsSheet', () => {
   it('opens at half height again next time', async () => {
     await opened();
     shell().grow();
-    fixture.componentInstance.close();
+    shell().close();
     await closing();
 
     await opened();

@@ -347,16 +347,19 @@ describe('CommentComponent', () => {
       expect(deleted).toEqual([{ id: 'c1', hasReplies: false }]);
     });
 
-    it('goes from the list once its replies are gone, by what it has now', async () => {
+    it('reports a reply’s deletion apart, and goes from the list once its replies are gone', async () => {
       spyOn(service, 'deleteComment').and.returnValue(of(undefined));
       const deleted: DeletedComment[] = [];
       component.commentDeleted.subscribe((d) => deleted.push(d));
+      let repliesDeleted = 0;
+      component.replyDeleted.subscribe(() => repliesDeleted++);
       await render({ ...mine(), repliesCount: 1 });
 
       component.onReplyDeleted({ id: 'r1', hasReplies: false });
+      expect(repliesDeleted).toBe(1);
       await askToDelete('confirm');
 
-      expect(deleted.at(-1)).toEqual({ id: 'c1', hasReplies: false });
+      expect(deleted).toEqual([{ id: 'c1', hasReplies: false }]);
     });
 
     it('stays as a note while replies remain, and hides with the last one', async () => {

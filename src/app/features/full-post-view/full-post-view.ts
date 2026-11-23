@@ -120,7 +120,7 @@ export class FullPostView implements OnInit {
   changeCount(by: number): void {
     const post = this.post();
     if (post) {
-      const commentsCount = Math.max(0, (post.commentsCount || 0) + by);
+      const commentsCount = Math.max(0, post.commentsCount + by);
       this.postService.setActivePost({ ...post, commentsCount });
     }
   }

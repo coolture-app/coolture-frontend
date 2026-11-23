@@ -14,7 +14,7 @@
         tabindex="-1"
         aria-hidden="true"
         [routerLink]="['/users', c.author.username]"
-        [replaceUrl]="inSheet()"
+        [replaceUrl]="inSheet"
       >
         @if (c.author.avatar; as avatar) {
           <img [src]="avatar.url" alt="" class="comment__avatar" loading="lazy" />
@@ -29,7 +29,7 @@
           <textarea
             #editInput
             class="comment__edit"
-            maxlength="512"
+            [maxLength]="maxLength"
             [attr.aria-label]="'COMMENT.edit-comment' | translate"
             [value]="content()"
             (blur)="saveEdit(editInput.value)"
@@ -41,14 +41,14 @@
             <a
               class="comment__username"
               [routerLink]="['/users', c.author.username]"
-              [replaceUrl]="inSheet()"
+              [replaceUrl]="inSheet"
               >{{ c.author.username }}</a
             >
             @if (mention(); as m) {
               <a
                 class="comment__mention"
                 [routerLink]="['/users', m.username]"
-                [replaceUrl]="inSheet()"
+                [replaceUrl]="inSheet"
                 >{{ '@' + m.username }}</a
               >
               {{ m.text }}
@@ -141,9 +141,9 @@
         <app-comment-component
           [comment]="reply"
           [rootActive]="c.depth === 0 ? !isDeleted() : rootActive()"
-          [inSheet]="inSheet()"
           (replyClicked)="replyClicked.emit($event)"
           (commentDeleted)="onReplyDeleted($event)"
+          (replyDeleted)="replyDeleted.emit()"
         />
       }
     </div>
