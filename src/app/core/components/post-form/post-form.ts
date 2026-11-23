@@ -1,4 +1,3 @@
-import { RouterLink } from '@angular/router';
 import {
   Component,
   Input,
@@ -35,6 +34,7 @@ import { Btn } from '../btn/btn';
 import { PlacePicker } from '../place-picker/place-picker';
 import { locationForm } from '../place-picker/location-form';
 import { PostPhotos } from '../post-photos/post-photos';
+import { BackService } from '../../services/back/back.service';
 
 import { PostDetail } from '../../models/posts/post-detail.model';
 import { PostCreateRequest } from '../../models/posts/post-create-request.model';
@@ -79,7 +79,6 @@ export interface PostFormSubmit {
     Btn,
     PlacePicker,
     PostPhotos,
-    RouterLink,
   ],
   templateUrl: './post-form.html',
   styleUrl: './post-form.scss',
@@ -94,6 +93,7 @@ export class PostForm implements OnInit, OnChanges, OnDestroy {
   private destroyRef = inject(DestroyRef);
   private injector = inject(Injector);
   private host = inject(ElementRef);
+  private backService = inject(BackService);
 
   private readonly placePicker = viewChild<PlacePicker>('placePicker');
   readonly photos = viewChild.required(PostPhotos);
@@ -315,6 +315,11 @@ export class PostForm implements OnInit, OnChanges, OnDestroy {
       () => (this.host.nativeElement as HTMLElement).querySelector<HTMLElement>(selector)?.focus(),
       { injector: this.injector },
     );
+  }
+
+  /** Back where the form was opened from, so Back from there never lands on the form. */
+  cancel(): void {
+    this.backService.back(this.initialData ? `/posts/${this.initialData.id}` : '/');
   }
 
   resetSubmitting(): void {
