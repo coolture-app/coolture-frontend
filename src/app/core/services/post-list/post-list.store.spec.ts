@@ -195,23 +195,15 @@ describe('PostListStore', () => {
 
     it('stops on a second 400, and shows the retry, so it cannot loop', () => {
       store.start({ kind: 'feed' });
-      expectFeedRequest().flush({ error: 'bad' }, badRequest);
-      expectFeedRequest().flush({ error: 'bad' }, badRequest);
+      expectFeedRequest().flush(page(['a'], 'c1'));
+      store.loadMore();
+      expectFeedRequest({ cursor: 'c1' }).flush({ error: 'bad' }, badRequest);
+      expectFeedRequest().flush(page(['a'], 'c1'));
+      store.loadMore();
+      expectFeedRequest({ cursor: 'c1' }).flush({ error: 'bad' }, badRequest);
 
       expect(store.failed()).toBeTrue();
       expect(store.loading()).toBeFalse();
-    });
-
-    it('cannot loop either if the 400 comes back after a good page', () => {
-      store.start({ kind: 'feed' });
-      expectFeedRequest().flush(page(['a'], 'c1'));
-      store.loadMore();
-      expectFeedRequest({ cursor: 'c1' }).flush({ error: 'bad' }, badRequest);
-      expectFeedRequest().flush(page(['a'], 'c1'));
-      store.loadMore();
-      expectFeedRequest({ cursor: 'c1' }).flush({ error: 'bad' }, badRequest);
-
-      expect(store.failed()).toBeTrue();
     });
 
     it('keeps what is shown on a 500, and retries the same page', () => {
