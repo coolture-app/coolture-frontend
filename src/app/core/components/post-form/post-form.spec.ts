@@ -11,8 +11,8 @@ import { ConfirmAnswer, ConfirmService } from '../../services/confirm/confirm.se
 
 const SUMMER_START = '2026-07-10T17:00:00Z';
 const SUMMER_END = '2026-07-10T19:30:00Z';
-const WINTER_START = '2026-12-10T18:00:00Z';
-const WINTER_END = '2026-12-10T21:00:00Z';
+const WINTER_START = '2026-01-10T18:00:00Z';
+const WINTER_END = '2026-01-10T21:00:00Z';
 
 function post(startsAt: string, endsAt?: string): PostDetail {
   return {

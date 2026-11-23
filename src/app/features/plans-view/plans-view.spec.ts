@@ -8,7 +8,7 @@ function card(id: string): PostCard {
     id,
     author: { id: 'u1', username: 'ola', followersCount: 0, followingCount: 0 },
     title: `Post ${id}`,
-    startsAt: '2026-12-01T18:00:00Z',
+    startsAt: new Date(Date.now() + 7 * 86_400_000).toISOString(),
     openEnded: false,
     positiveReactionCount: 0,
     participantCount: 0,
