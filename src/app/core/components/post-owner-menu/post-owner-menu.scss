@@ -1,0 +1,27 @@
+@use '_mixin' as *;
+
+:host {
+  position: relative;
+  display: block;
+  flex-shrink: 0;
+}
+
+.owner__toggle {
+  @include center-flex;
+  width: 44px;
+  height: 44px;
+  // The tap area reaches past the card's padding; the dots stay in line with the header's text.
+  margin: calc(-1 * var(--space-sm)) calc(-1 * var(--space-sm)) 0 0;
+  border: none;
+  border-radius: var(--radius-full);
+  background: none;
+  color: var(--color-text-secondary);
+  font-size: 20px;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+
+  &:hover,
+  &[aria-expanded='true'] {
+    background: var(--color-surface-alt);
+  }
+}

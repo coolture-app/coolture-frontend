@@ -1,0 +1,62 @@
+<section class="home-area" aria-labelledby="home-area-title">
+  <div class="home-area__header">
+    <h2 id="home-area-title" class="home-area__title">{{ 'HOME_AREA.title' | translate }}</h2>
+    @if (!onboarding()) {
+      <app-btn variant="icon" [label]="'HOME_AREA.close' | translate" (btnClick)="done.emit()">
+        <ng-icon name="heroXMark" />
+      </app-btn>
+    }
+  </div>
+  <p class="home-area__text">{{ 'HOME_AREA.text' | translate }}</p>
+
+  @if (choice(); as place) {
+    <div class="home-area__choice">
+      <ng-icon name="heroMapPin" aria-hidden="true" />
+      <span class="home-area__name">{{ place.name }}</span>
+      <app-btn variant="plain" size="sm" (btnClick)="change()">
+        {{ 'HOME_AREA.change' | translate }}
+      </app-btn>
+    </div>
+  } @else {
+    <app-place-search
+      kind="area"
+      [near]="near()"
+      [label]="'HOME_AREA.searchLabel' | translate"
+      [placeholder]="'HOME_AREA.searchPlaceholder' | translate"
+      (picked)="choose($event)"
+    >
+      <button
+        type="button"
+        class="home-area__link"
+        [disabled]="locating()"
+        [attr.aria-busy]="locating()"
+        (click)="useMyLocation()"
+      >
+        {{ (locating() ? 'HOME_AREA.locating' : 'HOME_AREA.useMyLocation') | translate }}
+      </button>
+    </app-place-search>
+  }
+
+  @if (errorKey(); as key) {
+    <p class="home-area__error" role="alert">{{ key | translate }}</p>
+  }
+
+  <div class="home-area__footer">
+    @if (onboarding()) {
+      <app-btn variant="secondary" [disabled]="busy()" (btnClick)="done.emit()">
+        {{ 'HOME_AREA.skip' | translate }}
+      </app-btn>
+    } @else if (saved()) {
+      <app-btn variant="danger" [disabled]="busy()" (btnClick)="remove()">
+        {{ 'HOME_AREA.remove' | translate }}
+      </app-btn>
+    }
+    <app-btn
+      variant="primary"
+      [disabled]="!choice() || busy() || choice() === saved()"
+      (btnClick)="save()"
+    >
+      {{ 'HOME_AREA.save' | translate }}
+    </app-btn>
+  </div>
+</section>

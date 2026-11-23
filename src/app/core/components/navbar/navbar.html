@@ -1,17 +1,65 @@
+@let user = authService.currentUser();
 <nav class="navbar">
-  <h1 class="navbar__title">COOLTURE</h1>
+  <h1 class="navbar__title">
+    <a routerLink="/">COOLTURE</a>
+  </h1>
+  <!-- One list of places: in the top bar on wider screens, a bar at the bottom on phones. -->
+  <div class="navbar__links">
+    @for (link of links; track link.path) {
+      @let isAccount = link.path === '/profile' && !!user;
+      <a
+        class="navbar__link"
+        [class.navbar__link--add]="link.path === '/posts/new'"
+        [class.navbar__link--account]="isAccount"
+        [routerLink]="link.path"
+        routerLinkActive="active"
+        ariaCurrentWhenActive="page"
+        [routerLinkActiveOptions]="activeOptions(link.path)"
+        [appTooltip]="link.labelKey | translate"
+        (click)="link.path === '/' && homeTapped($event)"
+      >
+        @if (isAccount) {
+          @if (user?.avatar?.url; as url) {
+            <img class="navbar__avatar" [src]="url" alt="" />
+          } @else {
+            <span class="navbar__avatar navbar__avatar--letter" aria-hidden="true">{{
+              user | initials
+            }}</span>
+          }
+          <span class="navbar__account-name">{{ user?.username }}</span>
+        } @else {
+          <ng-icon [name]="link.icon" />
+        }
+      </a>
+    }
+  </div>
   <span class="navbar__actions">
-    <app-btn variant="secondary" size="sm" (btnClick)="changeLanguage()">
+    <app-btn
+      variant="secondary"
+      size="sm"
+      [label]="'NAVBAR.switch-language' | translate"
+      (btnClick)="changeLanguage()"
+    >
       {{ currentLang() === 'pl' ? 'EN' : 'PL' }}
     </app-btn>
-    @if (authService.isAuthenticated()) {
-      <app-btn variant="secondary" size="sm" (btnClick)="logout()">{{
-        'NAVBAR.logout' | translate
-      }}</app-btn>
+    @if (user) {
+      <app-btn
+        variant="secondary"
+        size="sm"
+        [label]="'NAVBAR.logout' | translate"
+        (btnClick)="authService.logout()"
+      >
+        <ng-icon class="navbar__action-icon" name="lucideLogOut" />
+        <span class="navbar__action-label">{{ 'NAVBAR.logout' | translate }}</span>
+      </app-btn>
     } @else {
-      <app-btn variant="primary" size="sm" (btnClick)="login()">{{
-        'NAVBAR.login' | translate
-      }}</app-btn>
+      <app-btn
+        variant="primary"
+        size="sm"
+        [label]="'NAVBAR.login' | translate"
+        (btnClick)="login()"
+        >{{ 'NAVBAR.login' | translate }}</app-btn
+      >
     }
   </span>
 </nav>

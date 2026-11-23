@@ -4,37 +4,68 @@ import {
   Output,
   EventEmitter,
   inject,
-  ChangeDetectorRef,
+  ElementRef,
+  OnDestroy,
   OnInit,
   OnChanges,
   SimpleChanges,
   DestroyRef,
+  afterNextRender,
+  Injector,
+  viewChild,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { CommonModule, formatDate } from '@angular/common';
+import {
+  AbstractControl,
+  FormArray,
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { lastValueFrom, Observable } from 'rxjs';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { FormInput } from '../form-input/form-input';
-import { FormSelect, SelectOption } from '../form-select/form-select';
 import { FormTextarea } from '../form-textarea/form-textarea';
-import { FormFileUpload } from '../form-file-upload/form-file-upload';
 import { Btn } from '../btn/btn';
+import { PlacePicker } from '../place-picker/place-picker';
+import { locationForm } from '../place-picker/location-form';
+import { PostPhotos } from '../post-photos/post-photos';
+import { BackService } from '../../services/back/back.service';
+import { ConfirmService } from '../../services/confirm/confirm.service';
 
-import { PostFormData } from '../../models/posts/post-form-data.model';
-import { PostDetail, PostMedia } from '../../models/posts/post-detail.model';
-import { PostType, PostVisibility } from '../../models/common/enums';
-import { MediaService } from '../../services/media/media.service';
-import { DictionaryService } from '../../services/dictionary/dictionary.service';
-import { CountryCode } from '../../models/dictionary/country-code.model';
-import { MediaResource } from '../../models/media/media-resource.model';
+import { PostDetail } from '../../models/posts/post-detail.model';
+import { PostCreateRequest } from '../../models/posts/post-create-request.model';
+import { PostType } from '../../models/common/enums';
+import { EventLocationRequest } from '../../models/common/geo.model';
+import { linkUrl, PostLink } from '../../models/posts/post-link';
+import {
+  MAX_DESCRIPTION,
+  MAX_LINK_LABEL,
+  MAX_POST_LINKS,
+  MAX_TITLE,
+} from '../../models/posts/post-limits';
 
-interface MediaPreview {
-  file: File;
-  previewUrl: string;
-  isUploading: boolean;
-  mediaId?: string;
+type LinkGroup = FormGroup<{ url: FormControl<string>; label: FormControl<string> }>;
+
+/** An address with a dot in its host, with or without its scheme, which `linkUrl` adds. */
+const LINK_ADDRESS = /^\s*(https?:\/\/)?[^\s/]+\.[^\s]+\s*$/i;
+
+/**
+ * A `datetime-local` input holds a local time with no zone, and the API sends UTC.
+ * onSubmit reads the input back as local time, so it has to be filled with local time too.
+ */
+function toLocalInputValue(iso: string | undefined): string {
+  return iso ? formatDate(iso, "yyyy-MM-dd'T'HH:mm", 'en-US') : '';
+}
+
+/** The post, and the saved photos taken off it, to delete once it's saved. */
+export interface PostFormSubmit {
+  request: PostCreateRequest;
+  removedMediaIds: string[];
 }
 
 @Component({
@@ -45,155 +76,106 @@ interface MediaPreview {
     ReactiveFormsModule,
     TranslatePipe,
     FormInput,
-    FormSelect,
     FormTextarea,
-    FormFileUpload,
     Btn,
+    PlacePicker,
+    PostPhotos,
   ],
   templateUrl: './post-form.html',
   styleUrl: './post-form.scss',
 })
-export class PostForm implements OnInit, OnChanges {
+export class PostForm implements OnInit, OnChanges, OnDestroy {
   @Input() mode: 'create' | 'edit' = 'create';
   @Input() initialData?: PostDetail;
-  @Input() existingMedia: PostMedia[] = [];
 
-  @Output() formSubmit = new EventEmitter<PostFormData>();
-  @Output() existingMediaRemove = new EventEmitter<string>();
+  @Output() formSubmit = new EventEmitter<PostFormSubmit>();
 
   private fb = inject(FormBuilder);
-  private mediaService = inject(MediaService);
-  private dictionaryService = inject(DictionaryService);
-  private cdr = inject(ChangeDetectorRef);
   private destroyRef = inject(DestroyRef);
-  private translate = inject(TranslateService);
+  private injector = inject(Injector);
+  private host = inject(ElementRef);
+  private backService = inject(BackService);
+  private confirm = inject(ConfirmService);
 
-  countryCodes$: Observable<CountryCode[]> = this.dictionaryService.getCountryCodes();
+  private readonly placePicker = viewChild<PlacePicker>('placePicker');
+  readonly photos = viewChild.required(PostPhotos);
 
-  countryCodeOptions: SelectOption[] = [];
-
-  mediaPreviews: MediaPreview[] = [];
-  newlyUploadedMedia: MediaResource[] = [];
   isSubmitting = false;
+  /** Most events have no end, so its field waits for "Dodaj zakończenie". */
+  showEnd = false;
+  /** "Bez daty końcowej": the event runs until further notice, so it has no end. */
+  openEnded = false;
 
-  typeOptions: SelectOption[] = [
-    { value: 'ONLINE', label: '' },
-    { value: 'OFFLINE', label: '' },
-  ];
+  readonly locationGroup = locationForm();
 
-  visibilityOptions: SelectOption[] = [
-    { value: 'PUBLIC', label: '' },
-    { value: 'PRIVATE', label: '' },
-    { value: 'FRIENDS', label: '' },
-  ];
+  /** The start as an edit loaded it. It may have passed, and sending it back unchanged is fine. */
+  private initialStart = '';
+  /** The fields as loaded, to tell whether leaving loses anything. */
+  private loaded = '';
 
-  // Form definition with validation matching API contract + DB schema
-  postForm = this.fb.group({
-    title: ['', [Validators.required, Validators.maxLength(128)]],
-    type: ['ONLINE' as PostType, Validators.required],
-    startsAt: ['', Validators.required],
-    endsAt: [''],
-    description: ['', [Validators.required, Validators.maxLength(1024)]],
-    eventUrl: [''],
-    tags: [''],
-    visibility: ['PUBLIC' as PostVisibility, Validators.required],
-    location: this.fb.group({
-      countryCode: ['', [Validators.minLength(3), Validators.maxLength(3)]],
-      venueName: ['', Validators.maxLength(64)],
-      buildingNum: ['', Validators.maxLength(16)],
-      street: ['', Validators.maxLength(128)],
-      postalCode: ['', Validators.maxLength(16)],
-      city: ['', Validators.maxLength(128)],
-      coordinates: this.fb.group({
-        latitude: [null as number | null, [Validators.min(-90), Validators.max(90)]],
-        longitude: [null as number | null, [Validators.min(-180), Validators.max(180)]],
-      }),
-    }),
+  /** The API refuses a start moved to the past, to the minute, as the input holds it. */
+  private startNotInPast = (startsAt: AbstractControl): ValidationErrors | null => {
+    const value: string = startsAt.value;
+    const past =
+      !!value && value !== this.initialStart && value < toLocalInputValue(new Date().toISOString());
+    return past ? { past: true } : null;
+  };
+
+  /** The API refuses an end that isn't after the start. */
+  private endAfterStart = (endsAt: AbstractControl<string>): ValidationErrors | null => {
+    const startsAt = this.postForm?.controls.startsAt.value;
+    return startsAt && endsAt.value && endsAt.value <= startsAt ? { afterStart: true } : null;
+  };
+
+  postForm = this.fb.nonNullable.group({
+    title: ['', [Validators.required, Validators.maxLength(MAX_TITLE)]],
+    type: ['OFFLINE' as PostType, Validators.required],
+    startsAt: ['', [Validators.required, this.startNotInPast]],
+    endsAt: ['', this.endAfterStart],
+    description: ['', [Validators.required, Validators.maxLength(MAX_DESCRIPTION)]],
+    links: new FormArray<LinkGroup>([]),
+    location: this.locationGroup,
   });
 
-  // FormControl getters for template
   get titleControl(): FormControl {
-    return this.postForm.get('title') as FormControl;
-  }
-  get typeControl(): FormControl {
-    return this.postForm.get('type') as FormControl;
+    return this.postForm.controls.title;
   }
   get startsAtControl(): FormControl {
-    return this.postForm.get('startsAt') as FormControl;
+    return this.postForm.controls.startsAt;
   }
   get endsAtControl(): FormControl {
-    return this.postForm.get('endsAt') as FormControl;
+    return this.postForm.controls.endsAt;
   }
   get descriptionControl(): FormControl {
-    return this.postForm.get('description') as FormControl;
+    return this.postForm.controls.description;
   }
-  get eventUrlControl(): FormControl {
-    return this.postForm.get('eventUrl') as FormControl;
+  get links(): FormArray<LinkGroup> {
+    return this.postForm.controls.links;
   }
-  get tagsControl(): FormControl {
-    return this.postForm.get('tags') as FormControl;
-  }
-  get visibilityControl(): FormControl {
-    return this.postForm.get('visibility') as FormControl;
-  }
-  get countryCodeControl(): FormControl {
-    return this.postForm.get('location.countryCode') as FormControl;
-  }
-  get cityControl(): FormControl {
-    return this.postForm.get('location.city') as FormControl;
-  }
-  get postalCodeControl(): FormControl {
-    return this.postForm.get('location.postalCode') as FormControl;
-  }
-  get streetControl(): FormControl {
-    return this.postForm.get('location.street') as FormControl;
-  }
-  get buildingNumControl(): FormControl {
-    return this.postForm.get('location.buildingNum') as FormControl;
-  }
-  get venueNameControl(): FormControl {
-    return this.postForm.get('location.venueName') as FormControl;
-  }
-  get latitudeControl(): FormControl {
-    return this.postForm.get('location.coordinates.latitude') as FormControl;
-  }
-  get longitudeControl(): FormControl {
-    return this.postForm.get('location.coordinates.longitude') as FormControl;
-  }
+
+  readonly maxTitle = MAX_TITLE;
+  readonly maxDescription = MAX_DESCRIPTION;
+  readonly maxLinks = MAX_POST_LINKS;
+  readonly maxLinkLabel = MAX_LINK_LABEL;
 
   get isOffline(): boolean {
-    return this.postForm.get('type')?.value === 'OFFLINE';
-  }
-
-  get hasUploading(): boolean {
-    return this.mediaPreviews.some((p) => p.isUploading);
+    return this.postForm.controls.type.value === 'OFFLINE';
   }
 
   ngOnInit(): void {
-    // Load dictionaries, then re-patch form if initialData already arrived
-    this.countryCodes$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((codes) => {
-      this.countryCodeOptions = codes.map((c) => ({ value: c.code, label: c.code }));
-      // Re-sync select after options are available
-      if (this.initialData?.location) {
-        this.countryCodeControl.setValue(this.initialData.location.countryCode ?? '', {
-          emitEvent: false,
-        });
+    if (!this.initialData) {
+      this.loaded = this.fields();
+    }
+    this.postForm.controls.type.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((type) => this.matchLocationTo(type));
+    this.startsAtControl.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.endsAtControl.updateValueAndValidity({ emitEvent: false });
+      // A start in the past shows its error at once, since it also turns Zapisz off.
+      if (this.startsAtControl.hasError('past')) {
+        this.startsAtControl.markAsTouched();
       }
     });
-
-    // Subscribe to type changes for location validators
-    this.postForm
-      .get('type')
-      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((type) => this.toggleLocationValidators(type ?? 'ONLINE'));
-
-    this.toggleLocationValidators(this.postForm.get('type')?.value ?? 'ONLINE');
-
-    // Set translated labels for type/visibility
-    this.updateTranslatedOptions();
-    this.translate.onLangChange
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.updateTranslatedOptions());
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -202,199 +184,186 @@ export class PostForm implements OnInit, OnChanges {
     }
   }
 
-  private updateTranslatedOptions(): void {
-    this.typeOptions = [
-      { value: 'ONLINE', label: this.translate.instant('POST_FORM.type-online') },
-      { value: 'OFFLINE', label: this.translate.instant('POST_FORM.type-offline') },
-    ];
-    this.visibilityOptions = [
-      { value: 'PUBLIC', label: this.translate.instant('POST_FORM.visibility-public') },
-      { value: 'PRIVATE', label: this.translate.instant('POST_FORM.visibility-private') },
-      { value: 'FRIENDS', label: this.translate.instant('POST_FORM.visibility-friends') },
-    ];
+  /** An online post has no place, so its fields don't validate. They stay filled for a switch back. */
+  private matchLocationTo(type: PostType): void {
+    if (type === 'OFFLINE') {
+      this.locationGroup.enable({ emitEvent: false });
+    } else {
+      this.locationGroup.disable({ emitEvent: false });
+    }
   }
 
   private patchFormFromPost(post: PostDetail): void {
-    const tagsStr = post.tags ? post.tags.join(', ') : '';
-
+    const location = post.location;
+    this.initialStart = toLocalInputValue(post.startsAt);
     this.postForm.patchValue({
       title: post.title,
       type: post.type,
-      startsAt: post.startsAt ? post.startsAt.substring(0, 16) : '',
-      endsAt: post.endsAt ? post.endsAt.substring(0, 16) : '',
-      description: post.description,
-      eventUrl: post.eventUrl ?? '',
-      tags: tagsStr,
-      visibility: post.visibility ?? 'PUBLIC',
+      startsAt: toLocalInputValue(post.startsAt),
+      endsAt: toLocalInputValue(post.endsAt),
+      description: post.description ?? '',
       location: {
-        countryCode: post.location?.countryCode ?? '',
-        venueName: post.location?.venueName ?? '',
-        buildingNum: post.location?.buildingNum ?? '',
-        street: post.location?.street ?? '',
-        postalCode: post.location?.postalCode ?? '',
-        city: post.location?.city ?? '',
-        coordinates: {
-          latitude: post.location?.coordinates?.latitude ?? null,
-          longitude: post.location?.coordinates?.longitude ?? null,
-        },
+        venueName: location?.venueName ?? '',
+        street: location?.street ?? '',
+        buildingNum: location?.buildingNum ?? '',
+        postalCode: location?.postalCode ?? '',
+        city: location?.city ?? '',
+        countryCode: location?.countryCode ?? null,
+        coordinates: location?.coordinates ?? null,
       },
     });
-
-    this.toggleLocationValidators(post.type);
+    this.links.clear();
+    (post.links ?? []).forEach((link) => this.links.push(this.linkGroup(link)));
+    this.showEnd = !!post.endsAt;
+    this.openEnded = post.openEnded;
+    this.matchLocationTo(post.type);
+    this.loaded = this.fields();
   }
 
-  private toggleLocationValidators(type: PostType): void {
-    const controls = [
-      this.countryCodeControl,
-      this.postalCodeControl,
-      this.cityControl,
-      this.latitudeControl,
-      this.longitudeControl,
-    ];
+  private fields(): string {
+    return JSON.stringify([this.postForm.getRawValue(), this.showEnd, this.openEnded]);
+  }
 
-    if (controls.some((c) => !c)) return;
-
-    if (type === 'OFFLINE') {
-      this.countryCodeControl.addValidators(Validators.required);
-      this.postalCodeControl.addValidators(Validators.required);
-      this.cityControl.addValidators(Validators.required);
-      this.latitudeControl.addValidators(Validators.required);
-      this.longitudeControl.addValidators(Validators.required);
-    } else {
-      this.countryCodeControl.removeValidators(Validators.required);
-      this.postalCodeControl.removeValidators(Validators.required);
-      this.cityControl.removeValidators(Validators.required);
-      this.latitudeControl.removeValidators(Validators.required);
-      this.longitudeControl.removeValidators(Validators.required);
+  /**
+   * Asked when the page is left with changes: `save` them and go on, go on without them, or stay. A form that can't
+   * be saved stays, showing why.
+   */
+  async confirmLeave(save: (data: PostFormSubmit) => Promise<boolean>): Promise<boolean> {
+    if (this.isSubmitting || (this.fields() === this.loaded && !this.photos().changed())) {
+      return true;
     }
-
-    controls.forEach((c) => c.updateValueAndValidity({ emitEvent: false }));
+    const answer = await this.confirm.choose({
+      title: 'LEAVE.title',
+      text: this.mode === 'create' ? 'LEAVE.textNew' : 'LEAVE.text',
+      confirm: this.mode === 'create' ? 'POST_FORM.submit-create' : 'POST_FORM.submit-edit',
+      other: 'LEAVE.discard',
+    });
+    if (answer !== 'confirm') {
+      return answer === 'other';
+    }
+    const data = this.submit();
+    return !!data && save(data);
   }
 
-  async onFilesSelected(files: File[]): Promise<void> {
-    for (const file of files) {
-      const preview: MediaPreview = {
-        file,
-        previewUrl: URL.createObjectURL(file),
-        isUploading: true,
-      };
-      this.mediaPreviews.push(preview);
+  addEnd(): void {
+    this.showEnd = true;
+    this.focusAfterRender('#endsAt');
+  }
 
-      try {
-        const initRes = await lastValueFrom(
-          this.mediaService.initUpload({
-            purpose: 'EVENT_MEDIA',
-            mimeType: file.type,
-            sizeBytes: file.size,
-            fileName: file.name,
-          }),
-        );
+  removeEnd(): void {
+    this.showEnd = false;
+    this.postForm.controls.endsAt.setValue('');
+  }
 
-        await lastValueFrom(
-          this.mediaService.uploadToS3(initRes.uploadUrl, file, initRes.requiredHeaders),
-        );
-        await lastValueFrom(this.mediaService.completeUpload(initRes.mediaId));
+  addLink(): void {
+    if (this.links.length >= MAX_POST_LINKS) {
+      return;
+    }
+    this.links.push(this.linkGroup());
+    this.focusAfterRender(`#link-url-${this.links.length - 1}`);
+  }
 
-        preview.mediaId = initRes.mediaId;
-        preview.isUploading = false;
-        this.cdr.detectChanges();
-      } catch (err) {
-        console.error('Error while loading file', file.name, err);
-        this.mediaPreviews = this.mediaPreviews.filter((p) => p !== preview);
-        this.cdr.detectChanges();
-      }
+  removeLink(index: number): void {
+    this.links.removeAt(index);
+  }
+
+  private linkGroup(link?: PostLink): LinkGroup {
+    return this.fb.nonNullable.group({
+      url: [link?.url ?? '', [Validators.required, Validators.pattern(LINK_ADDRESS)]],
+      label: [link?.label ?? '', Validators.maxLength(MAX_LINK_LABEL)],
+    });
+  }
+
+  setOpenEnded(openEnded: boolean): void {
+    this.openEnded = openEnded;
+    if (openEnded) {
+      this.removeEnd();
     }
   }
 
-  removeNewPreview(index: number): void {
-    URL.revokeObjectURL(this.mediaPreviews[index].previewUrl);
-    this.mediaPreviews.splice(index, 1);
-  }
-
-  removeExisting(mediaId: string): void {
-    this.existingMediaRemove.emit(mediaId);
-  }
-
-  removeNewlyUploaded(mediaId: string): void {
-    this.newlyUploadedMedia = this.newlyUploadedMedia.filter((m) => m.id !== mediaId);
+  /**
+   * Leaving without publishing drops what this form uploaded, and a daily job catches a closed tab.
+   * While saving, the post may already hold these photos, so they stay.
+   */
+  ngOnDestroy(): void {
+    if (!this.isSubmitting) {
+      this.photos().discardUploads();
+    }
   }
 
   onSubmit(): void {
-    if (this.postForm.invalid || this.isSubmitting || this.hasUploading) {
+    const data = this.submit();
+    if (data) {
+      this.formSubmit.emit(data);
+    }
+  }
+
+  /** What to save, or null while it can't be saved: invalid, uploading or already saving. */
+  private submit(): PostFormSubmit | null {
+    const photos = this.photos();
+    if (this.isSubmitting || photos.hasUploading()) {
+      return null;
+    }
+    if (this.postForm.invalid) {
       this.postForm.markAllAsTouched();
-      return;
+      this.revealFirstError();
+      return null;
     }
 
     this.isSubmitting = true;
-    const formValue = this.postForm.getRawValue();
-    const isOffline = formValue.type === 'OFFLINE';
-
-    // Collect all media IDs
-    const existingIds = this.existingMedia.map((m) => m.media.id);
-    const newPreviewIds = this.mediaPreviews.map((p) => p.mediaId!).filter(Boolean);
-    const newlyUploadedIds = this.newlyUploadedMedia.map((m) => m.id);
-    const allMediaIds = [...existingIds, ...newPreviewIds, ...newlyUploadedIds];
-
-    // Parse tags from comma-separated string
-    const tagsRaw = formValue.tags ?? '';
-    const tags = tagsRaw
-      .split(',')
-      .map((t: string) => t.trim())
-      .filter((t: string) => t.length > 0)
-      .slice(0, 10)
-      .map((t: string) => t.substring(0, 32));
-
-    const data: PostFormData = {
-      title: formValue.title ?? '',
-      type: formValue.type ?? 'ONLINE',
-      startsAt: formValue.startsAt ? new Date(formValue.startsAt).toISOString() : '',
-      endsAt: formValue.endsAt ? new Date(formValue.endsAt).toISOString() : null,
-      description: formValue.description ?? '',
-      eventUrl: formValue.eventUrl || null,
-      tags,
-      visibility: (formValue.visibility as PostVisibility) ?? 'PUBLIC',
-      location: isOffline
-        ? {
-            countryCode: formValue.location?.countryCode ?? '',
-            venueName: formValue.location?.venueName || null,
-            buildingNum: formValue.location?.buildingNum || null,
-            street: formValue.location?.street || null,
-            postalCode: formValue.location?.postalCode ?? '',
-            city: formValue.location?.city ?? '',
-            coordinates: {
-              latitude: Number(formValue.location?.coordinates?.latitude),
-              longitude: Number(formValue.location?.coordinates?.longitude),
-            },
-          }
-        : null,
-      mediaIds: allMediaIds,
-      coverMediaId: allMediaIds.length > 0 ? allMediaIds[0] : null,
+    const form = this.postForm.getRawValue();
+    return {
+      request: {
+        title: form.title,
+        type: form.type,
+        startsAt: new Date(form.startsAt).toISOString(),
+        endsAt: this.showEnd && form.endsAt ? new Date(form.endsAt).toISOString() : null,
+        openEnded: this.openEnded,
+        description: form.description,
+        // The API strips a label, and drops a blank one.
+        links: form.links.map(({ url, label }) => ({ url: linkUrl(url), label })),
+        location: form.type === 'OFFLINE' ? this.locationRequest() : null,
+        mediaIds: photos.mediaIds(),
+      },
+      removedMediaIds: photos.removedMediaIds(),
     };
+  }
 
-    this.formSubmit.emit(data);
+  private locationRequest(): EventLocationRequest {
+    const place = this.locationGroup.getRawValue();
+    const optional = (text: string) => text.trim() || null;
+    return {
+      countryCode: place.countryCode,
+      venueName: optional(place.venueName),
+      street: optional(place.street),
+      buildingNum: optional(place.buildingNum),
+      postalCode: optional(place.postalCode),
+      city: place.city.trim(),
+      coordinates: place.coordinates!,
+    };
+  }
+
+  /** Once the errors are on screen, the first one takes the focus, which scrolls it into view. */
+  private revealFirstError(): void {
+    if (this.isOffline) {
+      this.placePicker()?.revealErrors();
+    }
+    this.focusAfterRender('.has-error input, .has-error textarea, [aria-invalid="true"]');
+  }
+
+  private focusAfterRender(selector: string): void {
+    afterNextRender(
+      () => (this.host.nativeElement as HTMLElement).querySelector<HTMLElement>(selector)?.focus(),
+      { injector: this.injector },
+    );
+  }
+
+  /** Back where the form was opened from, so Back from there never lands on the form. */
+  cancel(): void {
+    this.backService.back(this.initialData ? `/posts/${this.initialData.id}` : '/');
   }
 
   resetSubmitting(): void {
-    this.isSubmitting = false;
-  }
-
-  resetForm(): void {
-    this.postForm.reset({
-      type: 'ONLINE',
-      visibility: 'PUBLIC',
-      location: {
-        countryCode: '',
-        venueName: '',
-        buildingNum: '',
-        street: '',
-        postalCode: '',
-        city: '',
-        coordinates: { latitude: null, longitude: null },
-      },
-    });
-    this.mediaPreviews.forEach((p) => URL.revokeObjectURL(p.previewUrl));
-    this.mediaPreviews = [];
-    this.newlyUploadedMedia = [];
     this.isSubmitting = false;
   }
 }

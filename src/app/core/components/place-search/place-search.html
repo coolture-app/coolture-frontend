@@ -1,0 +1,58 @@
+<div class="place-search">
+  <label [for]="id" class="place-search__label">{{ label() }}</label>
+  <div class="place-search__box">
+    <ng-icon class="place-search__icon" name="heroMagnifyingGlass" aria-hidden="true" />
+    <input
+      #box
+      [id]="id"
+      class="place-search__input"
+      type="search"
+      role="combobox"
+      autocomplete="off"
+      enterkeyhint="search"
+      aria-autocomplete="list"
+      [attr.aria-controls]="id + '-list'"
+      [attr.aria-expanded]="suggestions().length > 0"
+      [attr.aria-activedescendant]="active() >= 0 ? id + '-' + active() : null"
+      [placeholder]="placeholder()"
+      [value]="query()"
+      (input)="onType($any($event.target).value)"
+      (keydown)="onKey($event)"
+    />
+  </div>
+
+  @if (query().trim()) {
+    @if (suggestions().length > 0) {
+      <ul [id]="id + '-list'" class="place-search__list" role="listbox">
+        @for (place of suggestions(); track $index; let i = $index) {
+          <!-- The keyboard works through the search box, as a combobox's options do. -->
+          <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+          <li
+            [id]="id + '-' + i"
+            class="place-search__option"
+            [class.place-search__option--active]="i === active()"
+            role="option"
+            [attr.aria-selected]="i === active()"
+            (mousedown)="$event.preventDefault()"
+            (click)="pick(place)"
+          >
+            <span class="place-search__name">{{ place.name }}</span>
+            @if (place.detail) {
+              <span class="place-search__detail">{{ place.detail }}</span>
+            }
+          </li>
+        }
+      </ul>
+      <p class="place-search__attribution">
+        ©
+        <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener"
+          >OpenStreetMap contributors</a
+        >
+      </p>
+    } @else if (unavailable()) {
+      <p class="place-search__note" role="status">{{ 'PLACE_SEARCH.unavailable' | translate }}</p>
+    }
+  } @else {
+    <ng-content />
+  }
+</div>

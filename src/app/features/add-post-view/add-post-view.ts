@@ -5,10 +5,9 @@ import { Router } from '@angular/router';
 import { lastValueFrom } from 'rxjs';
 
 import { PostService } from '../../core/services/post/post.service';
-import { AuthService } from '../../core/services/auth/auth.service';
-import { PostForm } from '../../core/components/post-form/post-form';
-import { PostFormData } from '../../core/models/posts/post-form-data.model';
-import { PostCreateRequest } from '../../core/models/posts/post-create-request.model';
+import { PostForm, PostFormSubmit } from '../../core/components/post-form/post-form';
+import { ToastService } from '../../core/services/toast/toast.service';
+import { PostDetail } from '../../core/models/posts/post-detail.model';
 
 @Component({
   selector: 'app-add-post-view',
@@ -19,32 +18,30 @@ import { PostCreateRequest } from '../../core/models/posts/post-create-request.m
 export class AddPostView {
   private postService = inject(PostService);
   private router = inject(Router);
-  public authService = inject(AuthService);
+  private toast = inject(ToastService);
 
   @ViewChild(PostForm) postFormComponent!: PostForm;
 
-  async onFormSubmit(data: PostFormData): Promise<void> {
-    try {
-      const payload: PostCreateRequest = {
-        title: data.title,
-        type: data.type,
-        startsAt: data.startsAt,
-        endsAt: data.endsAt,
-        description: data.description,
-        eventUrl: data.eventUrl,
-        tags: data.tags.length > 0 ? data.tags : undefined,
-        visibility: data.visibility,
-        location: data.location,
-        mediaIds: data.mediaIds.length > 0 ? data.mediaIds : undefined,
-        coverMediaId: data.coverMediaId,
-      };
+  async onFormSubmit(data: PostFormSubmit): Promise<void> {
+    const post = await this.save(data);
+    if (post) {
+      // In place of the form, so going back from the new post never lands on the form again.
+      void this.router.navigate(['/posts', post.id], { replaceUrl: true });
+    }
+  }
 
-      const createdPost = await lastValueFrom(this.postService.addPost(payload));
-      this.postFormComponent.resetForm();
-      this.router.navigate(['/post', createdPost.id]);
+  confirmLeave(): Promise<boolean> {
+    return this.postFormComponent.confirmLeave(async (data) => !!(await this.save(data)));
+  }
+
+  private async save({ request }: PostFormSubmit): Promise<PostDetail | null> {
+    try {
+      return await lastValueFrom(this.postService.addPost(request));
     } catch (err) {
       console.error(err);
       this.postFormComponent.resetSubmitting();
+      this.toast.failed();
+      return null;
     }
   }
 }

@@ -1,129 +1,149 @@
-<div class="page">
-  <!-- MAIN VIEW WITH MAP OFF -->
-  <div class="searchbar">
-    <div class="searchbar__inner">
-      <span class="searchbar__wrapper">
-        <ng-icon class="searchbar__icon" name="heroMagnifyingGlass" />
-        <input
-          class="searchbar__input"
-          type="text"
-          [formControl]="searchControl"
-          placeholder="{{ 'MAIN_PAGE.searchbar' | translate }}"
-        />
-      </span>
-      <app-btn variant="primary">{{ 'MAIN_PAGE.search' | translate }}</app-btn>
-      @if (authService.isAuthenticated()) {
-        <app-btn variant="primary" (btnClick)="goToAddPost()">
-          <ng-icon name="heroPlus" />
-          <span class="addPost-btn__text">{{ 'MAIN_PAGE.addPost' | translate }}</span>
-        </app-btn>
-      }
-      @if (!isMapView()) {
-        <div class="sort-wrapper">
-          <button class="sort-btn" (click)="toggleSortMenu()">
-            <span>{{ getSortLabelKey() | translate }}</span>
-            <ng-icon name="heroChevronDown" />
-          </button>
-          @if (showSortMenu()) {
-            <div class="sort-menu">
-              @for (option of visibleSortOptions; track option.value) {
-                <button
-                  class="sort-menu__item"
-                  [class.active]="currentSortBy === option.value"
-                  (click)="setSortBy(option.value)"
-                >
-                  {{ option.labelKey | translate }}
-                </button>
-              }
-            </div>
-          }
-        </div>
-      }
-      <app-btn variant="icon" (btnClick)="toggleFilters()" [class.active]="showFilters()">
-        <ng-icon name="heroFunnel" />
-      </app-btn>
-      @if (currentSortBy !== 'RECOMMENDED') {
-        <app-switch class="map-switch" (switchState)="toggleMapView($event)"></app-switch>
-      }
-    </div>
-  </div>
-
-  @if (showFilters()) {
-    <div class="filter-wrapper">
-      <div class="filters">
-        <div class="filters__header">
-          <span class="filters__title">{{ 'MAIN_PAGE.filters' | translate }}</span>
-          <app-btn variant="plain" size="sm" (btnClick)="clearFilters()">
-            <ng-icon name="heroXMark" /> {{ 'MAIN_PAGE.clear' | translate }}
-          </app-btn>
-        </div>
-
-        <div class="filters__row">
-          <div class="filters__field">
-            <label for="type">{{ 'MAIN_PAGE.type' | translate }}</label>
-            <select id="type" [formControl]="filtersForm.controls.type">
-              <option value="">{{ 'MAIN_PAGE.allTypes' | translate }}</option>
-              <option value="OFFLINE">{{ 'MAIN_PAGE.offline' | translate }}</option>
-              <option value="ONLINE">{{ 'MAIN_PAGE.online' | translate }}</option>
-            </select>
-          </div>
-
-          <div class="filters__field">
-            <label for="tags">{{ 'MAIN_PAGE.tags' | translate }}</label>
-            <input
-              id="tags"
-              type="text"
-              [formControl]="filtersForm.controls.tags"
-              placeholder="{{ 'MAIN_PAGE.tagsPlaceholder' | translate }}"
-            />
-          </div>
-
-          <div class="filters__field">
-            <label for="visibility">{{ 'MAIN_PAGE.visibility' | translate }}</label>
-            <select id="visibility" [formControl]="filtersForm.controls.visibility">
-              <option value="">{{ 'MAIN_PAGE.allVisibility' | translate }}</option>
-              <option value="PUBLIC">{{ 'MAIN_PAGE.public' | translate }}</option>
-              <option value="PRIVATE">{{ 'MAIN_PAGE.private' | translate }}</option>
-              <option value="FRIENDS">{{ 'MAIN_PAGE.friends' | translate }}</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="filters__row">
-          <div class="filters__field">
-            <label for="startsFrom">{{ 'MAIN_PAGE.startsFrom' | translate }}</label>
-            <input
-              id="startsFrom"
-              type="datetime-local"
-              [formControl]="filtersForm.controls.startsFrom"
-            />
-          </div>
-
-          <div class="filters__field">
-            <label for="startsTo">{{ 'MAIN_PAGE.startsTo' | translate }}</label>
-            <input
-              id="startsTo"
-              type="datetime-local"
-              [formControl]="filtersForm.controls.startsTo"
-            />
-          </div>
-        </div>
+<div
+  class="page"
+  [class.page--map]="isMapView()"
+  [appPullToRefresh]="!isMapView() && list.query() !== null"
+  #ptr="pullToRefresh"
+  (refresh)="renewList()"
+>
+  <app-home-bar
+    #bar
+    [search]="searchControl"
+    [feed]="isFeed()"
+    [place]="activePlace()"
+    [picked]="place.picked()"
+    [radiusKm]="activeFilters().radiusKm"
+    [filterCount]="activeFilterCount()"
+    [mapView]="isMapView()"
+    [(filtersOpen)]="showFilters"
+    [(placeOpen)]="showPlace"
+    (tabPicked)="setTab($event)"
+    (searched)="applyControls()"
+    (mapSwitched)="toggleMapView($event)"
+  >
+    @if (showFilters()) {
+      <app-feed-filters
+        class="filters-popover"
+        [form]="filtersForm"
+        [signedIn]="authService.isAuthenticated()"
+        [sort]="listSort()"
+        [sortOptions]="sortOptions()"
+        (sortChange)="setSortBy($event)"
+        (clear)="clearFilters()"
+        (done)="showFilters.set(false)"
+      />
+    }
+    @if (showPlace()) {
+      <app-place-panel
+        class="filters-popover"
+        [form]="filtersForm"
+        [home]="home()"
+        [picked]="place.picked()"
+        [near]="place.searchNear()"
+        [locating]="locating()"
+        [locationFailed]="locationFailed()"
+        (pick)="pickPlace($event)"
+        (done)="showPlace.set(false)"
+      />
+    }
+    @if (ptr.pull() > 0 || list.renewing()) {
+      <div
+        class="pull"
+        [class.pull--renewing]="list.renewing()"
+        [class.pull--ready]="ptr.pull() >= pullThreshold"
+        [style.--pull]="list.renewing() ? pullThreshold : ptr.pull()"
+        [attr.role]="list.renewing() ? 'status' : null"
+        [attr.aria-label]="list.renewing() ? ('MAIN_PAGE.refreshing' | translate) : null"
+      >
+        <ng-icon name="lucideRefreshCw" size="20" aria-hidden="true" />
       </div>
-    </div>
-  }
+    }
+  </app-home-bar>
+
   @if (!isMapView()) {
-    @for (item of posts().items; track item.id) {
+    @if (nearestFromHome(); as name) {
+      <p class="list-note">{{ 'MAIN_PAGE.nearestFromHome' | translate: { place: name } }}</p>
+    }
+    @for (item of list.items(); track item.id) {
+      @if ($index === list.loadMoreAt()) {
+        <div
+          class="list-trigger"
+          [appInfiniteScroll]="list.canLoadMore()"
+          (reachedEnd)="list.loadMore()"
+        ></div>
+      }
       <app-post-component
-        (deleteRequest)="removeChild($event)"
+        (deleteRequest)="list.removeItem($event)"
         [data]="item"
         [isFullView]="false"
+        [folds]="isFeed() ? 'marked' : null"
       />
-    } @empty {
-      <p class="empty">{{ 'MAIN_PAGE.no-posts' | translate }}</p>
+    }
+    <!-- A jump to the bottom, such as End, passes the trigger above without it ever being in view. -->
+    <div
+      class="list-end"
+      [appInfiniteScroll]="list.canLoadMore()"
+      (reachedEnd)="list.loadMore()"
+    ></div>
+    @if (list.failed()) {
+      <div class="empty empty--action" role="alert">
+        <span>{{ 'MAIN_PAGE.loadError' | translate }}</span>
+        <app-btn variant="secondary" size="sm" (btnClick)="list.retry()">{{
+          'MAIN_PAGE.retry' | translate
+        }}</app-btn>
+      </div>
+    } @else if (list.loading() || !list.query()) {
+      <div role="status" [attr.aria-label]="'MAIN_PAGE.loading' | translate">
+        @for (_ of skeletons(); track $index) {
+          <app-post-skeleton />
+        }
+      </div>
+    } @else if (list.items().length === 0) {
+      <div class="empty empty--action">
+        <span>{{ 'MAIN_PAGE.no-posts' | translate }}</span>
+        @if (widerRadius(); as km) {
+          <app-btn variant="secondary" size="sm" (btnClick)="widenRadius()">{{
+            'MAIN_PAGE.widenRadius' | translate: { km: km }
+          }}</app-btn>
+        }
+        @if (canOfferPast()) {
+          <app-btn variant="secondary" size="sm" (btnClick)="searchPastToo()">{{
+            'MAIN_PAGE.searchPast' | translate
+          }}</app-btn>
+        }
+        @if (canOfferAll()) {
+          <span class="empty__hint">{{ 'MAIN_PAGE.seenBefore' | translate }}</span>
+          <app-btn variant="secondary" size="sm" (btnClick)="setTab('all')">{{
+            'MAIN_PAGE.showInAll' | translate
+          }}</app-btn>
+        }
+      </div>
+    } @else if (!list.hasMore()) {
+      <div class="empty empty--action">
+        <span>{{ 'MAIN_PAGE.endOfList' | translate }}</span>
+        @if (canOfferAll()) {
+          <span class="empty__hint">{{ 'MAIN_PAGE.seenBefore' | translate }}</span>
+          <app-btn variant="secondary" size="sm" (btnClick)="setTab('all')">{{
+            'MAIN_PAGE.showInAll' | translate
+          }}</app-btn>
+        }
+      </div>
     }
   }
-  <!-- VIEW WITH MAP ON -->
-  @else {
-    <app-map [filters]="currentFiltersForMap()"></app-map>
+  @if (mapOpened()) {
+    <!-- MapLibre loads with the first Mapa, not with the list. -->
+    @defer {
+      <app-map
+        [class.map-hidden]="!isMapView()"
+        [visible]="isMapView()"
+        [filters]="activeFilters()"
+        [excludeMine]="isFeed()"
+        [picks]="mapPicks()"
+        [focus]="mapFocusPost()"
+        [resume]="mapResumes()"
+        [home]="home()?.coordinates ?? null"
+        [topInset]="bar.overlap()"
+        (searchArea)="searchArea($event)"
+      ></app-map>
+    }
   }
 </div>

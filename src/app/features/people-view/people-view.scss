@@ -1,0 +1,128 @@
+@use '_mixin' as *;
+
+.page {
+  padding: var(--space-md);
+  max-width: var(--container-max);
+  margin: 0 auto;
+}
+
+.title {
+  font-size: var(--text-xl);
+  font-weight: var(--font-semibold);
+}
+
+.searchbar {
+  @include center-flex;
+  padding: var(--space-md) 0 var(--space-lg);
+
+  &__inner {
+    @include flex-between;
+    width: 100%;
+    gap: var(--space-sm);
+  }
+
+  &__wrapper {
+    @include flex-between;
+    flex: 1;
+    gap: var(--space-sm);
+    padding: var(--space-xs) var(--space-sm);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    transition:
+      border-color var(--transition-fast),
+      box-shadow var(--transition-fast);
+
+    &:focus-within {
+      border-color: var(--color-accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+  }
+
+  &__icon {
+    width: 20px;
+    height: 20px;
+    color: var(--color-text-tertiary);
+    flex-shrink: 0;
+  }
+
+  &__input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    color: var(--color-text);
+
+    &:focus {
+      outline: none;
+    }
+
+    &::placeholder {
+      color: var(--color-text-tertiary);
+    }
+  }
+}
+
+.empty {
+  @include center-flex;
+  padding: var(--space-3xl) var(--space-md);
+  color: var(--color-text-tertiary);
+  font-size: var(--text-sm);
+  text-align: center;
+}
+
+.user-card {
+  @include card;
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  margin-bottom: var(--space-sm);
+
+  &__avatar {
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+
+    &-img {
+      @include avatar(48px);
+    }
+
+    &--placeholder {
+      @include avatar-placeholder(48px);
+    }
+  }
+
+  &__info {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    cursor: pointer;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+
+  &__name {
+    font-weight: var(--font-semibold);
+    color: var(--color-text);
+  }
+
+  &__handle {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-xs) var(--space-sm);
+  }
+
+  &__username {
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+  }
+
+  app-btn {
+    flex-shrink: 0;
+  }
+}

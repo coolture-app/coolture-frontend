@@ -95,3 +95,52 @@
   font-size: calc($size * 0.4);
   user-select: none;
 }
+
+// A form's top-level part, such as a post's title, date or photos. The fields inside a part keep
+// their smaller labels, so a reader sees two levels.
+@mixin section-title {
+  margin: 0;
+  font-size: var(--text-base);
+  font-weight: var(--font-semibold);
+  color: var(--color-text);
+}
+
+// A rounded search field: a label holding the icon, the input and a clear button styled by search-clear.
+@mixin search-field {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-width: 0;
+  min-height: 40px;
+  padding: 0 var(--space-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+
+  input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: none;
+    color: var(--color-text);
+    font: inherit;
+    font-size: var(--text-body);
+  }
+
+  &:focus-within {
+    border-color: var(--color-accent);
+  }
+}
+
+@mixin search-clear {
+  @include center-flex;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}

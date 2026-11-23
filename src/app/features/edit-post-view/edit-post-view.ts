@@ -2,20 +2,24 @@ import { Component, inject, OnInit, signal, DestroyRef, ViewChild } from '@angul
 import { CommonModule } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslatePipe } from '@ngx-translate/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ActivatedRoute } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 
 import { PostService } from '../../core/services/post/post.service';
 import { MediaService } from '../../core/services/media/media.service';
-import { AuthService } from '../../core/services/auth/auth.service';
-import { PostForm } from '../../core/components/post-form/post-form';
-import { PostFormData } from '../../core/models/posts/post-form-data.model';
-import { PostDetail, PostMedia } from '../../core/models/posts/post-detail.model';
-import { PostUpdateRequest } from '../../core/models/posts/post-update-request.model';
+import { PostForm, PostFormSubmit } from '../../core/components/post-form/post-form';
+import { PostDetail } from '../../core/models/posts/post-detail.model';
+import { BackService } from '../../core/services/back/back.service';
+import { BackLink } from '../../core/components/back-link/back-link';
+import { LoadState } from '../../core/components/load-state/load-state';
+import { ToastService } from '../../core/services/toast/toast.service';
+import { NotFoundView } from '../not-found-view/not-found-view';
 
 @Component({
   selector: 'app-edit-post-view',
   standalone: true,
-  imports: [CommonModule, TranslatePipe, PostForm],
+  imports: [CommonModule, TranslatePipe, PostForm, BackLink, LoadState, NotFoundView],
   templateUrl: './edit-post-view.html',
   styleUrl: './edit-post-view.scss',
 })
@@ -23,76 +27,75 @@ export class EditPostView implements OnInit {
   private postService = inject(PostService);
   private mediaService = inject(MediaService);
   private route = inject(ActivatedRoute);
-  private router = inject(Router);
   private destroyRef = inject(DestroyRef);
-  public authService = inject(AuthService);
+  private backService = inject(BackService);
+  private toast = inject(ToastService);
 
   @ViewChild(PostForm) postFormComponent!: PostForm;
 
+  readonly postId = this.route.snapshot.paramMap.get('id') ?? '';
   currentPost = signal<PostDetail | null>(null);
-  existingMedia = signal<PostMedia[]>([]);
+  readonly notFound = signal(false);
+  readonly failed = signal(false);
 
   ngOnInit(): void {
-    const id = this.route.snapshot.paramMap.get('id');
-    if (id) {
-      this.postService
-        .getPost(id)
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe({
-          next: (post) => {
-            this.currentPost.set(post);
-            this.existingMedia.set(post.media || []);
-          },
-          error: (err) => {
-            console.error('Error while fetching event', err);
-            this.router.navigate(['/404']);
-          },
-        });
+    this.load();
+  }
+
+  load(): void {
+    this.failed.set(false);
+    this.postService
+      .getPost(this.postId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (post) => {
+          this.currentPost.set(post);
+          this.backService.rememberPostTitle(post.id, post.title);
+        },
+        error: (err) => {
+          console.error('Error while fetching event', err);
+          if (err instanceof HttpErrorResponse && err.status === 404) {
+            this.notFound.set(true);
+          } else {
+            this.failed.set(true);
+          }
+        },
+      });
+  }
+
+  async onFormSubmit(data: PostFormSubmit): Promise<void> {
+    const post = this.currentPost();
+    if (post && (await this.save(data))) {
+      // Back to where the edit was opened from, so "Wróć" there never lands on this form.
+      this.backService.back(`/posts/${post.id}`);
     }
   }
 
-  onExistingMediaRemove(mediaId: string): void {
-    this.mediaService
-      .deleteMedia(mediaId)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: () => {
-          this.existingMedia.update((media) => media.filter((m) => m.media.id !== mediaId));
-        },
-        error: (err) => console.error('Could not delete existing image', err),
-      });
+  confirmLeave(): Promise<boolean> {
+    return this.postFormComponent?.confirmLeave((data) => this.save(data)) ?? Promise.resolve(true);
   }
 
-  onFormSubmit(data: PostFormData): void {
+  private async save({ request, removedMediaIds }: PostFormSubmit): Promise<boolean> {
     const post = this.currentPost();
-    if (!post) return;
-
-    const payload: PostUpdateRequest = {
-      title: data.title,
-      type: data.type,
-      startsAt: data.startsAt,
-      endsAt: data.endsAt,
-      description: data.description,
-      eventUrl: data.eventUrl,
-      tags: data.tags.length > 0 ? data.tags : undefined,
-      visibility: data.visibility,
-      location: data.location,
-      mediaIds: data.mediaIds,
-      coverMediaId: data.coverMediaId,
-    };
-
-    this.postService
-      .updatePost(post.id, payload)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: () => {
-          this.postService.clearActivePost();
-          this.router.navigate(['/post', post.id]);
-        },
-        error: (err) => {
-          console.error('Error while updating post', err);
-          this.postFormComponent.resetSubmitting();
-        },
-      });
+    if (!post) return false;
+    try {
+      await firstValueFrom(this.postService.updatePost(post.id, request));
+    } catch (err) {
+      console.error('Error while updating post', err);
+      this.postFormComponent.resetSubmitting();
+      this.toast.failed();
+      return false;
+    }
+    // The API refuses to delete a photo still on a post, so this waits for the save. A failed delete leaves a file
+    // nobody sees.
+    await Promise.all(
+      removedMediaIds.map((id) =>
+        firstValueFrom(this.mediaService.deleteMedia(id)).catch((err) =>
+          console.error('Could not delete removed image', err),
+        ),
+      ),
+    );
+    this.postService.clearActivePost();
+    return true;
   }
 }

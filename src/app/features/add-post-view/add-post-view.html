@@ -1,25 +1,9 @@
 <div class="add-post-container">
   <div class="add-post-card">
     <header class="card-header">
-      <h2>{{ 'ADD_POST.header-title' | translate }}</h2>
+      <h2>{{ 'ADD_POST.title' | translate }}</h2>
       <p>{{ 'ADD_POST.header-desc' | translate }}</p>
     </header>
-
-    @if (authService.currentUser(); as user) {
-      <div class="posting-as">
-        @if (user.avatar; as avatar) {
-          <img [src]="avatar.url" [alt]="user.username" class="user-avatar" />
-        } @else {
-          <div class="user-avatar user-avatar--placeholder">
-            {{ user.firstName.charAt(0) }}{{ user.lastName.charAt(0) }}
-          </div>
-        }
-        <div class="user-info">
-          <span class="label">{{ 'ADD_POST.posting-as' | translate }}</span>
-          <span class="username">{{ user.username }}</span>
-        </div>
-      </div>
-    }
 
     <app-post-form mode="create" (formSubmit)="onFormSubmit($event)"></app-post-form>
   </div>

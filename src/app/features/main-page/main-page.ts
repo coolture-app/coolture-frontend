@@ -1,213 +1,649 @@
-import { Component, inject, signal, OnInit, DestroyRef } from '@angular/core';
-import { FormControl, ReactiveFormsModule, FormGroup } from '@angular/forms';
-import { Router } from '@angular/router';
 import {
-  debounceTime,
-  distinctUntilChanged,
-  startWith,
-  combineLatest,
-  BehaviorSubject,
-} from 'rxjs';
+  afterNextRender,
+  Component,
+  computed,
+  linkedSignal,
+  DestroyRef,
+  effect,
+  inject,
+  Injector,
+  OnDestroy,
+  signal,
+  untracked,
+} from '@angular/core';
+import { ViewportScroller } from '@angular/common';
+import { FormControl } from '@angular/forms';
+import { ActivatedRoute, NavigationStart, Params, Router } from '@angular/router';
+import { debounceTime, filter, firstValueFrom, merge } from 'rxjs';
 import { TranslatePipe } from '@ngx-translate/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  heroMagnifyingGlass,
-  heroPlus,
-  heroFunnel,
-  heroXMark,
-  heroChevronDown,
-} from '@ng-icons/heroicons/outline';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { PostComponent } from '../../core/components/post-component/post-component';
 import { Btn } from '../../core/components/btn/btn';
-import { HttpClient } from '@angular/common/http';
-import { PostCard } from '../../core/models/posts/post-card.model';
+import { PostSkeleton } from '../../core/components/post-skeleton/post-skeleton';
+import { InfiniteScroll } from '../../core/directives/infinite-scroll';
+import { PULL_THRESHOLD, PullToRefresh } from '../../core/directives/pull-to-refresh';
+import { lucideRefreshCw } from '@ng-icons/lucide';
 import { PostFilterParams } from '../../core/models/posts/post-filter-params.model';
+import { NamedPlace } from '../../core/models/common/geo.model';
+import { GeocodingService } from '../../core/services/geocoding/geocoding.service';
 import { PostService } from '../../core/services/post/post.service';
-import { PaginatedResponse } from '../../core/models/common/paginated-response.model';
+import { KindsService } from '../../core/services/interests/kinds.service';
 import { AuthService } from '../../core/services/auth/auth.service';
-import { PostType, PostStatus, PostVisibility, PostSortBy } from '../../core/models/common/enums';
-import { Switch } from '../../core/components/switch/switch/switch';
+import { LocationService } from '../../core/services/location/location.service';
+import { PostListStore } from '../../core/services/post-list/post-list.store';
+import { HomeTapService } from '../../core/services/home-tap/home-tap.service';
+import { PostsSort } from '../../core/models/common/enums';
 import { Map } from '../../core/components/map/map/map';
+import { type MapArea } from '../../core/components/map/map-geometry';
+import { MapFocus } from '../../core/components/map/map-focus';
+import { PostMark } from '../../core/models/posts/post-mark.model';
+import { backClosable } from '../../core/services/back-closable/back-closable';
+import { ToastService } from '../../core/services/toast/toast.service';
+import { TranslateService } from '@ngx-translate/core';
+import {
+  createFiltersForm,
+  HomeTab,
+  HomeViewMemory,
+  NO_FILTERS,
+  PlaceFilter,
+  RADII_KM,
+  START_SORT,
+  dayWindow,
+} from './home-view';
+import { fromHomeParams, HomeUrlState, sameHomeParams, toHomeParams } from './home-url';
+import { FeedFilters } from './feed-filters/feed-filters';
+import { HomePlace } from './home-place';
+import { PlacePanel } from './place-panel/place-panel';
+import { HomeBar } from './home-bar/home-bar';
+
+const LOCATION_WAIT_MS = 1500;
+/** How long the first page waits for an answer to the browser's location prompt. */
+const LOCATION_ANSWER_MS = 8000;
+/** How many of the feed's first posts the map lights up as top picks on Dla Ciebie. */
+const MAP_PICKS = 30;
+/** Wszystkie's orders. Dla Ciebie has no menu: its order is the ranking. */
+const SORT_OPTIONS: { value: PostsSort; labelKey: string }[] = [
+  { value: 'UPCOMING', labelKey: 'MAIN_PAGE.sortUpcoming' },
+  { value: 'NEAREST', labelKey: 'MAIN_PAGE.sortNearest' },
+  { value: 'POPULAR', labelKey: 'MAIN_PAGE.sortPopular' },
+  { value: 'RECENT', labelKey: 'MAIN_PAGE.sortRecent' },
+];
 
 @Component({
   selector: 'app-main-page',
-  imports: [TranslatePipe, NgIcon, PostComponent, ReactiveFormsModule, Btn, Switch, Map],
-  viewProviders: [
-    provideIcons({ heroMagnifyingGlass, heroPlus, heroFunnel, heroXMark, heroChevronDown }),
+  imports: [
+    TranslatePipe,
+    NgIcon,
+    PostComponent,
+    Btn,
+    Map,
+    HomeBar,
+    FeedFilters,
+    PlacePanel,
+    InfiniteScroll,
+    PullToRefresh,
+    PostSkeleton,
   ],
+  viewProviders: [provideIcons({ lucideRefreshCw })],
   templateUrl: './main-page.html',
   styleUrl: './main-page.scss',
 })
-export class MainPage implements OnInit {
-  private http = inject(HttpClient);
+export class MainPage implements OnDestroy {
   private postService = inject(PostService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private destroyRef = inject(DestroyRef);
+  private location = inject(LocationService);
+  private scroller = inject(ViewportScroller);
+  private memory = inject(HomeViewMemory);
+  private homeTap = inject(HomeTapService);
+  private injector = inject(Injector);
+  private toast = inject(ToastService);
+  private geocoding = inject(GeocodingService);
+  private translate = inject(TranslateService);
+  private mapFocus = inject(MapFocus);
+  /** A place tapped on a card here opens the map in a history entry of its own, so Back returns to the card. */
+  private mapOverlay = backClosable('mapFocus', () => this.toggleMapView(false));
   authService = inject(AuthService);
+  list = inject(PostListStore);
 
-  searchControl = new FormControl('');
+  searchControl = new FormControl('', { nonNullable: true });
 
   showFilters = signal(false);
-  showSortMenu = signal(false);
-
-  private sortBy$ = new BehaviorSubject<PostSortBy>('RECENT');
-
-  sortOptions: { value: PostSortBy; labelKey: string }[] = [
-    { value: 'RECENT', labelKey: 'MAIN_PAGE.sortRecent' },
-    { value: 'POPULAR', labelKey: 'MAIN_PAGE.sortPopular' },
-    { value: 'UPCOMING', labelKey: 'MAIN_PAGE.sortUpcoming' },
-    { value: 'RECOMMENDED', labelKey: 'MAIN_PAGE.sortRecommended' },
-  ];
-
-  get visibleSortOptions(): { value: PostSortBy; labelKey: string }[] {
-    if (this.authService.isAuthenticated()) {
-      return this.sortOptions;
-    }
-    return this.sortOptions.filter((o) => o.value !== 'RECOMMENDED');
-  }
-
+  showPlace = signal(false);
   isMapView = signal(false);
+  /** The map stays once opened, hidden under Lista, so its style and tiles load once a visit. */
+  readonly mapOpened = linkedSignal<boolean, boolean>({
+    source: this.isMapView,
+    computation: (map, previous) => map || !!previous?.value,
+  });
+  /** Back from a post: the map opens where it was left. */
+  readonly mapResumes = signal(false);
+  /** The post a card's place opened the map on. */
+  readonly mapFocusPost = signal<PostMark | null>(null);
+  locationFailed = signal(false);
+  locating = signal(false);
+  /** Where the list was scrolled to when the map replaced it, to land there again on the way back. */
+  private listScrollY = 0;
 
-  currentFiltersForMap = signal<PostFilterParams>({});
+  filtersForm = createFiltersForm();
+  readonly home = this.authService.home;
 
-  filtersForm = new FormGroup({
-    type: new FormControl(''),
-    tags: new FormControl(''),
-    startsFrom: new FormControl(''),
-    startsTo: new FormControl(''),
-    visibility: new FormControl(''),
-    status: new FormControl(''),
+  /** The applied search and filters, also what the map shows. Both tabs share them. */
+  readonly activeFilters = signal<PostFilterParams>({});
+  readonly place = new HomePlace(
+    this.home,
+    computed(() => {
+      const { latitude, longitude } = this.activeFilters();
+      return latitude !== undefined && longitude !== undefined ? { latitude, longitude } : null;
+    }),
+    (point) => this.geocoding.areaAt(point),
+  );
+  /** What the applied radius is centred on, or Online, for the place pill. */
+  readonly activePlace = signal<PlaceFilter>('');
+  /** Online posts have no place, so there's nothing to measure from or show on a map. */
+  readonly isOnline = computed(() => this.activePlace() === 'online');
+  readonly sortOptions = computed(() =>
+    this.isOnline() ? SORT_OPTIONS.filter((option) => option.value !== 'NEAREST') : SORT_OPTIONS,
+  );
+  /** Dla Ciebie is the ranked feed of posts new to the user; Wszystkie is every post, in a chosen order. */
+  readonly tab = signal<HomeTab>('forYou');
+  /** Wszystkie's order. Kept while on Dla Ciebie, so going back finds it as it was. */
+  readonly sort = signal<PostsSort>(START_SORT);
+  readonly isFeed = computed(() => this.tab() === 'forYou');
+  /** The order the list is in, or null for the feed's ranking. */
+  readonly listSort = computed(() => (this.isFeed() ? null : this.sort()));
+  /** The home's name while Najbliższe measures from it, so the list can say so. */
+  readonly nearestFromHome = computed(() =>
+    this.listSort() === 'NEAREST' && !this.place.own() ? (this.home()?.name ?? null) : null,
+  );
+  /**
+   * How many filters the panel has on, counting a date range and the chosen kinds as one each, and Wszystkie's order
+   * when it isn't the first. Not the search or the place, Online included.
+   */
+  readonly activeFilterCount = computed(() => {
+    const { kinds, kids, from, to, followed, includePast } = this.activeFilters();
+    const sort = this.listSort();
+    const resorted = sort !== null && sort !== START_SORT;
+    return [kinds, kids, from || to, followed, includePast, resorted].filter(Boolean).length;
+  });
+  /** A screenful for the first page. After that one is enough, and the posts stay what's on screen. */
+  readonly skeletons = computed(() => Array(this.list.items().length > 0 ? 1 : 3));
+  readonly pullThreshold = PULL_THRESHOLD;
+
+  /** When an empty result could change by looking at past events too. See the contract's table. */
+  readonly canOfferPast = computed(() => {
+    const { includePast, from, to } = this.activeFilters();
+    return !includePast && !from && !to;
+  });
+  /** Dla Ciebie hides what the user saw or saved, so a search there points to Wszystkie too. */
+  readonly canOfferAll = computed(() => this.isFeed() && !!this.activeFilters().q);
+  /** The next radius chip, offered when nothing is inside the current one. */
+  readonly widerRadius = computed(() => {
+    const radius = this.activeFilters().radiusKm;
+    return radius === undefined ? null : (RADII_KM.find((km) => km > radius) ?? null);
   });
 
-  posts = signal<PaginatedResponse<PostCard>>({
-    items: [],
-    page: { limit: 20, hasMore: false, nextCursor: null },
+  /**
+   * Dla Ciebie's first posts, which the map lights up. Null on Wszystkie, where no pin stands out. While a new list's
+   * first page loads, the last picks stay, so the stars don't blink off and on.
+   */
+  readonly mapPicks = linkedSignal<
+    { feed: boolean; ids: string[]; waiting: boolean },
+    ReadonlySet<string> | null
+  >({
+    source: () => ({
+      feed: this.isFeed(),
+      ids:
+        this.list.query()?.kind === 'feed'
+          ? this.list
+              .items()
+              .slice(0, MAP_PICKS)
+              .map((post) => post.id)
+          : [],
+      waiting: this.list.loading() && this.list.items().length === 0,
+    }),
+    computation: ({ feed, ids, waiting }, previous) =>
+      !feed ? null : waiting && previous?.value ? previous.value : new Set(ids),
   });
 
-  ngOnInit() {
-    this.sortBy$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((sortBy) => {
-      const controls = this.filtersForm.controls;
-      if (sortBy === 'RECOMMENDED') {
-        controls.type.setValue('', { emitEvent: false });
-        controls.tags.setValue('', { emitEvent: false });
-        controls.visibility.setValue('', { emitEvent: false });
-        controls.startsFrom.setValue('', { emitEvent: false });
-        controls.startsTo.setValue('', { emitEvent: false });
-        this.searchControl.setValue('', { emitEvent: false });
+  /** False until the first render in the browser, so a prerendered page never holds a response. */
+  private ready = signal(false);
+  private loadRun = 0;
+  private listOutdated = false;
 
-        controls.type.disable({ emitEvent: false });
-        controls.tags.disable({ emitEvent: false });
-        controls.visibility.disable({ emitEvent: false });
-        controls.startsFrom.disable({ emitEvent: false });
-        controls.startsTo.disable({ emitEvent: false });
-        this.searchControl.disable({ emitEvent: false });
-
-        this.isMapView.set(false);
-      } else {
-        controls.type.enable({ emitEvent: false });
-        controls.tags.enable({ emitEvent: false });
-        controls.visibility.enable({ emitEvent: false });
-        controls.startsFrom.enable({ emitEvent: false });
-        controls.startsTo.enable({ emitEvent: false });
-        this.searchControl.enable({ emitEvent: false });
+  constructor() {
+    const url = fromHomeParams(this.route.snapshot.queryParams);
+    // Set now, not with the rest of the URL, so a reload on Mapa never starts Lista first.
+    this.isMapView.set(url.map);
+    const restored = this.restoreView(url);
+    this.postService.clearActivePost();
+    this.mapResumes.set(restored && this.isMapView());
+    const focus = this.mapFocus.take();
+    if (focus) {
+      this.openOnMap(focus, false);
+    }
+    effect(() => {
+      if (this.mapFocus.requested()) {
+        untracked(() => this.openOnMap(this.mapFocus.take()!, true));
       }
     });
 
-    const search$ = this.searchControl.valueChanges.pipe(
-      startWith(''),
-      debounceTime(400),
-      distinctUntilChanged(),
-    );
+    // Starts the kinds' catalogue request with the page, not when Filtry first opens.
+    inject(KindsService);
 
-    const filter$ = this.filtersForm.valueChanges.pipe(startWith(this.filtersForm.value));
+    // The page is prerendered with no query, so the URL applies only after hydration matched it.
+    afterNextRender(() => {
+      if (restored) {
+        this.ready.set(true);
+      } else {
+        void this.openFromUrl(url).then(() => this.ready.set(true));
+      }
+    });
 
-    combineLatest([search$, filter$, this.sortBy$])
+    // Cards measure distances from the point the list was filtered or sorted by, so they agree with
+    // it: the radius's centre, or Najbliższe's position. See LocationService.
+    effect(() => {
+      const { latitude, longitude, radiusKm } = this.activeFilters();
+      const nearest = this.listSort() === 'NEAREST' ? this.place.sortPoint() : null;
+      const centre = radiusKm && latitude !== undefined && longitude !== undefined;
+      this.location.measureFrom(centre ? { latitude, longitude } : nearest);
+    });
+
+    // First open, and again if the store was cleared because the user changed.
+    effect(() => {
+      if (this.ready() && this.list.query() === null) {
+        untracked(() => this.load());
+      }
+    });
+
+    this.homeTap.freshFeed
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(([search, _, sortBy]) => {
-        const filters = this.filtersForm.getRawValue();
-        const recommended = sortBy === 'RECOMMENDED';
+      .subscribe(() => this.startFresh());
 
-        if (recommended) {
-          this.postService.getRecommendations(undefined, 20).subscribe({
-            next: (data) => this.posts.set(data),
-            error: (err) => console.error('Error while fetching recommendations', err),
-          });
-        } else {
-          const mapParams: PostFilterParams = {
-            ...(search && { q: search }),
-            ...(filters.type && { type: filters.type as PostType }),
-            ...(filters.tags && {
-              tags: (filters.tags as string)
-                .split(',')
-                .map((t: string) => t.trim())
-                .filter(Boolean),
-            }),
-            ...(filters.startsFrom && { startsFrom: new Date(filters.startsFrom).toISOString() }),
-            ...(filters.startsTo && { startsTo: new Date(filters.startsTo).toISOString() }),
-            ...(filters.visibility && { visibility: filters.visibility as PostVisibility }),
-            ...(filters.status && { status: filters.status as PostStatus }),
-          };
-
-          this.currentFiltersForMap.set(mapParams);
-
-          const filterParams: PostFilterParams = {
-            ...mapParams,
-            limit: 20,
-            sortBy,
-          };
-
-          this.postService.getPosts(filterParams).subscribe({
-            next: (data) => this.posts.set(data),
-            error: (err) => console.error('Error while fetching posts', err),
-          });
+    this.filtersForm.controls.place.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((place) => {
+        this.locationFailed.set(false);
+        if (place === 'mine' && !this.place.position()) {
+          void this.locateForFilter();
+        } else if (place === 'online') {
+          this.showOnline();
+        } else if (place === '') {
+          // Else Najbliższe would go on measuring from a place the pill no longer shows.
+          this.place.picked.set(null);
         }
       });
 
-    this.postService.clearActivePost();
+    merge(this.searchControl.valueChanges, this.filtersForm.valueChanges)
+      .pipe(debounceTime(400), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.applyControls());
+
+    this.router.events
+      .pipe(
+        filter((event) => event instanceof NavigationStart),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(() => this.saveView());
   }
 
-  toggleFilters(): void {
-    this.showFilters.update((v) => !v);
+  ngOnDestroy(): void {
+    this.location.measureFrom(null);
   }
 
+  applyControls(): void {
+    this.changeList(() => this.applyFilters());
+  }
+
+  /** A place from the search, or the home: the radius centres on it, with the radius as it was. */
+  pickPlace(place: NamedPlace): void {
+    this.place.pick(place);
+    this.filtersForm.controls.place.setValue('picked');
+  }
+
+  /**
+   * The map's "Szukaj w tym obszarze": the circle in its view becomes the picked place, named by a lookup. A view
+   * wider than the largest radius gets that radius, and the map zooms in to it.
+   */
+  searchArea({ centre, radiusKm }: MapArea): void {
+    const radius = Math.min(radiusKm, RADII_KM[RADII_KM.length - 1]);
+    this.place.pickPoint(centre);
+    this.filtersForm.patchValue({ place: 'picked', radiusKm: radius }, { emitEvent: false });
+    this.applyControls();
+  }
+
+  /** Filtry's "Wyczyść" leaves the place, which has its own panel. Wszystkie's order is in Filtry, so it goes too. */
   clearFilters(): void {
-    this.filtersForm.reset();
-    this.searchControl.setValue('');
+    const { place, radiusKm } = this.filtersForm.getRawValue();
+    this.filtersForm.reset({ ...NO_FILTERS, place, radiusKm }, { emitEvent: false });
+    this.searchControl.setValue('', { emitEvent: false });
+    this.changeList(() => {
+      if (!this.isFeed()) {
+        this.sort.set(START_SORT);
+      }
+      this.applyFilters();
+    });
   }
 
-  goToAddPost(): void {
-    this.router.navigate(['/addPost']);
+  /** The empty state's shortcut. The panel opens, so that the user can see and undo what's now on. */
+  searchPastToo(): void {
+    this.showFilters.set(true);
+    this.filtersForm.controls.includePast.setValue(true, { emitEvent: false });
+    this.applyControls();
   }
 
-  removeChild(idToRemove: string): void {
-    this.posts.update((currentData) => ({
-      ...currentData,
-      items: currentData.items.filter((post) => String(post.id) !== String(idToRemove)),
-    }));
+  /** A new session that keeps the cards in view until its first page arrives, and keeps them if it fails. */
+  async renewList(): Promise<void> {
+    if (!(await this.list.renew())) {
+      this.toast.show(this.translate.instant('MAIN_PAGE.refreshFailed'));
+    }
   }
 
-  toggleSortMenu(): void {
-    this.showSortMenu.update((v) => !v);
+  /** Najbliższe needs a point: the user's position, else their home. With neither, the order stays and a note says why. */
+  async setSortBy(sortBy: PostsSort): Promise<void> {
+    if (sortBy === 'NEAREST' && !this.place.own()) {
+      const position = await this.location.request();
+      if (position) {
+        this.place.position.set(position);
+      } else if (!this.home()) {
+        this.toast.show(this.translate.instant('MAIN_PAGE.nearestNeedsLocation'));
+        return;
+      }
+    }
+    this.changeList(() => this.sort.set(sortBy));
   }
 
-  setSortBy(sortBy: PostSortBy): void {
-    this.sortBy$.next(sortBy);
-    this.showSortMenu.set(false);
+  /**
+   * Search and filters stay, so the same question gets the other tab's answer. On Mapa, the tab already shown goes
+   * back to its Lista.
+   */
+  setTab(tab: HomeTab): void {
+    if (tab === this.tab() && this.isMapView()) {
+      this.toggleMapView(false);
+      return;
+    }
+    this.changeList(() => this.tab.set(tab));
   }
 
-  get currentSortBy(): PostSortBy {
-    return this.sortBy$.value;
-  }
-
-  getSortLabelKey(): string {
-    const sort = this.sortOptions.find((o) => o.value === this.currentSortBy);
-    return sort ? sort.labelKey : 'MAIN_PAGE.sortRecent';
+  /** The empty list's shortcut: the next radius chip. The panel shows the new value. */
+  widenRadius(): void {
+    const radius = this.widerRadius();
+    if (radius !== null) {
+      this.filtersForm.controls.radiusKm.setValue(radius, { emitEvent: false });
+      this.applyControls();
+    }
   }
 
   toggleMapView(isToggled: boolean): void {
+    if (isToggled === this.isMapView()) {
+      return;
+    }
+    if (!isToggled && this.mapOverlay.isOpen()) {
+      // Back to the card the map was opened from, through its history entry.
+      this.mapOverlay.close();
+      return;
+    }
+    if (isToggled) {
+      this.listScrollY = this.scroller.getScrollPosition()[1];
+    }
     this.isMapView.set(isToggled);
-    console.log(this.isMapView());
+    this.showInUrl();
+    if (isToggled) {
+      return;
+    }
+    if (this.listOutdated || this.list.query() === null) {
+      this.load();
+    } else {
+      // The same list renders again from the store, so the same card is at the same place.
+      const y = this.listScrollY;
+      afterNextRender(() => this.scroller.scrollToPosition([0, y]), { injector: this.injector });
+    }
+  }
+
+  /** Home tapped at the top: the default feed again, as a new session with a new first page. */
+  startFresh(): void {
+    this.resetControls();
+    this.tab.set('forYou');
+    this.sort.set(START_SORT);
+    this.applyFilters();
+    this.isMapView.set(false);
+    this.showInUrl();
+    this.load();
+  }
+
+  /** At once rather than after the form's debounce, as the map goes and Najbliższe falls back to the first order. */
+  private showOnline(): void {
+    this.changeList(() => {
+      if (this.sort() === 'NEAREST') {
+        this.sort.set(START_SORT);
+      }
+      this.applyFilters();
+    });
+    this.toggleMapView(false);
+  }
+
+  /** Applies a change, and starts a new list only if it changes which list should be showing. */
+  private changeList(change: () => void): void {
+    const listKey = () => JSON.stringify([this.tab(), this.listSort(), this.activeFilters()]);
+    const before = listKey();
+    change();
+    if (listKey() !== before) {
+      // A different list starts at its beginning, not where the last one was scrolled to.
+      this.scroller.scrollToPosition([0, 0]);
+      this.showInUrl();
+      this.load();
+    }
+  }
+
+  /** The map on a post: from its card on this page, in a history entry of its own; from another page, as it opens. */
+  private openOnMap(post: PostMark, fromThisPage: boolean): void {
+    this.mapFocusPost.set(post);
+    if (this.isMapView()) {
+      return;
+    }
+    if (fromThisPage) {
+      this.listScrollY = this.scroller.getScrollPosition()[1];
+      // Its entry says Mapa, so a reload there stays on the map, and Back returns to Lista's entry.
+      const queryParams = { ...this.urlParams(), view: 'map' };
+      this.mapOverlay.opened({
+        pageStaysLive: true,
+        url: this.router.serializeUrl(
+          this.router.createUrlTree([], { relativeTo: this.route, queryParams }),
+        ),
+      });
+    }
+    this.isMapView.set(true);
+  }
+
+  /** Under the map, Wszystkie waits for Lista. Dla Ciebie loads, as its first posts are the map's top picks. */
+  private load(): void {
+    // Counted before the early return, so a Dla Ciebie start still waiting for a position is dropped.
+    const run = ++this.loadRun;
+    this.listOutdated = this.isMapView() && !this.isFeed();
+    if (this.listOutdated) {
+      return;
+    }
+    if (this.isMapView()) {
+      // A new list under the map opens at its top on Lista.
+      this.listScrollY = 0;
+    }
+    if (this.isFeed()) {
+      void this.startFeed(run);
+    } else {
+      const sortBy = this.sort();
+      const position = sortBy === 'NEAREST' ? this.place.sortPoint() : null;
+      this.list.start({
+        kind: 'posts',
+        filters: { ...this.activeFilters(), ...position, sortBy },
+      });
+    }
+  }
+
+  /**
+   * Uses the position when it's allowed and arrives quickly. On the first open, if the browser hasn't
+   * decided yet, it asks, and the first page waits a little for the answer.
+   */
+  private async startFeed(run: number): Promise<void> {
+    const location = await this.location.currentOrAsk(LOCATION_WAIT_MS, LOCATION_ANSWER_MS);
+    if (run === this.loadRun) {
+      this.list.start({
+        kind: 'feed',
+        ...(location && { location }),
+        filters: this.activeFilters(),
+      });
+    }
+  }
+
+  /**
+   * Puts the page in the state its URL describes. A radius or Najbliższe with no point in the link
+   * needs the reader's position, and without it they fall back as they do when picked by hand.
+   */
+  private async openFromUrl(url: HomeUrlState): Promise<void> {
+    // After this render's own check has finished, which the form's values would otherwise change under.
+    await Promise.resolve();
+    const { filters, sort, point } = url;
+    this.setControls(url);
+    this.place.pickPoint(point);
+
+    // On a reload /auth/me may not have answered yet, and the filter means nothing for a guest.
+    if (filters.followed && !(await this.signedIn())) {
+      this.filtersForm.controls.followed.setValue(false, { emitEvent: false });
+    }
+
+    const needsPosition = filters.place === 'mine' || (sort === 'NEAREST' && !point);
+    if (needsPosition) {
+      const position = await this.location.currentOrAsk(LOCATION_WAIT_MS, LOCATION_ANSWER_MS);
+      this.place.position.set(position);
+      if (!position && filters.place === 'mine') {
+        this.filtersForm.controls.place.setValue('', { emitEvent: false });
+        this.locationFailed.set(true);
+      }
+      if (!position && sort === 'NEAREST' && !this.home()) {
+        this.sort.set(START_SORT);
+        this.toast.show(this.translate.instant('MAIN_PAGE.nearestNeedsLocation'));
+      }
+    }
+    this.applyFilters();
+    this.showInUrl();
+  }
+
+  private setControls({ search, filters, tab, sort }: HomeUrlState): void {
+    this.searchControl.setValue(search, { emitEvent: false });
+    this.filtersForm.setValue(filters, { emitEvent: false });
+    this.tab.set(tab);
+    this.sort.set(sort);
+  }
+
+  private async signedIn(): Promise<boolean> {
+    return this.authService.isAuthenticated() || firstValueFrom(this.authService.checkSession());
+  }
+
+  /** The filters as the form has them, and what their radius is centred on. */
+  private applyFilters(): void {
+    const filters = this.readFilters();
+    const place = this.filtersForm.controls.place.value;
+    this.activeFilters.set(filters);
+    this.activePlace.set(filters.radiusKm || place === 'online' ? place : '');
+  }
+
+  /** The current state as the URL's query string. */
+  private urlParams(): Params {
+    const { latitude, longitude } = this.activeFilters();
+    const nearest = this.listSort() === 'NEAREST';
+    const inFilter = latitude !== undefined && longitude !== undefined;
+    return toHomeParams({
+      search: this.searchControl.value,
+      filters: this.filtersForm.getRawValue(),
+      tab: this.tab(),
+      sort: this.sort(),
+      point: inFilter || nearest ? this.place.sortPoint() : null,
+      map: this.isMapView(),
+    });
+  }
+
+  /** Replaces the URL, so Back still leaves the home page rather than undoing each filter. */
+  private showInUrl(): void {
+    const queryParams = this.urlParams();
+    const current = this.router.parseUrl(this.router.url).queryParams;
+    if (!sameHomeParams(queryParams, current)) {
+      void this.router.navigate([], { relativeTo: this.route, queryParams, replaceUrl: true });
+    }
+  }
+
+  /** "Moja lokalizacja" needs the position first. Without it, the filter goes back to "Wszędzie". */
+  private async locateForFilter(): Promise<void> {
+    this.locating.set(true);
+    const position = await this.location.request();
+    this.locating.set(false);
+    if (position) {
+      this.place.position.set(position);
+      this.applyControls();
+    } else {
+      this.filtersForm.controls.place.setValue('', { emitEvent: false });
+      this.locationFailed.set(true);
+    }
+  }
+
+  private resetControls(): void {
+    this.filtersForm.reset(NO_FILTERS, { emitEvent: false });
+    this.searchControl.setValue('', { emitEvent: false });
+    this.place.picked.set(null);
+  }
+
+  private readFilters(): PostFilterParams {
+    const search = this.searchControl.value.trim();
+    const { kinds, kids, fromDay, toDay, followed, includePast, place, radiusKm } =
+      this.filtersForm.getRawValue();
+    const position = this.place.centre(place);
+
+    return {
+      ...(search && { q: search }),
+      ...(kinds.length && { kinds }),
+      ...(kids && { kids }),
+      ...(place === 'online' && { type: 'ONLINE' as const }),
+      ...dayWindow(fromDay, toDay),
+      ...(followed && this.authService.isAuthenticated() && { followed }),
+      ...(includePast && { includePast }),
+      ...(position && { ...position, radiusKm }),
+    };
+  }
+
+  private saveView(): void {
+    this.memory.save({
+      url: this.urlParams(),
+      place: this.filtersForm.controls.place.value,
+      sort: this.sort(),
+      listScrollY: this.listScrollY,
+      nearPosition: this.place.position(),
+      pickedPlace: this.place.picked(),
+    });
+  }
+
+  /**
+   * On Back or Forward, puts the page back as it was left, from memory and with no request, so the
+   * router's scroll restoration lands on the same card. Otherwise a new list will start, from the URL.
+   * Memory holds the last home page left, which may not be the entry Back landed on, so the URL decides.
+   */
+  private restoreView(url: HomeUrlState): boolean {
+    const comingBack = this.router.currentNavigation()?.trigger === 'popstate';
+    const view = comingBack ? this.memory.restore() : null;
+    if (!view || !sameHomeParams(view.url, this.route.snapshot.queryParams)) {
+      this.list.clear();
+      return false;
+    }
+
+    this.setControls({ ...url, filters: { ...url.filters, place: view.place }, sort: view.sort });
+    this.place.position.set(view.nearPosition);
+    this.place.picked.set(view.pickedPlace);
+    this.listScrollY = view.listScrollY;
+    this.applyFilters();
+
+    const post = this.postService.activePost();
+    if (post) {
+      this.list.updateItem(post);
+    }
+    return true;
   }
 }

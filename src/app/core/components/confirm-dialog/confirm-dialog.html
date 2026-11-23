@@ -1,0 +1,31 @@
+<app-dialog
+  [open]="!!confirm.request()"
+  titleId="confirm-title"
+  (dismissed)="confirm.answer('cancel')"
+>
+  @if (confirm.request(); as request) {
+    <h2 id="confirm-title" class="confirm__title">
+      {{ request.title | translate: request.params }}
+    </h2>
+    @if (request.text) {
+      <p class="confirm__text">{{ request.text | translate: request.params }}</p>
+    }
+    <div class="confirm__buttons">
+      <app-btn variant="secondary" [fullWidth]="phone()" (btnClick)="confirm.answer('cancel')">
+        {{ 'CONFIRM.cancel' | translate }}
+      </app-btn>
+      @if (request.other) {
+        <app-btn variant="secondary" [fullWidth]="phone()" (btnClick)="confirm.answer('other')">
+          {{ request.other | translate: request.params }}
+        </app-btn>
+      }
+      <app-btn
+        [variant]="request.danger ? 'danger' : 'primary'"
+        [fullWidth]="phone()"
+        (btnClick)="confirm.answer('confirm')"
+      >
+        {{ request.confirm | translate: request.params }}
+      </app-btn>
+    </div>
+  }
+</app-dialog>

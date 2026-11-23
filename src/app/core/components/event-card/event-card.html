@@ -12,16 +12,35 @@
         >{{ 'EVENT_CARD.by' | translate }} {{ post.author.username }}</span
       >
     </div>
+    @if (post.type === 'ONLINE') {
+      <div class="event-card__row">
+        <span class="event-card__author">{{ 'POST.online' | translate }}</span>
+      </div>
+    } @else if (place) {
+      <div class="event-card__row">
+        <button
+          type="button"
+          class="event-card__place"
+          [attr.aria-label]="'POST.showOnMap' | translate: { place: place }"
+          (click)="showOnMap($event)"
+          (keydown)="$event.stopPropagation()"
+        >
+          <ng-icon name="heroMapPin" aria-hidden="true" />
+          {{ place }}
+          <ng-icon name="lucideChevronRight" aria-hidden="true" />
+        </button>
+      </div>
+    }
   </div>
   <div class="event-card__right">
-    <span class="event-card__date">{{ post.startsAt | date: dateFormats().short }}</span>
+    <span class="event-card__date">{{ when.card(post) }}</span>
     @if (post.myParticipation === 'TAKES_PART') {
       <span class="event-card__badge event-card__badge--going">{{
-        'MY_EVENTS.takes_part' | translate
+        'PLANS.takes_part' | translate
       }}</span>
     } @else if (post.myParticipation === 'INTERESTED') {
       <span class="event-card__badge event-card__badge--interested">{{
-        'MY_EVENTS.interested' | translate
+        'PLANS.interested' | translate
       }}</span>
     }
   </div>

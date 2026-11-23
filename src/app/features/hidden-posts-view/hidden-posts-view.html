@@ -1,0 +1,33 @@
+<div class="page">
+  <div class="hidden-posts">
+    <div class="hidden-posts__head">
+      <app-back-link fallback="/profile/settings" />
+      <h1 class="hidden-posts__title">{{ 'HIDDEN.title' | translate }}</h1>
+    </div>
+    <p class="hidden-posts__intro">{{ 'HIDDEN.intro' | translate }}</p>
+
+    @for (item of list.items(); track item.id) {
+      @if ($index === list.loadMoreAt()) {
+        <div
+          class="hidden-posts__trigger"
+          [appInfiniteScroll]="list.canLoadMore()"
+          (reachedEnd)="list.loadMore()"
+        ></div>
+      }
+      <app-post-component [data]="item" [isFullView]="false" folds="unmarked" />
+    }
+    <div
+      class="hidden-posts__trigger"
+      [appInfiniteScroll]="list.canLoadMore()"
+      (reachedEnd)="list.loadMore()"
+    ></div>
+
+    @if (list.failed()) {
+      <app-load-state [failed]="true" (retry)="list.retry()" />
+    } @else if (list.loading()) {
+      <app-post-skeleton />
+    } @else if (list.items().length === 0) {
+      <p class="hidden-posts__empty">{{ 'HIDDEN.empty' | translate }}</p>
+    }
+  </div>
+</div>

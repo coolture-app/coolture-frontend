@@ -6,7 +6,7 @@ export interface PaginationInfo {
 export interface PaginationMeta {
   limit: number;
   hasMore: boolean;
-  nextCursor: string | null;
+  nextCursor?: string; // only when hasMore is true
 }
 
 export interface PaginatedResponse<T> {

@@ -1,10 +1,13 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable, signal, computed, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { catchError, map, Observable, of, tap } from 'rxjs';
+import { catchError, finalize, map, Observable, of, shareReplay, tap } from 'rxjs';
 import { ApiUrlService } from '../api-url.service';
-import { UserProfile } from '../../models/users/user-profile.model';
+import { Me, UserProfile } from '../../models/users/user-profile.model';
+import { NamedPlace } from '../../models/common/geo.model';
+import { UserInterests } from '../../models/interests/interest.model';
 import { environment } from '../../../../environments/environment';
+import { DEV_IDENTITY } from '../../auth/dev-identity';
 
 interface StoredTokens {
   idToken: string;
@@ -24,8 +27,16 @@ interface TokenResponse {
   refresh_token?: string;
 }
 
+/** Cognito answered that it won't accept the code or the refresh token, unlike a network failure or a `5xx`. */
+class TokenRequestRefused extends Error {
+  constructor(status: number) {
+    super(`Token request refused with status ${status}`);
+  }
+}
+
 const TOKENS_KEY = 'coolture.auth.tokens';
 const PENDING_LOGIN_KEY = 'coolture.auth.pending-login';
+const LOCAL_LOGOUT_KEY = 'coolture.auth.local-logout';
 const REFRESH_MARGIN_MS = 60_000;
 const SCOPES = 'openid email profile';
 
@@ -36,33 +47,121 @@ export class AuthService {
   private http = inject(HttpClient);
   private apiUrl = inject(ApiUrlService);
   private platformId = inject(PLATFORM_ID);
+  /** Development builds act as whoever the DEV pill says, in place of a login. */
+  private devIdentity = inject(DEV_IDENTITY, { optional: true });
   private refreshing: Promise<string | null> | null = null;
+  private sessionCheck: Observable<boolean> | null = null;
+  /** Counts logouts, so a `/auth/me` answer sent before one can't sign the user back in. */
+  private logouts = 0;
 
   readonly currentUser = signal<UserProfile | null>(null);
+  /**
+   * Whether the signed-in user has picked a kind of event, or null while unknown.
+   * A selection can only be replaced, never removed, so once true it stays true for the session
+   * and a /auth/me response sent before a save cannot undo it.
+   */
+  readonly onboarded = signal<boolean | null>(null);
+  /** Where the signed-in user lives, if they said. Only `/auth/me` gives it. */
+  readonly home = signal<NamedPlace | null>(null);
+  /** Whether friends see the signed-in user's stances. Only `/auth/me` gives it. */
+  readonly shareStances = signal(true);
+  /** Counts changes made here, so a `/auth/me` answer sent before a change can't undo it. */
+  private homeChanges = 0;
+  private shareChanges = 0;
   readonly isAuthenticated = computed(() => this.currentUser() !== null);
   readonly userId = computed(() => this.currentUser()?.id ?? '');
 
   checkSession(): Observable<boolean> {
-    if (this.isCognitoConfigured() && !this.readTokens()) {
-      this.currentUser.set(null);
+    if (this.isSignedOut()) {
+      this.clearUser();
       return of(false);
     }
-    return this.http.get<UserProfile>(this.apiUrl.path('/auth/me')).pipe(
-      tap((userProfile) => this.currentUser.set(userProfile)),
-      map(() => true),
-      catchError(() => {
-        this.currentUser.set(null);
+    const changesBefore = this.homeChanges;
+    const shareChangesBefore = this.shareChanges;
+    const logoutsBefore = this.logouts;
+    const loggedOutSince = () => this.logouts !== logoutsBefore;
+    const check: Observable<boolean> = this.http.get<Me>(this.apiUrl.path('/auth/me')).pipe(
+      tap(({ onboarded, home, shareStances, ...profile }) => {
+        if (loggedOutSince()) {
+          return;
+        }
+        this.currentUser.set(profile);
+        this.onboarded.update((selected) => selected || onboarded);
+        if (this.homeChanges === changesBefore) {
+          this.home.set(home ?? null);
+        }
+        if (this.shareChanges === shareChangesBefore) {
+          this.shareStances.set(shareStances);
+        }
+      }),
+      map(() => !loggedOutSince()),
+      catchError((error: HttpErrorResponse) => {
+        if ((error.status === 401 || error.status === 403) && !loggedOutSince()) {
+          this.clearUser();
+        }
         return of(false);
       }),
+      finalize(() => {
+        if (this.sessionCheck === check) {
+          this.sessionCheck = null;
+        }
+      }),
+      shareReplay(1),
     );
+    this.sessionCheck ??= check;
+    return this.sessionCheck;
   }
 
-  async login(returnUrl?: string): Promise<void> {
+  /** After the interests were saved, so the profile shows them without asking `/auth/me` again. */
+  markOnboarded({ kinds, interests }: UserInterests): void {
+    this.onboarded.set(true);
+    this.currentUser.update((user) => user && { ...user, kinds, interests });
+  }
+
+  /** After the profile was saved, so the navbar and every page show it. */
+  markProfile(profile: UserProfile): void {
+    this.currentUser.set(profile);
+  }
+
+  /** After the home was saved or removed. */
+  markHome(home: NamedPlace | null): void {
+    this.homeChanges++;
+    this.home.set(home);
+  }
+
+  /** After the sharing switch was saved. */
+  markShareStances(share: boolean): void {
+    this.shareChanges++;
+    this.shareStances.set(share);
+  }
+
+  private clearUser(): void {
+    this.currentUser.set(null);
+    this.onboarded.set(null);
+    this.home.set(null);
+    this.shareStances.set(true);
+  }
+
+  login(returnUrl?: string): Promise<void> {
+    return this.signIn('oauth2/authorize', returnUrl);
+  }
+
+  /** Cognito's sign-up page, which comes back through the same callback as a sign-in. */
+  signUp(returnUrl?: string): Promise<void> {
+    return this.signIn('signup', returnUrl);
+  }
+
+  private async signIn(page: 'oauth2/authorize' | 'signup', returnUrl?: string): Promise<void> {
     if (!isPlatformBrowser(this.platformId)) {
       return;
     }
+    if (this.devIdentity) {
+      this.devIdentity.openMenu();
+      return;
+    }
     if (!this.isCognitoConfigured()) {
-      console.warn('Cognito is not configured for this build - login is unavailable.');
+      localStorage.removeItem(LOCAL_LOGOUT_KEY);
+      window.location.assign(returnUrl ?? '/');
       return;
     }
     const verifier = randomBase64Url(64);
@@ -70,7 +169,8 @@ export class AuthService {
     const pending: PendingLogin = {
       state,
       verifier,
-      returnUrl: returnUrl ?? window.location.pathname + window.location.search,
+      returnUrl:
+        returnUrl ?? window.location.pathname + window.location.search + window.location.hash,
     };
     sessionStorage.setItem(PENDING_LOGIN_KEY, JSON.stringify(pending));
 
@@ -83,7 +183,7 @@ export class AuthService {
       code_challenge: await sha256Base64Url(verifier),
       code_challenge_method: 'S256',
     });
-    window.location.assign(`${environment.cognito.domain}/oauth2/authorize?${params}`);
+    window.location.assign(`${environment.cognito.domain}/${page}?${params}`);
   }
 
   async completeLogin(code: string | null, state: string | null): Promise<string> {
@@ -121,9 +221,16 @@ export class AuthService {
     if (!isPlatformBrowser(this.platformId)) {
       return;
     }
+    this.logouts++;
+    this.sessionCheck = null;
     this.clearTokens();
-    this.currentUser.set(null);
+    this.clearUser();
+    if (this.devIdentity) {
+      this.devIdentity.signOut();
+      return;
+    }
     if (!this.isCognitoConfigured()) {
+      localStorage.setItem(LOCAL_LOGOUT_KEY, 'true');
       window.location.assign('/');
       return;
     }
@@ -142,9 +249,11 @@ export class AuthService {
       });
       this.storeTokens({ ...tokens, refresh_token: tokens.refresh_token ?? refreshToken });
       return tokens.id_token;
-    } catch {
-      this.clearTokens();
-      this.currentUser.set(null);
+    } catch (error) {
+      if (error instanceof TokenRequestRefused) {
+        this.clearTokens();
+        this.clearUser();
+      }
       return null;
     }
   }
@@ -156,9 +265,21 @@ export class AuthService {
       body: new URLSearchParams({ client_id: environment.cognito.clientId, ...body }),
     });
     if (!response.ok) {
-      throw new Error(`Token request failed with status ${response.status}`);
+      throw response.status >= 500 || response.status === 429
+        ? new Error(`Token request failed with status ${response.status}`)
+        : new TokenRequestRefused(response.status);
     }
     return response.json();
+  }
+
+  private isSignedOut(): boolean {
+    if (this.devIdentity) {
+      return this.devIdentity.isGuest();
+    }
+    if (this.isCognitoConfigured()) {
+      return !this.readTokens();
+    }
+    return isPlatformBrowser(this.platformId) && !!localStorage.getItem(LOCAL_LOGOUT_KEY);
   }
 
   private isCognitoConfigured(): boolean {

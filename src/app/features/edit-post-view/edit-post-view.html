@@ -1,32 +1,23 @@
-<div class="edit-post-container" *ngIf="currentPost()">
-  <div class="edit-post-card">
-    <header class="card-header">
-      <h2>{{ 'EDIT_POST.header-title' | translate }}</h2>
-      <p>{{ 'EDIT_POST.header-desc' | translate }}</p>
-    </header>
+@if (notFound()) {
+  <app-not-found-view />
+} @else {
+  <div class="edit-post-container">
+    <app-back-link [fallback]="'/posts/' + postId" />
+    @if (currentPost(); as post) {
+      <div class="edit-post-card">
+        <header class="card-header">
+          <h2>{{ 'EDIT_POST.title' | translate }}</h2>
+          <p>{{ 'EDIT_POST.header-desc' | translate }}</p>
+        </header>
 
-    @if (authService.currentUser(); as user) {
-      <div class="posting-as">
-        @if (user.avatar; as avatar) {
-          <img [src]="avatar.url" [alt]="user.username" class="user-avatar" />
-        } @else {
-          <div class="user-avatar user-avatar--placeholder">
-            {{ user.firstName.charAt(0) }}{{ user.lastName.charAt(0) }}
-          </div>
-        }
-        <div class="user-info">
-          <span class="label">{{ 'EDIT_POST.editing-as' | translate }}</span>
-          <span class="username">{{ user.username }}</span>
-        </div>
+        <app-post-form
+          mode="edit"
+          [initialData]="post"
+          (formSubmit)="onFormSubmit($event)"
+        ></app-post-form>
       </div>
+    } @else {
+      <app-load-state [failed]="failed()" message="POST.loadFailed" (retry)="load()" />
     }
-
-    <app-post-form
-      mode="edit"
-      [initialData]="currentPost()!"
-      [existingMedia]="existingMedia()"
-      (formSubmit)="onFormSubmit($event)"
-      (existingMediaRemove)="onExistingMediaRemove($event)"
-    ></app-post-form>
   </div>
-</div>
+}

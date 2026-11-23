@@ -1,3 +1,24 @@
 <app-navbar />
-<router-outlet />
-<app-footer />
+<div class="app__content" [attr.inert]="onboarding() ? '' : null">
+  <router-outlet />
+</div>
+<app-toast />
+<app-photo-viewer />
+<app-comments-sheet />
+<app-confirm-dialog />
+<app-sign-in-prompt />
+<ng-container *ngComponentOutlet="devSwitcher" />
+@if (onboarding()) {
+  <div class="app__onboarding" role="dialog" aria-modal="true">
+    @if (homeStep()) {
+      <app-home-area class="app__step" onboarding (done)="homeStep.set(false)" />
+    } @else {
+      <app-interests-view
+        class="app__step"
+        onboarding
+        (dismissed)="interestsDismissed.set(true)"
+        (saved)="homeStep.set(true)"
+      />
+    }
+  </div>
+}

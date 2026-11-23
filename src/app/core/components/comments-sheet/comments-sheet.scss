@@ -1,0 +1,53 @@
+@use '_mixin' as *;
+
+.sheet__post {
+  display: flex;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+
+.sheet__avatar-link {
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+.sheet__avatar {
+  @include avatar(36px);
+
+  &--placeholder {
+    @include avatar-placeholder(36px);
+    line-height: 1;
+  }
+}
+
+.sheet__post-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.sheet__author {
+  font-size: var(--text-meta);
+  color: var(--color-text-secondary);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.sheet__post-title {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: var(--text-title);
+  font-weight: var(--font-semibold);
+  line-height: 1.25;
+  color: var(--color-text);
+  text-decoration: none;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}

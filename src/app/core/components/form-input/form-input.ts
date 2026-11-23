@@ -20,6 +20,8 @@ export class FormInput {
   @Input() step?: string;
   @Input() inputId = '';
   @Input() optionalLabel = 'POST_FORM.optional';
+  /** Labels a whole part of the form, not a field inside one. */
+  @Input() heading = false;
   @Input() errorMessages: Record<string, string> = {};
 
   get currentLength(): number {
@@ -31,8 +33,9 @@ export class FormInput {
     return this.control.invalid && this.control.touched;
   }
 
+  /** Only once the field was left or a save was tried, so an empty form doesn't open with errors. */
   get activeErrors(): string[] {
-    if (!this.control.errors) return [];
+    if (!this.showErrors || !this.control.errors) return [];
     return Object.keys(this.control.errors)
       .filter((key) => this.errorMessages[key])
       .map((key) => this.errorMessages[key]);

@@ -1,5 +1,6 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Tooltip } from '../../directives/tooltip';
 
 export type BtnVariant =
   | 'primary'
@@ -13,7 +14,7 @@ export type BtnSize = 'sm' | 'md' | 'lg';
 
 @Component({
   selector: 'app-btn',
-  imports: [CommonModule],
+  imports: [CommonModule, Tooltip],
   templateUrl: './btn.html',
   styleUrl: './btn.scss',
 })
@@ -21,8 +22,13 @@ export class Btn {
   @Input({ required: true }) variant: BtnVariant = 'primary';
   @Input() size: BtnSize = 'md';
   @Input() disabled = false;
+  /** Greyed and ignores taps like `disabled`, but stays focusable, so its tooltip can say why. */
+  @Input() unavailable = false;
   @Input() fullWidth = false;
+  @Input() pressed?: boolean;
   @Input() type: 'button' | 'submit' | 'reset' = 'button';
+  /** What the button does: its accessible name, and the tooltip on hover and keyboard focus. */
+  @Input() label = '';
 
   @Output() btnClick = new EventEmitter<Event>();
 
@@ -33,11 +39,14 @@ export class Btn {
     const variantClass = `btn--${this.variant}`;
     const sizeClass = this.size !== 'md' ? `btn--${this.size}` : '';
     const widthClass = this.fullWidth ? 'btn--full' : '';
-    return [base, variantClass, sizeClass, widthClass, this.class].filter(Boolean).join(' ');
+    const unavailableClass = this.unavailable ? 'btn--unavailable' : '';
+    return [base, variantClass, sizeClass, widthClass, unavailableClass, this.class]
+      .filter(Boolean)
+      .join(' ');
   }
 
   onClick(event: Event): void {
-    if (!this.disabled) {
+    if (!this.disabled && !this.unavailable) {
       this.btnClick.emit(event);
     }
   }

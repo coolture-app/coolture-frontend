@@ -1,0 +1,18 @@
+<app-menu #menu>
+  <button
+    menuTrigger
+    type="button"
+    class="owner__toggle"
+    aria-haspopup="menu"
+    [attr.aria-expanded]="menu.open()"
+    [attr.aria-label]="'POST.ownerMenu' | translate"
+    [appTooltip]="'POST.ownerMenu' | translate"
+    (click)="menu.toggle()"
+  >
+    <ng-icon name="lucideEllipsis" aria-hidden="true" />
+  </button>
+  <app-menu-item icon="lucidePencil" (click)="edit()">{{ 'POST.edit' | translate }}</app-menu-item>
+  <app-menu-item icon="lucideTrash2" danger (click)="remove()">{{
+    'POST.delete' | translate
+  }}</app-menu-item>
+</app-menu>

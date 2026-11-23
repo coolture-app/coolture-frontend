@@ -5,268 +5,73 @@
   flex-grow: 1;
 }
 .page {
+  --container-max: var(--feed-column);
   padding: var(--space-md);
   display: flex;
   flex-direction: column;
   flex-grow: 1;
 }
 
-.searchbar {
-  @include center-flex;
-  padding: var(--space-md) 0 var(--space-lg);
-
-  &__inner {
-    @include flex-between;
-    width: 100%;
-    max-width: var(--container-max);
-    gap: var(--space-sm);
-    align-items: center;
-  }
-
-  &__wrapper {
-    @include flex-between;
-    flex: 1;
-    gap: var(--space-sm);
-    padding: var(--space-xs) var(--space-sm);
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
-    transition:
-      border-color var(--transition-fast),
-      box-shadow var(--transition-fast);
-
-    &:focus-within {
-      border-color: var(--color-accent);
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-    }
-  }
-
-  &__icon {
-    width: 20px;
-    height: 20px;
-    color: var(--color-text-tertiary);
-    flex-shrink: 0;
-  }
-
-  &__input {
-    flex: 1;
-    border: none;
-    background: transparent;
-    font-family: var(--font-sans);
-    font-size: var(--text-base);
-    color: var(--color-text);
-
-    &:focus {
-      outline: none;
-    }
-
-    &::placeholder {
-      color: var(--color-text-tertiary);
-    }
-  }
-}
-
-.addPost-btn {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  flex-shrink: 0;
-
-  ng-icon {
-    width: 16px;
-    height: 16px;
-  }
-
-  &__text {
-    @media (max-width: 639px) {
-      display: none;
-    }
-  }
+// Under the bar, so it opens where the reader is, and scrolls inside itself when long.
+.filters-popover {
+  position: absolute;
+  top: calc(100% - var(--space-xs));
+  left: 50%;
+  z-index: 1;
+  width: min(var(--container-max), calc(100% - 2 * var(--space-md)));
+  max-height: calc(100dvh - var(--navbar-height) - var(--bottom-bar-height) - 140px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  transform: translateX(-50%);
+  animation: popover-in var(--transition-base);
 
   @media (max-width: 639px) {
-    position: fixed;
-    bottom: calc(var(--space-lg) + var(--footer-height));
-    right: var(--space-lg);
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    padding: 0;
-    justify-content: center;
-    box-shadow: var(--shadow-lg);
-    z-index: var(--z-sticky);
+    width: calc(100% - 2 * var(--space-sm));
   }
 }
 
-.sort-wrapper {
-  position: relative;
-}
-
-.sort-btn {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  padding: var(--space-sm) var(--space-md);
-  background: var(--color-surface);
+// Fades in and comes down over the list as it's pulled, turning with the pull. The list itself stays put.
+.pull {
+  --size: 36px;
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  display: grid;
+  place-items: center;
+  width: var(--size);
+  height: var(--size);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  font-family: var(--font-sans);
-  font-size: var(--text-sm);
-  color: var(--color-text);
-  cursor: pointer;
-  transition:
-    border-color var(--transition-fast),
-    background var(--transition-fast);
-
-  &:hover {
-    background: var(--color-background);
-  }
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md);
+  color: var(--color-text-secondary);
+  opacity: min(1, calc(var(--pull) / 48));
+  transform: translate(-50%, calc(var(--pull) * 1px - var(--size) - var(--space-sm)));
 
   ng-icon {
-    width: 16px;
-    height: 16px;
-    color: var(--color-text-secondary);
+    transform: rotate(calc(var(--pull) * 3deg));
   }
-}
 
-.sort-menu {
-  position: absolute;
-  top: calc(100% + var(--space-xs));
-  right: 0;
-  min-width: 160px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
-  z-index: var(--z-dropdown);
-  overflow: hidden;
+  &--ready {
+    color: var(--color-accent);
+  }
 
-  &__item {
-    display: block;
-    width: 100%;
-    padding: var(--space-sm) var(--space-md);
-    background: transparent;
-    border: none;
-    font-family: var(--font-sans);
-    font-size: var(--text-sm);
-    color: var(--color-text);
-    text-align: left;
-    cursor: pointer;
-    transition: background var(--transition-fast);
+  &--renewing {
+    color: var(--color-accent);
+    transition: transform var(--transition-base);
 
-    &:hover {
-      background: var(--color-background);
-    }
-
-    &.active {
-      background: var(--color-accent-light);
-      color: var(--color-accent);
-      font-weight: 500;
+    ng-icon {
+      animation: pull-spin 0.8s linear infinite;
     }
   }
 }
 
-.filter-wrapper {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-}
-
-.filters {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-md);
-  margin-bottom: var(--space-md);
-  max-width: var(--container-max);
-  display: flex;
-  width: 100%;
-  flex-direction: column;
-
-  &__header {
-    @include flex-between;
-    margin-bottom: var(--space-md);
-  }
-
-  &__title {
-    font-weight: 600;
-    font-size: var(--text-base);
-  }
-
-  &__row {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: var(--space-md);
-    margin-bottom: var(--space-md);
-
-    &:last-child {
-      margin-bottom: 0;
-    }
-  }
-
-  &__field {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xs);
-
-    label {
-      font-size: var(--text-sm);
-      color: var(--color-text-secondary);
-      font-weight: 500;
-    }
-
-    input,
-    select {
-      padding: var(--space-sm);
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-md);
-      font-family: var(--font-sans);
-      font-size: var(--text-sm);
-      background: var(--color-background);
-      color: var(--color-text);
-
-      &:focus {
-        outline: none;
-        border-color: var(--color-accent);
-        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-      }
-    }
-  }
-
-  &__field--checkbox {
-    flex-direction: row !important;
-    align-items: center;
-    gap: var(--space-sm);
-    margin-top: 24px;
-    height: 38px; // Match standard input height to look aligned
-
-    @media (max-width: 639px) {
-      margin-top: 0;
-      height: auto;
-    }
-
-    input[type='checkbox'] {
-      width: 20px;
-      height: 20px;
-      margin: 0;
-      cursor: pointer;
-      accent-color: var(--color-accent);
-      padding: 0;
-      border-radius: var(--radius-sm);
-
-      &:focus {
-        box-shadow: none;
-      }
-    }
-
-    label {
-      cursor: pointer;
-      margin: 0;
-      font-size: var(--text-sm);
-      color: var(--color-text-secondary);
-      font-weight: 500;
-      user-select: none;
-    }
+@keyframes popover-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -6px);
   }
 }
 
@@ -276,4 +81,44 @@
   color: var(--color-text-tertiary);
   font-size: var(--text-sm);
   text-align: center;
+
+  &--action {
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  &__hint {
+    margin-top: var(--space-sm);
+    color: var(--color-text-secondary);
+  }
+}
+
+.list-note {
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-md);
+}
+
+.list-trigger {
+  height: 0;
+}
+
+@keyframes pull-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Lista hides the map instead of destroying it.
+app-map.map-hidden {
+  display: none;
+}
+
+// Phones on Mapa: the map fills the page, under the bar.
+@media (max-width: 639px) {
+  .page--map {
+    position: relative;
+    padding: 0;
+  }
 }

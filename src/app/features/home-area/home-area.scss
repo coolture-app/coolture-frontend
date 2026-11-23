@@ -1,0 +1,70 @@
+.home-area {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: var(--text-lg);
+  }
+
+  &__text {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+  }
+
+  &__choice {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-accent);
+  }
+
+  &__name {
+    flex: 1;
+    font-weight: var(--font-medium);
+    color: var(--color-text);
+  }
+
+  &__link {
+    align-self: flex-start;
+    padding: var(--space-xs) 0;
+    border: none;
+    background: none;
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    color: var(--color-accent);
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      text-decoration: underline;
+    }
+
+    &:disabled {
+      color: var(--color-text-secondary);
+      cursor: default;
+    }
+  }
+
+  &__error {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--color-danger);
+  }
+
+  &__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-sm);
+  }
+}

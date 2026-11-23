@@ -1,0 +1,60 @@
+@use '_mixin' as *;
+
+.account {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-md);
+}
+
+.account__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.account__label {
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+}
+
+.account__input {
+  @include input-base;
+
+  &--handle {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    color: var(--color-text-secondary);
+
+    &:focus-within {
+      border-color: var(--color-accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    input {
+      flex: 1;
+      min-width: 0;
+      border: none;
+      outline: none;
+      background: none;
+      color: var(--color-text);
+      font: inherit;
+    }
+  }
+}
+
+.account__hint {
+  color: var(--color-text-secondary);
+  font-size: var(--text-meta);
+
+  &--error {
+    color: var(--color-danger);
+  }
+}
+
+.account__buttons {
+  display: flex;
+  justify-content: flex-end;
+}

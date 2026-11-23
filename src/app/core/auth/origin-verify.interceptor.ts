@@ -8,7 +8,7 @@ export const originVerifyInterceptor: HttpInterceptorFn = (req, next) => {
     return next(req);
   }
   const secret = serverEnv('ORIGIN_VERIFY_SECRET');
-  if (!secret || !req.url.startsWith(inject(ApiUrlService).url)) {
+  if (!secret || !inject(ApiUrlService).owns(req.url)) {
     return next(req);
   }
   return next(req.clone({ setHeaders: { 'X-Origin-Verify': secret } }));

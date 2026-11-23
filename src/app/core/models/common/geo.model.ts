@@ -3,17 +3,35 @@ export interface GeoPoint {
   longitude: number;
 }
 
+/** The middle of Trójmiasto, where the map and the place search start with no position. */
+export const TRICITY: GeoPoint = { latitude: 54.44, longitude: 18.57 };
+
+/** A point with a name to show for it: where someone lives, or what a radius is centred on. */
+export interface NamedPlace {
+  /** "Oliwa, Gdańsk", "Banino", "Ergo Arena". */
+  name: string;
+  coordinates: GeoPoint;
+}
+
+/** What the post form sends. Only the city and the pin are required. */
 export interface EventLocationRequest {
-  countryCode: string;
+  /** Two letters, such as `PL`. */
+  countryCode: string | null;
   venueName: string | null;
   buildingNum: string | null;
   street: string | null;
-  postalCode: string;
+  postalCode: string | null;
   city: string;
   coordinates: GeoPoint;
 }
 
-export interface EventLocation extends EventLocationRequest {
-  id: string;
-  createdAt: string;
+// As read from the API: fields without a value are left out of the JSON.
+export interface EventLocation {
+  countryCode?: string;
+  venueName?: string;
+  buildingNum?: string;
+  street?: string;
+  postalCode?: string;
+  city?: string;
+  coordinates: GeoPoint;
 }

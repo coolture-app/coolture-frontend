@@ -1,22 +1,1665 @@
+import { InterestCatalog } from '../../core/models/interests/interest.model';
+import { ViewportScroller } from '@angular/common';
+import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpTestingController, TestRequest } from '@angular/common/http/testing';
+import { Navigation, provideRouter, Router } from '@angular/router';
+import { By } from '@angular/platform-browser';
+import { MapFocus } from '../../core/components/map/map-focus';
 
 import { MainPage } from './main-page';
+import { HomeBar } from './home-bar/home-bar';
+import { LocationService } from '../../core/services/location/location.service';
+import { PostService } from '../../core/services/post/post.service';
+import { GeoPoint } from '../../core/models/common/geo.model';
+import { PostCard } from '../../core/models/posts/post-card.model';
+import { PostDetail } from '../../core/models/posts/post-detail.model';
+import { InfiniteScroll } from '../../core/directives/infinite-scroll';
+import { HomeTapService } from '../../core/services/home-tap/home-tap.service';
+import { ToastService } from '../../core/services/toast/toast.service';
+import { AuthService } from '../../core/services/auth/auth.service';
+import { of, Subject } from 'rxjs';
+
+@Component({ template: '' })
+class OtherPage {}
+
+function card(id: string): PostCard {
+  return {
+    id,
+    author: { id: 'u1', username: 'ola', followersCount: 0, followingCount: 0 },
+    title: `Post ${id}`,
+    startsAt: '2026-12-01T18:00:00Z',
+    openEnded: false,
+    positiveReactionCount: 0,
+    participantCount: 0,
+    interestedCount: 0,
+    goingCount: 0,
+    commentsCount: 0,
+    type: 'ONLINE',
+    status: 'ACTIVE',
+    createdAt: '2026-11-01T00:00:00Z',
+  };
+}
+
+function page(ids: string[] = []) {
+  return { items: ids.map(card), page: { limit: 20, hasMore: false } };
+}
+
+const KIND_CATALOG: InterestCatalog = {
+  minKinds: 1,
+  minInterests: 0,
+  maxInterests: 6,
+  kinds: [
+    { key: 'concerts', labelPl: 'Koncerty', labelEn: 'Concerts' },
+    { key: 'stage', labelPl: 'Scena', labelEn: 'Stage' },
+    { key: 'kids', labelPl: 'Dla dzieci', labelEn: 'For children' },
+  ],
+  categories: [],
+};
 
 describe('MainPage', () => {
-  let component: MainPage;
   let fixture: ComponentFixture<MainPage>;
+  let component: MainPage;
+  let http: HttpTestingController;
+  let router: Router;
+  let allowedLocation: GeoPoint | null;
+  let askedLocation: GeoPoint | null;
+  let currentNavigation: jasmine.Spy;
+  let locationRequest: Promise<GeoPoint | null> | null;
+  let scroller: ViewportScroller;
 
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [MainPage],
-    }).compileComponents();
+  async function settle(): Promise<void> {
+    await fixture.whenStable();
+    await new Promise((resolve) => setTimeout(resolve));
+    await fixture.whenStable();
+  }
 
+  async function open(navigation?: Partial<Navigation>): Promise<void> {
+    currentNavigation.and.returnValue(navigation ?? null);
     fixture = TestBed.createComponent(MainPage);
     component = fixture.componentInstance;
-    fixture.detectChanges();
+    await settle();
+    currentNavigation.and.returnValue(null);
+  }
+
+  /** Applies the search and filters now, as the typing pause would. */
+  async function apply(): Promise<void> {
+    component.applyControls();
+    await settle();
+  }
+
+  /** Opens the page on Wszystkie, with both first pages answered. */
+  async function openAll(): Promise<void> {
+    await open();
+    expectFeed().flush({ ...page(), mode: 'RANKED' });
+    component.setTab('all');
+    await settle();
+    expectPosts().flush(page());
+  }
+
+  function expectFeed(): TestRequest {
+    return http.expectOne((r) => r.url.endsWith('/feed'));
+  }
+
+  function expectPosts(): TestRequest {
+    return http.expectOne((r) => r.url.endsWith('/posts'));
+  }
+
+  function param(request: TestRequest, name: string): string | null {
+    return request.request.params.get(name);
+  }
+
+  /** Answers the lookups that name a place that came as a bare point. */
+  function nameLookups(name: string | null): void {
+    const features = name
+      ? [
+          {
+            geometry: { coordinates: [18.65, 54.35] },
+            properties: { type: 'district', name, city: 'Gdańsk' },
+          },
+        ]
+      : [];
+    http.match((r) => r.url.endsWith('/geo/reverse')).forEach((r) => r.flush({ features }));
+  }
+
+  async function openPlace(): Promise<void> {
+    (fixture.nativeElement.querySelector('.place-btn') as HTMLButtonElement).click();
+    await settle();
+  }
+
+  /** Answered by the position in `askedLocation`, or refused. */
+  async function pickMyLocation(): Promise<void> {
+    option('MAIN_PAGE.myLocation').click();
+    await settle();
+  }
+
+  async function toggleFilters(): Promise<void> {
+    (fixture.nativeElement.querySelector('.filters-btn') as HTMLButtonElement).click();
+    await settle();
+  }
+
+  /** An option in the place panel, by its name. */
+  function option(label: string): HTMLButtonElement {
+    const options = fixture.nativeElement.querySelectorAll(
+      '.panel__option',
+    ) as NodeListOf<HTMLElement>;
+    return Array.from(options).find(
+      (o) => o.querySelector('.panel__option-name')!.textContent!.trim() === label,
+    ) as HTMLButtonElement;
+  }
+
+  function radiusChips(): HTMLButtonElement[] {
+    return Array.from(fixture.nativeElement.querySelectorAll('.panel .chip'));
+  }
+
+  function pill(): string {
+    return (fixture.nativeElement.querySelector('.place-btn') as HTMLElement)
+      .textContent!.replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function shownTitles(): string[] {
+    const titles = fixture.nativeElement.querySelectorAll('.post__title');
+    return Array.from(titles as NodeListOf<Element>).map((title) => title.textContent!.trim());
+  }
+
+  function text(): string {
+    return (fixture.nativeElement as HTMLElement).textContent!;
+  }
+
+  function button(label: string): HTMLButtonElement {
+    const buttons = fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLElement>;
+    const found = Array.from(buttons).find((b) => b.textContent!.trim() === label);
+    return found as HTMLButtonElement;
+  }
+
+  beforeEach(() => {
+    allowedLocation = null;
+    askedLocation = null;
+    locationRequest = null;
+    TestBed.configureTestingModule({
+      imports: [MainPage],
+      providers: [
+        provideRouter([{ path: 'other', component: OtherPage }]),
+        {
+          provide: LocationService,
+          useValue: {
+            currentIfAllowed: () => Promise.resolve(allowedLocation),
+            currentOrAsk: () => Promise.resolve(allowedLocation),
+            request: () => locationRequest ?? Promise.resolve(askedLocation),
+            measureFrom: () => undefined,
+            metersTo: () => null,
+          },
+        },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    router = TestBed.inject(Router);
+    currentNavigation = spyOn(router, 'currentNavigation');
+    scroller = TestBed.inject(ViewportScroller);
+    spyOn(scroller, 'scrollToPosition');
   });
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
+  /** The page asks for the kinds' names when it is created. */
+  function flushKinds(): void {
+    http.match((r) => r.url.endsWith('/dicts/interests')).forEach((r) => r.flush(KIND_CATALOG));
+  }
+
+  afterEach(() => {
+    flushKinds();
+    http.verify();
+  });
+
+  describe('the two tabs', () => {
+    it('opens on Dla Ciebie, the feed', async () => {
+      await open();
+
+      expectFeed().flush({ ...page(['a']), mode: 'RANKED' });
+      await settle();
+
+      expect(component.tab()).toBe('forYou');
+      expect(shownTitles()).toEqual(['Post a']);
+    });
+
+    it('narrows Dla Ciebie with a search, and stays on the feed', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+
+      component.searchControl.setValue('  jazz ');
+      // Past the typing pause.
+      await new Promise((resolve) => setTimeout(resolve, 420));
+      await settle();
+
+      const feed = expectFeed();
+      expect(param(feed, 'q')).toBe('jazz');
+      expect(component.tab()).toBe('forYou');
+      feed.flush({ ...page(), mode: 'RANKED' });
+    });
+
+    it('narrows Dla Ciebie with filters, sent again with every page', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+
+      component.filtersForm.controls.includePast.setValue(true);
+      await apply();
+
+      const first = expectFeed();
+      expect(param(first, 'includePast')).toBe('true');
+      first.flush({
+        items: [card('a')],
+        page: { limit: 20, hasMore: true, nextCursor: 'c1' },
+        mode: 'RANKED',
+      });
+      await settle();
+
+      component.list.loadMore();
+      const next = expectFeed();
+      expect(param(next, 'cursor')).toBe('c1');
+      expect(param(next, 'includePast')).toBe('true');
+      next.flush({ ...page(), mode: 'RANKED' });
+    });
+
+    it('filters by the kinds picked in Filtry, counted as one, and by Dla dzieci', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      await toggleFilters();
+      flushKinds();
+      await settle();
+      const tile = (name: string) =>
+        [...fixture.nativeElement.querySelectorAll('.kind')].find(
+          (b: HTMLElement) => b.textContent!.trim() === name,
+        ) as HTMLButtonElement;
+      expect(tile('Dla dzieci')).toBeUndefined();
+
+      tile('Scena').click();
+      tile('Koncerty').click();
+      await apply();
+      const feed = expectFeed();
+      expect(param(feed, 'kinds')).toBe('concerts,stage');
+      feed.flush({ ...page(), mode: 'RANKED' });
+      await settle();
+      expect(router.url).toBe('/?kinds=concerts,stage');
+
+      component.filtersForm.controls.kids.setValue(true);
+      await apply();
+      const kids = expectFeed();
+      expect(param(kids, 'kids')).toBe('true');
+      kids.flush({ ...page(), mode: 'RANKED' });
+      await settle();
+      expect(component.activeFilterCount()).toBe(2);
+    });
+
+    it('clears the kinds and Dla dzieci with Wyczyść, and the kinds alone with Wyczyść rodzaj', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      await toggleFilters();
+      flushKinds();
+      await settle();
+      const el = fixture.nativeElement as HTMLElement;
+      const tile = (name: string) =>
+        [...el.querySelectorAll<HTMLButtonElement>('.kind')].find(
+          (b) => b.textContent!.trim() === name,
+        )!;
+      const clearKinds = () =>
+        [...el.querySelectorAll<HTMLButtonElement>('.filters__kinds-head button')].find((b) =>
+          b.textContent!.includes('MAIN_PAGE.clearKinds'),
+        );
+      expect(clearKinds()).toBeUndefined();
+
+      tile('Koncerty').click();
+      component.filtersForm.controls.kids.setValue(true);
+      await apply();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      await settle();
+      expect(tile('Koncerty').getAttribute('aria-pressed')).toBe('true');
+
+      clearKinds()!.click();
+      await apply();
+      const kinds = expectFeed();
+      expect(param(kinds, 'kinds')).toBeNull();
+      expect(param(kinds, 'kids')).toBe('true');
+      kinds.flush({ ...page(), mode: 'RANKED' });
+      await settle();
+      expect(tile('Koncerty').getAttribute('aria-pressed')).toBe('false');
+      expect(clearKinds()).toBeUndefined();
+
+      tile('Scena').click();
+      await apply();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      await settle();
+
+      component.clearFilters();
+      await settle();
+      const cleared = expectFeed();
+      expect(param(cleared, 'kinds')).toBeNull();
+      expect(param(cleared, 'kids')).toBeNull();
+      cleared.flush({ ...page(), mode: 'RANKED' });
+      await settle();
+      expect(tile('Scena').getAttribute('aria-pressed')).toBe('false');
+      expect(clearKinds()).toBeUndefined();
+      expect(component.activeFilterCount()).toBe(0);
+    });
+
+    it('shows Wszystkie as every post, coming up next first, with the same search', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      component.searchControl.setValue('jazz');
+      await apply();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+
+      component.setTab('all');
+      await settle();
+
+      const posts = expectPosts();
+      expect(param(posts, 'q')).toBe('jazz');
+      expect(param(posts, 'sortBy')).toBe('UPCOMING');
+      posts.flush(page());
+    });
+
+    it('keeps the sort when filters change on Wszystkie, and keeps the filters when the sort changes', async () => {
+      await openAll();
+
+      await component.setSortBy('POPULAR');
+      await settle();
+      expect(param(expectPosts(), 'sortBy')).toBe('POPULAR');
+
+      component.filtersForm.controls.includePast.setValue(true);
+      await apply();
+      const filtered = expectPosts();
+      expect(param(filtered, 'sortBy')).toBe('POPULAR');
+      expect(param(filtered, 'includePast')).toBe('true');
+      filtered.flush(page());
+
+      await component.setSortBy('RECENT');
+      await settle();
+      const resorted = expectPosts();
+      expect(param(resorted, 'includePast')).toBe('true');
+      resorted.flush(page());
+    });
+
+    it('sorts from Filtry’s chips on Wszystkie only, counting an order that isn’t the first', async () => {
+      const sortChips = () =>
+        Array.from(
+          fixture.nativeElement.querySelectorAll('.filters__chip') as NodeListOf<HTMLButtonElement>,
+        );
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      await toggleFilters();
+      expect(sortChips().length).toBe(0);
+
+      component.setTab('all');
+      await settle();
+      expectPosts().flush(page());
+      await settle();
+      expect(sortChips().map((chip) => chip.textContent!.trim())).toEqual([
+        'MAIN_PAGE.sortUpcoming',
+        'MAIN_PAGE.sortNearest',
+        'MAIN_PAGE.sortPopular',
+        'MAIN_PAGE.sortRecent',
+      ]);
+      expect(component.activeFilterCount()).toBe(0);
+
+      sortChips()[2].click();
+      await settle();
+      expect(param(expectPosts(), 'sortBy')).toBe('POPULAR');
+      await settle();
+      expect(component.showFilters()).toBeTrue();
+      expect(sortChips()[2].getAttribute('aria-pressed')).toBe('true');
+      expect(component.activeFilterCount()).toBe(1);
+
+      component.setTab('forYou');
+      await settle();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      expect(component.activeFilterCount()).toBe(0);
+    });
+
+    it('sets the order back with Wyczyść', async () => {
+      await router.navigateByUrl('/?tab=all&sort=popular');
+      await open();
+      expectPosts().flush(page());
+
+      component.clearFilters();
+      await settle();
+
+      expect(param(expectPosts(), 'sortBy')).toBe('UPCOMING');
+      expect(component.activeFilterCount()).toBe(0);
+    });
+
+    it('goes back to the feed, with its filters, on Dla Ciebie', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      component.setTab('all');
+      await settle();
+      expectPosts().flush(page());
+      component.filtersForm.controls.includePast.setValue(true);
+      await apply();
+      expectPosts().flush(page());
+
+      component.setTab('forYou');
+      await settle();
+
+      expect(param(expectFeed(), 'includePast')).toBe('true');
+    });
+
+    it('does not start a new list when nothing about it changed', async () => {
+      await open();
+      expectFeed().flush({ ...page(['a']), mode: 'RANKED' });
+      await settle();
+
+      component.clearFilters();
+      component.applyControls();
+      component.setTab('forYou');
+      await settle();
+
+      expect(shownTitles()).toEqual(['Post a']);
+    });
+
+    it('applies the search at once on Enter, without waiting for the typing pause', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      const input = fixture.nativeElement.querySelector('.search__input') as HTMLInputElement;
+
+      input.value = 'jazz';
+      input.dispatchEvent(new Event('input'));
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+      await settle();
+
+      expect(param(expectFeed(), 'q')).toBe('jazz');
+    });
+
+    it('points a search on Dla Ciebie to Wszystkie, at the end of its results', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      component.searchControl.setValue('jazz');
+      await apply();
+      expectFeed().flush({ ...page(['a']), mode: 'RANKED' });
+      await settle();
+
+      expect(text()).toContain('MAIN_PAGE.seenBefore');
+      button('MAIN_PAGE.showInAll').click();
+      await settle();
+
+      expect(component.tab()).toBe('all');
+      expect(param(expectPosts(), 'q')).toBe('jazz');
+    });
+
+    it('does not point to Wszystkie without a search', async () => {
+      await open();
+      expectFeed().flush({ ...page(['a']), mode: 'RANKED' });
+      await settle();
+
+      expect(text()).not.toContain('MAIN_PAGE.seenBefore');
+    });
+  });
+
+  describe('Najbliższe', () => {
+    it('sends the position with the sort', async () => {
+      askedLocation = { latitude: 54.35, longitude: 18.65 };
+      await openAll();
+
+      await component.setSortBy('NEAREST');
+      await settle();
+
+      const posts = expectPosts();
+      expect(param(posts, 'sortBy')).toBe('NEAREST');
+      expect(param(posts, 'latitude')).toBe('54.35');
+      expect(param(posts, 'longitude')).toBe('18.65');
+      expect(param(posts, 'radiusKm')).toBeNull();
+      posts.flush(page());
+    });
+
+    it('keeps the order and says why when the position is refused', async () => {
+      await openAll();
+
+      await component.setSortBy('NEAREST');
+      await settle();
+
+      http.expectNone((r) => r.url.endsWith('/posts'));
+      expect(component.sort()).toBe('UPCOMING');
+      expect(TestBed.inject(ToastService).message()).toBe('MAIN_PAGE.nearestNeedsLocation');
+    });
+
+    it('measures from the home when the position is refused, and says so', async () => {
+      TestBed.inject(AuthService).home.set({
+        name: 'Oliwa, Gdańsk',
+        coordinates: { latitude: 54.41, longitude: 18.56 },
+      });
+      await openAll();
+
+      await component.setSortBy('NEAREST');
+      await settle();
+
+      const posts = expectPosts();
+      expect(param(posts, 'latitude')).toBe('54.41');
+      posts.flush(page());
+      await settle();
+      expect(text()).toContain('MAIN_PAGE.nearestFromHome');
+    });
+
+    it('measures from the home after Wszędzie, not from the place picked before it', async () => {
+      TestBed.inject(AuthService).home.set({
+        name: 'Oliwa, Gdańsk',
+        coordinates: { latitude: 54.41, longitude: 18.56 },
+      });
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      component.pickPlace({ name: 'Sopot', coordinates: { latitude: 54.44, longitude: 18.56 } });
+      await apply();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      await openPlace();
+      option('MAIN_PAGE.anywhere').click();
+      await apply();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      component.setTab('all');
+      await settle();
+      expectPosts().flush(page());
+
+      await component.setSortBy('NEAREST');
+      await settle();
+
+      expect(param(expectPosts(), 'latitude')).toBe('54.41');
+      await openPlace();
+      expect(option('Sopot')).toBeUndefined();
+    });
+  });
+
+  describe('the bar above the feed', () => {
+    it('clears the search with its own button, at once', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      component.searchControl.setValue('jazz');
+      component.applyControls();
+      await settle();
+      expectFeed().flush({ ...page(['j']), mode: 'RANKED' });
+      await settle();
+
+      (fixture.nativeElement.querySelector('.search__clear') as HTMLButtonElement).click();
+      await settle();
+
+      expectFeed().flush({ ...page(['f']), mode: 'RANKED' });
+      await settle();
+      expect(component.searchControl.value).toBe('');
+      expect(fixture.nativeElement.querySelector('.search__clear')).toBeNull();
+    });
+
+    it('counts the filters that are on, a date range as one, and not the search', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      component.searchControl.setValue('jazz', { emitEvent: false });
+      component.filtersForm.patchValue(
+        { includePast: true, fromDay: '2026-12-01', toDay: '2026-12-02' },
+        { emitEvent: false },
+      );
+      component.applyControls();
+      await settle();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      await settle();
+
+      expect(component.activeFilterCount()).toBe(2);
+      const count = fixture.nativeElement.querySelector('.filters-btn__count');
+      expect(count.textContent.trim()).toBe('2');
+    });
+
+    it('starts a changed list at the top', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      (scroller.scrollToPosition as jasmine.Spy).calls.reset();
+
+      component.setTab('all');
+      await settle();
+
+      expect(scroller.scrollToPosition).toHaveBeenCalledWith([0, 0]);
+      expectPosts().flush(page());
+    });
+
+    it('hides while scrolling down past the top and comes back on any scroll up', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      const bar: HomeBar = fixture.debugElement.query(By.directive(HomeBar)).componentInstance;
+      let y = 0;
+      spyOnProperty(window, 'scrollY').and.callFake(() => y);
+      const scrollTo = (to: number) => {
+        y = to;
+        bar.onScroll();
+      };
+      jasmine.clock().install();
+
+      scrollTo(60);
+      expect(bar.hidden()).toBeFalse();
+      scrollTo(400);
+      expect(bar.hidden()).toBeTrue();
+      scrollTo(395);
+      expect(bar.hidden()).toBeFalse();
+      expect(bar.scrolling()).toBeTrue();
+      jasmine.clock().tick(999);
+      expect(bar.scrolling()).toBeTrue();
+      jasmine.clock().tick(1);
+      expect(bar.scrolling()).toBeFalse();
+      jasmine.clock().uninstall();
+    });
+  });
+
+  describe('the map switch', () => {
+    it('lights up the first posts of the feed on Dla Ciebie, and none on Wszystkie', async () => {
+      await open();
+      expectFeed().flush({ ...page(['a', 'b']), mode: 'RANKED' });
+      await settle();
+
+      expect([...component.mapPicks()!]).toEqual(['a', 'b']);
+      component.setTab('all');
+      await settle();
+      expectPosts().flush(page());
+      expect(component.mapPicks()).toBeNull();
+    });
+
+    it('keeps the picks it lit while the next feed loads', async () => {
+      await open();
+      expectFeed().flush({ ...page(['a', 'b']), mode: 'RANKED' });
+      await settle();
+      // The map reads them as it draws.
+      expect([...component.mapPicks()!]).toEqual(['a', 'b']);
+
+      component.searchControl.setValue('jazz');
+      await apply();
+      expect([...component.mapPicks()!]).toEqual(['a', 'b']);
+
+      expectFeed().flush({ ...page(['c']), mode: 'RANKED' });
+      await settle();
+      expect([...component.mapPicks()!]).toEqual(['c']);
+    });
+
+    it('opens the map on a post whose place was tapped on its card', async () => {
+      await open();
+      expectFeed().flush({ ...page(['a']), mode: 'RANKED' });
+      await settle();
+      const post = {
+        id: 'a',
+        title: 'a',
+        startsAt: '2026-12-01T18:00:00Z',
+        openEnded: false,
+        positiveReactionCount: 0,
+        interestedCount: 0,
+        goingCount: 0,
+        coordinates: { latitude: 54.35, longitude: 18.6 },
+      };
+
+      TestBed.inject(MapFocus).requested.set(post);
+      await settle();
+
+      expect(component.isMapView()).toBeTrue();
+      expect(component.mapFocusPost()).toEqual(post);
+      expect(TestBed.inject(MapFocus).requested()).toBeNull();
+    });
+
+    it('goes back to Lista when the shown tab is tapped on Mapa, and switches the pins on the other', async () => {
+      await open();
+      expectFeed().flush({ ...page(['a']), mode: 'RANKED' });
+      await settle();
+      component.toggleMapView(true);
+      await settle();
+
+      component.setTab('all');
+      await settle();
+      expect(component.isMapView()).toBeTrue();
+      expect(component.tab()).toBe('all');
+
+      component.setTab('all');
+      await settle();
+      expect(component.isMapView()).toBeFalse();
+      http.match((r) => r.url.endsWith('/posts/map'));
+      expectPosts().flush(page());
+    });
+
+    it('passes the active filters on, and catches the list up when switched off', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      await settle();
+
+      component.toggleMapView(true);
+      await settle();
+      component.searchControl.setValue('jazz');
+      await apply();
+
+      expect(component.activeFilters()).toEqual({ q: 'jazz' });
+      http.match((r) => r.url.endsWith('/posts/map'));
+      http.expectNone((r) => r.url.endsWith('/posts'));
+
+      component.toggleMapView(false);
+      await settle();
+
+      expect(param(expectFeed(), 'q')).toBe('jazz');
+    });
+
+    it('does not reload the list when nothing changed meanwhile', async () => {
+      await open();
+      expectFeed().flush({ ...page(['a']), mode: 'RANKED' });
+      await settle();
+
+      component.toggleMapView(true);
+      await settle();
+      component.toggleMapView(false);
+      await settle();
+
+      http.match((r) => r.url.endsWith('/posts/map'));
+      expect(shownTitles()).toEqual(['Post a']);
+    });
+
+    it('puts the list back where it was scrolled to', async () => {
+      await open();
+      expectFeed().flush({ ...page(['a']), mode: 'RANKED' });
+      await settle();
+      spyOn(scroller, 'getScrollPosition').and.returnValue([0, 1234]);
+
+      component.toggleMapView(true);
+      await settle();
+      (scroller.getScrollPosition as jasmine.Spy).and.returnValue([0, 0]);
+      component.toggleMapView(false);
+      await settle();
+
+      http.match((r) => r.url.endsWith('/posts/map'));
+      expect(scroller.scrollToPosition).toHaveBeenCalledWith([0, 1234]);
+    });
+
+    it('starts a list that changed on the map at the top', async () => {
+      await open();
+      expectFeed().flush({ ...page(['a']), mode: 'RANKED' });
+      await settle();
+      spyOn(scroller, 'getScrollPosition').and.returnValue([0, 1234]);
+
+      component.toggleMapView(true);
+      await settle();
+      component.searchControl.setValue('jazz');
+      await apply();
+      component.toggleMapView(false);
+      await settle();
+
+      http.match((r) => r.url.endsWith('/posts/map'));
+      expectFeed();
+      expect(scroller.scrollToPosition).not.toHaveBeenCalledWith([0, 1234]);
+    });
+  });
+
+  describe('past events', () => {
+    it('offers past events on an empty result, and opens the filters', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      component.searchControl.setValue('jazz');
+      await apply();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      await settle();
+
+      button('MAIN_PAGE.searchPast').click();
+      await settle();
+
+      const feed = expectFeed();
+      expect(param(feed, 'q')).toBe('jazz');
+      expect(param(feed, 'includePast')).toBe('true');
+      expect(component.showFilters()).toBeTrue();
+      feed.flush({ ...page(), mode: 'RANKED' });
+      await settle();
+      expect(button('MAIN_PAGE.searchPast')).toBeUndefined();
+    });
+
+    it('offers them on Nadchodzące too, and not where a date already shows them', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      await settle();
+
+      // Nadchodzące puts ended events after the rest.
+      component.setTab('all');
+      await settle();
+      expectPosts().flush(page());
+      await settle();
+      expect(button('MAIN_PAGE.searchPast')).toBeDefined();
+
+      void component.setSortBy('RECENT');
+      component.filtersForm.controls.fromDay.setValue('2026-01-01');
+      await settle();
+      http.match((r) => r.url.endsWith('/posts'));
+      await apply();
+      expectPosts().flush(page());
+      await settle();
+      expect(button('MAIN_PAGE.searchPast')).toBeUndefined();
+    });
+  });
+
+  describe('list states', () => {
+    it('shows loading until the first page arrives, and not the empty message', async () => {
+      await open();
+      const request = expectFeed();
+      await settle();
+
+      expect(fixture.nativeElement.querySelectorAll('app-post-skeleton').length).toBe(3);
+      expect(fixture.nativeElement.querySelector('[role=status]').getAttribute('aria-label')).toBe(
+        'MAIN_PAGE.loading',
+      );
+      expect(text()).not.toContain('MAIN_PAGE.no-posts');
+
+      request.flush({ ...page(), mode: 'RANKED' });
+      await settle();
+
+      expect(fixture.nativeElement.querySelector('app-post-skeleton')).toBeNull();
+      expect(text()).toContain('MAIN_PAGE.no-posts');
+    });
+
+    it('shows one placeholder, not a screenful, while adding to a list', async () => {
+      await open();
+      expectFeed().flush({
+        ...page(['a']),
+        mode: 'RANKED',
+        page: { limit: 20, hasMore: true, nextCursor: 'c1' },
+      });
+      await settle();
+
+      component.list.loadMore();
+      await settle();
+
+      expect(fixture.nativeElement.querySelectorAll('app-post-skeleton').length).toBe(1);
+      expect(shownTitles()).toEqual(['Post a']);
+      expectFeed().flush({ ...page(['b']), mode: 'RANKED' });
+    });
+
+    it('asks for the next page from 15 cards before the end, at once when there are fewer', async () => {
+      const triggerCard = () => {
+        const triggers = fixture.nativeElement.querySelectorAll('.list-trigger');
+        expect(triggers.length).toBe(1);
+        return triggers[0].nextElementSibling.querySelector('.post__title').textContent.trim();
+      };
+      await open();
+      expectFeed().flush({ ...page(['a', 'b']), mode: 'RANKED' });
+      await settle();
+      expect(triggerCard()).toBe('Post a');
+
+      component.setTab('all');
+      await settle();
+      expectPosts().flush(page(Array.from({ length: 20 }, (_, i) => `c${i}`)));
+      await settle();
+      expect(triggerCard()).toBe('Post c5');
+    });
+
+    it('also asks from after the last card, for a jump straight to the bottom', async () => {
+      const ids = Array.from({ length: 20 }, (_, i) => `c${i}`);
+      await open();
+      expectFeed().flush({
+        ...page(ids),
+        mode: 'RANKED',
+        page: { limit: 20, hasMore: true, nextCursor: 'c1' },
+      });
+      await settle();
+
+      const end = fixture.nativeElement.querySelector('.list-end');
+      expect(end.previousElementSibling.querySelector('.post__title').textContent.trim()).toBe(
+        'Post c19',
+      );
+      spyOn(component.list, 'loadMore');
+      const directive = fixture.debugElement
+        .queryAll((el) => el.nativeElement === end)[0]
+        .injector.get(InfiniteScroll);
+      expect(directive.enabled()).toBeTrue();
+      directive.reachedEnd.emit();
+      expect(component.list.loadMore).toHaveBeenCalled();
+    });
+
+    it('shows the end of the list only after posts', async () => {
+      await open();
+      expectFeed().flush({ ...page(['a']), mode: 'RANKED' });
+      await settle();
+
+      expect(text()).toContain('MAIN_PAGE.endOfList');
+    });
+
+    it('offers a retry on a failure, keeping the posts, and retrying works', async () => {
+      await open();
+      expectFeed().flush({
+        ...page(['a']),
+        mode: 'RANKED',
+        page: { limit: 20, hasMore: true, nextCursor: 'c1' },
+      });
+      await settle();
+
+      component.list.loadMore();
+      expectFeed().flush({ error: 'down' }, { status: 500, statusText: 'Server Error' });
+      await settle();
+
+      expect(text()).toContain('MAIN_PAGE.loadError');
+      expect(shownTitles()).toEqual(['Post a']);
+
+      button('MAIN_PAGE.retry').click();
+      const retried = expectFeed();
+      expect(param(retried, 'cursor')).toBe('c1');
+      retried.flush({ ...page(['b']), mode: 'RANKED' });
+      await settle();
+
+      expect(shownTitles()).toEqual(['Post a', 'Post b']);
+    });
+  });
+
+  describe('Home tapped at the top', () => {
+    it('starts a new feed session, keeping the location', async () => {
+      allowedLocation = { latitude: 54.35, longitude: 18.65 };
+      await open();
+      expectFeed().flush({ ...page(['a']), mode: 'RANKED' });
+      await settle();
+
+      TestBed.inject(HomeTapService).freshFeed.next();
+      await settle();
+
+      const again = expectFeed();
+      expect(param(again, 'latitude')).toBe('54.35');
+      expect(param(again, 'cursor')).toBeNull();
+      again.flush({ ...page(['b']), mode: 'RANKED' });
+      await settle();
+      expect(shownTitles()).toEqual(['Post b']);
+    });
+
+    it('leaves a search, and Wszystkie, for the default feed', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      component.setTab('all');
+      await settle();
+      expectPosts().flush(page());
+      component.searchControl.setValue('jazz');
+      component.applyControls();
+      await settle();
+      expectPosts().flush(page(['j']));
+
+      TestBed.inject(HomeTapService).freshFeed.next();
+      await settle();
+
+      const feed = expectFeed();
+      expect(param(feed, 'q')).toBeNull();
+      feed.flush({ ...page(['f']), mode: 'RANKED' });
+      await settle();
+      expect(component.searchControl.value).toBe('');
+      expect(component.tab()).toBe('forYou');
+      expect(shownTitles()).toEqual(['Post f']);
+    });
+  });
+
+  describe('location', () => {
+    it('uses the position on the first page when it is allowed, or once asked', async () => {
+      allowedLocation = { latitude: 54.35, longitude: 18.65 };
+      await open();
+
+      const request = expectFeed();
+      expect(param(request, 'latitude')).toBe('54.35');
+      expect(param(request, 'longitude')).toBe('18.65');
+      request.flush({ ...page(), mode: 'RANKED' });
+    });
+
+    describe('the place panel', () => {
+      async function openFilters(): Promise<void> {
+        await open();
+        expectFeed().flush({ ...page(), mode: 'RANKED' });
+        await openPlace();
+      }
+
+      const chip = option;
+
+      it('starts at Anywhere, with no radius to pick', async () => {
+        await openFilters();
+
+        expect(chip('MAIN_PAGE.anywhere').getAttribute('aria-pressed')).toBe('true');
+        expect(radiusChips().length).toBe(0);
+        expect(pill()).toBe('MAIN_PAGE.anywhere');
+      });
+
+      it('stays open on a place with its radius, and closes on a radius or Anywhere', async () => {
+        askedLocation = { latitude: 54.35, longitude: 18.65 };
+        await openFilters();
+
+        await pickMyLocation();
+        expectFeed().flush({ ...page(), mode: 'RANKED' });
+        expect(component.showPlace()).toBeTrue();
+        expect(radiusChips().length).toBeGreaterThan(0);
+
+        radiusChips()[0].click();
+        await apply();
+        expectFeed().flush({ ...page(), mode: 'RANKED' });
+        expect(component.showPlace()).toBeFalse();
+
+        await openPlace();
+        chip('MAIN_PAGE.anywhere').click();
+        await apply();
+        expectFeed().flush({ ...page(), mode: 'RANKED' });
+        expect(component.showPlace()).toBeFalse();
+      });
+
+      it('lists posts within 5 km of the position by default', async () => {
+        askedLocation = { latitude: 54.35, longitude: 18.65 };
+        await openFilters();
+
+        await pickMyLocation();
+
+        const feed = expectFeed();
+        expect(param(feed, 'latitude')).toBe('54.35');
+        expect(param(feed, 'longitude')).toBe('18.65');
+        expect(param(feed, 'radiusKm')).toBe('5');
+        feed.flush({
+          items: [card('a')],
+          page: { limit: 20, hasMore: true, nextCursor: 'c1' },
+          mode: 'RANKED',
+        });
+        await settle();
+        component.list.loadMore();
+        const next = expectFeed();
+        expect(param(next, 'radiusKm')).toBe('5');
+        expect(param(next, 'latitude')).toBe('54.35');
+        next.flush({ ...page(), mode: 'RANKED' });
+        await settle();
+        expect(component.activeFilterCount()).toBe(0);
+        expect(pill()).toBe('MAIN_PAGE.nearMe · MAIN_PAGE.km');
+        expect(radiusChips().map((c) => c.textContent!.trim())).toEqual(
+          Array(6).fill('MAIN_PAGE.km'),
+        );
+      });
+
+      it('changes the radius', async () => {
+        askedLocation = { latitude: 54.35, longitude: 18.65 };
+        await openFilters();
+        await pickMyLocation();
+        expectFeed().flush({ ...page(), mode: 'RANKED' });
+        await settle();
+
+        radiusChips()[4].click();
+        await apply();
+
+        expect(param(expectFeed(), 'radiusKm')).toBe('50');
+      });
+
+      it('offers the next radius when nothing is inside, and none past the largest', async () => {
+        askedLocation = { latitude: 54.35, longitude: 18.65 };
+        await openFilters();
+        await pickMyLocation();
+        expectFeed().flush({ ...page(), mode: 'RANKED' });
+        await settle();
+
+        button('MAIN_PAGE.widenRadius').click();
+        await settle();
+
+        expect(param(expectFeed(), 'radiusKm')).toBe('10');
+        expect(component.filtersForm.controls.radiusKm.value).toBe(10);
+
+        component.filtersForm.controls.radiusKm.setValue(100);
+        await apply();
+        expectFeed().flush({ ...page(), mode: 'RANKED' });
+        await settle();
+        expect(button('MAIN_PAGE.widenRadius')).toBeUndefined();
+      });
+
+      it('goes back to Anywhere and says why when the position is refused', async () => {
+        await openFilters();
+
+        await pickMyLocation();
+
+        expect(component.filtersForm.controls.place.value).toBe('');
+        expect(text()).toContain('MAIN_PAGE.locationFailed');
+      });
+
+      it('shows that it is waiting for the position', async () => {
+        let answer: (location: GeoPoint) => void = () => undefined;
+        locationRequest = new Promise((resolve) => (answer = resolve));
+        await openFilters();
+
+        await pickMyLocation();
+        expect(component.locating()).toBeTrue();
+
+        answer({ latitude: 54.35, longitude: 18.65 });
+        await apply();
+        expect(component.locating()).toBeFalse();
+        expect(param(expectFeed(), 'radiusKm')).toBe('5');
+      });
+    });
+
+    it('centres on a searched place, named in the pill', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      await openPlace();
+
+      component.pickPlace({
+        name: 'Ergo Arena',
+        coordinates: { latitude: 54.43, longitude: 18.58 },
+      });
+      await apply();
+
+      const feed = expectFeed();
+      expect(param(feed, 'latitude')).toBe('54.43');
+      expect(param(feed, 'radiusKm')).toBe('5');
+      feed.flush({ ...page(), mode: 'RANKED' });
+      await settle();
+      expect(pill()).toBe('Ergo Arena · MAIN_PAGE.km');
+      expect(option('Ergo Arena').getAttribute('aria-pressed')).toBe('true');
+    });
+
+    it('offers the home first, and centres on it when picked', async () => {
+      TestBed.inject(AuthService).home.set({
+        name: 'Oliwa, Gdańsk',
+        coordinates: { latitude: 54.41, longitude: 18.56 },
+      });
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      await openPlace();
+
+      const options = fixture.nativeElement.querySelectorAll('.panel__option-name');
+      expect(options[0].textContent.trim()).toBe('Oliwa, Gdańsk');
+      option('Oliwa, Gdańsk').click();
+      await apply();
+
+      expect(param(expectFeed(), 'latitude')).toBe('54.41');
+      await settle();
+      expect(option('Oliwa, Gdańsk').getAttribute('aria-pressed')).toBe('true');
+    });
+
+    it('makes the circle in the map’s view the place, with its own radius, and names it', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+
+      component.searchArea({ centre: { latitude: 54.35, longitude: 18.65 }, radiusKm: 7 });
+      await settle();
+
+      const feed = expectFeed();
+      expect(param(feed, 'latitude')).toBe('54.35');
+      expect(param(feed, 'radiusKm')).toBe('7');
+      feed.flush({ ...page(), mode: 'RANKED' });
+      nameLookups('Wrzeszcz Górny');
+      await settle();
+      expect(pill()).toBe('Wrzeszcz Górny · MAIN_PAGE.km');
+      expect(router.url).toBe('/?radius=7&lat=54.35&lng=18.65');
+      await openPlace();
+      expect(radiusChips().map((c) => c.getAttribute('aria-pressed'))).toEqual([
+        'false',
+        'false',
+        'true',
+        'false',
+        'false',
+        'false',
+        'false',
+      ]);
+    });
+
+    it('keeps the largest radius for a view wider than it', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+
+      component.searchArea({ centre: { latitude: 54.35, longitude: 18.65 }, radiusKm: 140 });
+      await settle();
+
+      expect(param(expectFeed(), 'radiusKm')).toBe('100');
+      nameLookups(null);
+    });
+
+    it('keeps the place when Filtry is cleared, Online too', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      component.pickPlace({ name: 'Sopot', coordinates: { latitude: 54.44, longitude: 18.56 } });
+      component.searchControl.setValue('jazz');
+      await apply();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+
+      component.clearFilters();
+      await settle();
+
+      const feed = expectFeed();
+      expect(param(feed, 'q')).toBeNull();
+      expect(param(feed, 'latitude')).toBe('54.44');
+      feed.flush({ ...page(), mode: 'RANKED' });
+
+      await openPlace();
+      option('MAIN_PAGE.online').click();
+      await settle();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      component.filtersForm.controls.includePast.setValue(true);
+      await apply();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+
+      component.clearFilters();
+      await settle();
+
+      const online = expectFeed();
+      expect(param(online, 'type')).toBe('ONLINE');
+      expect(param(online, 'includePast')).toBeNull();
+      online.flush({ ...page(), mode: 'RANKED' });
+    });
+
+    it('closes the panel on Escape, and on its ✕', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      await toggleFilters();
+
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      await settle();
+      expect(component.showFilters()).toBeFalse();
+
+      await toggleFilters();
+      (
+        fixture.nativeElement.querySelector(
+          'app-feed-filters [aria-label="MAIN_PAGE.close"]',
+        ) as HTMLButtonElement
+      ).click();
+      await settle();
+      expect(component.showFilters()).toBeFalse();
+    });
+  });
+
+  describe('Online', () => {
+    async function pickOnline(): Promise<void> {
+      await openPlace();
+      option('MAIN_PAGE.online').click();
+      await settle();
+    }
+
+    it('is picked in the place panel, which closes, and lists online posts with no radius', async () => {
+      askedLocation = { latitude: 54.35, longitude: 18.65 };
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      await openPlace();
+      await pickMyLocation();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+
+      // Still open on the position's radius.
+      option('MAIN_PAGE.online').click();
+      await settle();
+
+      const feed = expectFeed();
+      expect(param(feed, 'type')).toBe('ONLINE');
+      expect(param(feed, 'radiusKm')).toBeNull();
+      expect(param(feed, 'latitude')).toBeNull();
+      feed.flush({ ...page(), mode: 'RANKED' });
+      await apply();
+      expect(component.showPlace()).toBeFalse();
+      expect(pill()).toBe('MAIN_PAGE.online');
+      expect(component.activeFilterCount()).toBe(0);
+      expect(router.url).toBe('/?type=online');
+    });
+
+    it('hides Mapa, and goes to Lista when picked on the map', async () => {
+      await openAll();
+      component.toggleMapView(true);
+      await settle();
+      http.match((r) => r.url.endsWith('/posts/map'));
+
+      await pickOnline();
+
+      expect(component.isMapView()).toBeFalse();
+      const posts = expectPosts();
+      expect(param(posts, 'type')).toBe('ONLINE');
+      posts.flush(page());
+      await apply();
+      expect(fixture.nativeElement.querySelector('app-view-switch')).toBeNull();
+
+      await openPlace();
+      option('MAIN_PAGE.anywhere').click();
+      await apply();
+      expectPosts().flush(page());
+      await settle();
+      expect(fixture.nativeElement.querySelector('app-view-switch')).not.toBeNull();
+    });
+
+    it('takes Najbliższe out of the sort, going back to Nadchodzące', async () => {
+      askedLocation = { latitude: 54.35, longitude: 18.65 };
+      await openAll();
+      await component.setSortBy('NEAREST');
+      await settle();
+      expectPosts().flush(page());
+
+      await pickOnline();
+
+      const posts = expectPosts();
+      expect(param(posts, 'sortBy')).toBe('UPCOMING');
+      posts.flush(page());
+      await apply();
+      expect(component.sortOptions().map((o) => o.value)).toEqual([
+        'UPCOMING',
+        'POPULAR',
+        'RECENT',
+      ]);
+    });
+  });
+
+  describe('the URL', () => {
+    const chip = option;
+
+    it('stays a plain / on the default feed', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      await settle();
+
+      expect(router.url).toBe('/');
+    });
+
+    it('shows the search, tab and sort, and replaces the entry so Back leaves the page', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      const navigate = spyOn(router, 'navigate').and.callThrough();
+
+      component.setTab('all');
+      await settle();
+      expectPosts().flush(page());
+      await component.setSortBy('POPULAR');
+      await settle();
+      expectPosts().flush(page());
+      component.searchControl.setValue('jazz');
+      await apply();
+      expectPosts().flush(page());
+      await settle();
+
+      expect(router.url).toBe('/?tab=all&sort=popular&q=jazz');
+      navigate.calls.allArgs().forEach(([, extras]) => expect(extras?.replaceUrl).toBeTrue());
+    });
+
+    it('keeps Mapa in the URL, so a reload opens the map', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      await settle();
+
+      component.toggleMapView(true);
+      await settle();
+      expect(router.url).toBe('/?view=map');
+
+      component.toggleMapView(false);
+      await settle();
+      expect(router.url).toBe('/');
+      http.match((r) => r.url.endsWith('/posts/map'));
+    });
+
+    it('opens on Mapa when the URL says so', async () => {
+      await router.navigateByUrl('/?tab=all&view=map');
+
+      await open();
+
+      expect(component.isMapView()).toBeTrue();
+      expect(component.mapOpened()).toBeTrue();
+      http.expectNone((r) => r.url.endsWith('/posts'));
+      http.match((r) => r.url.endsWith('/posts/map'));
+    });
+
+    it('opens with what the URL holds', async () => {
+      await router.navigateByUrl('/?tab=all&sort=popular&q=jazz&type=online&past=true');
+
+      await open();
+
+      const posts = expectPosts();
+      expect(param(posts, 'sortBy')).toBe('POPULAR');
+      expect(param(posts, 'q')).toBe('jazz');
+      expect(param(posts, 'type')).toBe('ONLINE');
+      expect(param(posts, 'includePast')).toBe('true');
+      expect(component.tab()).toBe('all');
+      expect(component.searchControl.value).toBe('jazz');
+      // Popularne and Pokaż minione.
+      expect(component.activeFilterCount()).toBe(2);
+      posts.flush(page());
+    });
+
+    it('waits for /auth/me before a linked Od obserwowanych, as a reload starts before it answers', async () => {
+      const auth = TestBed.inject(AuthService);
+      const session = new Subject<boolean>();
+      spyOn(auth, 'checkSession').and.returnValue(session);
+      await router.navigateByUrl('/?followed=true');
+
+      await open();
+      http.expectNone((r) => r.url.endsWith('/feed'));
+      auth.currentUser.set({
+        id: 'me',
+        username: 'jan',
+        followersCount: 0,
+        followingCount: 0,
+        isFollowing: false,
+        isBlocked: false,
+        followsYou: false,
+        interests: [],
+      });
+      session.next(true);
+      await settle();
+
+      const feed = expectFeed();
+      expect(param(feed, 'followed')).toBe('true');
+      expect(component.filtersForm.controls.followed.value).toBeTrue();
+      feed.flush({ ...page(), mode: 'RANKED' });
+    });
+
+    it('drops a linked Od obserwowanych for a guest, from the switch and the URL too', async () => {
+      spyOn(TestBed.inject(AuthService), 'checkSession').and.returnValue(of(false));
+      await router.navigateByUrl('/?followed=true&past=true');
+
+      await open();
+
+      expect(param(expectFeed(), 'followed')).toBeNull();
+      expect(component.filtersForm.controls.followed.value).toBeFalse();
+      await settle();
+      expect(router.url).toBe('/?past=true');
+    });
+
+    it('clears a value it can’t use from the URL', async () => {
+      await router.navigateByUrl('/?sort=nope&radius=7.5');
+
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      await settle();
+
+      expect(router.url).toBe('/');
+    });
+
+    it('offers a linked place as the picked one, lists around it, and names it by the district around it', async () => {
+      await router.navigateByUrl('/?radius=25&lat=54.35&lng=18.65');
+
+      await open();
+
+      const feed = expectFeed();
+      expect(param(feed, 'latitude')).toBe('54.35');
+      expect(param(feed, 'longitude')).toBe('18.65');
+      expect(param(feed, 'radiusKm')).toBe('25');
+      feed.flush({ ...page(), mode: 'RANKED' });
+      expect(pill()).toBe('MAIN_PAGE.pickedPlace · MAIN_PAGE.km');
+      nameLookups('Wrzeszcz Górny');
+      await settle();
+      expect(pill()).toBe('Wrzeszcz Górny · MAIN_PAGE.km');
+      expect(router.url).toBe('/?radius=25&lat=54.35&lng=18.65');
+      await openPlace();
+      expect(chip('Wrzeszcz Górny, Gdańsk').getAttribute('aria-pressed')).toBe('true');
+      expect(chip('MAIN_PAGE.myLocation').getAttribute('aria-pressed')).toBe('false');
+    });
+
+    it('moves from a linked place to the user’s own position, and shows that in the URL', async () => {
+      askedLocation = { latitude: 50.06, longitude: 19.94 };
+      await router.navigateByUrl('/?radius=25&lat=54.35&lng=18.65');
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      nameLookups(null);
+      await openPlace();
+
+      await pickMyLocation();
+
+      const feed = expectFeed();
+      expect(param(feed, 'latitude')).toBe('50.06');
+      feed.flush({ ...page(), mode: 'RANKED' });
+      await settle();
+      expect(router.url).toBe('/?radius=25&lat=50.06&lng=19.94');
+      expect(chip('MAIN_PAGE.pickedPlace')).toBeDefined();
+    });
+
+    it('has no Wskazane miejsce without a linked place, and Anywhere takes the radius away', async () => {
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      await openPlace();
+      expect(chip('MAIN_PAGE.pickedPlace')).toBeUndefined();
+
+      await router.navigateByUrl('/?radius=25&lat=54.35&lng=18.65');
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      nameLookups(null);
+      await openPlace();
+      chip('MAIN_PAGE.anywhere').click();
+      await apply();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      await settle();
+
+      expect(router.url).toBe('/');
+      expect(pill()).toBe('MAIN_PAGE.anywhere');
+    });
+
+    it('sorts Najbliższe from the linked point', async () => {
+      await router.navigateByUrl('/?tab=all&sort=nearest&lat=54.35&lng=18.65');
+
+      await open();
+
+      const posts = expectPosts();
+      expect(param(posts, 'sortBy')).toBe('NEAREST');
+      expect(param(posts, 'latitude')).toBe('54.35');
+      posts.flush(page());
+      nameLookups(null);
+    });
+
+    it('falls back when a link asks for Najbliższe and no position comes', async () => {
+      await router.navigateByUrl('/?tab=all&sort=nearest');
+
+      await open();
+
+      const posts = expectPosts();
+      expect(param(posts, 'sortBy')).toBe('UPCOMING');
+      posts.flush(page());
+      await settle();
+      expect(router.url).toBe('/?tab=all');
+      expect(TestBed.inject(ToastService).message()).toBe('MAIN_PAGE.nearestNeedsLocation');
+    });
+
+    it('goes back to a plain / when Home starts a fresh feed', async () => {
+      await router.navigateByUrl('/?tab=all&q=jazz');
+      await open();
+      expectPosts().flush(page());
+      await settle();
+
+      TestBed.inject(HomeTapService).freshFeed.next();
+      await settle();
+
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      await settle();
+      expect(router.url).toBe('/');
+    });
+  });
+
+  describe('coming back to the list', () => {
+    let homeUrl = '/';
+
+    async function leaveAfterScrolling(): Promise<void> {
+      homeUrl = router.url;
+      await router.navigateByUrl('/other');
+      fixture.destroy();
+    }
+
+    async function comeBack(navigation: Partial<Navigation>): Promise<void> {
+      await router.navigateByUrl(homeUrl);
+      currentNavigation.and.returnValue(navigation);
+      fixture = TestBed.createComponent(MainPage);
+      component = fixture.componentInstance;
+      await settle();
+    }
+
+    beforeEach(async () => {
+      await open();
+      expectFeed().flush({ ...page(['a', 'b']), mode: 'RANKED' });
+      await settle();
+    });
+
+    it('restores the list at once with no request on Back, and leaves the scroll to the router', async () => {
+      await leaveAfterScrolling();
+      (scroller.scrollToPosition as jasmine.Spy).calls.reset();
+
+      await comeBack({ trigger: 'popstate', extras: {} });
+
+      expect(shownTitles()).toEqual(['Post a', 'Post b']);
+      expect(scroller.scrollToPosition).not.toHaveBeenCalled();
+    });
+
+    it('restores the tab, the search, the filters and the chosen sort', async () => {
+      component.setTab('all');
+      await settle();
+      expectPosts().flush(page());
+      await component.setSortBy('POPULAR');
+      await settle();
+      expectPosts().flush(page());
+      component.searchControl.setValue('jazz');
+      component.filtersForm.controls.includePast.setValue(true);
+      await toggleFilters();
+      await apply();
+      expectPosts().flush(page(['c']));
+      await settle();
+      await leaveAfterScrolling();
+
+      await comeBack({ trigger: 'popstate', extras: {} });
+
+      expect(component.searchControl.value).toBe('jazz');
+      expect(component.filtersForm.controls.includePast.value).toBeTrue();
+      expect(component.showFilters()).toBeFalse();
+      expect(component.tab()).toBe('all');
+      expect(component.sort()).toBe('POPULAR');
+      expect(shownTitles()).toEqual(['Post c']);
+      await apply();
+    });
+
+    it('restores Moja lokalizacja, and Wszystkie’s order kept on Dla Ciebie, which the URL doesn’t hold', async () => {
+      askedLocation = { latitude: 54.35, longitude: 18.65 };
+      component.setTab('all');
+      await settle();
+      expectPosts().flush(page());
+      await component.setSortBy('POPULAR');
+      await settle();
+      expectPosts().flush(page());
+      component.setTab('forYou');
+      await settle();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      await openPlace();
+      await pickMyLocation();
+      expectFeed().flush({ ...page(['n']), mode: 'RANKED' });
+      await settle();
+      await leaveAfterScrolling();
+
+      await comeBack({ trigger: 'popstate', extras: {} });
+
+      expect(shownTitles()).toEqual(['Post n']);
+      expect(pill()).toBe('MAIN_PAGE.nearMe · MAIN_PAGE.km');
+      component.setTab('all');
+      await settle();
+      expect(param(expectPosts(), 'sortBy')).toBe('POPULAR');
+    });
+
+    it('shows on the card what happened on the post page', async () => {
+      await leaveAfterScrolling();
+      TestBed.inject(PostService).setActivePost({
+        ...card('a'),
+        title: 'Edited',
+        commentsCount: 5,
+        myReaction: 'LIKE',
+        media: [],
+      } as PostDetail);
+
+      await comeBack({ trigger: 'popstate', extras: {} });
+
+      expect(shownTitles()).toEqual(['Edited', 'Post b']);
+      expect(component.list.items()[0].myReaction).toBe('LIKE');
+      expect(TestBed.inject(PostService).activePost()).toBeNull();
+    });
+
+    it('starts from the URL when Back lands on a different home page than memory holds', async () => {
+      await leaveAfterScrolling();
+      homeUrl = '/?tab=all&q=rock';
+
+      await comeBack({ trigger: 'popstate', extras: {} });
+
+      const posts = expectPosts();
+      expect(param(posts, 'q')).toBe('rock');
+      posts.flush(page(['z']));
+      await settle();
+      expect(shownTitles()).toEqual(['Post z']);
+    });
+
+    it('starts a new session on any other navigation', async () => {
+      await leaveAfterScrolling();
+
+      await comeBack({ trigger: 'imperative', extras: {} });
+
+      expectFeed().flush({ ...page(['z']), mode: 'RANKED' });
+      await settle();
+      expect(shownTitles()).toEqual(['Post z']);
+    });
   });
 });

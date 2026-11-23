@@ -1,0 +1,13 @@
+<app-dialog [open]="!!prompt.reason()" titleId="sign-in-prompt-title" (dismissed)="prompt.close()">
+  @if (prompt.reason(); as reason) {
+    <button
+      type="button"
+      class="prompt__close"
+      [attr.aria-label]="'SIGN_IN.close' | translate"
+      (click)="prompt.close()"
+    >
+      <ng-icon name="lucideX" aria-hidden="true" />
+    </button>
+    <app-sign-in-card [reason]="reason" titleId="sign-in-prompt-title" />
+  }
+</app-dialog>

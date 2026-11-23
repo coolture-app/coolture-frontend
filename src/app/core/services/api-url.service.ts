@@ -13,6 +13,15 @@ export class ApiUrlService {
     return this.baseUrl;
   }
 
+  /** Matches on a path boundary, so `/api2` or `api.example.com.evil.com` is not the API's own. */
+  owns(url: string): boolean {
+    const base = this.baseUrl.replace(/\/+$/, '');
+    if (!base) {
+      return false;
+    }
+    return url === base || ['/', '?', '#'].some((boundary) => url.startsWith(base + boundary));
+  }
+
   path(path: string): string {
     return `${this.baseUrl}${path}`;
   }

@@ -1,10 +1,56 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
+import { CommentsSheetService } from '../../services/comments-sheet/comments-sheet.service';
+import { HttpTestingController } from '@angular/common/http/testing';
 
 import { PostComponent } from './post-component';
+import { PostCard } from '../../models/posts/post-card.model';
+import { AuthService } from '../../services/auth/auth.service';
+import { UserProfile } from '../../models/users/user-profile.model';
+import { ToastService } from '../../services/toast/toast.service';
+import { PhotoViewerService } from '../../services/photo-viewer/photo-viewer.service';
+import { PostDetail } from '../../models/posts/post-detail.model';
+import { ViewerStates } from '../../services/viewer-states/viewer-states';
+import { mark } from '../map/map-stubs.testing';
+import { SignInPromptService } from '../../services/sign-in-prompt/sign-in-prompt.service';
+
+function card(overrides: Partial<PostCard> = {}): PostCard {
+  return {
+    id: 'p1',
+    author: { id: 'u1', username: 'ola', followersCount: 0, followingCount: 0 },
+    title: 'Koncert',
+    startsAt: '2030-12-01T18:00:00Z',
+    openEnded: false,
+    positiveReactionCount: 3,
+    participantCount: 2,
+    interestedCount: 2,
+    goingCount: 0,
+    commentsCount: 0,
+    type: 'OFFLINE',
+    status: 'ACTIVE',
+    createdAt: '2026-11-01T00:00:00Z',
+    ...overrides,
+  };
+}
 
 describe('PostComponent', () => {
   let component: PostComponent;
   let fixture: ComponentFixture<PostComponent>;
+  let http: HttpTestingController;
+
+  function render(data: PostCard | PostDetail, isFullView = false): void {
+    fixture.componentRef.setInput('data', data);
+    fixture.componentRef.setInput('isFullView', isFullView);
+    fixture.detectChanges();
+  }
+
+  function element(): HTMLElement {
+    return fixture.nativeElement;
+  }
+
+  function place(): string | undefined {
+    return element().querySelector('.post__location')?.textContent?.trim();
+  }
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -13,10 +59,873 @@ describe('PostComponent', () => {
 
     fixture = TestBed.createComponent(PostComponent);
     component = fixture.componentInstance;
-    fixture.detectChanges();
+    http = TestBed.inject(HttpTestingController);
   });
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
+  it('offers the owner menu only on your own post, named for assistive technology', () => {
+    render(card());
+    expect(element().querySelector('app-post-owner-menu')).toBeNull();
+
+    TestBed.inject(AuthService).currentUser.set({ id: 'u1' } as UserProfile);
+    fixture.detectChanges();
+    const toggle = element().querySelector('app-post-owner-menu button');
+    expect(toggle?.getAttribute('aria-label')).toBe('POST.ownerMenu');
+  });
+
+  it('has five icon actions, each named and pressed when on, the stances grouped', () => {
+    render(card({ myParticipation: 'TAKES_PART', positiveReactionCount: 0, interestedCount: 0 }));
+
+    const actions = Array.from(element().querySelectorAll('.post__social button'));
+    expect(actions.map((b) => b.getAttribute('aria-label'))).toEqual([
+      'POST.like',
+      'POST.comments',
+      'POST.not-for-me',
+      'POST.interested',
+      'POST.takes_part',
+    ]);
+    expect(actions.map((b) => b.getAttribute('aria-pressed'))).toEqual([
+      'false',
+      null,
+      'false',
+      'false',
+      'true',
+    ]);
+    expect(actions.every((b) => b.textContent!.trim() === '')).toBeTrue();
+    const group = element().querySelector('.post__stances[role="group"]')!;
+    expect(group.getAttribute('aria-label')).toBe('POST.stance');
+    expect(group.querySelectorAll('button').length).toBe(3);
+  });
+
+  it('shows the like and stance of data that changes under a card, as after a refresh', () => {
+    render(card());
+
+    render(card({ myReaction: 'LIKE', myParticipation: 'INTERESTED' }));
+
+    expect(component.isLiked()).toBeTrue();
+    expect(component.isInterested()).toBeTrue();
+    const pressed = element().querySelectorAll('.post__social [aria-pressed="true"]');
+    expect(pressed.length).toBe(2);
+  });
+
+  it('offers no "Nie dla mnie" on your own post', () => {
+    TestBed.inject(AuthService).currentUser.set({ id: 'u1' } as UserProfile);
+    render(card({ interestedCount: 0 }));
+
+    const labels = Array.from(element().querySelectorAll('.post__stances button')).map((b) =>
+      b.getAttribute('aria-label'),
+    );
+    expect(labels).toEqual([
+      'POST.interested · POST.friendsSee',
+      'POST.takes_part · POST.friendsSee',
+    ]);
+  });
+
+  it('says friends see a stance only while the viewer shares them', () => {
+    const auth = TestBed.inject(AuthService);
+    auth.currentUser.set({ id: 'u1' } as UserProfile);
+    auth.markShareStances(false);
+    render(card({ interestedCount: 0 }));
+
+    const labels = Array.from(element().querySelectorAll('.post__stances button')).map((b) =>
+      b.getAttribute('aria-label'),
+    );
+    expect(labels).toEqual(['POST.interested', 'POST.takes_part']);
+  });
+
+  it('names the friends who go or are interested, above the author', () => {
+    render(
+      card({
+        friendStances: {
+          going: {
+            count: 3,
+            people: [
+              { id: 'f1', username: 'anna_demo', firstName: 'Anna' },
+              { id: 'f2', username: 'jan_demo' },
+            ],
+          },
+          interested: { count: 1, people: [{ id: 'f3', username: 'ola', firstName: 'Ola' }] },
+        },
+      }),
+    );
+
+    const line = element().querySelector('.post__friends .friends');
+    expect(line?.getAttribute('aria-label')).toBe('POST.friendsGoing · POST.friendsInterested');
+    expect(
+      Array.from(line!.querySelectorAll('.friends__names')).map((n) => n.textContent?.trim()),
+    ).toEqual(['Anna, jan_demo +1', 'Ola']);
+    expect(line!.querySelectorAll('.friends__face').length).toBe(3);
+  });
+
+  it('opens the friends list from the friends line', () => {
+    const data = card({
+      friendStances: { going: { count: 1, people: [{ id: 'f1', username: 'anna_demo' }] } },
+    });
+    render(data);
+
+    (element().querySelector('.post__friends .friends') as HTMLButtonElement).click();
+
+    const sheet = TestBed.inject(CommentsSheetService);
+    expect(sheet.content()).toBe('friends');
+    expect(sheet.post()).toBe(data);
+  });
+
+  it('shows no friends line when no friend took a stance', () => {
+    render(card());
+
+    expect(element().querySelector('app-friends-line')).toBeNull();
+  });
+
+  describe('the like count', () => {
+    function badge(): string | undefined {
+      return element().querySelector('[aria-label^="POST.like"] .post__count')?.textContent?.trim();
+    }
+
+    it('shows on the like icon, and says it in the button’s name, with none at 0', () => {
+      render(card({ positiveReactionCount: 0 }));
+      expect(badge()).toBeUndefined();
+
+      render(card({ positiveReactionCount: 7 }));
+      expect(badge()).toBe('7');
+      expect(element().querySelector('[aria-label="POST.like (7)"]')).not.toBeNull();
+    });
+
+    it('caps a long count', () => {
+      render(card({ positiveReactionCount: 100 }));
+
+      expect(badge()).toBe('99+');
+    });
+
+    it('counts the bookmark and the ticket apart, as the like, and moves a count with the stance', () => {
+      TestBed.inject(AuthService).currentUser.set({ id: 'u2' } as UserProfile);
+      const data = card({ interestedCount: 3, goingCount: 0 });
+      render(data);
+      const count = (label: string) =>
+        element().querySelector(`[aria-label^="${label}"] .post__count`)?.textContent?.trim();
+
+      expect(count('POST.interested')).toBe('3');
+      expect(
+        element().querySelector('[aria-label="POST.interested (3) · POST.friendsSee"]'),
+      ).not.toBeNull();
+      expect(count('POST.takes_part')).toBeUndefined();
+
+      (element().querySelector('[aria-label^="POST.takes_part"]') as HTMLButtonElement).click();
+      fixture.detectChanges();
+
+      expect(data.goingCount).toBe(1);
+      expect(count('POST.takes_part')).toBe('1');
+      http.match(() => true).forEach((r) => r.flush({}));
+    });
+
+    it("tells the map's marks of a like and a stance set here, with the sum in step", () => {
+      TestBed.inject(AuthService).currentUser.set({ id: 'u2' } as UserProfile);
+      const data = card({ positiveReactionCount: 0, interestedCount: 1 });
+      render(data);
+
+      (element().querySelector('[aria-label^="POST.like"]') as HTMLButtonElement).click();
+      (element().querySelector('[aria-label^="POST.takes_part"]') as HTMLButtonElement).click();
+
+      expect(TestBed.inject(ViewerStates).shown(mark('p1'))).toEqual(
+        jasmine.objectContaining({
+          myReaction: 'LIKE',
+          myParticipation: 'TAKES_PART',
+          positiveReactionCount: 1,
+          interestedCount: 1,
+          goingCount: 1,
+        }),
+      );
+      http.match(() => true).forEach((r) => r.flush({}));
+    });
+  });
+
+  describe('the comment button', () => {
+    function commentButton(): HTMLButtonElement {
+      return element().querySelector('[aria-label="POST.comments"]') as HTMLButtonElement;
+    }
+
+    function badge(): string | undefined {
+      return element()
+        .querySelector('[aria-label^="POST.comments"] .post__count')
+        ?.textContent?.trim();
+    }
+
+    it('shows no count with no comments', () => {
+      render(card({ commentsCount: 0 }));
+
+      expect(badge()).toBeUndefined();
+      expect(commentButton()).not.toBeNull();
+    });
+
+    it('shows the count on the icon, and says it in the button’s name', () => {
+      render(card({ commentsCount: 12 }));
+
+      expect(badge()).toBe('12');
+      expect(element().querySelector('[aria-label="POST.comments (12)"]')).not.toBeNull();
+    });
+
+    it('caps a long count, and still says the exact number', () => {
+      render(card({ commentsCount: 1234 }));
+
+      expect(badge()).toBe('99+');
+      expect(element().querySelector('[aria-label="POST.comments (1234)"]')).not.toBeNull();
+    });
+
+    it('follows the count while this post’s comments are open', async () => {
+      const data = card({ commentsCount: 2 });
+      render(data);
+      const sheet = TestBed.inject(CommentsSheetService);
+
+      sheet.show(data);
+      sheet.changeCount(1);
+      await fixture.whenStable();
+      expect(badge()).toBe('3');
+
+      sheet.close();
+      await fixture.whenStable();
+      expect(badge()).toBe('3');
+    });
+
+    it('isn’t changed by another post’s comments being open', async () => {
+      render(card({ commentsCount: 2 }));
+      const sheet = TestBed.inject(CommentsSheetService);
+
+      sheet.show(card({ id: 'other', commentsCount: 9 }));
+      await fixture.whenStable();
+
+      expect(badge()).toBe('2');
+      sheet.close();
+    });
+
+    it('opens the sheet over the list, and stays on the page', () => {
+      const data = card();
+      render(data);
+      const navigate = spyOn(TestBed.inject(Router), 'navigate');
+
+      commentButton().click();
+
+      expect(TestBed.inject(CommentsSheetService).post()).toBe(data);
+      expect(navigate).not.toHaveBeenCalled();
+    });
+
+    it('scrolls to the comments on the post page, where they already are', () => {
+      render(card(), true);
+      const section = document.createElement('div');
+      section.id = 'comments';
+      document.body.appendChild(section);
+      const scroll = spyOn(section, 'scrollIntoView');
+
+      commentButton().click();
+
+      expect(scroll).toHaveBeenCalled();
+      expect(TestBed.inject(CommentsSheetService).post()).toBeNull();
+      section.remove();
+    });
+  });
+
+  describe('photo', () => {
+    const cover = { id: 'm1', url: 'http://x/p.png', width: 1080, height: 1350 };
+
+    function frame(): HTMLElement {
+      return element().querySelector('.post__frame')!;
+    }
+
+    function image(): HTMLImageElement {
+      return element().querySelector('.post__slide img')!;
+    }
+
+    it('takes the shape of the photo before it loads, and is hidden until loaded', () => {
+      render(card({ coverMedia: cover }));
+
+      expect(frame().style.aspectRatio).toBe('0.8 / 1');
+      expect(image().classList).not.toContain('is-loaded');
+
+      image().dispatchEvent(new Event('load'));
+      fixture.detectChanges();
+      expect(image().classList).toContain('is-loaded');
+    });
+
+    it('is square for a photo with no size, and stays so after it loads', () => {
+      render(card({ coverMedia: { id: 'm1', url: 'http://x/p.png' } }));
+
+      image().dispatchEvent(new Event('load'));
+      fixture.detectChanges();
+
+      expect(frame().style.aspectRatio).toBe('1 / 1');
+    });
+
+    it('opens the photo full screen when tapped', () => {
+      render(card({ coverMedia: cover }));
+
+      (element().querySelector('.post__slide') as HTMLButtonElement).click();
+
+      expect(TestBed.inject(PhotoViewerService).open()).toEqual({
+        photos: [{ url: cover.url, width: 1080, height: 1350 }],
+        index: 0,
+      });
+    });
+
+    it('shows every photo on the post page as a carousel, framed by the first', () => {
+      const media = [
+        { media: cover, position: 0 },
+        {
+          media: { id: 'm2', url: 'http://x/q.png', width: 2000, height: 1000 },
+          position: 1,
+        },
+      ];
+      render({ ...card({ coverMedia: cover }), media } as PostDetail, true);
+
+      expect(element().querySelectorAll('.post__slide').length).toBe(2);
+      expect(element().querySelectorAll('.post__dot').length).toBe(2);
+      expect(frame().style.aspectRatio).toBe('0.8 / 1');
+    });
+
+    it('has no carousel controls for one photo', () => {
+      render(card({ coverMedia: cover }));
+
+      expect(element().querySelector('.post__dots')).toBeNull();
+      expect(element().querySelector('.post__arrow')).toBeNull();
+    });
+  });
+
+  describe('description', () => {
+    const LONG = `Pierwszy akapit opisu wydarzenia.${String.fromCharCode(10)}${'Drugi akapit, dużo dłuższy. '.repeat(60)}`;
+
+    async function measured(): Promise<void> {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      await fixture.whenStable();
+    }
+
+    function text(): HTMLElement {
+      return element().querySelector<HTMLElement>('.post__desc-text')!;
+    }
+
+    function toggle(): HTMLButtonElement | null {
+      return element().querySelector('.post__desc-toggle');
+    }
+
+    it('renders a post with no description, without an empty block', () => {
+      render(card());
+
+      expect(element().querySelector('.post__desc')).toBeNull();
+    });
+
+    it('offers no toggle for a text that fits', async () => {
+      render(card({ description: 'Krótki opis' }));
+      await measured();
+
+      expect(text().textContent?.trim()).toBe('Krótki opis');
+      expect(toggle()).toBeNull();
+    });
+
+    it('clamps by lines, keeps the paragraphs and shows the whole text in the DOM', async () => {
+      render(card({ description: LONG }));
+      await measured();
+
+      expect(getComputedStyle(text()).whiteSpace).toBe('pre-line');
+      expect(text().clientHeight).toBeLessThan(text().scrollHeight);
+      expect(text().textContent?.trim()).toBe(LONG.trim());
+      expect(toggle()?.textContent).toContain('POST.show-more');
+    });
+
+    it('showing the toggle does not change the height of the card', async () => {
+      render(card({ description: LONG }));
+      const before = element().getBoundingClientRect().height;
+      await measured();
+
+      expect(toggle()).not.toBeNull();
+      expect(element().getBoundingClientRect().height).toBe(before);
+    });
+
+    it('expands and collapses, and says which it is', async () => {
+      render(card({ description: LONG }));
+      await measured();
+      const clamped = text().clientHeight;
+
+      toggle()!.click();
+      await measured();
+      expect(text().clientHeight).toBeGreaterThan(clamped);
+      expect(toggle()?.getAttribute('aria-expanded')).toBe('true');
+      expect(toggle()?.textContent).toContain('POST.show-less');
+
+      toggle()!.click();
+      await measured();
+      expect(text().clientHeight).toBe(clamped);
+      expect(toggle()?.getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('stays expanded when the post comes back, as a copy from the post page too', async () => {
+      const data = card({ id: 'shown-again', description: LONG });
+      render(data);
+      await measured();
+      toggle()!.click();
+      await measured();
+
+      const again = TestBed.createComponent(PostComponent);
+      again.componentRef.setInput('data', { ...data });
+      again.componentRef.setInput('isFullView', false);
+      again.detectChanges();
+
+      expect(again.componentInstance.isExpanded()).toBeTrue();
+      expect(again.nativeElement.querySelector('.post__desc-text--clamped')).toBeNull();
+    });
+
+    it('collapses runs of blank lines into one, and keeps the paragraphs', () => {
+      const lf = String.fromCharCode(10);
+      render(card({ description: `Jeden.  ${lf}${lf}${lf}${lf}Dwa.${lf}Trzy.` }));
+
+      expect(component.description()).toBe(`Jeden.${lf}${lf}Dwa.${lf}Trzy.`);
+    });
+
+    it('cuts at 6 lines without a photo, and at 3 with one', async () => {
+      render(card({ description: LONG }));
+      await measured();
+      const lineHeight = parseFloat(getComputedStyle(text()).lineHeight);
+      expect(Math.round(text().clientHeight / lineHeight)).toBe(6);
+
+      const withPhoto = TestBed.createComponent(PostComponent);
+      const photo = { id: 'm', url: 'http://x/p.png' };
+      withPhoto.componentRef.setInput(
+        'data',
+        card({ id: 'p2', description: LONG, coverMedia: photo }),
+      );
+      withPhoto.componentRef.setInput('isFullView', false);
+      withPhoto.detectChanges();
+      const clamped = withPhoto.nativeElement.querySelector('.post__desc-text') as HTMLElement;
+      expect(Math.round(clamped.clientHeight / lineHeight)).toBe(3);
+    });
+
+    it('shows the whole text with no toggle on the post page', async () => {
+      render(card({ description: LONG }), true);
+      await measured();
+
+      expect(element().querySelector('.post__desc-text--clamped')).toBeNull();
+      expect(toggle()).toBeNull();
+    });
+  });
+
+  describe('kind', () => {
+    const detail = (kinds: string[]): PostDetail => ({ ...card(), media: [], kinds });
+
+    async function flushKinds(): Promise<void> {
+      await new Promise((resolve) => setTimeout(resolve));
+      http
+        .expectOne((r) => r.url.endsWith('/dicts/interests'))
+        .flush({
+          minKinds: 1,
+          minInterests: 0,
+          maxInterests: 6,
+          kinds: [
+            { key: 'concerts', labelPl: 'Koncerty', labelEn: 'Concerts' },
+            { key: 'stage', labelPl: 'Scena', labelEn: 'Stage' },
+            { key: 'kids', labelPl: 'Dla dzieci', labelEn: 'For kids' },
+          ],
+          categories: [],
+        });
+      fixture.detectChanges();
+    }
+
+    it('names every kind on the post page, best first, each linking to Wszystkie filtered by it', async () => {
+      render(detail(['stage', 'concerts']), true);
+      await flushKinds();
+
+      const links = [...element().querySelectorAll<HTMLAnchorElement>('.post__kind')];
+      expect(links.map((link) => link.textContent?.trim())).toEqual(['Scena', 'Koncerty']);
+      expect(links.map((link) => link.getAttribute('href'))).toEqual([
+        '/?tab=all&kinds=stage',
+        '/?tab=all&kinds=concerts',
+      ]);
+    });
+
+    it('links Dla dzieci as the switch, and the other kinds as chips', async () => {
+      render(detail(['kids', 'concerts']), true);
+      await flushKinds();
+
+      const links = [...element().querySelectorAll<HTMLAnchorElement>('.post__kind')];
+      expect(links.map((link) => link.getAttribute('href'))).toEqual([
+        '/?tab=all&kids=true',
+        '/?tab=all&kinds=concerts',
+      ]);
+    });
+
+    it('opens the kind, not the author’s profile, by click or Enter', async () => {
+      render(detail(['stage']), true);
+      await flushKinds();
+      const navigate = spyOn(TestBed.inject(Router), 'navigate');
+      const link = element().querySelector<HTMLAnchorElement>('.post__kind')!;
+
+      link.click();
+      link.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+
+      expect(navigate).not.toHaveBeenCalledWith(['/users', jasmine.anything()]);
+    });
+
+    it('shows nothing before a kind is derived', async () => {
+      render(detail([]), true);
+      await new Promise((resolve) => setTimeout(resolve));
+
+      expect(element().querySelector('.post__kinds')).toBeNull();
+    });
+
+    it('stays off cards', async () => {
+      render(detail(['stage']));
+      await new Promise((resolve) => setTimeout(resolve));
+
+      expect(element().querySelector('.post__kinds')).toBeNull();
+    });
+  });
+
+  describe('links', () => {
+    const links = () =>
+      Array.from(element().querySelectorAll<HTMLAnchorElement>('.post-links__link')).map((link) => [
+        link.textContent!.trim(),
+        link.getAttribute('href'),
+        link.target,
+      ]);
+
+    it('shows each by its name or domain, in a new tab, on cards too', () => {
+      render(
+        card({
+          links: [
+            { url: 'https://bilety.example/k', label: 'Bilety' },
+            { url: 'https://www.fb.com/e' },
+          ],
+        }),
+      );
+
+      expect(links()).toEqual([
+        ['Bilety', 'https://bilety.example/k', '_blank'],
+        ['fb.com', 'https://www.fb.com/e', '_blank'],
+      ]);
+    });
+
+    it('leaves no line when there are none', () => {
+      render(card());
+
+      expect(element().querySelector('app-post-links')).toBeNull();
+    });
+  });
+
+  describe('place', () => {
+    const location = {
+      id: 'l1',
+      coordinates: { latitude: 54, longitude: 18 },
+      venueName: 'Ergo Arena',
+      street: 'Plac Dwóch Miast',
+      buildingNum: '1',
+      city: 'Gdańsk',
+    };
+
+    it('shows venue and city on a card', () => {
+      render(card({ location }));
+
+      expect(place()).toBe('Ergo Arena, Gdańsk');
+    });
+
+    it('adds the address on the post page', () => {
+      render(card({ location }), true);
+
+      expect(place()).toBe('Ergo Arena, Plac Dwóch Miast 1, Gdańsk');
+    });
+
+    it('shows Online for an online post', () => {
+      render(card({ type: 'ONLINE' }));
+
+      expect(place()).toBe('POST.online');
+    });
+
+    it('shows nothing when an in-person post has no address', () => {
+      render(card());
+
+      expect(place()).toBeUndefined();
+    });
+  });
+
+  describe('folding', () => {
+    beforeEach(() => {
+      TestBed.inject(AuthService).currentUser.set({ id: 'u2' } as UserProfile);
+    });
+
+    function folded(): string | undefined {
+      return element().querySelector('.post__folded span')?.textContent?.trim();
+    }
+
+    it('folds a marked card on Dla Ciebie, and Cofnij brings back the stance and the like', () => {
+      const data = card({ myParticipation: 'INTERESTED', myReaction: 'LIKE' });
+      fixture.componentRef.setInput('folds', 'marked');
+      render(data);
+
+      component.setNotForMe();
+      http.expectOne((r) => r.method === 'PUT').flush({});
+      fixture.detectChanges();
+      expect(folded()).toBe('POST.hidden');
+      expect(element().querySelector('.post__social')).toBeNull();
+
+      (element().querySelector('.post__folded button') as HTMLButtonElement).click();
+      const stance = http.expectOne((r) => r.method === 'PUT' && r.url.endsWith('/participation'));
+      expect(stance.request.body).toEqual({ type: 'INTERESTED' });
+      stance.flush({});
+      http.expectOne((r) => r.method === 'PUT' && r.url.endsWith('/reaction')).flush({});
+      fixture.detectChanges();
+
+      expect(folded()).toBeUndefined();
+      expect(data.myParticipation).toBe('INTERESTED');
+      expect(data.myReaction).toBe('LIKE');
+      expect(data.interestedCount).toBe(2);
+    });
+
+    it('keeps the card on Wszystkie and the post page, with the eye pressed', () => {
+      render(card());
+
+      component.setNotForMe();
+      http.expectOne((r) => r.method === 'PUT').flush({});
+      fixture.detectChanges();
+
+      expect(folded()).toBeUndefined();
+      const eye = element().querySelector('.post__stances button')!;
+      expect(eye.getAttribute('aria-pressed')).toBe('true');
+    });
+
+    it('folds an unmarked card on Ukryte posty, and Cofnij marks it again', () => {
+      const data = card({ myParticipation: 'NOT_INTERESTED' });
+      fixture.componentRef.setInput('folds', 'unmarked');
+      render(data);
+      expect(folded()).toBeUndefined();
+
+      component.setNotForMe();
+      http.expectOne((r) => r.method === 'DELETE').flush(null);
+      fixture.detectChanges();
+      expect(folded()).toBe('POST.restored');
+
+      component.undoFold();
+      const mark = http.expectOne((r) => r.method === 'PUT');
+      expect(mark.request.body).toEqual({ type: 'NOT_INTERESTED' });
+      mark.flush({});
+      fixture.detectChanges();
+      expect(folded()).toBeUndefined();
+    });
+  });
+
+  describe('a guest', () => {
+    it('is asked to sign in by any stance or the like, saying what the tap does', () => {
+      const prompt = TestBed.inject(SignInPromptService);
+      const asked: (string | null)[] = [];
+      render(card());
+
+      for (const tap of [
+        () => component.likePost(),
+        () => component.setNotForMe(),
+        () => component.setInterested(),
+        () => component.setTakesPart(),
+      ]) {
+        tap();
+        asked.push(prompt.reason());
+      }
+
+      expect(asked).toEqual(['like', 'notForMe', 'interested', 'takesPart']);
+      http.expectNone((r) => !r.url.endsWith('/dicts/interests'));
+      expect(component.isLiked()).toBeFalse();
+      expect(component.stance()).toBeUndefined();
+    });
+  });
+
+  describe('interactions keep the data in step, for when the card is shown again', () => {
+    const serverError = { status: 500, statusText: 'Server Error' };
+
+    beforeEach(() => {
+      TestBed.inject(AuthService).currentUser.set({ id: 'u2' } as UserProfile);
+    });
+
+    it('records a like, and removes it again', () => {
+      const data = card();
+      render(data);
+
+      component.likePost();
+      http.expectOne((r) => r.method === 'PUT' || r.method === 'POST').flush({});
+      expect(data.myReaction).toBe('LIKE');
+      expect(data.positiveReactionCount).toBe(4);
+
+      component.likePost();
+      http.expectOne((r) => r.method === 'DELETE').flush(null);
+      expect(data.myReaction).toBeUndefined();
+      expect(data.positiveReactionCount).toBe(3);
+      expect(component.isLiked()).toBeFalse();
+    });
+
+    it('undoes a like that failed', () => {
+      const data = card();
+      render(data);
+
+      component.likePost();
+      http
+        .expectOne((r) => r.method === 'PUT' || r.method === 'POST')
+        .flush({ error: 'down' }, serverError);
+
+      expect(data.myReaction).toBeUndefined();
+      expect(data.positiveReactionCount).toBe(3);
+      expect(component.isLiked()).toBeFalse();
+    });
+
+    it('moves between interested and attending without counting the person twice', () => {
+      const data = card();
+      render(data);
+
+      component.setInterested();
+      http.expectOne((r) => r.method === 'PUT' || r.method === 'POST').flush({});
+      expect(data.myParticipation).toBe('INTERESTED');
+      expect([data.interestedCount, data.goingCount]).toEqual([3, 0]);
+
+      component.setTakesPart();
+      http.expectOne((r) => r.method === 'PUT' || r.method === 'POST').flush({});
+      expect(data.myParticipation).toBe('TAKES_PART');
+      expect([data.interestedCount, data.goingCount]).toEqual([2, 1]);
+      expect(component.isInterested()).toBeFalse();
+      expect(component.isTakesPart()).toBeTrue();
+
+      component.setTakesPart();
+      http.expectOne((r) => r.method === 'DELETE').flush(null);
+      expect(data.myParticipation).toBeUndefined();
+      expect([data.interestedCount, data.goingCount]).toEqual([2, 0]);
+    });
+
+    it('returns to the previous participation when a change fails', () => {
+      const data = card({ myParticipation: 'INTERESTED' });
+      render(data);
+
+      component.setTakesPart();
+      http
+        .expectOne((r) => r.method === 'PUT' || r.method === 'POST')
+        .flush({ error: 'down' }, serverError);
+
+      expect(data.myParticipation).toBe('INTERESTED');
+      expect([data.interestedCount, data.goingCount]).toEqual([2, 0]);
+      expect(component.isInterested()).toBeTrue();
+    });
+
+    it('says the post is saved in Plans when it is marked, and not when it is unmarked', () => {
+      const toast = TestBed.inject(ToastService);
+      const data = card();
+      render(data);
+
+      component.setInterested();
+      http.expectOne((r) => r.method === 'PUT' || r.method === 'POST').flush({});
+      expect(toast.message()).toBe('POST.saved-to-plans');
+
+      toast.message.set(null);
+      component.setInterested();
+      http.expectOne((r) => r.method === 'DELETE').flush(null);
+      expect(toast.message()).toBeNull();
+    });
+
+    it('marks a post "Nie dla mnie" without counting it, or saying it went to Plans', () => {
+      const toast = TestBed.inject(ToastService);
+      const data = card();
+      render(data);
+
+      component.setNotForMe();
+      const request = http.expectOne((r) => r.method === 'PUT');
+      expect(request.request.body).toEqual({ type: 'NOT_INTERESTED' });
+      request.flush({});
+
+      expect(data.myParticipation).toBe('NOT_INTERESTED');
+      expect([data.interestedCount, data.goingCount]).toEqual([2, 0]);
+      expect(toast.message()).toBeNull();
+    });
+
+    it('takes the participant back out of the count when "Interesuje mnie" becomes a mark', () => {
+      const data = card({ myParticipation: 'INTERESTED' });
+      render(data);
+
+      component.setNotForMe();
+      http.expectOne((r) => r.method === 'PUT').flush({});
+
+      expect(data.interestedCount).toBe(1);
+      expect(component.isInterested()).toBeFalse();
+    });
+
+    it('takes the like back with a mark, as the server does, and returns it if the mark fails', () => {
+      const data = card({ myReaction: 'LIKE' });
+      render(data);
+
+      component.setNotForMe();
+      expect(data.myReaction).toBeUndefined();
+      expect(data.positiveReactionCount).toBe(2);
+
+      http.expectOne((r) => r.method === 'PUT').flush({ error: 'down' }, serverError);
+      expect(data.myReaction).toBe('LIKE');
+      expect(data.positiveReactionCount).toBe(3);
+      expect(data.myParticipation).toBeUndefined();
+    });
+
+    it('takes a mark back with a like', () => {
+      const data = card({ myParticipation: 'NOT_INTERESTED' });
+      render(data);
+
+      component.likePost();
+      http.expectOne((r) => r.method === 'PUT' && r.url.endsWith('/reaction')).flush({});
+
+      expect(data.myParticipation).toBeUndefined();
+      expect(component.isNotForMe()).toBeFalse();
+      expect(data.myReaction).toBe('LIKE');
+    });
+
+    it('sends one request at a time, in the order they were made', () => {
+      render(card());
+
+      component.setNotForMe();
+      component.setNotForMe();
+
+      const mark = http.expectOne((r) => r.method === 'PUT');
+      http.expectNone((r) => r.method === 'DELETE');
+      mark.flush({});
+      http.expectOne((r) => r.method === 'DELETE').flush(null);
+    });
+  });
+
+  describe('an ended event', () => {
+    const ended = { startsAt: '2020-05-01T18:00:00Z', endsAt: '2020-05-01T21:00:00Z' };
+
+    function stanceButtons(): HTMLButtonElement[] {
+      return Array.from(element().querySelectorAll('.post__stances button'));
+    }
+
+    beforeEach(() => {
+      TestBed.inject(AuthService).currentUser.set({ id: 'u2' } as UserProfile);
+    });
+
+    it('says so after the date, and turns off both stances but keeps the chosen one lit', () => {
+      render(card({ ...ended, myParticipation: 'TAKES_PART' }));
+
+      expect(element().querySelector('.post__info .post__ended')?.textContent?.trim()).toBe(
+        'POST.ended',
+      );
+      const [notForMe, interested, going] = stanceButtons();
+      expect(notForMe.getAttribute('aria-disabled')).toBeNull();
+      expect(interested.getAttribute('aria-disabled')).toBe('true');
+      expect(going.getAttribute('aria-disabled')).toBe('true');
+      expect(going.getAttribute('aria-pressed')).toBe('true');
+      expect(interested.getAttribute('aria-label')).toBe('POST.interested (2) · POST.endedHint');
+    });
+
+    it('ignores a tap on a stance, but still takes a like and Nie dla mnie', () => {
+      const data = card(ended);
+      render(data);
+
+      stanceButtons()[1].click();
+      http.expectNone((r) => !r.url.endsWith('/dicts/interests'));
+      expect(data.myParticipation).toBeUndefined();
+
+      component.likePost();
+      http.expectOne((r) => r.method === 'PUT' || r.method === 'POST').flush({});
+      stanceButtons()[0].click();
+      http.expectOne((r) => r.method === 'PUT' || r.method === 'POST').flush({});
+      expect(data.myParticipation).toBe('NOT_INTERESTED');
+    });
+
+    it('is not ended while it runs, nor three hours into one with no end', () => {
+      const start = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+      render(card({ startsAt: start }));
+
+      expect(element().querySelector('.post__ended')).toBeNull();
+      expect(stanceButtons()[1].getAttribute('aria-disabled')).toBeNull();
+    });
   });
 });

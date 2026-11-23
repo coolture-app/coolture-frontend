@@ -1,0 +1,26 @@
+@use '_mixin' as *;
+
+// Room above the card for the close button, which sits in the dialog's corner.
+app-sign-in-card {
+  display: block;
+  padding-top: calc(var(--space-xl) - var(--space-lg));
+}
+
+.prompt__close {
+  @include center-flex;
+  position: absolute;
+  top: var(--space-xs);
+  right: var(--space-xs);
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: none;
+  color: var(--color-text-secondary);
+  font-size: 20px;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--color-surface-alt);
+  }
+}

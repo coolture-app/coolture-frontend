@@ -1,0 +1,206 @@
+@if (notFound()) {
+  <app-not-found-view />
+} @else if (user(); as u) {
+  <div class="page">
+    <div class="profile">
+      <section class="profile__header">
+        @if (!isOwnProfile()) {
+          <app-back-link fallback="/people" />
+        }
+
+        <div class="profile__corner">
+          @if (isOwnProfile()) {
+            <a
+              class="profile__icon-btn"
+              routerLink="/profile/settings"
+              [attr.aria-label]="'SETTINGS.title' | translate"
+              [appTooltip]="'SETTINGS.title' | translate"
+            >
+              <ng-icon name="lucideSettings" aria-hidden="true" />
+            </a>
+          } @else {
+            <app-menu #menu>
+              <button
+                menuTrigger
+                type="button"
+                class="profile__icon-btn"
+                aria-haspopup="menu"
+                [attr.aria-expanded]="menu.open()"
+                [attr.aria-label]="'PROFILE.more' | translate"
+                [appTooltip]="'PROFILE.more' | translate"
+                (click)="menu.toggle()"
+              >
+                <ng-icon name="lucideEllipsis" aria-hidden="true" />
+              </button>
+              @if (u.isBlocked) {
+                <app-menu-item icon="lucideUserCheck" (click)="onBlock()">{{
+                  'PROFILE.unblock' | translate
+                }}</app-menu-item>
+              } @else {
+                <app-menu-item icon="lucideUserX" danger (click)="onBlock()">{{
+                  'PROFILE.block' | translate
+                }}</app-menu-item>
+              }
+            </app-menu>
+          }
+        </div>
+
+        <div class="profile__top" [class.profile__top--own]="isOwnProfile()">
+          <app-profile-avatar [user]="u" [own]="isOwnProfile()" (changed)="user.set($event)" />
+
+          @if (!blocked()) {
+            <div class="profile__stats">
+              <button type="button" class="profile__stat" (click)="followList.set('followers')">
+                <span class="profile__stat-value">{{ u.followersCount ?? 0 }}</span>
+                <span class="profile__stat-label">{{ 'PROFILE.followers' | translate }}</span>
+              </button>
+              <button type="button" class="profile__stat" (click)="followList.set('following')">
+                <span class="profile__stat-value">{{ u.followingCount ?? 0 }}</span>
+                <span class="profile__stat-label">{{ 'PROFILE.following' | translate }}</span>
+              </button>
+            </div>
+          }
+        </div>
+
+        <div class="profile__names">
+          <h1 class="profile__name">{{ u.firstName }} {{ u.lastName }}</h1>
+          <span class="profile__handle">
+            <span class="profile__username">&#64;{{ u.username }}</span>
+            @if (since()) {
+              <span class="profile__since">{{
+                'PROFILE.since' | translate: { date: since() }
+              }}</span>
+            }
+          </span>
+        </div>
+
+        @if (isOwnProfile()) {
+          <div class="profile__actions">
+            <app-btn variant="secondary" size="sm" routerLink="/profile/interests" tabindex="-1">
+              <ng-icon name="lucideHeart" aria-hidden="true" />
+              {{ 'PROFILE.interests' | translate }}
+            </app-btn>
+            <app-btn
+              variant="secondary"
+              size="sm"
+              [label]="'PROFILE.homeHint' | translate"
+              (btnClick)="showHome.set(true)"
+            >
+              <ng-icon name="lucideMapPin" aria-hidden="true" />
+              {{ home()?.name ?? ('PROFILE.addHome' | translate) }}
+            </app-btn>
+          </div>
+        } @else if (blocked()) {
+          <p class="profile__blocked">{{ 'PROFILE.youBlocked' | translate }}</p>
+          <div class="profile__actions">
+            <app-btn variant="secondary" size="sm" (btnClick)="onBlock()">
+              {{ 'PROFILE.unblock' | translate }}
+            </app-btn>
+          </div>
+        } @else {
+          <div class="profile__actions">
+            <app-follow-btn
+              [following]="u.isFollowing"
+              [busy]="followBusy()"
+              (toggled)="toggleFollow()"
+            />
+            <app-relation-pill [following]="u.isFollowing" [followsYou]="u.followsYou" />
+          </div>
+        }
+
+        <app-profile-interests [groups]="chipGroups()" />
+
+        @if (editingBio()) {
+          <form
+            class="profile__bio profile__bio--editing"
+            (submit)="$event.preventDefault(); saveBio()"
+          >
+            <textarea
+              #bioInput
+              class="profile__textarea"
+              rows="4"
+              maxlength="512"
+              [attr.aria-label]="'PROFILE.bio' | translate"
+              [value]="bioDraft()"
+              (input)="bioDraft.set($any($event.target).value)"
+              (keydown.escape)="cancelEditingBio()"
+            ></textarea>
+            <div class="profile__bio-buttons">
+              <app-btn variant="secondary" size="sm" (btnClick)="cancelEditingBio()">
+                {{ 'PROFILE.cancel' | translate }}
+              </app-btn>
+              <app-btn variant="primary" size="sm" type="submit" [disabled]="savingBio()">
+                {{ 'PROFILE.save' | translate }}
+              </app-btn>
+            </div>
+          </form>
+        } @else if (u.bio) {
+          <div class="profile__bio">
+            <p class="profile__bio-text">{{ u.bio }}</p>
+            @if (isOwnProfile()) {
+              <button
+                type="button"
+                class="profile__bio-edit"
+                [attr.aria-label]="'PROFILE.editDescription' | translate"
+                [appTooltip]="'PROFILE.editDescription' | translate"
+                (click)="startEditingBio()"
+              >
+                <ng-icon name="lucidePencil" aria-hidden="true" />
+              </button>
+            }
+          </div>
+        } @else if (isOwnProfile()) {
+          <button
+            type="button"
+            class="profile__bio profile__bio--empty"
+            (click)="startEditingBio()"
+          >
+            {{ 'PROFILE.bioPlaceholder' | translate }}
+          </button>
+        }
+      </section>
+
+      @if (!blocked() && u.events) {
+        <app-profile-events [user]="u" [own]="isOwnProfile()" />
+      }
+    </div>
+  </div>
+
+  @if (showHome()) {
+    <div
+      class="profile__modal-overlay"
+      (click)="showHome.set(false)"
+      (keydown.escape)="showHome.set(false)"
+      tabindex="0"
+    >
+      <div
+        class="profile__modal"
+        (click)="$event.stopPropagation()"
+        (keydown.escape)="showHome.set(false)"
+        tabindex="0"
+      >
+        <app-home-area (done)="showHome.set(false)" />
+      </div>
+    </div>
+  }
+
+  @if (followList(); as list) {
+    <app-sheet
+      [url]="followListUrl(list)"
+      [title]="(list === 'followers' ? 'PROFILE.followers' : 'PROFILE.following') | translate"
+      [closeLabel]="'FOLLOW_LIST.close' | translate"
+      (closed)="followList.set(null)"
+    >
+      <app-follow-list
+        [userId]="u.id"
+        [type]="list"
+        [isOwnProfile]="isOwnProfile()"
+        (followChanged)="onFollowChanged($event)"
+      />
+    </app-sheet>
+  }
+} @else {
+  <div class="page">
+    <app-load-state [failed]="failed()" message="PROFILE.loadFailed" (retry)="retry()" />
+  </div>
+}

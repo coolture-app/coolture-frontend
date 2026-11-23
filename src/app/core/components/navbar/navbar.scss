@@ -1,3 +1,5 @@
+@use '_mixin' as *;
+
 :host {
   position: sticky;
   top: 0;
@@ -5,34 +7,188 @@
   display: block;
 }
 
+// Three columns, so that the places sit in the exact middle whatever the sides hold, as wide as the home page's
+// search bar under them.
 .navbar {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: var(--navbar-height);
-  padding: 0 var(--space-md);
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border-light);
-  backdrop-filter: blur(8px);
-  background: rgba(255, 255, 255, 0.9);
   position: relative;
+  display: grid;
+  grid-template-columns: 1fr minmax(0, var(--container-max)) 1fr;
+  align-items: center;
+  gap: var(--space-sm);
+  height: var(--navbar-height);
+  // viewport-fit=cover lets the page under a phone's notch in landscape.
+  padding: 0 max(var(--space-md), env(safe-area-inset-right)) 0
+    max(var(--space-md), env(safe-area-inset-left));
+  border-bottom: 1px solid var(--color-border-light);
 
-  .navbar__actions {
+  // The blur sits on a layer of its own: on .navbar itself, it would make the phone's bottom bar,
+  // which is fixed, position itself inside the navbar instead of the screen.
+  &::before {
+    content: '';
     position: absolute;
-    right: var(--space-md);
+    inset: 0;
+    z-index: -1;
+    backdrop-filter: blur(8px);
+    background: rgba(255, 255, 255, 0.9);
   }
 }
 
 .navbar__title {
   font-size: var(--text-lg);
+  font-family: var(--font-brand);
   font-weight: var(--font-bold);
   letter-spacing: 0.08em;
   color: var(--color-text);
   text-transform: uppercase;
+  white-space: nowrap;
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+}
+
+// Five equal slots, each place centred in its own, so + is in the exact middle.
+.navbar__links {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-self: stretch;
+}
+
+.navbar__link {
+  @include center-flex;
+  justify-self: center;
+  gap: var(--space-sm);
+  min-width: min(64px, 100%);
+  max-width: 100%;
+  padding: 0 var(--space-sm);
+  border-top: 3px solid transparent;
+  border-bottom: 3px solid transparent;
+  color: var(--color-text-secondary);
+  transition:
+    color var(--transition-fast),
+    background var(--transition-fast);
+
+  ng-icon {
+    --ng-icon__size: 24px;
+  }
+
+  &:hover {
+    color: var(--color-text);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: -4px;
+    border-radius: var(--radius-md);
+  }
+
+  &.active {
+    border-bottom-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+
+  // New post: the one action among places, so it's framed like a button, in outline only.
+  &--add ng-icon {
+    --ng-icon__size: 18px;
+    padding: 2px;
+    border: 2px solid currentColor;
+    border-radius: var(--radius-sm);
+    box-sizing: content-box;
+  }
+}
+
+.navbar__avatar {
+  @include avatar(28px);
+  display: block;
+  transition: box-shadow var(--transition-fast);
+
+  &--letter {
+    @include avatar-placeholder(28px);
+    font-size: var(--text-sm);
+    text-transform: uppercase;
+  }
+}
+
+// Active like the other places, as a ring, since the photo can't change colour.
+.navbar__link.active .navbar__avatar {
+  box-shadow:
+    0 0 0 2px var(--color-surface),
+    0 0 0 4px var(--color-accent);
+}
+
+.navbar__account-name {
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .navbar__actions {
   display: flex;
+  justify-self: end;
   align-items: center;
   gap: var(--space-sm);
+}
+
+.navbar__action-icon {
+  display: none;
+  --ng-icon__size: 18px;
+}
+
+// Phones: the logo and account actions stay on top, the places move to a bar at the bottom,
+// within reach of a thumb.
+@media (max-width: 639px) {
+  .navbar {
+    grid-template-columns: 1fr auto;
+  }
+
+  .navbar__links {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: var(--bottom-bar-height);
+    padding-bottom: env(safe-area-inset-bottom);
+    border-top: 1px solid var(--color-border-light);
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(8px);
+
+    // While a phone's address bar slides away, the screen's bottom moves before the bar does, and the page showed
+    // through the gap.
+    &::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      right: 0;
+      left: 0;
+      height: 64px;
+      background: inherit;
+    }
+  }
+
+  .navbar__link {
+    justify-self: stretch;
+    min-width: 0;
+    border-bottom: none;
+
+    &.active {
+      border-top-color: transparent;
+    }
+  }
+
+  .navbar__action-label {
+    display: none;
+  }
+
+  // On a phone the account is the bottom bar's last place, with no handle, as in Instagram.
+  .navbar__account-name {
+    display: none;
+  }
+
+  .navbar__action-icon {
+    display: block;
+  }
 }

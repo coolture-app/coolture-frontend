@@ -46,7 +46,7 @@
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "4kB",
+                  "maximumWarning": "7kB",
                   "maximumError": "8kB"
                 }
               ],
@@ -60,6 +60,10 @@
                 {
                   "replace": "src/environments/environment.ts",
                   "with": "src/environments/environment.development.ts"
+                },
+                {
+                  "replace": "src/environments/dev-tools.ts",
+                  "with": "src/environments/dev-tools.development.ts"
                 }
               ]
             }
@@ -68,6 +72,9 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "proxyConfig": "proxy.conf.json"
+          },
           "configurations": {
             "production": {
               "buildTarget": "frontend:build:production"
@@ -84,8 +91,13 @@
         "test": {
           "builder": "@angular/build:karma",
           "options": {
+            "main": "src/test-main.ts",
+            "browsers": "ChromeHeadless",
             "tsConfig": "tsconfig.spec.json",
             "inlineStyleLanguage": "scss",
+            "stylePreprocessorOptions": {
+              "includePaths": ["src/app/static/styles"]
+            },
             "assets": [
               {
                 "glob": "**/*",

@@ -1,35 +1,36 @@
 import { UserSummary } from '../users/user-summary.model';
 import { EventLocation } from '../common/geo.model';
 import { MediaResource } from '../media/media-resource.model';
-import {
-  PostType,
-  PostStatus,
-  PostVisibility,
-  ReactionType,
-  ParticipationType,
-} from '../common/enums';
+import { PostType, PostStatus, ReactionType, ParticipationType } from '../common/enums';
+import { FriendStances } from './friend-stances.model';
+import { PostLink } from './post-link';
 
+// Fields without a value are left out of the JSON, not sent as null.
 export interface PostBase {
   id: string; // UUID
   author: UserSummary;
-  location: EventLocation | null;
+  location?: EventLocation;
   title: string;
-  description: string;
-  eventUrl: string | null;
+  description?: string;
+  links?: PostLink[];
   startsAt: string; // ISO-8601
-  endsAt: string | null; // ISO-8601
-  tags: string[];
+  endsAt?: string; // ISO-8601
+  /** No end date: no endsAt, and the event never ends. */
+  openEnded: boolean;
   positiveReactionCount: number;
-  negativeReactionCount: number;
+  /** Interesuje mnie and Biorę udział together. */
   participantCount: number;
+  interestedCount: number;
+  goingCount: number;
   commentsCount: number;
   type: PostType;
   status: PostStatus;
-  visibility: PostVisibility;
   createdAt: string; // ISO-8601
-  lastModifiedAt: string | null; // ISO-8601
-  deletedAt: string | null; // ISO-8601
-  myReaction: ReactionType | null;
-  myParticipation: ParticipationType | null;
-  coverMedia: MediaResource | null;
+  lastModifiedAt?: string; // ISO-8601
+  deletedAt?: string; // ISO-8601
+  myReaction?: ReactionType;
+  myParticipation?: ParticipationType;
+  coverMedia?: MediaResource;
+  /** Left out for a guest, or when no friend took a stance. */
+  friendStances?: FriendStances;
 }

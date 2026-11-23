@@ -1,72 +1,172 @@
 <div class="map-wrapper">
+  @if (moved() || searching()) {
+    <button
+      type="button"
+      class="map-search-area"
+      [disabled]="searching()"
+      [attr.aria-busy]="searching()"
+      (click)="onSearchArea()"
+    >
+      @if (searching()) {
+        <span class="map-search-area__spinner" aria-hidden="true"></span>
+      }
+      {{ 'MAP.searchArea' | translate }}
+    </button>
+  }
+  @if (loading()) {
+    <div class="map-loading" role="status" [attr.aria-label]="'MAP.loading' | translate"></div>
+  }
   <mgl-map
-    #map
-    [style]="'https://tiles.openfreemap.org/styles/liberty'"
-    [zoom]="[12]"
-    [center]="[18.23, 54.6]"
+    [style]="mapStyle"
+    [zoom]="[start.zoom]"
+    [center]="start.center"
+    [attributionControl]="{ compact: true }"
     (mapLoad)="onMapLoad($event)"
     (moveEnd)="onMoveEnd($event)"
+    (mapClick)="onMapClick($event)"
+    (styleImageMissing)="onImageMissing($event.id)"
   >
+    @if (radiusArea(); as area) {
+      <mgl-geojson-source id="radius" [data]="area"></mgl-geojson-source>
+      @if (outsideArea(); as outside) {
+        <mgl-geojson-source id="radius-outside" [data]="outside"></mgl-geojson-source>
+        <mgl-layer
+          id="radius-outside"
+          type="fill"
+          source="radius-outside"
+          [paint]="layers.RADIUS_OUTSIDE_PAINT"
+        ></mgl-layer>
+      }
+      <mgl-layer
+        id="radius-line"
+        type="line"
+        source="radius"
+        [paint]="layers.RADIUS_LINE_PAINT"
+      ></mgl-layer>
+    }
     <mgl-geojson-source
       id="posts"
-      [data]="postsGeoJson()"
+      [data]="pins()"
       [cluster]="true"
-      [clusterMaxZoom]="14"
-      [clusterRadius]="50"
-      [clusterProperties]="{
-        coverMediaUrl: ['max', ['get', 'coverMediaUrl']],
-      }"
+      [clusterMaxZoom]="layers.CLUSTER_SOURCE.maxZoom"
+      [clusterRadius]="layers.CLUSTER_SOURCE.radius"
+      [clusterProperties]="layers.CLUSTER_SOURCE.properties"
     ></mgl-geojson-source>
+    <mgl-layer
+      id="titles"
+      type="symbol"
+      source="posts"
+      [minzoom]="layers.TITLE_MIN_ZOOM"
+      [filter]="layers.IS_PIN"
+      [layout]="layers.TITLE_LAYOUT"
+      [paint]="layers.TITLE_PAINT"
+    ></mgl-layer>
+    <mgl-layer
+      id="pins"
+      type="symbol"
+      source="posts"
+      [filter]="layers.IS_PIN"
+      [layout]="layers.PILL_LAYOUT"
+      [paint]="layers.PILL_PAINT"
+      (layerClick)="onPinClick($event)"
+      (layerMouseEnter)="onPinEnter($event)"
+      (layerMouseLeave)="onPinLeave()"
+    ></mgl-layer>
+    <mgl-layer
+      id="clusters"
+      type="circle"
+      source="posts"
+      [filter]="layers.IS_CLUSTER"
+      [paint]="layers.CLUSTER_PAINT"
+      (layerClick)="onClusterClick($event)"
+      (layerMouseEnter)="onPinEnter($event)"
+      (layerMouseLeave)="onPinLeave()"
+    ></mgl-layer>
+    <mgl-layer
+      id="cluster-count"
+      type="symbol"
+      source="posts"
+      [filter]="layers.IS_CLUSTER"
+      [layout]="layers.CLUSTER_COUNT_LAYOUT"
+      [paint]="layers.CLUSTER_COUNT_PAINT"
+    ></mgl-layer>
+    <mgl-layer
+      id="cluster-star"
+      type="symbol"
+      source="posts"
+      [filter]="layers.IS_PICK_CLUSTER"
+      [layout]="layers.CLUSTER_STAR_LAYOUT"
+    ></mgl-layer>
+    <mgl-layer
+      id="lit"
+      type="symbol"
+      source="posts"
+      [filter]="litFilter()"
+      [layout]="layers.LIT_LAYOUT"
+      [paint]="layers.LIT_PAINT"
+      (layerClick)="onPinClick($event)"
+    ></mgl-layer>
+    <mgl-geojson-source id="here" [data]="hereData()"></mgl-geojson-source>
+    <mgl-layer id="here" type="circle" source="here" [paint]="layers.HERE_PAINT"></mgl-layer>
 
-    <mgl-markers-for-clusters source="posts">
-      <!-- Template for single marker -->
-      <ng-template mglPoint let-feature>
-        <mgl-marker #marker [lngLat]="feature.geometry.coordinates">
-          <div
-            role="button"
-            tabindex="0"
-            (click)="onPointClick($event, feature)"
-            (keydown.enter)="onPointClick($event, feature)"
-          >
-            <app-map-marker
-              [coverImageUrl]="feature.properties.coverMediaUrl"
-              [isCluster]="false"
-            ></app-map-marker>
-          </div>
-        </mgl-marker>
-      </ng-template>
-
-      <!-- Template for cluster -->
-      <ng-template mglClusterPoint let-feature>
-        <mgl-marker [lngLat]="feature.geometry.coordinates">
-          <div
-            role="button"
-            tabindex="0"
-            (click)="onClusterClick($event, feature)"
-            (keydown.enter)="onClusterClick($event, feature)"
-          >
-            <app-map-marker
-              [coverImageUrl]="feature.properties.coverMediaUrl"
-              [clusterCount]="feature.properties.point_count"
-              [isCluster]="true"
-            ></app-map-marker>
-          </div>
-        </mgl-marker>
-      </ng-template>
-    </mgl-markers-for-clusters>
-
-    @if (selectedFeature(); as feature) {
+    @if (hovered(); as place) {
+      @if (place !== selected() && hoverInfo(); as info) {
+        <mgl-popup
+          [lngLat]="[place.coordinates.longitude, place.coordinates.latitude]"
+          [closeButton]="false"
+          [closeOnClick]="false"
+          [offset]="16"
+          className="map-hover"
+        >
+          <div class="map-hover__name">{{ info.name }}</div>
+          <div class="map-hover__details">{{ info.details }}</div>
+        </mgl-popup>
+      }
+    }
+    @if (wide() && selected(); as place) {
       <mgl-popup
-        [lngLat]="[feature.geometry.coordinates[0], feature.geometry.coordinates[1]]"
-        [offset]="[0, -20]"
-        (popupClose)="selectedFeature.set(null)"
+        [lngLat]="[place.coordinates.longitude, place.coordinates.latitude]"
+        [closeButton]="false"
+        [closeOnClick]="false"
+        [offset]="cardGap"
+        maxWidth="360px"
+        className="map-card"
       >
-        <app-map-popup
-          [postId]="feature.properties?.['id'] ?? ''"
-          [popupTitle]="feature.properties?.['title'] ?? ''"
-          [popupBody]="feature.properties?.['desc'] ?? ''"
-        ></app-map-popup>
+        <app-map-preview
+          [place]="place"
+          [picks]="picks()"
+          [(opened)]="opened"
+          (openedChange)="fitSelected(false)"
+          (closed)="closePreview()"
+        />
       </mgl-popup>
     }
   </mgl-map>
+  <button
+    type="button"
+    class="map-locate"
+    [disabled]="locating()"
+    [attr.aria-label]="'MAP.locate' | translate"
+    [title]="'MAP.locate' | translate"
+    (click)="locate()"
+  >
+    <ng-icon name="lucideLocateFixed" aria-hidden="true" />
+  </button>
+  @if (picks() && !selected()) {
+    <p class="map-legend">
+      <app-pick-star />
+      {{ 'MAP.legend' | translate }}
+    </p>
+  }
+  @if (!wide() && selected(); as place) {
+    <div class="map-sheet">
+      <app-map-preview
+        [place]="place"
+        [picks]="picks()"
+        [(opened)]="opened"
+        (openedChange)="fitSelected(false)"
+        (closed)="closePreview()"
+      />
+    </div>
+  }
 </div>

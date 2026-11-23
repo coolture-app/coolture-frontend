@@ -1,0 +1,29 @@
+@for (group of groups(); track group.shared) {
+  <section
+    [class.profile__group]="group.title"
+    [class.profile__group--shared]="group.title && group.shared"
+  >
+    @if (group.title) {
+      <h2 class="profile__group-title">{{ group.title | translate }}</h2>
+    }
+    <ul
+      class="profile__interests"
+      [attr.aria-label]="group.title ?? 'PROFILE.interests' | translate"
+    >
+      @for (kind of group.kinds; track kind.key) {
+        <li
+          class="profile__interest profile__interest--kind"
+          [class.profile__interest--other]="!group.shared"
+        >
+          <ng-icon [svg]="kind.icon!" aria-hidden="true" />
+          {{ kind.label }}
+        </li>
+      }
+      @for (interest of group.interests; track interest.key) {
+        <li class="profile__interest" [class.profile__interest--other]="!group.shared">
+          {{ interest.label }}
+        </li>
+      }
+    </ul>
+  </section>
+}

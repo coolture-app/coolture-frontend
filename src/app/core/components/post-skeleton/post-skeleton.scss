@@ -1,0 +1,68 @@
+@use '_mixin' as *;
+
+:host {
+  @include center-flex;
+  width: 100%;
+}
+
+.skeleton {
+  @include card;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  width: 100%;
+  max-width: var(--container-max);
+  margin: var(--space-sm) auto;
+  padding: var(--space-sm) var(--space-md) var(--space-lg);
+}
+
+.skeleton__author {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.skeleton__lines {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: var(--space-xs);
+}
+
+.skeleton__avatar,
+.skeleton__line {
+  background: var(--color-border-light);
+  animation: pulse 1.6s ease-in-out infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+.skeleton__avatar {
+  @include avatar(40px);
+}
+
+.skeleton__line {
+  height: 12px;
+  border-radius: var(--radius-sm);
+
+  &--title {
+    width: 50%;
+    height: 20px;
+  }
+
+  &--short {
+    width: 30%;
+  }
+
+  &--medium {
+    width: 70%;
+  }
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.5;
+  }
+}

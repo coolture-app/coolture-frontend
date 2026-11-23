@@ -12,6 +12,10 @@
     display: flex;
     align-items: center;
     gap: var(--space-sm);
+
+    &--heading {
+      @include section-title;
+    }
   }
 
   &__optional {
