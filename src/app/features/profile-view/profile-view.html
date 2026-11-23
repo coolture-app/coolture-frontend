@@ -46,59 +46,7 @@
         </div>
 
         <div class="profile__top" [class.profile__top--own]="isOwnProfile()">
-          <div class="profile__avatar-wrapper">
-            @if (u.avatar; as avatar) {
-              <button
-                type="button"
-                class="profile__avatar-view"
-                [attr.aria-label]="'PROFILE.showAvatar' | translate"
-                (click)="showAvatar()"
-              >
-                <img [src]="avatar.url" [alt]="u.username" class="profile__avatar" />
-              </button>
-            } @else {
-              <div class="profile__avatar profile__avatar--placeholder">
-                {{ u | initials }}
-              </div>
-            }
-            @if (isOwnProfile()) {
-              @let hasPhoto = !!u.avatar;
-              <app-menu #avatarMenu align="start">
-                <button
-                  menuTrigger
-                  type="button"
-                  class="profile__avatar-badge"
-                  [attr.aria-label]="
-                    (hasPhoto ? 'PROFILE.changeAvatar' : 'PROFILE.addAvatar') | translate
-                  "
-                  [attr.aria-haspopup]="hasPhoto ? 'menu' : null"
-                  [attr.aria-expanded]="hasPhoto ? avatarMenu.open() : null"
-                  [appTooltip]="
-                    (hasPhoto ? 'PROFILE.changeAvatar' : 'PROFILE.addAvatar') | translate
-                  "
-                  [disabled]="isUploadingAvatar()"
-                  (click)="hasPhoto ? avatarMenu.toggle() : avatarInput.click()"
-                >
-                  <ng-icon [name]="hasPhoto ? 'lucideCamera' : 'lucidePlus'" aria-hidden="true" />
-                </button>
-                <app-menu-item icon="lucideCamera" (click)="avatarInput.click()">{{
-                  'PROFILE.changeAvatar' | translate
-                }}</app-menu-item>
-                <app-menu-item icon="lucideTrash2" danger (click)="onRemoveAvatar()">{{
-                  'PROFILE.removeAvatar' | translate
-                }}</app-menu-item>
-              </app-menu>
-              <input
-                #avatarInput
-                class="profile__avatar-input"
-                type="file"
-                accept="image/*"
-                tabindex="-1"
-                aria-hidden="true"
-                (change)="onFileSelected($event)"
-              />
-            }
-          </div>
+          <app-profile-avatar [user]="u" [own]="isOwnProfile()" (changed)="user.set($event)" />
 
           @if (!blocked()) {
             <div class="profile__stats">
@@ -250,14 +198,6 @@
         (followChanged)="onFollowChanged($event)"
       />
     </app-sheet>
-  }
-
-  @if (pickedFile(); as file) {
-    <app-avatar-cropper
-      [file]="file"
-      (saved)="uploadAvatar($event)"
-      (cancelled)="pickedFile.set(null)"
-    />
   }
 } @else {
   <div class="page">

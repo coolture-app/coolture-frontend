@@ -1,4 +1,3 @@
-import { InitialsPipe } from '../../core/pipes/initials.pipe';
 import {
   afterNextRender,
   Component,
@@ -19,14 +18,11 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { InterestGroup, ProfileInterests } from './profile-interests/profile-interests';
 import {
-  lucideCamera,
   lucideEllipsis,
   lucideHeart,
   lucideMapPin,
   lucidePencil,
-  lucidePlus,
   lucideSettings,
-  lucideTrash2,
   lucideUserCheck,
   lucideUserX,
 } from '@ng-icons/lucide';
@@ -35,7 +31,6 @@ import { AuthService } from '../../core/services/auth/auth.service';
 import { Users } from '../../core/services/users/users.service';
 import { RelationsService, unblockQuestion } from '../../core/services/relations/relations.service';
 import { ConfirmService } from '../../core/services/confirm/confirm.service';
-import { MediaService } from '../../core/services/media/media.service';
 import { InterestsService } from '../../core/services/interests/interests.service';
 import { KindsService } from '../../core/services/interests/kinds.service';
 import { kindIcon } from '../../core/icons/kind-icons';
@@ -51,11 +46,10 @@ import { RelationPill } from '../../core/components/relation-pill/relation-pill'
 import { Tooltip } from '../../core/directives/tooltip';
 import { ToastService } from '../../core/services/toast/toast.service';
 import { HomeArea } from '../home-area/home-area';
-import { PhotoViewerService } from '../../core/services/photo-viewer/photo-viewer.service';
-import { AvatarCropper } from '../../core/components/avatar-cropper/avatar-cropper';
 import { NotFoundView } from '../not-found-view/not-found-view';
 import { LoadState } from '../../core/components/load-state/load-state';
 import { ProfileEvents } from './profile-events/profile-events';
+import { ProfileAvatar } from './profile-avatar/profile-avatar';
 import { Menu, MenuItem } from '../../core/components/menu/menu';
 import { currentLang } from '../../core/utils/current-lang';
 
@@ -64,10 +58,9 @@ import { currentLang } from '../../core/utils/current-lang';
   selector: 'app-profile-view',
   imports: [
     ProfileInterests,
-    InitialsPipe,
+    ProfileAvatar,
     TranslatePipe,
     NgIcon,
-    AvatarCropper,
     FollowListComponent,
     Sheet,
     RouterLink,
@@ -85,14 +78,11 @@ import { currentLang } from '../../core/utils/current-lang';
   ],
   viewProviders: [
     provideIcons({
-      lucideCamera,
       lucideEllipsis,
       lucideHeart,
       lucideMapPin,
       lucidePencil,
-      lucidePlus,
       lucideSettings,
-      lucideTrash2,
       lucideUserCheck,
       lucideUserX,
     }),
@@ -102,10 +92,8 @@ import { currentLang } from '../../core/utils/current-lang';
 })
 export class ProfileView {
   private authService = inject(AuthService);
-  private photoViewer = inject(PhotoViewerService);
   private usersService = inject(Users);
   private relationsService = inject(RelationsService);
-  private mediaService = inject(MediaService);
   private interestsService = inject(InterestsService);
   private kindsService = inject(KindsService);
   private toast = inject(ToastService);
@@ -125,15 +113,12 @@ export class ProfileView {
   private username: string | null = null;
   /** Someone you blocked: only who they are, and Odblokuj. */
   readonly blocked = computed(() => !this.isOwnProfile() && !!this.user()?.isBlocked);
-  isUploadingAvatar = signal(false);
 
   editingBio = signal(false);
   savingBio = signal(false);
   bioDraft = signal('');
 
   readonly followBusy = signal(false);
-  /** A photo picked and being placed in the circle, not uploaded yet. */
-  pickedFile = signal<File | null>(null);
   readonly followList = signal<FollowListType | null>(null);
   private followSheet = viewChild(Sheet);
   private router = inject(Router);
@@ -344,13 +329,6 @@ export class ProfileView {
     }
   }
 
-  showAvatar() {
-    const avatar = this.user()?.avatar;
-    if (avatar?.url) {
-      this.photoViewer.show([{ url: avatar.url, width: avatar.width, height: avatar.height }], 0);
-    }
-  }
-
   async onBlock() {
     const u = this.user();
     if (!u || this.isOwnProfile()) return;
@@ -392,67 +370,6 @@ export class ProfileView {
       }
     } catch (err) {
       console.error('Error blocking user', err);
-      this.toast.failed();
-    }
-  }
-
-  onFileSelected(event: Event) {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    input.value = '';
-    if (file) {
-      this.pickedFile.set(file);
-    }
-  }
-
-  async uploadAvatar(cropped: Blob) {
-    this.pickedFile.set(null);
-    const userId = this.user()?.id;
-    if (!userId || !this.isOwnProfile()) return;
-    const file = new File([cropped], 'avatar.jpg', { type: cropped.type });
-
-    this.isUploadingAvatar.set(true);
-
-    try {
-      const mediaResource = await this.mediaService.upload(file, 'PROFILE_IMAGE');
-
-      await firstValueFrom(
-        this.usersService.setOrUpdateProfilePicture(userId, mediaResource.id, mediaResource.id),
-      );
-
-      const updatedUser = await firstValueFrom(this.usersService.getUserById(userId));
-      if (updatedUser) {
-        this.authService.markProfile(updatedUser);
-        this.user.set(updatedUser);
-      }
-    } catch (err) {
-      console.error('Error uploading avatar', err);
-      this.toast.failed();
-    } finally {
-      this.isUploadingAvatar.set(false);
-    }
-  }
-
-  async onRemoveAvatar() {
-    const userId = this.user()?.id;
-    if (!userId || !this.isOwnProfile()) return;
-
-    const confirmed = await this.confirm.ask({
-      title: 'PROFILE.removeAvatarTitle',
-      confirm: 'PROFILE.removeAvatar',
-      danger: true,
-    });
-    if (!confirmed) return;
-
-    try {
-      await firstValueFrom(this.usersService.deleteProfileImage(userId));
-      const updatedUser = await firstValueFrom(this.usersService.getUserById(userId));
-      if (updatedUser) {
-        this.authService.markProfile(updatedUser);
-        this.user.set(updatedUser);
-      }
-    } catch (err) {
-      console.error('Error removing avatar', err);
       this.toast.failed();
     }
   }

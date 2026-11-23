@@ -1,6 +1,6 @@
 import { ConfirmService } from '../../core/services/confirm/confirm.service';
 import { TestBed } from '@angular/core/testing';
-import { HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, TestRequest } from '@angular/common/http/testing';
 import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { Title } from '@angular/platform-browser';
@@ -11,6 +11,10 @@ import { AuthService } from '../../core/services/auth/auth.service';
 import { PhotoViewerService } from '../../core/services/photo-viewer/photo-viewer.service';
 import { UserProfile } from '../../core/models/users/user-profile.model';
 import { InterestCatalog } from '../../core/models/interests/interest.model';
+import { MediaService } from '../../core/services/media/media.service';
+import { MediaResource } from '../../core/models/media/media-resource.model';
+import { AvatarCropper } from '../../core/components/avatar-cropper/avatar-cropper';
+import { until } from '../../core/testing/until.testing';
 
 const ME: UserProfile = {
   id: 'me-1',
@@ -186,10 +190,10 @@ describe('ProfileView', () => {
   describe('your photo', () => {
     it('opens the file picker at once while there is none', async () => {
       await open('/profile');
-      const input = element.querySelector<HTMLInputElement>('.profile__avatar-input')!;
+      const input = element.querySelector<HTMLInputElement>('.avatar-input')!;
       const pick = spyOn(input, 'click');
 
-      element.querySelector<HTMLButtonElement>('.profile__avatar-badge')!.click();
+      element.querySelector<HTMLButtonElement>('.avatar-badge')!.click();
       harness.detectChanges();
 
       expect(pick).toHaveBeenCalled();
@@ -199,7 +203,7 @@ describe('ProfileView', () => {
     it('offers to change or remove it once there is one', async () => {
       await open('/profile', { ...ME, avatar: { id: 'm-1', url: 'photo.jpg' } });
 
-      element.querySelector<HTMLButtonElement>('.profile__avatar-badge')!.click();
+      element.querySelector<HTMLButtonElement>('.avatar-badge')!.click();
       harness.detectChanges();
 
       const items = [...document.querySelectorAll('[role="menuitem"]')].map((b) =>
@@ -211,7 +215,7 @@ describe('ProfileView', () => {
     it('enlarges the photo on a tap, apart from the badge', async () => {
       await open('/profile', { ...ME, avatar: { id: 'm-1', url: 'photo.jpg' } });
 
-      element.querySelector<HTMLButtonElement>('.profile__avatar-view')!.click();
+      element.querySelector<HTMLButtonElement>('.avatar-view')!.click();
 
       expect(TestBed.inject(PhotoViewerService).open()?.photos[0].url).toBe('photo.jpg');
       expect(document.querySelector('[role="menu"]')).toBeNull();
@@ -219,7 +223,7 @@ describe('ProfileView', () => {
 
     it('places a picked photo in the circle before anything is uploaded', async () => {
       await open('/profile');
-      const input = element.querySelector<HTMLInputElement>('.profile__avatar-input')!;
+      const input = element.querySelector<HTMLInputElement>('.avatar-input')!;
       const files = new DataTransfer();
       files.items.add(new File(['x'], 'me.png', { type: 'image/png' }));
       input.files = files.files;
@@ -230,6 +234,44 @@ describe('ProfileView', () => {
       expect(element.querySelector('app-avatar-cropper')).not.toBeNull();
       http.expectNone((r) => r.url.includes('/media'));
       element.querySelector('dialog')?.close();
+    });
+
+    it('uploads the placed photo and shows the profile saved with it', async () => {
+      await open('/profile');
+      const upload = spyOn(TestBed.inject(MediaService), 'upload').and.resolveTo({
+        id: 'm-2',
+      } as MediaResource);
+      const input = element.querySelector<HTMLInputElement>('.avatar-input')!;
+      const files = new DataTransfer();
+      files.items.add(new File(['x'], 'me.png', { type: 'image/png' }));
+      input.files = files.files;
+      input.dispatchEvent(new Event('change'));
+      harness.detectChanges();
+      const cropper = harness.fixture.debugElement.query(
+        (d) => d.componentInstance instanceof AvatarCropper,
+      ).componentInstance as AvatarCropper;
+      const next = async (url: string, method: string) => {
+        let request: TestRequest | undefined;
+        await until(
+          () => !!(request = http.match((r) => r.method === method && r.url.endsWith(url))[0]),
+          `${method} ${url}`,
+        );
+        return request!;
+      };
+
+      cropper.saved.emit(new Blob(['y'], { type: 'image/jpeg' }));
+
+      expect(upload).toHaveBeenCalledWith(jasmine.any(File), 'PROFILE_IMAGE');
+      const put = await next('/users/me-1/profile-image', 'PUT');
+      expect(put.request.body).toEqual({ fullMediaId: 'm-2', thumbnailMediaId: 'm-2' });
+      put.flush({});
+      (await next('/users/me-1', 'GET')).flush({ ...ME, avatar: { id: 'm-2', url: 'new.jpg' } });
+      await until(() => !!TestBed.inject(AuthService).currentUser()?.avatar, 'the saved profile');
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+
+      expect(element.querySelector('img.avatar')?.getAttribute('src')).toBe('new.jpg');
+      expect(element.querySelector('app-avatar-cropper')).toBeNull();
     });
   });
 
@@ -311,7 +353,7 @@ describe('ProfileView', () => {
     });
 
     it('has no photo badge', () => {
-      expect(element.querySelector('.profile__avatar-badge')).toBeNull();
+      expect(element.querySelector('.avatar-badge')).toBeNull();
     });
 
     it('leaves an empty bio out and has no pencil', () => {
