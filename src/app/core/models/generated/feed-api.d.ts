@@ -83,7 +83,7 @@ export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
     /**
-     * @description How this page was ordered. RANKED is the scorer, also for guests and new users. UPCOMING is the fallback when ranking failed. The UI must work the same for both. New values may be added, so treat unknown ones like RANKED.
+     * @description How this page was ordered (README.md).
      * @enum {string}
      */
     FeedMode: 'RANKED' | 'UPCOMING';
@@ -300,7 +300,7 @@ export interface components {
     Cursor: string;
     /** @description Page size. Values above 100 are capped. Non-numeric values return 400. */
     Limit: number;
-    /** @description Send together with longitude, rounded to 2 decimals. The centre of radiusKm and of NEAREST. On /feed, the first page's position is also used for proximity, and later pages send it again only with radiusKm. Without it, /feed measures proximity from the viewer's home, if they set one. */
+    /** @description Send together with longitude, rounded to 2 decimals. The centre of radiusKm and of NEAREST, and on /feed of proximity (README.md). */
     Latitude: number;
     /** @description Send together with latitude. See latitude. */
     Longitude: number;
@@ -337,7 +337,7 @@ export interface operations {
         cursor?: components['parameters']['Cursor'];
         /** @description Page size. Values above 100 are capped. Non-numeric values return 400. */
         limit?: components['parameters']['Limit'];
-        /** @description Send together with longitude, rounded to 2 decimals. The centre of radiusKm and of NEAREST. On /feed, the first page's position is also used for proximity, and later pages send it again only with radiusKm. Without it, /feed measures proximity from the viewer's home, if they set one. */
+        /** @description Send together with longitude, rounded to 2 decimals. The centre of radiusKm and of NEAREST, and on /feed of proximity (README.md). */
         latitude?: components['parameters']['Latitude'];
         /** @description Send together with latitude. See latitude. */
         longitude?: components['parameters']['Longitude'];
@@ -367,7 +367,7 @@ export interface operations {
     };
     requestBody?: never;
     responses: {
-      /** @description One page. A short or empty page doesn't mean the end. Only hasMore false does. */
+      /** @description One page. */
       200: {
         headers: {
           [name: string]: unknown;
@@ -387,7 +387,7 @@ export interface operations {
         cursor?: components['parameters']['Cursor'];
         /** @description Page size. Values above 100 are capped. Non-numeric values return 400. */
         limit?: components['parameters']['Limit'];
-        /** @description NEAREST needs latitude and longitude, and shows only posts with a place. STANCE_NEWEST needs participationTypes and puts the viewer's newest of those stances first. UPCOMING mixes events already running into the events to come, every 5th card, and with includePast the ended events follow them. PAST shows only ended events, the latest end first. POPULAR orders by likes + Interesuje mnie + Biorę udział (README.md). */
+        /** @description NEAREST needs latitude and longitude, and shows only posts with a place. STANCE_NEWEST needs participationTypes and puts the viewer's newest of those stances first. The orders are in README.md. */
         sortBy?: 'RECENT' | 'POPULAR' | 'UPCOMING' | 'PAST' | 'NEAREST' | 'STANCE_NEWEST';
         /** @description When false, ended events are hidden. UPCOMING puts them after every event to come. */
         includePast?: components['parameters']['IncludePast'];
@@ -406,7 +406,7 @@ export interface operations {
         from?: components['parameters']['From'];
         /** @description Only events running at some moment up to this time: their start is at or before it. Setting this turns the past-events window off. */
         to?: components['parameters']['To'];
-        /** @description Send together with longitude, rounded to 2 decimals. The centre of radiusKm and of NEAREST. On /feed, the first page's position is also used for proximity, and later pages send it again only with radiusKm. Without it, /feed measures proximity from the viewer's home, if they set one. */
+        /** @description Send together with longitude, rounded to 2 decimals. The centre of radiusKm and of NEAREST, and on /feed of proximity (README.md). */
         latitude?: components['parameters']['Latitude'];
         /** @description Send together with latitude. See latitude. */
         longitude?: components['parameters']['Longitude'];
