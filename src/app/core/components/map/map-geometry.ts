@@ -3,6 +3,41 @@ import { GeoPoint } from '../../models/common/geo.model';
 import { haversineMeters } from '../../services/location/location.service';
 import { MapBounds } from '../../models/posts/map-bounds.model';
 
+/** What "Szukaj w tym obszarze" hands over: the circle inside the view, touching its nearer edges. */
+export interface MapArea {
+  centre: GeoPoint;
+  /** Whole km, at least 1. */
+  radiusKm: number;
+}
+
+/** The circle around the rounded `centre` that touches the nearer of the view's `top` and `east` edges. */
+export function areaInView(centre: GeoPoint, top: number, east: number): MapArea {
+  const at = { latitude: round(centre.latitude), longitude: round(centre.longitude) };
+  const toEdgeKm =
+    Math.min(
+      haversineMeters(at, { latitude: top, longitude: at.longitude }),
+      haversineMeters(at, { latitude: at.latitude, longitude: east }),
+    ) / 1000;
+  return { centre: at, radiusKm: Math.max(1, Math.round(toEdgeKm)) };
+}
+
+/**
+ * The map's start shows at least `count` pins: `enough` when the view has them, `wider` when fewer are loaded at all,
+ * or else the points to fit, the centre and the `count` pins nearest it.
+ */
+export function startStep(
+  view: Box,
+  centre: GeoPoint,
+  marks: readonly { coordinates: GeoPoint }[],
+  count: number,
+): 'enough' | 'wider' | GeoPoint[] {
+  if (marks.filter((m) => inBox(view, m.coordinates)).length >= count) {
+    return 'enough';
+  }
+  const closest = nearest(marks, centre, count);
+  return closest.length < count ? 'wider' : [centre, ...closest.map((m) => m.coordinates)];
+}
+
 export interface Box {
   west: number;
   south: number;

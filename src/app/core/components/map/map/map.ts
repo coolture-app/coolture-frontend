@@ -2,24 +2,26 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   effect,
   inject,
   input,
-  OnDestroy,
   output,
   signal,
   untracked,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideLocateFixed } from '@ng-icons/lucide';
-import { Subject, takeUntil, debounceTime, throttleTime, asyncScheduler } from 'rxjs';
+import { Subject, debounceTime, throttleTime, asyncScheduler } from 'rxjs';
 import type {
   FilterSpecification,
   GeoJSONSource,
   Map as MapLibreMap,
   MapLayerMouseEvent,
+  MapLibreEvent,
+  MapMouseEvent,
 } from 'maplibre-gl';
 import {
   MapComponent as MglMapComponent,
@@ -32,15 +34,15 @@ import { PostFilterParams } from '../../../models/posts/post-filter-params.model
 import { PostMark } from '../../../models/posts/post-mark.model';
 import { collapseCredit, followLanguage, MAP_STYLE, quietMissingIcons } from '../map-style';
 import {
+  areaInView,
   boundsOf,
   circle,
   fitPin,
-  inBox,
-  nearest,
+  MapArea,
   outside,
   pointData,
   ringPoints,
-  round,
+  startStep,
   toBox,
 } from '../map-geometry';
 import { MapMarks } from '../map-marks';
@@ -50,7 +52,7 @@ import { MapMemory } from '../map-memory';
 import { MapPreview } from '../map-preview/map-preview';
 import { PickStar } from '../pick-star/pick-star';
 import { GeoPoint, TRICITY } from '../../../models/common/geo.model';
-import { haversineMeters, LocationService } from '../../../services/location/location.service';
+import { LocationService } from '../../../services/location/location.service';
 import { ToastService } from '../../../services/toast/toast.service';
 import { mediaQuery, WIDE_FROM_PX } from '../../../services/media-query/media-query';
 
@@ -71,17 +73,11 @@ const WIDEST_START_ZOOM = 9;
 const FIT_MARGIN_PX = 32;
 /** Between a pin and its card on wide screens. */
 const CARD_GAP_PX = 18;
-const PIN_LAYERS = ['pins', 'lit'];
 /** A cluster tap zooms at least this far in, and no further than `MAX_TAP_ZOOM`. */
 const MIN_TAP_ZOOM_STEP = 1.5;
 const MAX_TAP_ZOOM = 18;
-
-/** What "Szukaj w tym obszarze" hands over: the circle inside the view, touching its nearer edges. */
-export interface MapArea {
-  centre: GeoPoint;
-  /** Whole km, at least 1. */
-  radiusKm: number;
-}
+/** Marks the start's own moves, as MapLibre hands it to their `moveend`: any other move ends the start's easing out. */
+const START_MOVE = { startMove: true };
 
 @Component({
   selector: 'app-map',
@@ -101,12 +97,13 @@ export interface MapArea {
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[style.--map-top-inset.px]': 'topInset()' },
 })
-export class Map implements OnDestroy {
+export class Map {
   private store = inject(MapMarks);
   private location = inject(LocationService);
   private translate = inject(TranslateService);
   private memory = inject(MapMemory);
   private toast = inject(ToastService);
+  private destroyRef = inject(DestroyRef);
 
   readonly mapStyle = MAP_STYLE;
   readonly layers = layers;
@@ -191,7 +188,7 @@ export class Map implements OnDestroy {
   });
   readonly litFilter = computed<FilterSpecification>(() => [
     'all',
-    ['!', ['has', 'point_count']],
+    layers.IS_PIN,
     ['==', ['get', 'id'], this.selected()?.id ?? ''],
   ]);
   readonly hereData = computed(() => pointData(this.here()));
@@ -225,7 +222,6 @@ export class Map implements OnDestroy {
   /** Only the latest selection's fit runs. */
   private fitRun = 0;
 
-  private destroy$ = new Subject<void>();
   private boundsChange$ = new Subject<void>();
   private moving$ = new Subject<void>();
 
@@ -254,7 +250,7 @@ export class Map implements OnDestroy {
         const shown = map.getContainer().clientWidth > 0;
         requestAnimationFrame(() => {
           map.resize();
-          untracked(() => this.showFocus(map, post, shown));
+          this.showFocus(map, post, shown);
         });
       }
     });
@@ -282,26 +278,21 @@ export class Map implements OnDestroy {
     });
 
     this.boundsChange$
-      .pipe(debounceTime(100), takeUntil(this.destroy$))
+      .pipe(debounceTime(100), takeUntilDestroyed())
       .subscribe(() => this.fetchForView());
 
     // While the map moves, pins ahead of it load before the view gets there.
     this.moving$
       .pipe(
         throttleTime(250, asyncScheduler, { leading: true, trailing: true }),
-        takeUntil(this.destroy$),
+        takeUntilDestroyed(),
       )
       .subscribe(() => this.fetchForView());
 
-    this.store.settled.pipe(takeUntil(this.destroy$)).subscribe(() => {
+    this.store.settled.pipe(takeUntilDestroyed()).subscribe(() => {
       this.searching.set(false);
       this.easeOutIfEmpty();
     });
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   onMapLoad(map: MapLibreMap): void {
@@ -316,7 +307,7 @@ export class Map implements OnDestroy {
     collapseCredit(map);
     quietMissingIcons(map);
     const labels = followLanguage(map, this.translate);
-    this.destroy$.subscribe(() => labels.unsubscribe());
+    this.destroyRef.onDestroy(() => labels.unsubscribe());
     layers.addPillImages(map);
     layers.addKindImages(map);
     const focus = this.focus();
@@ -359,12 +350,14 @@ export class Map implements OnDestroy {
   private async startAtPosition(map: MapLibreMap): Promise<void> {
     const position = await this.location.currentIfAllowed(POSITION_WAIT_MS);
     if (position && !this.moved() && !this.radiusArea() && !this.selectedPost()) {
-      map.jumpTo({ center: [position.longitude, position.latitude], zoom: POSITION_ZOOM });
+      map.jumpTo(
+        { center: [position.longitude, position.latitude], zoom: POSITION_ZOOM },
+        START_MOVE,
+      );
     }
   }
 
   private showFocus(map: MapLibreMap, post: PostMark, animate: boolean): void {
-    this.easingOut = false;
     this.focused.set(post);
     this.select(post.id);
     // A pin on several posts opens on this one.
@@ -381,16 +374,10 @@ export class Map implements OnDestroy {
 
   onSearchArea(): void {
     const map = this.map!;
-    // The middle and the top edge of what isn't under a floating bar.
-    const centre = map.getCenter();
+    const { lat, lng } = map.getCenter();
+    // The top edge of what isn't under a floating bar.
     const top = map.unproject([map.getCanvas().clientWidth / 2, this.topInset()]);
-    const at = { latitude: round(centre.lat), longitude: round(centre.lng) };
-    const toEdgeKm =
-      Math.min(
-        haversineMeters(at, { latitude: top.lat, longitude: at.longitude }),
-        haversineMeters(at, { latitude: at.latitude, longitude: map.getBounds().getEast() }),
-      ) / 1000;
-    const area = { centre: at, radiusKm: Math.max(1, Math.round(toEdgeKm)) };
+    const area = areaInView({ latitude: lat, longitude: lng }, top.lat, map.getBounds().getEast());
     this.moved.set(false);
     // The same area again changes no filter, so nothing would load and end the spinner.
     this.searching.set(!this.isFilter(area));
@@ -408,7 +395,6 @@ export class Map implements OnDestroy {
       this.toast.show(this.translate.instant('MAP.locateFailed'));
       return;
     }
-    this.easingOut = false;
     this.here.set(at);
     this.map.easeTo({
       center: [at.longitude, at.latitude],
@@ -424,7 +410,6 @@ export class Map implements OnDestroy {
     if (!place || !this.map) {
       return;
     }
-    this.easingOut = false;
     this.select(place.posts[0].id);
     this.hovered.set(null);
     this.fitSelected(true);
@@ -483,7 +468,6 @@ export class Map implements OnDestroy {
     if (!feature || !map) {
       return;
     }
-    this.easingOut = false;
     const center = (feature.geometry as Point).coordinates as [number, number];
     const source = map.getSource<GeoJSONSource>('posts');
     void source?.getClusterExpansionZoom(feature.properties['cluster_id']).then((zoom) => {
@@ -498,9 +482,8 @@ export class Map implements OnDestroy {
   }
 
   /** A tap on the map itself, not on a pin, closes the preview. */
-  onMapClick(event: unknown): void {
-    const { point } = event as { point: [number, number] };
-    const hit = this.map?.queryRenderedFeatures(point, { layers: [...PIN_LAYERS, 'clusters'] });
+  onMapClick({ point }: MapMouseEvent): void {
+    const hit = this.map?.queryRenderedFeatures(point, { layers: ['pins', 'lit', 'clusters'] });
     if (!hit?.length) {
       this.select(null);
     }
@@ -532,11 +515,12 @@ export class Map implements OnDestroy {
     this.opened.set(null);
   }
 
-  onMoveEnd(event: unknown): void {
-    const { originalEvent } = event as { originalEvent?: Event };
+  onMoveEnd(event: MapLibreEvent<Event | undefined> & Partial<typeof START_MOVE>): void {
     // Only the user's own gestures carry an original event; fitting the radius or the start doesn't.
-    if (originalEvent) {
+    if (event.originalEvent) {
       this.moved.set(true);
+    }
+    if (!event.startMove) {
       this.easingOut = false;
     }
     this.remember(this.selected());
@@ -578,31 +562,28 @@ export class Map implements OnDestroy {
   /** At the start, a view with fewer than `START_PINS` pins eases out to the nearest ones. */
   private easeOutIfEmpty(): void {
     const map = this.map;
-    if (!this.easingOut || !map || this.moved()) {
-      return;
-    }
-    const view = toBox(map.getBounds());
-    const marks = this.store.marks();
-    if (marks.filter((m) => inBox(view, m.coordinates)).length >= START_PINS) {
-      this.easingOut = false;
+    // A pin whose card already fits moves nothing when tapped, so a selection stops the start too.
+    if (!this.easingOut || !map || this.selectedPost()) {
       return;
     }
     const { lng, lat } = map.getCenter();
-    const centre = { latitude: lat, longitude: lng };
-    const closest = nearest(marks, centre, START_PINS);
-    if (closest.length < START_PINS) {
+    const step = startStep(
+      toBox(map.getBounds()),
+      { latitude: lat, longitude: lng },
+      this.store.marks(),
+      START_PINS,
+    );
+    const wider = map.getZoom() - 2;
+    if (step === 'wider' && wider >= WIDEST_START_ZOOM) {
       // Nothing more is loaded around this view, so look wider and check again on the answer.
-      if (map.getZoom() - 2 >= WIDEST_START_ZOOM) {
-        map.easeTo({ zoom: map.getZoom() - 2, duration: EASE_MS });
-      } else {
-        this.easingOut = false;
-      }
+      map.easeTo({ zoom: wider, duration: EASE_MS }, START_MOVE);
       return;
     }
     this.easingOut = false;
-    const camera = map.cameraForBounds(boundsOf([centre, ...closest.map((m) => m.coordinates)]), {
-      padding: 48,
-    });
+    if (!Array.isArray(step)) {
+      return;
+    }
+    const camera = map.cameraForBounds(boundsOf(step), { padding: 48 });
     if (camera?.zoom !== undefined) {
       map.easeTo({
         center: [lng, lat],

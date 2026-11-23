@@ -1,4 +1,4 @@
-import { fitPin } from './map-geometry';
+import { fitPin, startStep } from './map-geometry';
 
 describe('fitPin', () => {
   const view = { left: 0, top: 0, right: 800, bottom: 600 };
@@ -30,5 +30,28 @@ describe('fitPin', () => {
 
   it('puts a pin at the top when its card fits on neither side', () => {
     expect(fitPin({ x: 400, y: 300 }, view, 700, 24, 18)).toEqual({ dx: 0, dy: -276 });
+  });
+});
+
+describe('startStep', () => {
+  const view = { west: 18.5, south: 54.3, east: 18.7, north: 54.4 };
+  const centre = { latitude: 54.35, longitude: 18.6 };
+  const at = (latitude: number, longitude: number) => ({ coordinates: { latitude, longitude } });
+
+  it('is done when the view holds enough pins', () => {
+    expect(startStep(view, centre, [at(54.31, 18.6), at(54.39, 18.6)], 2)).toBe('enough');
+  });
+
+  it('looks wider when fewer pins are loaded at all', () => {
+    expect(startStep(view, centre, [at(54.5, 18.6)], 2)).toBe('wider');
+  });
+
+  it('fits the centre and the nearest pins outside the view', () => {
+    const marks = [at(54.31, 18.6), at(55, 18.6), at(54.45, 18.6)];
+    expect(startStep(view, centre, marks, 2)).toEqual([
+      centre,
+      { latitude: 54.31, longitude: 18.6 },
+      { latitude: 54.45, longitude: 18.6 },
+    ]);
   });
 });
