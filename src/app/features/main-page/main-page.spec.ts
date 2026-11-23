@@ -537,6 +537,32 @@ describe('MainPage', () => {
       await settle();
       expect(text()).toContain('MAIN_PAGE.nearestFromHome');
     });
+
+    it('measures from the home after Wszędzie, not from the place picked before it', async () => {
+      TestBed.inject(AuthService).home.set({
+        name: 'Oliwa, Gdańsk',
+        coordinates: { latitude: 54.41, longitude: 18.56 },
+      });
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      component.pickPlace({ name: 'Sopot', coordinates: { latitude: 54.44, longitude: 18.56 } });
+      await debounce();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      await openPlace();
+      option('MAIN_PAGE.anywhere').click();
+      await debounce();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      component.setTab('all');
+      await settle();
+      expectPosts().flush(page());
+
+      await component.setSortBy('NEAREST');
+      await settle();
+
+      expect(param(expectPosts(), 'latitude')).toBe('54.41');
+      await openPlace();
+      expect(option('Sopot')).toBeUndefined();
+    });
   });
 
   describe('the bar above the feed', () => {

@@ -333,6 +333,9 @@ export class MainPage implements OnDestroy {
           void this.locateForFilter();
         } else if (place === 'online') {
           this.showOnline();
+        } else if (place === '') {
+          // Else Najbliższe would go on measuring from a place the pill no longer shows.
+          this.place.picked.set(null);
         }
       });
 
