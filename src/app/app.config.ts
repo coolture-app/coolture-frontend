@@ -13,7 +13,6 @@ import { provideClientHydration, withEventReplay } from '@angular/platform-brows
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import { provideTranslateService } from '@ngx-translate/core';
 import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
-import { errorInterceptor } from './core/auth/auth.interceptor';
 import { authTokenInterceptor } from './core/auth/auth-token.interceptor';
 import { originVerifyInterceptor } from './core/auth/origin-verify.interceptor';
 import { devTools } from '../environments/dev-tools';
@@ -35,7 +34,7 @@ export const appConfig: ApplicationConfig = {
     provideClientHydration(withEventReplay()),
     provideHttpClient(
       withFetch(),
-      withInterceptors([errorInterceptor, authTokenInterceptor, originVerifyInterceptor]),
+      withInterceptors([authTokenInterceptor, originVerifyInterceptor]),
     ),
     ...(devTools?.providers ?? []),
     provideTranslateService({
