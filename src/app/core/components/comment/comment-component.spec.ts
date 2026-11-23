@@ -247,28 +247,6 @@ describe('CommentComponent', () => {
       expect(buttonNamed('COMMENT.delete-comment')).toBeDefined();
     });
 
-    it('closes the menu on the next click anywhere', async () => {
-      await render(mine());
-      (element().querySelector('.comment__menu-btn') as HTMLButtonElement).click();
-
-      document.body.click();
-      await fixture.whenStable();
-
-      expect(component.menuOpen()).toBeFalse();
-    });
-
-    it('opens again with one click after Esc closed it', async () => {
-      await render(mine());
-      const button = element().querySelector('.comment__menu-btn') as HTMLButtonElement;
-      button.click();
-      button.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-      expect(component.menuOpen()).toBeFalse();
-
-      button.click();
-
-      expect(component.menuOpen()).toBeTrue();
-    });
-
     async function startEditing(): Promise<HTMLTextAreaElement> {
       component.startEditing();
       await fixture.whenStable();

@@ -192,7 +192,7 @@ describe('UserProfileView', () => {
       harness.detectChanges();
 
       expect(pick).toHaveBeenCalled();
-      expect(element.querySelector('.profile__menu--avatar')).toBeNull();
+      expect(element.querySelector('[role="menu"]')).toBeNull();
     });
 
     it('offers to change or remove it once there is one', async () => {
@@ -201,7 +201,7 @@ describe('UserProfileView', () => {
       element.querySelector<HTMLButtonElement>('.profile__avatar-badge')!.click();
       harness.detectChanges();
 
-      const items = [...element.querySelectorAll('.profile__menu--avatar button')].map((b) =>
+      const items = [...element.querySelectorAll('[role="menuitem"]')].map((b) =>
         b.textContent?.trim(),
       );
       expect(items).toEqual(['PROFILE.changeAvatar', 'PROFILE.removeAvatar']);
@@ -213,7 +213,7 @@ describe('UserProfileView', () => {
       element.querySelector<HTMLButtonElement>('.profile__avatar-view')!.click();
 
       expect(TestBed.inject(PhotoViewerService).open()?.photos[0].url).toBe('photo.jpg');
-      expect(element.querySelector('.profile__menu--avatar')).toBeNull();
+      expect(element.querySelector('[role="menu"]')).toBeNull();
     });
 
     it('places a picked photo in the circle before anything is uploaded', async () => {
@@ -298,7 +298,7 @@ describe('UserProfileView', () => {
 
       element.querySelector<HTMLButtonElement>('.profile__corner button')!.click();
       harness.detectChanges();
-      expect(text('.profile__menu')).toBe('PROFILE.block');
+      expect(text('[role="menu"]')).toBe('PROFILE.block');
     });
 
     it('has no friend mark while only you follow them', () => {

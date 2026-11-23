@@ -24,13 +24,10 @@ describe('PostOwnerMenu', () => {
     fixture.detectChanges();
   }
 
-  it('opens with Edytuj and Usuń, and closes on a click elsewhere', () => {
+  it('opens with Edytuj and Usuń', () => {
     openMenu();
-    expect(items().map((b) => b.textContent?.trim())).toEqual(['POST.edit', 'POST.delete']);
 
-    document.body.click();
-    fixture.detectChanges();
-    expect(items()).toEqual([]);
+    expect(items().map((b) => b.textContent?.trim())).toEqual(['POST.edit', 'POST.delete']);
   });
 
   it('opens the edit page', () => {

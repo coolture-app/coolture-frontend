@@ -24,6 +24,9 @@ import {
   lucidePencil,
   lucidePlus,
   lucideSettings,
+  lucideTrash2,
+  lucideUserCheck,
+  lucideUserX,
 } from '@ng-icons/lucide';
 
 import { AuthService } from '../../core/services/auth/auth.service';
@@ -50,6 +53,7 @@ import { AvatarCropper } from '../../core/components/avatar-cropper/avatar-cropp
 import { NotFoundView } from '../not-found-view/not-found-view';
 import { LoadState } from '../../core/components/load-state/load-state';
 import { ProfileEvents } from './profile-events/profile-events';
+import { Menu, MenuItem } from '../../core/components/menu/menu';
 
 /** Your own profile at `/profile`, and anyone's at `/users/:username`. */
 @Component({
@@ -71,6 +75,8 @@ import { ProfileEvents } from './profile-events/profile-events';
     HomeArea,
     NotFoundView,
     LoadState,
+    Menu,
+    MenuItem,
     ProfileEvents,
   ],
   viewProviders: [
@@ -82,11 +88,13 @@ import { ProfileEvents } from './profile-events/profile-events';
       lucidePencil,
       lucidePlus,
       lucideSettings,
+      lucideTrash2,
+      lucideUserCheck,
+      lucideUserX,
     }),
   ],
   templateUrl: './my-profile-view.html',
   styleUrl: './my-profile-view.scss',
-  host: { '(document:click)': 'closeMenus()' },
 })
 export class UserProfileView {
   private authService = inject(AuthService);
@@ -123,12 +131,9 @@ export class UserProfileView {
   savingBio = signal(false);
   bioDraft = signal('');
 
-  menuOpen = signal(false);
   readonly followBusy = signal(false);
-  avatarMenuOpen = signal(false);
   /** A photo picked and being placed in the circle, not uploaded yet. */
   pickedFile = signal<File | null>(null);
-  private avatarInput = viewChild<ElementRef<HTMLInputElement>>('avatarInput');
   readonly followList = signal<FollowListType | null>(null);
   private followSheet = viewChild(Sheet);
   private router = inject(Router);
@@ -211,8 +216,6 @@ export class UserProfileView {
 
   private async load(username: string | null) {
     this.followList.set(null);
-    this.menuOpen.set(false);
-    this.avatarMenuOpen.set(false);
     this.editingBio.set(false);
     this.notFound.set(false);
     this.failed.set(false);
@@ -332,44 +335,11 @@ export class UserProfileView {
     }
   }
 
-  /** The toggles stop the click, so the host's document listener closes the menus on any other. */
-  toggleMenu(event: Event) {
-    event.stopPropagation();
-    this.avatarMenuOpen.set(false);
-    this.menuOpen.update((open) => !open);
-  }
-
   showAvatar() {
     const avatar = this.user()?.avatar;
     if (avatar?.url) {
       this.photoViewer.show([{ url: avatar.url, width: avatar.width, height: avatar.height }], 0);
     }
-  }
-
-  /** Without a photo there's nothing to choose between, so the file picker opens at once. */
-  onAvatarTap(event: Event) {
-    if (this.user()?.avatar) {
-      event.stopPropagation();
-      this.menuOpen.set(false);
-      this.avatarMenuOpen.update((open) => !open);
-    } else {
-      this.avatarInput()?.nativeElement.click();
-    }
-  }
-
-  closeAvatarMenu(event: Event) {
-    event.stopPropagation();
-    this.avatarMenuOpen.set(false);
-  }
-
-  protected closeMenus() {
-    this.menuOpen.set(false);
-    this.avatarMenuOpen.set(false);
-  }
-
-  closeMenu(event: Event) {
-    event.stopPropagation();
-    this.menuOpen.set(false);
   }
 
   async onBlock() {

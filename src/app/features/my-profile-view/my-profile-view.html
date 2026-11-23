@@ -23,31 +23,29 @@
               <ng-icon name="lucideSettings" aria-hidden="true" />
             </a>
           } @else if (user()) {
-            <button
-              type="button"
-              class="profile__icon-btn"
-              aria-haspopup="true"
-              [attr.aria-expanded]="menuOpen()"
-              [attr.aria-label]="'PROFILE.more' | translate"
-              [appTooltip]="'PROFILE.more' | translate"
-              (click)="toggleMenu($event)"
-              (keydown.escape)="closeMenu($event)"
-            >
-              <ng-icon name="lucideEllipsis" aria-hidden="true" />
-            </button>
-            @if (menuOpen()) {
-              <div class="profile__menu">
-                <button
-                  type="button"
-                  class="profile__menu-item"
-                  [class.profile__menu-item--danger]="!user()?.isBlocked"
-                  (click)="onBlock()"
-                  (keydown.escape)="closeMenu($event)"
-                >
-                  {{ (user()?.isBlocked ? 'PROFILE.unblock' : 'PROFILE.block') | translate }}
-                </button>
-              </div>
-            }
+            <app-menu #menu>
+              <button
+                menuTrigger
+                type="button"
+                class="profile__icon-btn"
+                aria-haspopup="menu"
+                [attr.aria-expanded]="menu.open()"
+                [attr.aria-label]="'PROFILE.more' | translate"
+                [appTooltip]="'PROFILE.more' | translate"
+                (click)="menu.toggle()"
+              >
+                <ng-icon name="lucideEllipsis" aria-hidden="true" />
+              </button>
+              @if (user()?.isBlocked) {
+                <app-menu-item icon="lucideUserCheck" (click)="onBlock()">{{
+                  'PROFILE.unblock' | translate
+                }}</app-menu-item>
+              } @else {
+                <app-menu-item icon="lucideUserX" danger (click)="onBlock()">{{
+                  'PROFILE.block' | translate
+                }}</app-menu-item>
+              }
+            </app-menu>
           }
         </div>
 
@@ -69,20 +67,31 @@
             }
             @if (isOwnProfile()) {
               @let hasPhoto = !!user()?.avatar;
-              <button
-                type="button"
-                class="profile__avatar-badge"
-                [attr.aria-label]="
-                  (hasPhoto ? 'PROFILE.changeAvatar' : 'PROFILE.addAvatar') | translate
-                "
-                [attr.aria-haspopup]="hasPhoto ? 'menu' : null"
-                [attr.aria-expanded]="hasPhoto ? avatarMenuOpen() : null"
-                [appTooltip]="(hasPhoto ? 'PROFILE.changeAvatar' : 'PROFILE.addAvatar') | translate"
-                [disabled]="isUploadingAvatar()"
-                (click)="onAvatarTap($event)"
-              >
-                <ng-icon [name]="hasPhoto ? 'lucideCamera' : 'lucidePlus'" aria-hidden="true" />
-              </button>
+              <app-menu #avatarMenu align="start">
+                <button
+                  menuTrigger
+                  type="button"
+                  class="profile__avatar-badge"
+                  [attr.aria-label]="
+                    (hasPhoto ? 'PROFILE.changeAvatar' : 'PROFILE.addAvatar') | translate
+                  "
+                  [attr.aria-haspopup]="hasPhoto ? 'menu' : null"
+                  [attr.aria-expanded]="hasPhoto ? avatarMenu.open() : null"
+                  [appTooltip]="
+                    (hasPhoto ? 'PROFILE.changeAvatar' : 'PROFILE.addAvatar') | translate
+                  "
+                  [disabled]="isUploadingAvatar()"
+                  (click)="hasPhoto ? avatarMenu.toggle() : avatarInput.click()"
+                >
+                  <ng-icon [name]="hasPhoto ? 'lucideCamera' : 'lucidePlus'" aria-hidden="true" />
+                </button>
+                <app-menu-item icon="lucideCamera" (click)="avatarInput.click()">{{
+                  'PROFILE.changeAvatar' | translate
+                }}</app-menu-item>
+                <app-menu-item icon="lucideTrash2" danger (click)="onRemoveAvatar()">{{
+                  'PROFILE.removeAvatar' | translate
+                }}</app-menu-item>
+              </app-menu>
               <input
                 #avatarInput
                 class="profile__avatar-input"
@@ -92,28 +101,6 @@
                 aria-hidden="true"
                 (change)="onFileSelected($event)"
               />
-              @if (avatarMenuOpen()) {
-                <div class="profile__menu profile__menu--avatar" role="menu">
-                  <button
-                    type="button"
-                    role="menuitem"
-                    class="profile__menu-item"
-                    (click)="avatarInput.click()"
-                    (keydown.escape)="closeAvatarMenu($event)"
-                  >
-                    {{ 'PROFILE.changeAvatar' | translate }}
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    class="profile__menu-item profile__menu-item--danger"
-                    (click)="onRemoveAvatar()"
-                    (keydown.escape)="closeAvatarMenu($event)"
-                  >
-                    {{ 'PROFILE.removeAvatar' | translate }}
-                  </button>
-                </div>
-              }
             }
           </div>
 

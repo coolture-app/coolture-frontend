@@ -71,37 +71,25 @@
       </div>
       @if (isMine()) {
         <div class="comment__menu-wrapper">
-          <button
-            type="button"
-            class="comment__menu-btn"
-            aria-haspopup="true"
-            [attr.aria-expanded]="menuOpen()"
-            [appTooltip]="'COMMENT.more' | translate"
-            (click)="toggleMenu($event)"
-            (keydown.escape)="closeMenu($event)"
-          >
-            <ng-icon name="lucideEllipsis" />
-          </button>
-          @if (menuOpen()) {
-            <div class="comment__menu">
-              <button
-                type="button"
-                class="comment__menu-item"
-                (click)="startEditing()"
-                (keydown.escape)="closeMenu($event)"
-              >
-                {{ 'COMMENT.edit-comment' | translate }}
-              </button>
-              <button
-                type="button"
-                class="comment__menu-item comment__menu-item--danger"
-                (click)="askToDelete()"
-                (keydown.escape)="closeMenu($event)"
-              >
-                {{ 'COMMENT.delete-comment' | translate }}
-              </button>
-            </div>
-          }
+          <app-menu #menu>
+            <button
+              menuTrigger
+              type="button"
+              class="comment__menu-btn"
+              aria-haspopup="menu"
+              [attr.aria-expanded]="menu.open()"
+              [appTooltip]="'COMMENT.more' | translate"
+              (click)="menu.toggle()"
+            >
+              <ng-icon name="lucideEllipsis" />
+            </button>
+            <app-menu-item icon="lucidePencil" (click)="startEditing()">{{
+              'COMMENT.edit-comment' | translate
+            }}</app-menu-item>
+            <app-menu-item icon="lucideTrash2" danger (click)="askToDelete()">{{
+              'COMMENT.delete-comment' | translate
+            }}</app-menu-item>
+          </app-menu>
         </div>
       }
     </div>

@@ -18,7 +18,7 @@ import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideEllipsis } from '@ng-icons/lucide';
+import { lucideEllipsis, lucidePencil, lucideTrash2 } from '@ng-icons/lucide';
 
 import { CommentSummary } from '../../models/comments/comment-summary.model';
 import { CommentsService } from '../../services/comments/comments.service';
@@ -27,6 +27,7 @@ import { ToastService } from '../../services/toast/toast.service';
 import { ConfirmService } from '../../services/confirm/confirm.service';
 import { Tooltip } from '../../directives/tooltip';
 import { Sheet } from '../sheet/sheet';
+import { Menu, MenuItem } from '../menu/menu';
 import { commentTime } from './comment-time';
 
 /** Who a reply answers, and where it goes. */
@@ -68,11 +69,10 @@ const REPLIES_PAGE = 20;
  */
 @Component({
   selector: 'app-comment-component',
-  imports: [InitialsPipe, TranslatePipe, RouterLink, NgIcon, Tooltip],
-  viewProviders: [provideIcons({ lucideEllipsis })],
+  imports: [InitialsPipe, TranslatePipe, RouterLink, NgIcon, Tooltip, Menu, MenuItem],
+  viewProviders: [provideIcons({ lucideEllipsis, lucidePencil, lucideTrash2 })],
   templateUrl: './comment-component.html',
   styleUrl: './comment-component.scss',
-  host: { '(document:click)': 'menuOpen.set(false)' },
 })
 export class CommentComponent implements OnInit {
   readonly comment = input.required<CommentSummary>();
@@ -103,7 +103,6 @@ export class CommentComponent implements OnInit {
   readonly hasEarlierReplies = signal(false);
   readonly repliesFailed = signal(false);
   readonly isEditing = signal(false);
-  readonly menuOpen = signal(false);
   readonly repliesCount = linkedSignal(() => this.comment().repliesCount);
   private readonly savedContent = signal<string | null>(null);
   private readonly wasEdited = signal(false);
@@ -176,17 +175,6 @@ export class CommentComponent implements OnInit {
         },
         error: () => this.repliesFailed.set(true),
       });
-  }
-
-  /** Any other click closes the menu, including one on its items, through the host's document listener. */
-  toggleMenu(event: Event): void {
-    event.stopPropagation();
-    this.menuOpen.update((open) => !open);
-  }
-
-  closeMenu(event: Event): void {
-    event.stopPropagation();
-    this.menuOpen.set(false);
   }
 
   startEditing(): void {
