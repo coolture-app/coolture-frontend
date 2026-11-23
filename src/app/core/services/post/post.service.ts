@@ -5,7 +5,6 @@ import { ApiUrlService } from '../api-url.service';
 import { PostDetail } from '../../models/posts/post-detail.model';
 import { PostCard } from '../../models/posts/post-card.model';
 import { PostCreateRequest } from '../../models/posts/post-create-request.model';
-import { PostUpdateRequest } from '../../models/posts/post-update-request.model';
 import { PaginatedResponse } from '../../models/common/paginated-response.model';
 import { PostFilterParams } from '../../models/posts/post-filter-params.model';
 import { FeedPage } from '../../models/posts/feed-page.model';
@@ -122,7 +121,8 @@ export class PostService {
     return this.http.post<PostDetail>(this.apiUrl.path('/posts'), payload);
   }
 
-  updatePost(id: string, payload: PostUpdateRequest): Observable<PostDetail> {
+  /** `links` replaces the saved ones and an empty list removes them; `endsAt: null` removes the end. */
+  updatePost(id: string, payload: PostCreateRequest): Observable<PostDetail> {
     return this.http.patch<PostDetail>(this.apiUrl.path(`/posts/${id}`), payload);
   }
 

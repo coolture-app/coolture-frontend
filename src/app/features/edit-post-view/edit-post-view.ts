@@ -4,14 +4,12 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslatePipe } from '@ngx-translate/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
-import { catchError, forkJoin, of, switchMap } from 'rxjs';
+import { catchError, from, mergeMap, of, switchMap, toArray } from 'rxjs';
 
 import { PostService } from '../../core/services/post/post.service';
 import { MediaService } from '../../core/services/media/media.service';
-import { PostForm } from '../../core/components/post-form/post-form';
-import { PostFormData } from '../../core/models/posts/post-form-data.model';
-import { PostDetail, PostMedia } from '../../core/models/posts/post-detail.model';
-import { PostUpdateRequest } from '../../core/models/posts/post-update-request.model';
+import { PostForm, PostFormSubmit } from '../../core/components/post-form/post-form';
+import { PostDetail } from '../../core/models/posts/post-detail.model';
 import { BackService } from '../../core/services/back/back.service';
 import { BackLink } from '../../core/components/back-link/back-link';
 import { LoadState } from '../../core/components/load-state/load-state';
@@ -37,7 +35,6 @@ export class EditPostView implements OnInit {
 
   readonly postId = this.route.snapshot.paramMap.get('id') ?? '';
   currentPost = signal<PostDetail | null>(null);
-  existingMedia = signal<PostMedia[]>([]);
   readonly notFound = signal(false);
   readonly failed = signal(false);
 
@@ -54,7 +51,6 @@ export class EditPostView implements OnInit {
         next: (post) => {
           this.currentPost.set(post);
           this.backService.rememberPostTitle(post.id, post.title);
-          this.existingMedia.set(post.media || []);
         },
         error: (err) => {
           console.error('Error while fetching event', err);
@@ -67,40 +63,27 @@ export class EditPostView implements OnInit {
       });
   }
 
-  onFormSubmit(data: PostFormData): void {
+  onFormSubmit({ request, removedMediaIds }: PostFormSubmit): void {
     const post = this.currentPost();
     if (!post) return;
 
-    const payload: PostUpdateRequest = {
-      title: data.title,
-      type: data.type,
-      startsAt: data.startsAt,
-      endsAt: data.endsAt,
-      openEnded: data.openEnded,
-      description: data.description,
-      links: data.links,
-      location: data.location,
-      mediaIds: data.mediaIds,
-    };
-
     this.postService
-      .updatePost(post.id, payload)
+      .updatePost(post.id, request)
       .pipe(
         // The API refuses to delete a photo still on a post, so this waits for the save. A failed delete leaves a
         // file nobody sees.
         switchMap(() =>
-          data.removedMediaIds.length > 0
-            ? forkJoin(
-                data.removedMediaIds.map((id) =>
-                  this.mediaService.deleteMedia(id).pipe(
-                    catchError((err) => {
-                      console.error('Could not delete removed image', err);
-                      return of(undefined);
-                    }),
-                  ),
-                ),
-              )
-            : of([]),
+          from(removedMediaIds).pipe(
+            mergeMap((id) =>
+              this.mediaService.deleteMedia(id).pipe(
+                catchError((err) => {
+                  console.error('Could not delete removed image', err);
+                  return of(undefined);
+                }),
+              ),
+            ),
+            toArray(),
+          ),
         ),
         takeUntilDestroyed(this.destroyRef),
       )

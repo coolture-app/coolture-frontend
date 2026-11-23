@@ -1,18 +1,20 @@
-@if (photos.length > 0) {
+@if (photos().length > 0) {
   <fieldset class="post-photos__photos" aria-describedby="post-photos-hint">
     <legend class="post-photos__photos-title">{{ 'POST_FORM.photos-title' | translate }}</legend>
     <p class="post-photos__photos-hint" id="post-photos-hint">
-      {{ (photos.length > 1 ? 'POST_FORM.photos-hint' : 'POST_FORM.photos-hint-one') | translate }}
+      {{
+        (photos().length > 1 ? 'POST_FORM.photos-hint' : 'POST_FORM.photos-hint-one') | translate
+      }}
     </p>
 
     <ul
       class="post-photos__gallery-grid"
       cdkDropList
       cdkDropListOrientation="mixed"
-      [cdkDropListData]="photos"
+      [cdkDropListData]="photos()"
       (cdkDropListDropped)="onPhotoDropped($event)"
     >
-      @for (photo of photos; track photo.key; let i = $index) {
+      @for (photo of photos(); track photo.key; let i = $index) {
         <li
           class="post-photos__tile"
           [class.post-photos__tile--cover]="i === 0"
@@ -26,7 +28,9 @@
               class="post-photos__tile-photo"
               draggable="false"
               [src]="photo.url"
-              [alt]="'POST_FORM.photo-number' | translate: { number: i + 1, total: photos.length }"
+              [alt]="
+                'POST_FORM.photo-number' | translate: { number: i + 1, total: photos().length }
+              "
             />
             @if (photo.isUploading) {
               <div class="post-photos__upload-overlay">
@@ -41,7 +45,7 @@
                 [title]="'POST_FORM.remove-photo' | translate"
                 [attr.aria-label]="
                   'POST_FORM.remove-photo-number'
-                    | translate: { number: i + 1, total: photos.length }
+                    | translate: { number: i + 1, total: photos().length }
                 "
               >
                 <svg
@@ -81,7 +85,8 @@
                 class="post-photos__tile-set-cover"
                 (click)="setAsCover(i)"
                 [attr.aria-label]="
-                  'POST_FORM.cover-set-number' | translate: { number: i + 1, total: photos.length }
+                  'POST_FORM.cover-set-number'
+                    | translate: { number: i + 1, total: photos().length }
                 "
               >
                 {{ 'POST_FORM.cover-set' | translate }}
@@ -98,7 +103,8 @@
               (click)="movePhoto(i, -1)"
               [title]="'POST_FORM.move-earlier' | translate"
               [attr.aria-label]="
-                'POST_FORM.move-earlier-number' | translate: { number: i + 1, total: photos.length }
+                'POST_FORM.move-earlier-number'
+                  | translate: { number: i + 1, total: photos().length }
               "
             >
               <svg
@@ -117,17 +123,17 @@
               </svg>
             </button>
             <span class="post-photos__tile-position" aria-hidden="true">
-              {{ i + 1 }} / {{ photos.length }}
+              {{ i + 1 }} / {{ photos().length }}
             </span>
             <button
               type="button"
               class="post-photos__tile-move"
               data-control="later"
-              [attr.aria-disabled]="i === photos.length - 1"
+              [attr.aria-disabled]="i === photos().length - 1"
               (click)="movePhoto(i, 1)"
               [title]="'POST_FORM.move-later' | translate"
               [attr.aria-label]="
-                'POST_FORM.move-later-number' | translate: { number: i + 1, total: photos.length }
+                'POST_FORM.move-later-number' | translate: { number: i + 1, total: photos().length }
               "
             >
               <svg
@@ -150,19 +156,19 @@
       }
     </ul>
   </fieldset>
-} @else if (editing) {
+} @else if (editing()) {
   <p class="post-photos__no-photos">{{ 'POST_FORM.no-current-photos' | translate }}</p>
 }
 
-<p class="post-photos__visually-hidden" role="status">{{ photoStatus }}</p>
+<p class="post-photos__visually-hidden" role="status">{{ photoStatus() }}</p>
 
 <app-form-file-upload
-  [label]="'POST_FORM.media-label' | translate: { count: photos.length, max: maxPhotos }"
+  [label]="'POST_FORM.media-label' | translate: { count: photos().length, max: maxPhotos }"
   [heading]="true"
   [buttonText]="'POST_FORM.media-click'"
   accept="image/*"
   [multiple]="true"
   [required]="false"
-  [disabled]="hasUploading || photosFull"
+  [disabled]="hasUploading() || photosFull()"
   (filesSelected)="onFilesSelected($event)"
 ></app-form-file-upload>

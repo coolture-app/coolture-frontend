@@ -5,9 +5,7 @@ import { Router } from '@angular/router';
 import { lastValueFrom } from 'rxjs';
 
 import { PostService } from '../../core/services/post/post.service';
-import { PostForm } from '../../core/components/post-form/post-form';
-import { PostFormData } from '../../core/models/posts/post-form-data.model';
-import { PostCreateRequest } from '../../core/models/posts/post-create-request.model';
+import { PostForm, PostFormSubmit } from '../../core/components/post-form/post-form';
 import { ToastService } from '../../core/services/toast/toast.service';
 
 @Component({
@@ -23,22 +21,9 @@ export class AddPostView {
 
   @ViewChild(PostForm) postFormComponent!: PostForm;
 
-  async onFormSubmit(data: PostFormData): Promise<void> {
+  async onFormSubmit({ request }: PostFormSubmit): Promise<void> {
     try {
-      const payload: PostCreateRequest = {
-        title: data.title,
-        type: data.type,
-        startsAt: data.startsAt,
-        endsAt: data.endsAt,
-        openEnded: data.openEnded,
-        description: data.description,
-        links: data.links,
-        location: data.location,
-        mediaIds: data.mediaIds.length > 0 ? data.mediaIds : undefined,
-      };
-
-      const createdPost = await lastValueFrom(this.postService.addPost(payload));
-      this.postFormComponent.resetForm();
+      const createdPost = await lastValueFrom(this.postService.addPost(request));
       // In place of the form, so going back from the new post never lands on the form again.
       this.router.navigate(['/posts', createdPost.id], { replaceUrl: true });
     } catch (err) {

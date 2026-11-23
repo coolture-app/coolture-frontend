@@ -421,24 +421,7 @@ export class ProfileView {
     this.isUploadingAvatar.set(true);
 
     try {
-      const initRes = await firstValueFrom(
-        this.mediaService.initUpload({
-          purpose: 'PROFILE_IMAGE',
-          mimeType: file.type,
-          sizeBytes: file.size,
-          fileName: file.name,
-        }),
-      );
-
-      if (!initRes) throw new Error('Failed to init upload');
-
-      await firstValueFrom(
-        this.mediaService.uploadToS3(initRes.uploadUrl, file, initRes.requiredHeaders),
-      );
-
-      const mediaResource = await firstValueFrom(this.mediaService.completeUpload(initRes.mediaId));
-
-      if (!mediaResource) throw new Error('Failed to complete upload');
+      const mediaResource = await this.mediaService.upload(file, 'PROFILE_IMAGE');
 
       await firstValueFrom(
         this.usersService.setOrUpdateProfilePicture(userId, mediaResource.id, mediaResource.id),

@@ -6,7 +6,15 @@ import { of } from 'rxjs';
 import { AddPostView } from './add-post-view';
 import { PostService } from '../../core/services/post/post.service';
 import { PostDetail } from '../../core/models/posts/post-detail.model';
-import { PostFormData } from '../../core/models/posts/post-form-data.model';
+import { PostCreateRequest } from '../../core/models/posts/post-create-request.model';
+
+const REQUEST: PostCreateRequest = {
+  title: 'Koncert',
+  description: 'Opis',
+  startsAt: '2030-05-01T17:00:00Z',
+  type: 'ONLINE',
+  mediaIds: [],
+};
 
 describe('AddPostView', () => {
   let component: AddPostView;
@@ -35,9 +43,7 @@ describe('AddPostView, after saving', () => {
     fixture.detectChanges();
     spyOn(TestBed.inject(PostService), 'addPost').and.returnValue(of({ id: 'p9' } as PostDetail));
 
-    await fixture.componentInstance.onFormSubmit({
-      mediaIds: [],
-    } as unknown as PostFormData);
+    await fixture.componentInstance.onFormSubmit({ request: REQUEST, removedMediaIds: [] });
 
     expect(navigate).toHaveBeenCalledWith(['/posts', 'p9'], { replaceUrl: true });
   });

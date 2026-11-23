@@ -4,7 +4,7 @@
     [label]="'POST_FORM.title' | translate"
     [placeholder]="'POST_FORM.title-placeholder' | translate"
     [required]="true"
-    [maxLength]="128"
+    [maxLength]="maxTitle"
     [heading]="true"
     inputId="title"
     [errorMessages]="{
@@ -107,7 +107,7 @@
     [label]="'POST_FORM.description' | translate"
     [placeholder]="'POST_FORM.description-placeholder' | translate"
     [required]="true"
-    [maxLength]="1024"
+    [maxLength]="maxDescription"
     [rows]="5"
     [heading]="true"
     inputId="description"
@@ -117,7 +117,7 @@
     }"
   ></app-form-textarea>
 
-  <app-post-photos [saved]="existingMedia" [editing]="mode === 'edit'"></app-post-photos>
+  <app-post-photos [saved]="initialData?.media ?? []" [editing]="mode === 'edit'"></app-post-photos>
 
   <section class="post-form__section" aria-labelledby="links-label">
     <h3 class="post-form__section-title" id="links-label">
@@ -194,7 +194,7 @@
       size="lg"
       [fullWidth]="true"
       type="submit"
-      [disabled]="isSubmitting || photos().hasUploading || startsAtControl.hasError('past')"
+      [disabled]="isSubmitting || photos().hasUploading() || startsAtControl.hasError('past')"
     >
       {{
         isSubmitting

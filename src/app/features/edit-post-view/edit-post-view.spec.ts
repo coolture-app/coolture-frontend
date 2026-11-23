@@ -3,12 +3,12 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, Subject, throwError } from 'rxjs';
 
 import { EditPostView } from './edit-post-view';
-import { PostForm } from '../../core/components/post-form/post-form';
+import { PostForm, PostFormSubmit } from '../../core/components/post-form/post-form';
 import { MediaService } from '../../core/services/media/media.service';
 import { PostService } from '../../core/services/post/post.service';
 import { BackService } from '../../core/services/back/back.service';
 import { PostDetail } from '../../core/models/posts/post-detail.model';
-import { PostFormData } from '../../core/models/posts/post-form-data.model';
+import { PostCreateRequest } from '../../core/models/posts/post-create-request.model';
 
 describe('EditPostView', () => {
   let component: EditPostView;
@@ -29,8 +29,16 @@ describe('EditPostView', () => {
   });
 });
 
-function formData(removedMediaIds: string[] = []): PostFormData {
-  return { mediaIds: [], removedMediaIds } as unknown as PostFormData;
+const REQUEST: PostCreateRequest = {
+  title: 'Koncert',
+  description: 'Opis',
+  startsAt: '2030-05-01T17:00:00Z',
+  type: 'ONLINE',
+  mediaIds: [],
+};
+
+function formData(removedMediaIds: string[] = []): PostFormSubmit {
+  return { request: REQUEST, removedMediaIds };
 }
 
 describe('EditPostView, after saving', () => {

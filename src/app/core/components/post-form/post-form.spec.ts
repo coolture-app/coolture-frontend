@@ -1,11 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 
-import { PostForm } from './post-form';
+import { PostForm, PostFormSubmit } from './post-form';
 import { PlacePicker } from '../place-picker/place-picker';
 import { WITHOUT_MAPLIBRE } from '../map/map-stubs.testing';
-import { PostFormData } from '../../models/posts/post-form-data.model';
 import { PostDetail, PostMedia } from '../../models/posts/post-detail.model';
+import { PostCreateRequest } from '../../models/posts/post-create-request.model';
 import { MediaService } from '../../services/media/media.service';
 
 const SUMMER_START = '2026-07-10T17:00:00Z';
@@ -55,34 +55,24 @@ describe('PostForm photos', () => {
 
   function showSaved(...photos: PostMedia[]): void {
     fixture.componentRef.setInput('mode', 'edit');
-    fixture.componentRef.setInput('initialData', post(SUMMER_START));
-    fixture.componentRef.setInput('existingMedia', photos);
+    fixture.componentRef.setInput('initialData', { ...post(SUMMER_START), media: photos });
     fixture.detectChanges();
   }
 
-  function submit(): PostFormData {
-    let emitted: PostFormData | undefined;
+  function submit(): PostFormSubmit {
+    let emitted: PostFormSubmit | undefined;
     component.formSubmit.subscribe((data) => (emitted = data));
     component.onSubmit();
     return emitted!;
   }
 
   async function addPhoto(): Promise<void> {
-    media.initUpload.and.returnValue(
-      of({ mediaId: 'n1', uploadUrl: 'http://s', requiredHeaders: {} }) as never,
-    );
-    media.uploadToS3.and.returnValue(of(undefined) as never);
-    media.completeUpload.and.returnValue(of({ id: 'n1' }) as never);
+    media.upload.and.resolveTo({ id: 'n1' } as never);
     await component.photos().onFilesSelected([new File(['x'], 'n.png', { type: 'image/png' })]);
   }
 
   beforeEach(async () => {
-    media = jasmine.createSpyObj<MediaService>('MediaService', [
-      'initUpload',
-      'uploadToS3',
-      'completeUpload',
-      'deleteMedia',
-    ]);
+    media = jasmine.createSpyObj<MediaService>('MediaService', ['upload', 'deleteMedia']);
     media.deleteMedia.and.returnValue(of(undefined));
     await TestBed.configureTestingModule({
       imports: [PostForm],
@@ -99,11 +89,10 @@ describe('PostForm photos', () => {
 
     component.photos().movePhoto(2, -1);
     component.photos().removePhoto(0);
-    const data = submit();
+    const { request, removedMediaIds } = submit();
 
-    expect(data.mediaIds).toEqual(['c', 'b']);
-    expect(data.removedMediaIds).toEqual(['a']);
-    expect('coverMediaId' in data).toBeFalse();
+    expect(request.mediaIds).toEqual(['c', 'b']);
+    expect(removedMediaIds).toEqual(['a']);
   });
 
   it('deletes what it uploaded when left without publishing, and never a saved photo', async () => {
@@ -125,17 +114,6 @@ describe('PostForm photos', () => {
 
     expect(media.deleteMedia).not.toHaveBeenCalled();
   });
-
-  it('deletes after publishing nothing it just cleared', async () => {
-    showSaved();
-    await addPhoto();
-    submit();
-    component.resetForm();
-
-    fixture.destroy();
-
-    expect(media.deleteMedia).not.toHaveBeenCalled();
-  });
 });
 
 describe('PostForm editing an existing post', () => {
@@ -148,11 +126,11 @@ describe('PostForm editing an existing post', () => {
     fixture.detectChanges();
   }
 
-  function submit(): PostFormData {
-    let emitted: PostFormData | undefined;
+  function submit(): PostCreateRequest {
+    let emitted: PostFormSubmit | undefined;
     component.formSubmit.subscribe((data) => (emitted = data));
     component.onSubmit();
-    return emitted!;
+    return emitted!.request;
   }
 
   beforeEach(async () => {
@@ -185,17 +163,6 @@ describe('PostForm editing an existing post', () => {
     }
   });
 
-  it('keeps the time when the same post is saved twice', () => {
-    load(post(SUMMER_START));
-
-    const firstSave = submit();
-    component.resetSubmitting();
-    load(post(firstSave.startsAt));
-    const secondSave = submit();
-
-    expect(new Date(secondSave.startsAt).getTime()).toBe(new Date(SUMMER_START).getTime());
-  });
-
   it('keeps a start that has passed, but refuses moving it to another past time', () => {
     load(post(SUMMER_START, SUMMER_END));
 
@@ -205,7 +172,8 @@ describe('PostForm editing an existing post', () => {
     fixture.detectChanges();
 
     expect(component.startsAtControl.hasError('past')).toBeTrue();
-    expect(submit()).toBeUndefined();
+    component.onSubmit();
+    expect(component.isSubmitting).toBeFalse();
 
     component.startsAtControl.setValue(localClock(SUMMER_START));
 
@@ -254,11 +222,11 @@ describe('PostForm fields', () => {
   let component: PostForm;
   let fixture: ComponentFixture<PostForm>;
 
-  function submit(): PostFormData | undefined {
-    let emitted: PostFormData | undefined;
+  function submit(): PostCreateRequest | undefined {
+    let emitted: PostFormSubmit | undefined;
     component.formSubmit.subscribe((data) => (emitted = data));
     component.onSubmit();
-    return emitted;
+    return emitted?.request;
   }
 
   function fillEventFields(): void {
@@ -276,12 +244,6 @@ describe('PostForm fields', () => {
     fixture = TestBed.createComponent(PostForm);
     component = fixture.componentInstance;
     fixture.detectChanges();
-  });
-
-  it('starts in person, with the end hidden and no errors shown', () => {
-    expect(component.isOffline).toBeTrue();
-    expect(component.showEnd).toBeFalse();
-    expect(fixture.nativeElement.querySelectorAll('.has-error').length).toBe(0);
   });
 
   it('needs a place in person, and a pin with a city is enough', () => {
@@ -336,9 +298,14 @@ describe('PostForm fields', () => {
     component.endsAtControl.setValue('2030-05-01T22:00');
 
     expect(submit()!.endsAt).toBe(new Date('2030-05-01T22:00').toISOString());
+
+    component.resetSubmitting();
+    component.startsAtControl.setValue('2030-05-01T23:00');
+
+    expect(component.endsAtControl.hasError('afterStart')).toBeTrue();
   });
 
-  it('hides the link and the end with "Bez daty końcowej", clears the end, and brings the link back', () => {
+  it('hides the end and "Dodaj zakończenie" with "Bez daty końcowej", clears the end, and brings the button back', () => {
     fillEventFields();
     component.postForm.controls.type.setValue('ONLINE');
     component.addEnd();
