@@ -7,7 +7,7 @@ import { DEV_IDENTITY } from './dev-identity';
 
 export const authTokenInterceptor: HttpInterceptorFn = (req, next) => {
   const apiUrl = inject(ApiUrlService);
-  if (!req.url.startsWith(apiUrl.url)) {
+  if (!apiUrl.owns(req.url)) {
     return next(req);
   }
 

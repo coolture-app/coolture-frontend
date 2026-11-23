@@ -1,5 +1,4 @@
 import { Component, DOCUMENT, inject, signal } from '@angular/core';
-import { NgTemplateOutlet } from '@angular/common';
 import { IsActiveMatchOptions, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -17,19 +16,11 @@ import { AuthService } from '../../services/auth/auth.service';
 import { HomeTapService } from '../../services/home-tap/home-tap.service';
 import { Btn } from '../btn/btn';
 import { Tooltip } from '../../directives/tooltip';
+import { pathOf } from '../../services/back/back.service';
 
 @Component({
   selector: 'app-navbar',
-  imports: [
-    TranslateModule,
-    Btn,
-    RouterLink,
-    RouterLinkActive,
-    NgIcon,
-    Tooltip,
-    NgTemplateOutlet,
-    InitialsPipe,
-  ],
+  imports: [TranslateModule, Btn, RouterLink, RouterLinkActive, NgIcon, Tooltip, InitialsPipe],
   viewProviders: [
     provideIcons({
       lucideCalendarDays,
@@ -52,11 +43,11 @@ export class Navbar {
   currentLang = signal(this.translate.currentLang);
 
   readonly links = [
-    { path: '/', icon: 'lucideHouse', labelKey: 'NAVBAR.main-page' },
-    { path: '/people', icon: 'lucideUsers', labelKey: 'NAVBAR.friends' },
+    { path: '/', icon: 'lucideHouse', labelKey: 'NAVBAR.home' },
+    { path: '/people', icon: 'lucideUsers', labelKey: 'NAVBAR.people' },
     { path: '/posts/new', icon: 'lucidePlus', labelKey: 'NAVBAR.addPost' },
-    { path: '/plans', icon: 'lucideCalendarDays', labelKey: 'NAVBAR.my-events' },
-    { path: '/profile', icon: 'lucideUserRound', labelKey: 'NAVBAR.my-profile' },
+    { path: '/plans', icon: 'lucideCalendarDays', labelKey: 'NAVBAR.plans' },
+    { path: '/profile', icon: 'lucideUserRound', labelKey: 'NAVBAR.profile' },
   ];
 
   /** Home is active on its own path alone, whatever search or filters its URL holds. */
@@ -80,7 +71,7 @@ export class Navbar {
    * an ordinary link.
    */
   homeTapped(event: MouseEvent): void {
-    if (this.router.url.split(/[?#]/)[0] !== '/') {
+    if (pathOf(this.router.url) !== '/') {
       return;
     }
     event.preventDefault();
@@ -99,9 +90,5 @@ export class Navbar {
 
   login(): void {
     void this.authService.login();
-  }
-
-  async logout(): Promise<void> {
-    this.authService.logout();
   }
 }

@@ -1,27 +1,27 @@
 import {
-  AfterViewChecked,
-  ChangeDetectorRef,
+  afterNextRender,
   Component,
+  computed,
   ElementRef,
   inject,
-  Input,
-  OnChanges,
+  Injector,
+  input,
+  linkedSignal,
   OnDestroy,
-  SimpleChanges,
+  signal,
 } from '@angular/core';
 import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
-import { lastValueFrom } from 'rxjs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { FormFileUpload } from '../form-file-upload/form-file-upload';
 import { PostMedia } from '../../models/posts/post-detail.model';
 import { MAX_POST_PHOTOS } from '../../models/posts/post-limits';
-import { imageSize, MediaService } from '../../services/media/media.service';
+import { MediaService } from '../../services/media/media.service';
 import { ToastService } from '../../services/toast/toast.service';
 
 /** One photo in the form's gallery: saved on the post, or added in this form. */
 export interface FormPhoto {
-  /** Stays the same while the photo uploads, so it can be moved before it finishes. */
+  /** A saved photo's media id. An added one's stays the same while it uploads, so it can be moved before it finishes. */
   key: string;
   url: string;
   isUploading: boolean;
@@ -41,52 +41,64 @@ type PhotoControl = 'earlier' | 'later' | 'remove';
   templateUrl: './post-photos.html',
   styleUrl: './post-photos.scss',
 })
-export class PostPhotos implements OnChanges, AfterViewChecked, OnDestroy {
+export class PostPhotos implements OnDestroy {
   /** The post's saved photos, in any order. */
-  @Input() saved: PostMedia[] = [];
+  readonly saved = input<PostMedia[]>([]);
   /** An edited post with no photos says so. */
-  @Input() editing = false;
+  readonly editing = input(false);
 
   private mediaService = inject(MediaService);
-  private cdr = inject(ChangeDetectorRef);
   private translate = inject(TranslateService);
   private toast = inject(ToastService);
   private host = inject(ElementRef);
+  private injector = inject(Injector);
 
-  /** In the order the post shows them. The first is the cover. */
-  photos: FormPhoto[] = [];
+  /** In the order the post shows them. The first is the cover. Photos added here outlast a new `saved`. */
+  readonly photos = linkedSignal<PostMedia[], FormPhoto[]>({
+    source: this.saved,
+    computation: (saved, previous) => [
+      ...[...saved]
+        .sort((a, b) => a.position - b.position)
+        .map((item) => ({
+          key: item.media.id,
+          url: item.media.url ?? '',
+          isUploading: false,
+          isSaved: true,
+          mediaId: item.media.id,
+        })),
+      ...(previous?.value.filter((photo) => !photo.isSaved) ?? []),
+    ],
+  });
   /** Saved photos the user took out. The post keeps them until the form is saved. */
-  removedMediaIds: string[] = [];
+  readonly removedMediaIds = linkedSignal<PostMedia[], string[]>({
+    source: this.saved,
+    computation: () => [],
+  });
   /** What screen readers hear after a change to the photos, which sighted people see happen. */
-  photoStatus = '';
+  readonly photoStatus = signal('');
+
+  readonly hasUploading = computed(() => this.photos().some((photo) => photo.isUploading));
+  readonly photosFull = computed(() => this.photos().length >= MAX_POST_PHOTOS);
+  readonly mediaIds = computed(() => this.photos().flatMap((photo) => photo.mediaId ?? []));
+  /** Added, removed or moved since `saved`. */
+  readonly changed = computed(
+    () =>
+      this.photos()
+        .map((photo) => photo.key)
+        .join() !==
+      [...this.saved()]
+        .sort((a, b) => a.position - b.position)
+        .map((item) => item.media.id)
+        .join(),
+  );
 
   readonly maxPhotos = MAX_POST_PHOTOS;
 
   private nextPhotoKey = 0;
   private isLeft = false;
-  private pendingFocus: { key: string | null; control: PhotoControl } | null = null;
-
-  get hasUploading(): boolean {
-    return this.photos.some((photo) => photo.isUploading);
-  }
-
-  get photosFull(): boolean {
-    return this.photos.length >= MAX_POST_PHOTOS;
-  }
-
-  /** In the order the post will show them: the first is the cover. */
-  mediaIds(): string[] {
-    return this.photos.flatMap((photo) => photo.mediaId ?? []);
-  }
-
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['saved']) {
-      this.showSavedPhotos();
-    }
-  }
 
   async onFilesSelected(selected: File[]): Promise<void> {
-    const room = Math.max(0, MAX_POST_PHOTOS - this.photos.length);
+    const room = Math.max(0, MAX_POST_PHOTOS - this.photos().length);
     const files = selected.slice(0, room);
     if (files.length < selected.length) {
       this.toast.show(
@@ -97,48 +109,28 @@ export class PostPhotos implements OnChanges, AfterViewChecked, OnDestroy {
       if (this.isLeft) {
         return;
       }
-      const photo: FormPhoto = {
-        key: `new-${this.nextPhotoKey++}`,
-        url: URL.createObjectURL(file),
-        isUploading: true,
-        isSaved: false,
-      };
-      this.photos.push(photo);
-      // Later files arrive after the first's upload, with no event to show them.
-      this.cdr.markForCheck();
+      const key = `new-${this.nextPhotoKey++}`;
+      const url = URL.createObjectURL(file);
+      this.photos.update((photos) => [...photos, { key, url, isUploading: true, isSaved: false }]);
 
       try {
-        const size = await imageSize(file);
-        const initRes = await lastValueFrom(
-          this.mediaService.initUpload({
-            purpose: 'EVENT_MEDIA',
-            mimeType: file.type,
-            sizeBytes: file.size,
-            fileName: file.name,
-            ...size,
-          }),
-        );
-
-        await lastValueFrom(
-          this.mediaService.uploadToS3(initRes.uploadUrl, file, initRes.requiredHeaders),
-        );
-        await lastValueFrom(this.mediaService.completeUpload(initRes.mediaId));
-
-        photo.mediaId = initRes.mediaId;
-        photo.isUploading = false;
+        const { id } = await this.mediaService.upload(file, 'EVENT_MEDIA');
         if (this.isLeft) {
-          this.deleteUpload(initRes.mediaId);
+          this.deleteUpload(id);
           return;
         }
-        this.cdr.detectChanges();
+        this.photos.update((photos) =>
+          photos.map((photo) =>
+            photo.key === key ? { ...photo, mediaId: id, isUploading: false } : photo,
+          ),
+        );
       } catch (err) {
         console.error('Error while loading file', file.name, err);
-        URL.revokeObjectURL(photo.url);
-        this.photos = this.photos.filter((p) => p !== photo);
+        URL.revokeObjectURL(url);
+        this.photos.update((photos) => photos.filter((photo) => photo.key !== key));
         if (!this.isLeft) {
           this.toast.show(this.translate.instant('POST_FORM.upload-failed', { name: file.name }));
         }
-        this.cdr.detectChanges();
       }
     }
   }
@@ -150,78 +142,52 @@ export class PostPhotos implements OnChanges, AfterViewChecked, OnDestroy {
   /** The button keeps the focus, even at the end of the row, because moving a tile in the page would drop it. */
   movePhoto(index: number, by: -1 | 1): void {
     const target = index + by;
-    if (target < 0 || target >= this.photos.length) {
+    if (target < 0 || target >= this.photos().length) {
       return;
     }
-    this.pendingFocus = { key: this.photos[index].key, control: by < 0 ? 'earlier' : 'later' };
+    this.focusAfterRender(this.photos()[index].key, by < 0 ? 'earlier' : 'later');
     this.moveTo(index, target);
   }
 
-  /** Moves the photo to the front, and the others keep their order. */
   setAsCover(index: number): void {
-    // This photo's "set as cover" button is about to go, so the focus moves to the one beside it.
-    this.pendingFocus = { key: this.photos[index].key, control: 'later' };
+    // The "Make cover" button is replaced by the cover badge, so the focus goes to this tile's "later" arrow.
+    this.focusAfterRender(this.photos()[index].key, 'later');
     this.moveTo(index, 0);
   }
 
   removePhoto(index: number): void {
-    const [photo] = this.photos.splice(index, 1);
+    const photo = this.photos()[index];
+    const photos = this.photos().filter((_, i) => i !== index);
+    this.photos.set(photos);
     if (photo.isSaved) {
-      // The post keeps it until the form is saved, and leaving without saving changes nothing.
-      this.removedMediaIds.push(photo.mediaId!);
+      this.removedMediaIds.update((ids) => [...ids, photo.key]);
     } else {
       URL.revokeObjectURL(photo.url);
       if (photo.mediaId) {
         this.deleteUpload(photo.mediaId);
       }
     }
-    const next = this.photos[Math.min(index, this.photos.length - 1)];
-    this.pendingFocus = { key: next?.key ?? null, control: 'remove' };
+    const next = photos[Math.min(index, photos.length - 1)];
+    this.focusAfterRender(next?.key ?? null, 'remove');
     this.announce(
       index === 0 && next ? 'POST_FORM.status-cover-removed' : 'POST_FORM.status-removed',
-      { total: this.photos.length },
+      { total: photos.length },
     );
-  }
-
-  /** The removed or moved control took the focus with it, so it comes back here once the page is updated. */
-  ngAfterViewChecked(): void {
-    const focus = this.pendingFocus;
-    if (!focus) {
-      return;
-    }
-    this.pendingFocus = null;
-    const page: HTMLElement = this.host.nativeElement;
-    const target = focus.key
-      ? page.querySelector(`[data-photo-key="${focus.key}"] [data-control="${focus.control}"]`)
-      : page.querySelector('.form-file-upload__dropzone');
-    (target as HTMLElement | null)?.focus();
   }
 
   /** Deletes what this form uploaded and the post doesn't hold. Saved photos stay. */
   discardUploads(): void {
-    for (const photo of this.photos) {
+    for (const photo of this.photos()) {
       if (!photo.isSaved && photo.mediaId) {
         this.deleteUpload(photo.mediaId);
       }
     }
   }
 
-  reset(): void {
-    this.revokeAddedPhotos();
-    this.photos = [];
-    this.removedMediaIds = [];
-    this.photoStatus = '';
-    this.pendingFocus = null;
-  }
-
   /** An upload still running when the form is left deletes itself once it finishes. */
   ngOnDestroy(): void {
     this.isLeft = true;
-    this.revokeAddedPhotos();
-  }
-
-  private revokeAddedPhotos(): void {
-    for (const photo of this.photos.filter((p) => !p.isSaved)) {
+    for (const photo of this.photos().filter((p) => !p.isSaved)) {
       URL.revokeObjectURL(photo.url);
     }
   }
@@ -236,31 +202,30 @@ export class PostPhotos implements OnChanges, AfterViewChecked, OnDestroy {
     if (from === to) {
       return;
     }
-    moveItemInArray(this.photos, from, to);
+    const photos = [...this.photos()];
+    moveItemInArray(photos, from, to);
+    this.photos.set(photos);
     this.announce(from === 0 || to === 0 ? 'POST_FORM.status-cover' : 'POST_FORM.status-moved', {
       number: to + 1,
-      total: this.photos.length,
+      total: photos.length,
     });
   }
 
   private announce(key: string, params: Record<string, number>): void {
-    this.photoStatus = this.translate.instant(key, params);
+    this.photoStatus.set(this.translate.instant(key, params));
   }
 
-  private showSavedPhotos(): void {
-    const added = this.photos.filter((photo) => !photo.isSaved);
-    const saved = [...this.saved]
-      .sort((a, b) => a.position - b.position)
-      .map(
-        (item): FormPhoto => ({
-          key: item.media.id,
-          url: item.media.url ?? '',
-          isUploading: false,
-          isSaved: true,
-          mediaId: item.media.id,
-        }),
-      );
-    this.photos = [...saved, ...added];
-    this.removedMediaIds = [];
+  /** The removed or moved control took the focus with it, so it comes back once the page is updated. */
+  private focusAfterRender(key: string | null, control: PhotoControl): void {
+    afterNextRender(
+      () => {
+        const page: HTMLElement = this.host.nativeElement;
+        const target = key
+          ? page.querySelector(`[data-photo-key="${key}"] [data-control="${control}"]`)
+          : page.querySelector('.form-file-upload__dropzone');
+        (target as HTMLElement | null)?.focus();
+      },
+      { injector: this.injector },
+    );
   }
 }

@@ -1,13 +1,4 @@
 @let user = authService.currentUser();
-<ng-template #avatar>
-  @if (user?.avatar?.url; as url) {
-    <img class="navbar__avatar" [src]="url" alt="" />
-  } @else {
-    <span class="navbar__avatar navbar__avatar--letter" aria-hidden="true">{{
-      user | initials
-    }}</span>
-  }
-</ng-template>
 <nav class="navbar">
   <h1 class="navbar__title">
     <a routerLink="/">COOLTURE</a>
@@ -28,7 +19,13 @@
         (click)="link.path === '/' && homeTapped($event)"
       >
         @if (isAccount) {
-          <ng-container [ngTemplateOutlet]="avatar" />
+          @if (user?.avatar?.url; as url) {
+            <img class="navbar__avatar" [src]="url" alt="" />
+          } @else {
+            <span class="navbar__avatar navbar__avatar--letter" aria-hidden="true">{{
+              user | initials
+            }}</span>
+          }
           <span class="navbar__account-name">{{ user?.username }}</span>
         } @else {
           <ng-icon [name]="link.icon" />
@@ -50,7 +47,7 @@
         variant="secondary"
         size="sm"
         [label]="'NAVBAR.logout' | translate"
-        (btnClick)="logout()"
+        (btnClick)="authService.logout()"
       >
         <ng-icon class="navbar__action-icon" name="lucideLogOut" />
         <span class="navbar__action-label">{{ 'NAVBAR.logout' | translate }}</span>

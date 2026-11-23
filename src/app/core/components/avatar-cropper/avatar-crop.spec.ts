@@ -1,14 +1,10 @@
-import { centredView, clampView, coverScale, MAX_ZOOM, sourceSquare, zoomAt } from './avatar-crop';
+import { centredView, clampView, MAX_ZOOM, sourceSquare, zoomAt } from './avatar-crop';
 
 describe('avatar crop', () => {
   // A landscape photo, 400 × 200, in a 100 px circle.
   const W = 400;
   const H = 200;
   const SIZE = 100;
-
-  it('covers the circle with the shorter side', () => {
-    expect(coverScale(W, H, SIZE)).toBe(0.5);
-  });
 
   it('starts centred', () => {
     expect(centredView(W, H, SIZE)).toEqual({ x: -50, y: 0, scale: 0.5 });

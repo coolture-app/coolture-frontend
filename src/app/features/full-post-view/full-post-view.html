@@ -11,7 +11,7 @@
       />
       <section #commentSection id="comments" class="comments" aria-labelledby="comments-title">
         <h2 id="comments-title" class="comments__title">
-          {{ 'COMMENT.title' | translate }} ({{ post()!.commentsCount || 0 }})
+          {{ 'COMMENT.title' | translate }} ({{ post()!.commentsCount }})
         </h2>
         <app-comment-thread [postId]="post()!.id" (countChange)="changeCount($event)" />
       </section>

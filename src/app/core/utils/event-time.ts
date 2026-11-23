@@ -1,8 +1,8 @@
 /**
  * When an event ends and how to say when it is, in the browser's time zone. The rules match the API's `EventTime`:
- * the end is `endsAt`, or the start + 3 hours without one, or never for a post with no end date (`openEnded`).
+ * the end is `endsAt`, or the start plus `DEFAULT_EVENT_HOURS` without one, or never for a post with no end date (`openEnded`).
  */
-export const DEFAULT_EVENT_HOURS = 3;
+const DEFAULT_EVENT_HOURS = 3;
 
 const HOUR_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * HOUR_MS;
@@ -14,7 +14,7 @@ const NIGHT_HOURS = 6;
 export interface EventTimes {
   startsAt: string;
   endsAt?: string;
-  openEnded?: boolean;
+  openEnded: boolean;
 }
 
 /** The words around dates, from `EVENT_TIME` in the translations. */
@@ -53,7 +53,7 @@ export function isRunning(post: EventTimes, now: Date): boolean {
   return new Date(post.startsAt) <= now && !hasEnded(post, now);
 }
 
-/** Whether the event's end, moved back 6 hours, falls on a later day than its start. */
+/** Whether the event's end, moved back `NIGHT_HOURS`, falls on a later day than its start. */
 export function isMultiDay(post: EventTimes): boolean {
   const end = eventEnd(post);
   return end !== null && startOfDay(nightDay(end)) > startOfDay(new Date(post.startsAt));

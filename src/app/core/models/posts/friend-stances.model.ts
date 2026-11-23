@@ -14,6 +14,11 @@ export interface FriendGroup {
   people: Friend[];
 }
 
+export const STANCES = [
+  { key: 'going', icon: 'appTicket', title: 'FRIENDS.going' },
+  { key: 'interested', icon: 'lucideBookmark', title: 'FRIENDS.interested' },
+] as const;
+
 /** The viewer's friends who marked a post Biorę udział (going) or Interesuje mnie (interested). */
 export interface FriendStances {
   going?: FriendGroup;
@@ -24,11 +29,4 @@ export interface FriendStances {
 export interface PostFriends {
   going: Friend[];
   interested: Friend[];
-}
-
-/** First and last name, or the username when there's no first name. */
-export function fullName(friend: Friend): string {
-  return friend.firstName
-    ? [friend.firstName, friend.lastName].filter(Boolean).join(' ')
-    : friend.username;
 }

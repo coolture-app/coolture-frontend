@@ -1,9 +1,10 @@
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, TestRequest } from '@angular/common/http/testing';
 import { TranslatePipe } from '@ngx-translate/core';
 
-import { Map, MapArea } from './map';
+import { Map } from './map';
+import { MapArea } from '../map-geometry';
 import { GeoPoint } from '../../../models/common/geo.model';
 import { LocationService } from '../../../services/location/location.service';
 import { MapMemory } from '../map-memory';
@@ -40,6 +41,11 @@ function fakeMap() {
       getEast: () => view.east,
     }),
   };
+}
+
+/** A `moveend` as MapLibre gives it: an original event only for the user's own gestures. */
+function moveEnd(data: { originalEvent?: Event; startMove?: boolean } = {}) {
+  return data as Parameters<Map['onMoveEnd']>[0];
 }
 
 const marks = () => (r: { url: string }) => r.url.endsWith('/posts/map');
@@ -91,16 +97,37 @@ describe('Map', () => {
     return map;
   }
 
-  it('starts over Trójmiasto wide enough for Gdynia and Gdańsk', () => {
-    expect(component.start).toEqual({ center: [18.57, 54.44], zoom: 10 });
-  });
-
   it('moves to the home when there is one', async () => {
     fixture.componentRef.setInput('home', { latitude: 54.52, longitude: 18.54 });
 
     const map = await load();
 
-    expect(map.jumpTo).toHaveBeenCalledWith({ center: [18.54, 54.52], zoom: 12 });
+    expect(map.jumpTo).toHaveBeenCalledWith(
+      { center: [18.54, 54.52], zoom: 12 },
+      { startMove: true },
+    );
+  });
+
+  it('moves to a home known only after it opened', async () => {
+    const map = await load();
+
+    fixture.componentRef.setInput('home', { latitude: 54.52, longitude: 18.54 });
+    await fixture.whenStable();
+
+    expect(map.jumpTo).toHaveBeenCalledOnceWith(
+      { center: [18.54, 54.52], zoom: 12 },
+      { startMove: true },
+    );
+  });
+
+  it('stays where the user moved it when the home comes later', async () => {
+    const map = await load();
+    component.onMoveEnd(moveEnd({ originalEvent: new MouseEvent('mouseup') }));
+
+    fixture.componentRef.setInput('home', { latitude: 54.52, longitude: 18.54 });
+    await fixture.whenStable();
+
+    expect(map.jumpTo).not.toHaveBeenCalled();
   });
 
   it('opens where it was left on Back from a post, though setting its padding ends a move', async () => {
@@ -113,7 +140,7 @@ describe('Map', () => {
     fixture.componentRef.setInput('resume', true);
     const map = fakeMap();
     // MapLibre's setPadding is a jump, and a jump ends with a moveend.
-    map.setPadding.and.callFake(() => component.onMoveEnd({}));
+    map.setPadding.and.callFake(() => component.onMoveEnd(moveEnd()));
 
     await load(map);
 
@@ -161,26 +188,61 @@ describe('Map', () => {
 
     const map = await load();
 
-    expect(map.jumpTo).toHaveBeenCalledWith({ center: [18.65, 54.35], zoom: 13 });
+    expect(map.jumpTo).toHaveBeenCalledWith(
+      { center: [18.65, 54.35], zoom: 13 },
+      { startMove: true },
+    );
+  });
+
+  it('looks further out from a start with no pins, then frames it with the nearest', async () => {
+    const map = await load();
+    const west = (r: TestRequest) => +r.request.params.get('leftUpper.longitude')!;
+    const first = http.expectOne(marks());
+    first.flush([]);
+
+    const wider = http.expectOne(marks());
+    expect(west(wider)).toBeLessThan(west(first));
+    wider.flush([mark('far', 54.6)]);
+
+    expect(map.fitBounds).toHaveBeenCalledOnceWith(
+      [
+        [18.6, 54.35123],
+        [18.60456, 54.6],
+      ],
+      jasmine.objectContaining({ maxZoom: 12 }),
+      { startMove: true },
+    );
+  });
+
+  it('stops looking further out after a move not its own', async () => {
+    const map = await load();
+    http.expectOne(marks()).flush([]);
+
+    // The ease of a cluster tap or of Moja lokalizacja.
+    component.onMoveEnd(moveEnd());
+    http.expectOne(marks()).flush([mark('far', 54.6)]);
+
+    http.expectNone(marks());
+    expect(map.fitBounds).not.toHaveBeenCalled();
   });
 
   it('offers a search in the view only after the user moves the map', async () => {
-    const map = await load();
+    await load();
 
-    component.onMoveEnd({ target: map });
+    component.onMoveEnd(moveEnd());
     expect(component.moved()).toBeFalse();
 
-    component.onMoveEnd({ target: map, originalEvent: new MouseEvent('mouseup') });
+    component.onMoveEnd(moveEnd({ originalEvent: new MouseEvent('mouseup') }));
     await fixture.whenStable();
     expect(component.moved()).toBeTrue();
     expect(fixture.nativeElement.querySelector('.map-search-area')).not.toBeNull();
   });
 
   it('hands over the circle inside the view, touching its nearer edges', async () => {
-    const map = await load();
+    await load();
     const areas: MapArea[] = [];
     component.searchArea.subscribe((area) => areas.push(area));
-    component.onMoveEnd({ target: map, originalEvent: new MouseEvent('mouseup') });
+    component.onMoveEnd(moveEnd({ originalEvent: new MouseEvent('mouseup') }));
 
     component.onSearchArea();
 
@@ -190,9 +252,9 @@ describe('Map', () => {
   });
 
   it('keeps the search button busy until the area it handed over has its pins', async () => {
-    const map = await load();
+    await load();
     http.match((r) => r.url.endsWith('/posts/map')).forEach((r) => r.flush([]));
-    component.onMoveEnd({ target: map, originalEvent: new MouseEvent('mouseup') });
+    component.onMoveEnd(moveEnd({ originalEvent: new MouseEvent('mouseup') }));
     component.searchArea.subscribe(({ centre, radiusKm }) =>
       fixture.componentRef.setInput('filters', { ...centre, radiusKm }),
     );
@@ -210,7 +272,7 @@ describe('Map', () => {
 
   it('keeps its view for the area it handed over, and fits to any other', async () => {
     const map = await load();
-    component.onMoveEnd({ target: map, originalEvent: new MouseEvent('mouseup') });
+    component.onMoveEnd(moveEnd({ originalEvent: new MouseEvent('mouseup') }));
     component.searchArea.subscribe(({ centre, radiusKm }) =>
       fixture.componentRef.setInput('filters', { ...centre, radiusKm }),
     );

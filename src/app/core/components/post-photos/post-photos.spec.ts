@@ -1,10 +1,11 @@
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of, Subject, throwError } from 'rxjs';
+import { of } from 'rxjs';
 
 import { FormPhoto, PostPhotos } from './post-photos';
 import { PostMedia } from '../../models/posts/post-detail.model';
 import { MediaService } from '../../services/media/media.service';
+import { MediaResource } from '../../models/media/media-resource.model';
 import { ToastService } from '../../services/toast/toast.service';
 
 function saved(id: string, position: number): PostMedia {
@@ -17,7 +18,7 @@ describe('PostPhotos', () => {
   let media: jasmine.SpyObj<MediaService>;
 
   function keys(): string[] {
-    return gallery.photos.map((photo) => photo.key);
+    return gallery.photos().map((photo) => photo.key);
   }
 
   function element(): HTMLElement {
@@ -39,20 +40,23 @@ describe('PostPhotos', () => {
   }
 
   function uploadsSucceed(): void {
-    media.initUpload.and.returnValue(
-      of({ mediaId: 'n1', uploadUrl: 'http://s', requiredHeaders: {} }) as never,
+    media.upload.and.resolveTo({ id: 'n1' } as MediaResource);
+  }
+
+  /** An upload that ends when the test says. */
+  function uploadWaits(): { finish: () => void; fail: () => void } {
+    const ends: { finish?: () => void; fail?: () => void } = {};
+    media.upload.and.returnValue(
+      new Promise<MediaResource>((resolve, reject) => {
+        ends.finish = () => resolve({ id: 'n1' } as MediaResource);
+        ends.fail = () => reject(new Error('nope'));
+      }),
     );
-    media.uploadToS3.and.returnValue(of(undefined) as never);
-    media.completeUpload.and.returnValue(of({ id: 'n1' }) as never);
+    return { finish: () => ends.finish!(), fail: () => ends.fail!() };
   }
 
   beforeEach(async () => {
-    media = jasmine.createSpyObj<MediaService>('MediaService', [
-      'initUpload',
-      'uploadToS3',
-      'completeUpload',
-      'deleteMedia',
-    ]);
+    media = jasmine.createSpyObj<MediaService>('MediaService', ['upload', 'deleteMedia']);
     media.deleteMedia.and.returnValue(of(undefined));
     await TestBed.configureTestingModule({
       imports: [PostPhotos],
@@ -83,7 +87,7 @@ describe('PostPhotos', () => {
     gallery.setAsCover(2);
 
     expect(keys()).toEqual(['c', 'a', 'b', 'd']);
-    expect(gallery.photoStatus).toContain('POST_FORM.status-cover');
+    expect(gallery.photoStatus()).toContain('POST_FORM.status-cover');
   });
 
   it('reorders a dragged photo', () => {
@@ -92,7 +96,7 @@ describe('PostPhotos', () => {
     gallery.onPhotoDropped({ previousIndex: 0, currentIndex: 2 } as CdkDragDrop<FormPhoto[]>);
 
     expect(keys()).toEqual(['b', 'c', 'a']);
-    expect(gallery.photoStatus).toContain('POST_FORM.status-cover');
+    expect(gallery.photoStatus()).toContain('POST_FORM.status-cover');
   });
 
   it('says nothing for a photo dropped where it was', () => {
@@ -101,7 +105,7 @@ describe('PostPhotos', () => {
     gallery.onPhotoDropped({ previousIndex: 1, currentIndex: 1 } as CdkDragDrop<FormPhoto[]>);
 
     expect(keys()).toEqual(['a', 'b']);
-    expect(gallery.photoStatus).toBe('');
+    expect(gallery.photoStatus()).toBe('');
   });
 
   it('does nothing at the ends of the row, and those buttons keep the focus', () => {
@@ -146,7 +150,7 @@ describe('PostPhotos', () => {
     gallery.removePhoto(0);
 
     expect(keys()).toEqual(['b']);
-    expect(gallery.photoStatus).toContain('POST_FORM.status-cover-removed');
+    expect(gallery.photoStatus()).toContain('POST_FORM.status-cover-removed');
   });
 
   it('leaves a removed saved photo for the save to remove', () => {
@@ -156,7 +160,7 @@ describe('PostPhotos', () => {
 
     expect(media.deleteMedia).not.toHaveBeenCalled();
     expect(gallery.mediaIds()).toEqual(['b']);
-    expect(gallery.removedMediaIds).toEqual(['a']);
+    expect(gallery.removedMediaIds()).toEqual(['a']);
   });
 
   it('adds new photos after the saved ones', async () => {
@@ -176,11 +180,11 @@ describe('PostPhotos', () => {
     gallery.removePhoto(1);
 
     expect(media.deleteMedia).toHaveBeenCalledOnceWith('n1');
-    expect(gallery.removedMediaIds).toEqual([]);
+    expect(gallery.removedMediaIds()).toEqual([]);
   });
 
   it('takes a photo whose upload fails off the list and says so', async () => {
-    media.initUpload.and.returnValue(throwError(() => new Error('nope')));
+    media.upload.and.rejectWith(new Error('nope'));
     spyOn(console, 'error');
     const toast = spyOn(TestBed.inject(ToastService), 'show');
     showSaved(saved('a', 0));
@@ -192,61 +196,42 @@ describe('PostPhotos', () => {
   });
 
   it('stops uploading the other chosen photos once left', async () => {
-    const finishing = new Subject<unknown>();
-    media.initUpload.and.returnValue(
-      of({ mediaId: 'n1', uploadUrl: 'http://s', requiredHeaders: {} }) as never,
-    );
-    media.uploadToS3.and.returnValue(finishing as never);
-    media.completeUpload.and.returnValue(of({ id: 'n1' }) as never);
+    const upload = uploadWaits();
     showSaved();
     const uploading = gallery.onFilesSelected([
       new File(['x'], 'a.png', { type: 'image/png' }),
       new File(['y'], 'b.png', { type: 'image/png' }),
     ]);
-    await new Promise((resolve) => setTimeout(resolve, 50));
 
     fixture.destroy();
-    finishing.next(undefined);
-    finishing.complete();
+    upload.finish();
     await uploading;
 
-    expect(media.initUpload).toHaveBeenCalledTimes(1);
+    expect(media.upload).toHaveBeenCalledTimes(1);
   });
 
   it('shows nothing about a failed upload once left', async () => {
-    const finishing = new Subject<unknown>();
     spyOn(console, 'error');
     const toast = spyOn(TestBed.inject(ToastService), 'show');
-    media.initUpload.and.returnValue(
-      of({ mediaId: 'n1', uploadUrl: 'http://s', requiredHeaders: {} }) as never,
-    );
-    media.uploadToS3.and.returnValue(finishing as never);
+    const upload = uploadWaits();
     showSaved();
     const uploading = gallery.onFilesSelected([new File(['x'], 'a.png', { type: 'image/png' })]);
-    await new Promise((resolve) => setTimeout(resolve, 50));
 
     fixture.destroy();
-    finishing.error(new Error('nope'));
+    upload.fail();
     await uploading;
 
     expect(toast).not.toHaveBeenCalled();
   });
 
   it('deletes an upload that finishes after the form was left', async () => {
-    const finishing = new Subject<unknown>();
-    media.initUpload.and.returnValue(
-      of({ mediaId: 'n1', uploadUrl: 'http://s', requiredHeaders: {} }) as never,
-    );
-    media.uploadToS3.and.returnValue(finishing as never);
-    media.completeUpload.and.returnValue(of({ id: 'n1' }) as never);
+    const upload = uploadWaits();
     showSaved();
     const uploading = gallery.onFilesSelected([new File(['x'], 'n.png', { type: 'image/png' })]);
-    await new Promise((resolve) => setTimeout(resolve, 50));
 
     fixture.destroy();
     expect(media.deleteMedia).not.toHaveBeenCalled();
-    finishing.next(undefined);
-    finishing.complete();
+    upload.finish();
     await uploading;
 
     expect(media.deleteMedia).toHaveBeenCalledOnceWith('n1');

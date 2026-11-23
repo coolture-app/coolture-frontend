@@ -173,27 +173,24 @@
   // --- Actions ---
   &__actions {
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
     justify-content: flex-end;
-    gap: var(--space-md);
     margin-top: var(--space-md);
     padding-top: var(--space-md);
     border-top: 1px solid var(--color-border-light);
+  }
 
-    // fullWidth fills the host, which is as wide as its text here and the whole row on a phone.
-    app-btn {
-      display: inline-block;
-    }
+  // Columns of 1fr in a grid only as wide as its content: both buttons as wide as the wider one.
+  &__buttons {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    gap: var(--space-md);
 
     @media (max-width: 639px) {
+      display: flex;
       flex-direction: column-reverse;
-      align-items: stretch;
+      flex: 1;
       gap: var(--space-sm);
-
-      app-btn {
-        display: block;
-      }
     }
   }
 }

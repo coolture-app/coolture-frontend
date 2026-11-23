@@ -4,6 +4,7 @@ import type { components as Feed } from './feed-api';
 import type { components as Users } from './users-api';
 import type { FeedPage } from '../posts/feed-page.model';
 import type { PostCard } from '../posts/post-card.model';
+import type { PostDetail } from '../posts/post-detail.model';
 import type { PostMark } from '../posts/post-mark.model';
 import type { PostFriends } from '../posts/friend-stances.model';
 import type { PaginatedResponse } from '../common/paginated-response.model';
@@ -19,6 +20,7 @@ type Accepts<Model, Actual extends Model> = Actual;
 
 export type ContractCheck = [
   Accepts<PostCard, FeedSchemas['PostCard']>,
+  Accepts<PostDetail, FeedSchemas['PostDetail']>,
   Accepts<PaginatedResponse<PostCard>, FeedSchemas['PostPage']>,
   Accepts<FeedPage, FeedSchemas['FeedPage']>,
   Accepts<PostMark, FeedSchemas['PostMark']>,

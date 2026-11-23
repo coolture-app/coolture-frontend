@@ -1,5 +1,11 @@
 @if (viewer.open(); as open) {
-  <div class="viewer" role="dialog" aria-modal="true" [attr.aria-label]="'POST.photos' | translate">
+  <div
+    class="viewer"
+    role="dialog"
+    aria-modal="true"
+    cdkTrapFocus
+    [attr.aria-label]="'POST.photos' | translate"
+  >
     <div class="viewer__track" #track (scroll)="onScroll()">
       @for (photo of open.photos; track $index) {
         <div class="viewer__slide">

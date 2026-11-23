@@ -14,9 +14,7 @@ export class PhotoViewerService {
   readonly open = signal<OpenPhotos | null>(null);
 
   show(photos: Photo[], index: number): void {
-    if (photos.length > 0) {
-      this.open.set({ photos, index: Math.min(Math.max(index, 0), photos.length - 1) });
-    }
+    this.open.set({ photos, index });
   }
 
   close(): void {

@@ -48,8 +48,28 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** Map markers. Takes the same filters as /posts, plus the map bounds. Only the newer parameters are listed here. */
+    /** Map markers. Takes the same filters as /posts, plus the map bounds. Only the parameters beyond /posts's are listed here. */
     get: operations['getPostMarks'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/posts/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * One post, with all its photos and kinds, for its page and its edit form
+     * @description A deleted post is a 404, and so is a post whose author and viewer blocked one another. post-write's POST and PATCH answer the same shape.
+     */
+    get: operations['getPost'];
     put?: never;
     post?: never;
     delete?: never;
@@ -83,7 +103,7 @@ export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
     /**
-     * @description How this page was ordered. RANKED is the scorer, also for guests and new users. UPCOMING is the fallback when ranking failed. The UI must work the same for both. New values may be added, so treat unknown ones like RANKED.
+     * @description How this page was ordered (README.md).
      * @enum {string}
      */
     FeedMode: 'RANKED' | 'UPCOMING';
@@ -144,6 +164,17 @@ export interface components {
       photos?: components['schemas']['MediaResource'][];
       friendStances?: components['schemas']['FriendStances'];
     };
+    /** @description A card's fields, with every photo and its position in place of photos, and the kinds. */
+    PostDetail: components['schemas']['PostCard'] & {
+      /** @description In the post's order. Empty when it has none. */
+      media: components['schemas']['PostMedia'][];
+      /** @description Kinds of event, best first. Left out until derived. */
+      kinds?: string[];
+    };
+    PostMedia: {
+      media: components['schemas']['MediaResource'];
+      position: number;
+    };
     /** @description What a pin and its preview need. Only the description's start: the map loads every post in view at once, and whole descriptions were over half of the answer. The viewer's own reaction and stance are left out for a guest or when there's none. */
     PostMark: {
       /** Format: uuid */
@@ -161,7 +192,7 @@ export interface components {
       positiveReactionCount: number;
       /** @description People who marked it Interesuje mnie. */
       interestedCount: number;
-      /** @description People who marked it Wezmę udział. */
+      /** @description People who marked it Biorę udział. */
       goingCount: number;
       coordinates: components['schemas']['GeoPoint'];
       venueName?: string;
@@ -300,7 +331,7 @@ export interface components {
     Cursor: string;
     /** @description Page size. Values above 100 are capped. Non-numeric values return 400. */
     Limit: number;
-    /** @description Send together with longitude, rounded to 2 decimals. The centre of radiusKm and of NEAREST. On /feed, the first page's position is also used for proximity, and later pages send it again only with radiusKm. Without it, /feed measures proximity from the viewer's home, if they set one. */
+    /** @description Send together with longitude, rounded to 2 decimals. The centre of radiusKm and of NEAREST, and on /feed of proximity (README.md). */
     Latitude: number;
     /** @description Send together with latitude. See latitude. */
     Longitude: number;
@@ -310,7 +341,7 @@ export interface components {
     Q: string;
     AuthorId: string;
     Status: components['schemas']['PostStatus'];
-    /** @description Only posts by people the viewer follows, and posts a friend (a mutual follow) marked Interesuje mnie or Biorę udział, unless that friend stopped sharing their stances. Nothing for a guest. Every post is public, so there's no visibility filter; an older client's visibility parameter is ignored. */
+    /** @description Only posts by people the viewer follows, and posts a friend (a mutual follow) marked Interesuje mnie or Biorę udział, unless that friend stopped sharing their stances. Nothing for a guest. */
     Followed: boolean;
     /** @description Kinds of event as comma-separated keys from /dicts/interests (kinds=concerts,stage); a post matches any of them. A post's kinds are derived from its text after it's saved, so for a few seconds a new post has none and matches no kind. A key no post has matches nothing; a key that isn't lowercase letters and underscores is a 400. */
     Kinds: string;
@@ -337,7 +368,7 @@ export interface operations {
         cursor?: components['parameters']['Cursor'];
         /** @description Page size. Values above 100 are capped. Non-numeric values return 400. */
         limit?: components['parameters']['Limit'];
-        /** @description Send together with longitude, rounded to 2 decimals. The centre of radiusKm and of NEAREST. On /feed, the first page's position is also used for proximity, and later pages send it again only with radiusKm. Without it, /feed measures proximity from the viewer's home, if they set one. */
+        /** @description Send together with longitude, rounded to 2 decimals. The centre of radiusKm and of NEAREST, and on /feed of proximity (README.md). */
         latitude?: components['parameters']['Latitude'];
         /** @description Send together with latitude. See latitude. */
         longitude?: components['parameters']['Longitude'];
@@ -347,7 +378,7 @@ export interface operations {
         q?: components['parameters']['Q'];
         authorId?: components['parameters']['AuthorId'];
         status?: components['parameters']['Status'];
-        /** @description Only posts by people the viewer follows, and posts a friend (a mutual follow) marked Interesuje mnie or Biorę udział, unless that friend stopped sharing their stances. Nothing for a guest. Every post is public, so there's no visibility filter; an older client's visibility parameter is ignored. */
+        /** @description Only posts by people the viewer follows, and posts a friend (a mutual follow) marked Interesuje mnie or Biorę udział, unless that friend stopped sharing their stances. Nothing for a guest. */
         followed?: components['parameters']['Followed'];
         /** @description Kinds of event as comma-separated keys from /dicts/interests (kinds=concerts,stage); a post matches any of them. A post's kinds are derived from its text after it's saved, so for a few seconds a new post has none and matches no kind. A key no post has matches nothing; a key that isn't lowercase letters and underscores is a 400. */
         kinds?: components['parameters']['Kinds'];
@@ -367,7 +398,7 @@ export interface operations {
     };
     requestBody?: never;
     responses: {
-      /** @description One page. A short or empty page doesn't mean the end. Only hasMore false does. */
+      /** @description One page. */
       200: {
         headers: {
           [name: string]: unknown;
@@ -387,7 +418,7 @@ export interface operations {
         cursor?: components['parameters']['Cursor'];
         /** @description Page size. Values above 100 are capped. Non-numeric values return 400. */
         limit?: components['parameters']['Limit'];
-        /** @description NEAREST needs latitude and longitude, and shows only posts with a place. STANCE_NEWEST needs participationTypes and puts the viewer's newest of those stances first. UPCOMING mixes events already running into the events to come, every 5th card, and with includePast the ended events follow them. PAST shows only ended events, the latest end first. POPULAR orders by likes + Interesuje mnie + Biorę udział (README.md). */
+        /** @description NEAREST needs latitude and longitude, and shows only posts with a place. STANCE_NEWEST needs participationTypes and puts the viewer's newest of those stances first. The orders are in README.md. */
         sortBy?: 'RECENT' | 'POPULAR' | 'UPCOMING' | 'PAST' | 'NEAREST' | 'STANCE_NEWEST';
         /** @description When false, ended events are hidden. UPCOMING puts them after every event to come. */
         includePast?: components['parameters']['IncludePast'];
@@ -395,7 +426,7 @@ export interface operations {
         q?: components['parameters']['Q'];
         authorId?: components['parameters']['AuthorId'];
         status?: components['parameters']['Status'];
-        /** @description Only posts by people the viewer follows, and posts a friend (a mutual follow) marked Interesuje mnie or Biorę udział, unless that friend stopped sharing their stances. Nothing for a guest. Every post is public, so there's no visibility filter; an older client's visibility parameter is ignored. */
+        /** @description Only posts by people the viewer follows, and posts a friend (a mutual follow) marked Interesuje mnie or Biorę udział, unless that friend stopped sharing their stances. Nothing for a guest. */
         followed?: components['parameters']['Followed'];
         /** @description Kinds of event as comma-separated keys from /dicts/interests (kinds=concerts,stage); a post matches any of them. A post's kinds are derived from its text after it's saved, so for a few seconds a new post has none and matches no kind. A key no post has matches nothing; a key that isn't lowercase letters and underscores is a 400. */
         kinds?: components['parameters']['Kinds'];
@@ -406,7 +437,7 @@ export interface operations {
         from?: components['parameters']['From'];
         /** @description Only events running at some moment up to this time: their start is at or before it. Setting this turns the past-events window off. */
         to?: components['parameters']['To'];
-        /** @description Send together with longitude, rounded to 2 decimals. The centre of radiusKm and of NEAREST. On /feed, the first page's position is also used for proximity, and later pages send it again only with radiusKm. Without it, /feed measures proximity from the viewer's home, if they set one. */
+        /** @description Send together with longitude, rounded to 2 decimals. The centre of radiusKm and of NEAREST, and on /feed of proximity (README.md). */
         latitude?: components['parameters']['Latitude'];
         /** @description Send together with latitude. See latitude. */
         longitude?: components['parameters']['Longitude'];
@@ -453,7 +484,7 @@ export interface operations {
         includePast?: components['parameters']['IncludePast'];
         /** @description Only posts with a place within this many km of latitude and longitude. Ignored without them. */
         radiusKm?: components['parameters']['RadiusKm'];
-        /** @description Only posts by people the viewer follows, and posts a friend (a mutual follow) marked Interesuje mnie or Biorę udział, unless that friend stopped sharing their stances. Nothing for a guest. Every post is public, so there's no visibility filter; an older client's visibility parameter is ignored. */
+        /** @description Only posts by people the viewer follows, and posts a friend (a mutual follow) marked Interesuje mnie or Biorę udział, unless that friend stopped sharing their stances. Nothing for a guest. */
         followed?: components['parameters']['Followed'];
         /** @description Kinds of event as comma-separated keys from /dicts/interests (kinds=concerts,stage); a post matches any of them. A post's kinds are derived from its text after it's saved, so for a few seconds a new post has none and matches no kind. A key no post has matches nothing; a key that isn't lowercase letters and underscores is a 400. */
         kinds?: components['parameters']['Kinds'];
@@ -478,6 +509,31 @@ export interface operations {
         };
       };
       400: components['responses']['BadRequest'];
+    };
+  };
+  getPost: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description The post. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PostDetail'];
+        };
+      };
+      400: components['responses']['BadRequest'];
+      404: components['responses']['NotFound'];
+      500: components['responses']['ServerError'];
     };
   };
   getPostFriends: {

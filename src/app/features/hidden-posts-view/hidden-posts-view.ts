@@ -1,15 +1,12 @@
-import { Component, computed, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { BackLink } from '../../core/components/back-link/back-link';
 import { PostComponent } from '../../core/components/post-component/post-component';
 import { PostSkeleton } from '../../core/components/post-skeleton/post-skeleton';
-import { Btn } from '../../core/components/btn/btn';
+import { LoadState } from '../../core/components/load-state/load-state';
 import { InfiniteScroll } from '../../core/directives/infinite-scroll';
 import { PostListStore } from '../../core/services/post-list/post-list.store';
-
-/** As on the home page: the next page is asked for this many cards before the end. */
-const CARDS_BEFORE_END = 15;
 
 /**
  * The viewer's "Nie dla mnie" posts, newest mark first, ended ones too. Unmarking folds a card in place, so the list
@@ -17,16 +14,13 @@ const CARDS_BEFORE_END = 15;
  */
 @Component({
   selector: 'app-hidden-posts-view',
-  imports: [TranslatePipe, BackLink, PostComponent, PostSkeleton, Btn, InfiniteScroll],
+  imports: [TranslatePipe, BackLink, PostComponent, PostSkeleton, LoadState, InfiniteScroll],
   providers: [PostListStore],
   templateUrl: './hidden-posts-view.html',
   styleUrl: './hidden-posts-view.scss',
 })
 export class HiddenPostsView implements OnInit {
   readonly list = inject(PostListStore);
-  readonly nextPageTrigger = computed(() =>
-    Math.max(0, this.list.items().length - CARDS_BEFORE_END),
-  );
 
   ngOnInit(): void {
     this.list.start({

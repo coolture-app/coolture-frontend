@@ -12,14 +12,14 @@
     [attr.aria-label]="going && interested ? going + ' · ' + interested : going || interested"
     (click)="opened.emit()"
   >
-    @for (group of groups(); track group.name) {
+    @for (group of groups(); track group.key) {
       @if (!$first) {
         <span class="friends__dot" aria-hidden="true">·</span>
       }
-      <span class="friends__group" [class]="'friends__group--' + group.name" aria-hidden="true">
+      <span class="friends__group" [class]="'friends__group--' + group.key" aria-hidden="true">
         <ng-icon class="friends__icon" [name]="group.icon" />
         <span class="friends__faces">
-          @for (friend of group.faces; track friend.id) {
+          @for (friend of group.stance.people; track friend.id) {
             @if (friend.avatarUrl) {
               <img class="friends__face" [src]="friend.avatarUrl" alt="" loading="lazy" />
             } @else {

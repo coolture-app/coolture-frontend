@@ -31,9 +31,9 @@ export interface PlaceOption extends NamedPlace {
 export type PlaceKind = 'area' | 'any';
 
 /** The suggestions for what the user typed last. */
-export interface PlaceSearch<Place = PlaceSuggestion> {
+export interface PlaceResults<Place = PlaceSuggestion> {
   text: string;
   places: Place[];
-  /** The geocoder failed or was too slow. The form says so, and the pin and the city are still enough to save. */
+  /** The geocoder failed or was too slow. Callers show a note and carry on without suggestions. */
   unavailable: boolean;
 }

@@ -3,30 +3,21 @@
     "searchbar": "Szukaj wydarzeń",
     "sort": "Filtry i sortowanie",
     "title": "Strona główna",
-    "no-posts": "Nie ma postów do wyświetlenia... Smutno.",
+    "no-posts": "Nie ma wydarzeń do wyświetlenia... Smutno.",
     "filters": "Filtry",
-    "order": "Kolejność",
     "clear": "Wyczyść",
     "kind": "Rodzaj",
     "clearKinds": "Wyczyść rodzaj",
     "kids": "Dla dzieci",
     "fromDay": "Od dnia",
     "toDay": "Do dnia",
-    "sortCreatedAt": "Data utworzenia",
-    "sortStartsAt": "Data wydarzenia",
-    "sortLikes": "Polubienia",
-    "sortParticipants": "Uczestnicy",
     "sortRecent": "Najnowsze",
     "sortPopular": "Popularne",
     "sortUpcoming": "Nadchodzące",
-    "sortRecommended": "Rekomendowane",
-    "orderDesc": "Malejąco",
-    "orderAsc": "Rosnąco",
     "online": "Online",
-    "recommended": "Rekomendowane",
     "loading": "Ładowanie...",
     "endOfList": "To już wszystko",
-    "loadError": "Nie udało się wczytać postów.",
+    "loadError": "Nie udało się wczytać wydarzeń.",
     "retry": "Spróbuj ponownie",
     "refreshing": "Odświeżanie",
     "refreshFailed": "Nie udało się odświeżyć",
@@ -54,7 +45,7 @@
     "sortNearest": "Najbliższe",
     "nearestNeedsLocation": "Najbliższe potrzebują Twojej lokalizacji. Zezwól na nią w ustawieniach przeglądarki.",
     "widenRadius": "Poszerz do {{km}} km",
-    "seenBefore": "Dla Ciebie pomija Twoje posty oraz polubione i zapisane.",
+    "seenBefore": "Dla Ciebie pomija Twoje wydarzenia oraz polubione i zapisane.",
     "showInAll": "Pokaż we Wszystkich",
     "where": "Gdzie?",
     "close": "Zamknij",
@@ -65,14 +56,9 @@
     "nearMe": "Przy mnie",
     "nearestFromHome": "Odległości od: {{place}}"
   },
-  "FULL_POST": {
-    "title": "Fajny post"
-  },
   "BACK": {
     "to": "Wróć do: {{page}}",
     "post": "Wydarzenie",
-    "newPost": "Nowe wydarzenie",
-    "editPost": "Edycja wydarzenia",
     "previous": "Poprzednia strona"
   },
   "POST": {
@@ -80,12 +66,10 @@
     "starts": "Początek wydarzenia",
     "show-more": "Wyświetl więcej",
     "show-less": "Wyświetl mniej",
-    "loading": "Ładowanie posta...",
-    "participating": "uczestników",
     "comments": "Pokaż komentarze",
     "photo-alt": "Zdjęcie z wydarzenia",
-    "edit": "Edytuj post",
-    "delete": "Usuń post",
+    "edit": "Edytuj wydarzenie",
+    "delete": "Usuń wydarzenie",
     "interested": "Interesuje mnie",
     "takes_part": "Biorę udział",
     "online": "Online",
@@ -118,25 +102,14 @@
     "loadFailed": "Nie udało się wczytać wydarzenia."
   },
   "NAVBAR": {
-    "main-page": "Strona główna",
-    "friends": "Ludzie",
-    "my-events": "Plany",
-    "my-profile": "Profil",
-    "menu": "Menu",
-    "addPost": "Dodaj post",
+    "home": "Strona główna",
+    "people": "Ludzie",
+    "plans": "Plany",
+    "profile": "Profil",
+    "addPost": "Dodaj wydarzenie",
     "logout": "Wyloguj się",
     "login": "Zaloguj się",
     "switch-language": "Zmień język na angielski (EN)"
-  },
-  "LANG": {
-    "pl": "PL",
-    "en": "EN"
-  },
-  "REGISTER": {
-    "title": "Zarejestruj się!"
-  },
-  "LOGIN": {
-    "title": "Zaloguj się!"
   },
   "404": {
     "header": "Strona, której szukasz, nie istnieje.",
@@ -150,19 +123,13 @@
     "interests": "Zainteresowania",
     "cancel": "Anuluj",
     "save": "Zapisz",
-    "firstName": "Imię",
-    "lastName": "Nazwisko",
-    "username": "Nazwa użytkownika",
     "bio": "Bio",
     "followers": "Obserwujący",
     "following": "Obserwowani",
     "follow": "Obserwuj",
     "block": "Zablokuj",
     "unblock": "Odblokuj",
-    "blocked": "Zablokowani",
     "no-blocked": "Brak zablokowanych użytkowników",
-    "loading": "Ładowanie...",
-    "hidden-posts": "Ukryte posty",
     "addHome": "Dodaj miejsce",
     "homeHint": "Widoczne tylko dla Ciebie",
     "shareStances": "Pokazuj znajomym, co mnie interesuje i gdzie idę",
@@ -177,8 +144,6 @@
     "removeAvatar": "Usuń zdjęcie",
     "bioPlaceholder": "Dodaj kilka słów o sobie",
     "since": "Na Coolture od {{date}}",
-    "blockedLoadError": "Nie udało się wczytać zablokowanych.",
-    "retry": "Spróbuj ponownie",
     "youBlocked": "Zablokowałeś tego użytkownika",
     "blockTitle": "Zablokować @{{username}}?",
     "blockText": "Nie zobaczycie nawzajem swoich profili, wydarzeń ani komentarzy, a obserwowanie skończy się w obie strony.",
@@ -187,6 +152,9 @@
     "removeAvatarTitle": "Usunąć zdjęcie profilowe?",
     "loadFailed": "Nie udało się wczytać profilu.",
     "sharedInterests": "Wspólne zainteresowania"
+  },
+  "BLOCKED": {
+    "title": "Zablokowani"
   },
   "SETTINGS": {
     "title": "Ustawienia",
@@ -199,19 +167,17 @@
     "usernameTaken": "Ta nazwa jest zajęta.",
     "saved": "Zapisano."
   },
-  "DISCOVER": {
-    "title": "Odkrywaj",
+  "PEOPLE": {
+    "title": "Ludzie",
     "searchbar": "Szukaj ludzi",
     "no-users": "Nie znaleziono uzytkownikow"
   },
   "ADD_POST": {
-    "title": "Dodaj post!",
-    "header-title": "Dodaj nowe wydarzenie",
-    "header-desc": "Wypełnij formularz, aby opublikować nowy post."
+    "title": "Dodaj wydarzenie",
+    "header-desc": "Wypełnij formularz, aby opublikować nowe wydarzenie."
   },
   "EDIT_POST": {
-    "title": "Edytuj post!",
-    "header-title": "Edytuj wydarzenie",
+    "title": "Edytuj wydarzenie",
     "header-desc": "Zmień szczegóły swojego wydarzenia."
   },
   "POST_FORM": {
@@ -255,7 +221,7 @@
     "status-removed": "Zdjęcie usunięte. Zostało zdjęć: {{total}}.",
     "status-cover-removed": "Okładka usunięta. Okładką jest teraz pierwsze zdjęcie. Zostało zdjęć: {{total}}.",
     "upload-failed": "Nie udało się wysłać zdjęcia {{name}}.",
-    "too-many-photos": "Post może mieć najwyżej {{max}} zdjęć.",
+    "too-many-photos": "Wydarzenie może mieć najwyżej {{max}} zdjęć.",
     "when": "Kiedy?",
     "ends-at-error": "Koniec musi być po początku.",
     "add-end": "Dodaj zakończenie",
@@ -313,7 +279,7 @@
   "EVENT_CARD": {
     "by": "przez"
   },
-  "MY_EVENTS": {
+  "PLANS": {
     "title": "Plany",
     "no-events": "Nie masz jeszcze żadnych wydarzeń... Smutno.",
     "all": "Wszystkie",
@@ -342,10 +308,7 @@
     "loading": "Wczytywanie...",
     "load-error": "Nie udało się wczytać zainteresowań.",
     "retry": "Spróbuj ponownie",
-    "skip": "Pomiń na razie",
-    "leave-title": "Niezapisane zmiany",
-    "leave-text": "Zapisać zmiany przed wyjściem?",
-    "leave-discard": "Nie zapisuj"
+    "skip": "Pomiń na razie"
   },
   "KINDS": {
     "more": "+{{count}} więcej",
@@ -417,11 +380,9 @@
     "error-no-place": "Wybierz miejsce z listy albo wskaż je na mapie."
   },
   "HIDDEN": {
-    "title": "Ukryte posty",
-    "intro": "Posty oznaczone „Nie dla mnie”. Widzisz je tylko Ty.",
-    "empty": "Nie ukryto jeszcze żadnego posta.",
-    "load-error": "Nie udało się wczytać ukrytych postów.",
-    "retry": "Spróbuj ponownie"
+    "title": "Ukryte wydarzenia",
+    "intro": "Wydarzenia oznaczone „Nie dla mnie”. Widzisz je tylko Ty.",
+    "empty": "Nie ukryto jeszcze żadnego wydarzenia."
   },
   "MAP": {
     "searchArea": "Szukaj w tym obszarze",
@@ -573,5 +534,11 @@
     "noFollowing": "Nikogo jeszcze nie obserwuje.",
     "noFollowingOwn": "Nie obserwujesz jeszcze nikogo.",
     "close": "Zamknij listę"
+  },
+  "LEAVE": {
+    "title": "Niezapisane zmiany",
+    "text": "Zapisać zmiany przed wyjściem?",
+    "textNew": "Opublikować wydarzenie przed wyjściem?",
+    "discard": "Nie zapisuj"
   }
 }

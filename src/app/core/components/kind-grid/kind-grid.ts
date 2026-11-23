@@ -3,7 +3,6 @@ import {
   Component,
   computed,
   forwardRef,
-  inject,
   input,
   model,
   signal,
@@ -12,8 +11,8 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
 import { TranslatePipe } from '@ngx-translate/core';
 import { kindIcon } from '../../icons/kind-icons';
-import { Kind } from '../../models/interests/interest.model';
-import { KindsService } from '../../services/interests/kinds.service';
+import { Kind, label } from '../../models/interests/interest.model';
+import { currentLang } from '../../utils/current-lang';
 
 /**
  * Kinds of event to pick, several at once. `large` is onboarding's and the profile's: tiles in two columns, each with
@@ -32,7 +31,7 @@ import { KindsService } from '../../services/interests/kinds.service';
   providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => KindGrid), multi: true }],
 })
 export class KindGrid implements ControlValueAccessor {
-  private kindNames = inject(KindsService);
+  private lang = currentLang();
 
   readonly kinds = input.required<readonly Kind[]>();
   readonly selected = model<ReadonlySet<string>>(new Set());
@@ -79,7 +78,7 @@ export class KindGrid implements ControlValueAccessor {
   protected tiles = computed(() => {
     return this.shown().map((kind) => ({
       key: kind.key,
-      name: this.kindNames.name(kind.key) ?? kind.key,
+      name: label(kind, this.lang()),
       icon: kindIcon(kind.key),
     }));
   });

@@ -1,5 +1,6 @@
 import {
   Component,
+  computed,
   DestroyRef,
   ElementRef,
   inject,
@@ -16,7 +17,7 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { heroMagnifyingGlass } from '@ng-icons/heroicons/outline';
 
 import { GeoPoint } from '../../models/common/geo.model';
-import { PlaceKind, PlaceOption } from '../../models/common/place-suggestion.model';
+import { PlaceKind, PlaceOption, PlaceResults } from '../../models/common/place-suggestion.model';
 import { GeocodingService } from '../../services/geocoding/geocoding.service';
 
 let nextId = 0;
@@ -45,8 +46,14 @@ export class PlaceSearch implements OnInit {
 
   protected readonly id = `place-search-${nextId++}`;
   protected query = signal('');
-  protected suggestions = signal<PlaceOption[]>([]);
-  protected unavailable = signal(false);
+  private results = signal<PlaceResults<PlaceOption> | null>(null);
+  /** Only for the text in the box, never an older one, which stays on the way to a new answer. */
+  private current = computed(() => {
+    const results = this.results();
+    return results?.text === this.query().trim() ? results : null;
+  });
+  protected suggestions = computed(() => this.current()?.places ?? []);
+  protected unavailable = computed(() => this.current()?.unavailable ?? false);
   protected active = signal(-1);
   private box = viewChild.required<ElementRef<HTMLInputElement>>('box');
   private texts = new Subject<string>();
@@ -55,13 +62,9 @@ export class PlaceSearch implements OnInit {
     this.geocoding
       .searchPlaces(this.texts, () => this.near(), this.kind())
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(({ text, places, unavailable }) => {
-        // An answer for text that was typed over is dropped by the search; this drops one for a box emptied since.
-        if (text === this.query().trim()) {
-          this.suggestions.set(places);
-          this.unavailable.set(unavailable);
-          this.active.set(-1);
-        }
+      .subscribe((results) => {
+        this.results.set(results);
+        this.active.set(-1);
       });
   }
 
@@ -72,8 +75,7 @@ export class PlaceSearch implements OnInit {
   protected onType(text: string): void {
     this.query.set(text);
     if (!text.trim()) {
-      this.suggestions.set([]);
-      this.unavailable.set(false);
+      this.results.set(null);
     }
     this.texts.next(text);
   }

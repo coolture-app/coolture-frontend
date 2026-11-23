@@ -2,34 +2,32 @@
   <div class="blocked">
     <div class="blocked__head">
       <app-back-link fallback="/profile/settings" />
-      <h1 class="blocked__title">{{ 'PROFILE.blocked' | translate }}</h1>
+      <h1 class="blocked__title">{{ 'BLOCKED.title' | translate }}</h1>
     </div>
 
-    @if (failed()) {
-      <div class="blocked__empty" role="alert">
-        <span>{{ 'PROFILE.blockedLoadError' | translate }}</span>
-        <app-btn variant="secondary" size="sm" (btnClick)="load()">
-          {{ 'PROFILE.retry' | translate }}
-        </app-btn>
-      </div>
-    } @else if (loading()) {
-      <p class="blocked__empty">{{ 'PROFILE.loading' | translate }}</p>
-    } @else {
-      <ul class="blocked__list">
-        @for (user of users(); track user.id) {
-          <li class="blocked__user">
-            <span class="blocked__info">
-              <span class="blocked__name">{{ user.firstName }} {{ user.lastName }}</span>
-              <span class="blocked__username">&#64;{{ user.username }}</span>
-            </span>
-            <app-btn variant="secondary" size="sm" (btnClick)="unblock(user)">
-              {{ 'PROFILE.unblock' | translate }}
-            </app-btn>
-          </li>
-        } @empty {
-          <li class="blocked__empty">{{ 'PROFILE.no-blocked' | translate }}</li>
-        }
-      </ul>
+    <ul class="blocked__list">
+      @for (user of pages.items(); track user.id) {
+        <li class="blocked__user">
+          <span class="blocked__info">
+            <span class="blocked__name">{{ user.firstName }} {{ user.lastName }}</span>
+            <span class="blocked__username">&#64;{{ user.username }}</span>
+          </span>
+          <app-btn variant="secondary" size="sm" (btnClick)="unblock(user)">
+            {{ 'PROFILE.unblock' | translate }}
+          </app-btn>
+        </li>
+      }
+    </ul>
+    <div
+      [appInfiniteScroll]="pages.hasMore() && !pages.loading() && !pages.failed()"
+      (reachedEnd)="pages.loadMore()"
+    ></div>
+    @if (pages.failed()) {
+      <app-load-state [failed]="true" (retry)="pages.retry()" />
+    } @else if (pages.loading()) {
+      <app-load-state />
+    } @else if (!pages.items().length) {
+      <p class="blocked__empty">{{ 'PROFILE.no-blocked' | translate }}</p>
     }
   </div>
 </div>

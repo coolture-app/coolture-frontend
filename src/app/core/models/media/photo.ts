@@ -7,9 +7,9 @@ export interface Photo {
   height?: number;
 }
 
-/** The tallest and the widest frame, width over height: 4:5 and 1.91:1, as Instagram's feed. */
-export const TALLEST_FRAME = 4 / 5;
-export const WIDEST_FRAME = 1.91;
+/** The limits of a frame's shape, as Instagram's feed holds them. */
+const TALLEST_FRAME = 4 / 5;
+const WIDEST_FRAME = 1.91;
 
 export function toPhoto(media: MediaResource | undefined): Photo | null {
   return media?.url ? { url: media.url, width: media.width, height: media.height } : null;

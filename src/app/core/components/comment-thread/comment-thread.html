@@ -2,9 +2,9 @@
   @for (item of comments(); track item.id) {
     <app-comment-component
       [comment]="item"
-      [inSheet]="inSheet()"
       (replyClicked)="setReplyTo($event)"
       (commentDeleted)="onDeleted($event)"
+      (replyDeleted)="countChange.emit(-1)"
     />
   }
   <div
@@ -63,8 +63,8 @@
           (ngModelChange)="content.set($event)"
           (input)="resize()"
           (focus)="composerFocused.emit()"
-          (keydown.control.enter)="onKeydown($event)"
-          (keydown.meta.enter)="onKeydown($event)"
+          (keydown.control.enter)="onSendShortcut($event)"
+          (keydown.meta.enter)="onSendShortcut($event)"
         ></textarea>
         <button
           type="button"

@@ -52,27 +52,27 @@ describe('BackService', () => {
       ['/', { key: 'MAIN_PAGE.forYou' }],
       ['/?tab=all&sort=popular', { key: 'MAIN_PAGE.all' }],
       ['/?tab=all&view=map', { key: 'MAIN_PAGE.map' }],
-      ['/people', { key: 'NAVBAR.friends' }],
-      ['/plans', { key: 'NAVBAR.my-events' }],
-      ['/profile', { key: 'NAVBAR.my-profile' }],
+      ['/people', { key: 'PEOPLE.title' }],
+      ['/plans', { key: 'PLANS.title' }],
+      ['/profile', { key: 'PROFILE.title' }],
       ['/users/jan_demo', { text: '@jan_demo' }],
       ['/posts/p1', { key: 'BACK.post' }],
       ['/posts/p1#comments', { key: 'BACK.post' }],
       ['/profile/settings', { key: 'SETTINGS.title' }],
-      ['/profile/blocked', { key: 'PROFILE.blocked' }],
+      ['/profile/blocked', { key: 'BLOCKED.title' }],
       ['/profile/hidden', { key: 'HIDDEN.title' }],
-      ['/profile/interests', { key: 'PROFILE.interests' }],
-      ['/posts/new', { key: 'BACK.newPost' }],
-      ['/posts/p1/edit', { key: 'BACK.editPost' }],
+      ['/profile/interests', { key: 'INTERESTS.title' }],
+      ['/posts/new', { key: 'ADD_POST.title' }],
+      ['/posts/p1/edit', { key: 'EDIT_POST.title' }],
       ['/nowhere', { key: 'BACK.previous' }],
     ];
     for (const [url, label] of cases) {
-      it(`${url}`, () => expect(back.label(url)).toEqual(label as never));
+      it(`${url}`, () => expect(back.target(url).label).toEqual(label as never));
     }
 
     it('a post by its title, once the post page knows it', () => {
       back.rememberPostTitle('p1', 'Koncert w parku');
-      expect(back.label('/posts/p1')).toEqual({ text: 'Koncert w parku' });
+      expect(back.target('/posts/p1').label).toEqual({ text: 'Koncert w parku' });
     });
   });
 
@@ -138,7 +138,7 @@ describe('BackService', () => {
       await visit('/users/jan');
       const historyBack = spyOn(location, 'back');
 
-      expect(back.target('/people')).toEqual({ url: '/people', label: { key: 'NAVBAR.friends' } });
+      expect(back.target('/people')).toEqual({ url: '/people', label: { key: 'PEOPLE.title' } });
       await pop(() => back.back('/people'));
 
       expect(historyBack).not.toHaveBeenCalled();

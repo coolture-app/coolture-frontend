@@ -1,0 +1,52 @@
+@let u = user();
+@if (u.avatar; as avatar) {
+  <button
+    type="button"
+    class="avatar-view"
+    [attr.aria-label]="'PROFILE.showAvatar' | translate"
+    (click)="show()"
+  >
+    <img [src]="avatar.url" [alt]="u.username" class="avatar" />
+  </button>
+} @else {
+  <div class="avatar avatar--placeholder">
+    {{ u | initials }}
+  </div>
+}
+@if (own()) {
+  @let hasPhoto = !!u.avatar;
+  <app-menu #menu align="start">
+    <button
+      menuTrigger
+      type="button"
+      class="avatar-badge"
+      [attr.aria-label]="(hasPhoto ? 'PROFILE.changeAvatar' : 'PROFILE.addAvatar') | translate"
+      [attr.aria-haspopup]="hasPhoto ? 'menu' : null"
+      [attr.aria-expanded]="hasPhoto ? menu.open() : null"
+      [appTooltip]="(hasPhoto ? 'PROFILE.changeAvatar' : 'PROFILE.addAvatar') | translate"
+      [disabled]="uploading()"
+      (click)="hasPhoto ? menu.toggle() : fileInput.click()"
+    >
+      <ng-icon [name]="hasPhoto ? 'lucideCamera' : 'lucidePlus'" aria-hidden="true" />
+    </button>
+    <app-menu-item icon="lucideCamera" (click)="fileInput.click()">{{
+      'PROFILE.changeAvatar' | translate
+    }}</app-menu-item>
+    <app-menu-item icon="lucideTrash2" danger (click)="remove()">{{
+      'PROFILE.removeAvatar' | translate
+    }}</app-menu-item>
+  </app-menu>
+  <input
+    #fileInput
+    class="avatar-input"
+    type="file"
+    accept="image/*"
+    tabindex="-1"
+    aria-hidden="true"
+    (change)="onFileSelected($event)"
+  />
+}
+
+@if (pickedFile(); as file) {
+  <app-avatar-cropper [file]="file" (saved)="upload($event)" (cancelled)="pickedFile.set(null)" />
+}

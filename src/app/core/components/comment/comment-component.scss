@@ -138,41 +138,6 @@
   }
 }
 
-.comment__menu {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  z-index: var(--z-dropdown);
-  min-width: 120px;
-  padding: var(--space-xs);
-  border: 1px solid var(--color-border-light);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
-  box-shadow: var(--shadow-md);
-}
-
-.comment__menu-item {
-  display: block;
-  width: 100%;
-  padding: var(--space-sm);
-  border: none;
-  border-radius: var(--radius-sm);
-  background: none;
-  font: inherit;
-  font-size: var(--text-body);
-  text-align: left;
-  color: var(--color-text);
-  cursor: pointer;
-
-  &:hover {
-    background: var(--color-surface-hover);
-  }
-
-  &--danger {
-    color: var(--color-danger, #b91c1c);
-  }
-}
-
 .comment__replies-toggle {
   display: block;
   margin: var(--space-xs) 0 0 44px;

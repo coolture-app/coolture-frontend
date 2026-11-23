@@ -4,7 +4,6 @@ import {
   Component,
   computed,
   DestroyRef,
-  DOCUMENT,
   ElementRef,
   inject,
   Injector,
@@ -20,7 +19,14 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideSendHorizontal, lucideX } from '@ng-icons/lucide';
 
-import { CommentComponent, DeletedComment, ReplyTarget } from '../comment/comment-component';
+import {
+  afterDelete,
+  CommentComponent,
+  DeletedComment,
+  isShown,
+  MAX_COMMENT_LENGTH,
+  ReplyTarget,
+} from '../comment/comment-component';
 import { CommentSummary } from '../../models/comments/comment-summary.model';
 import { CommentsService } from '../../services/comments/comments.service';
 import { AuthService } from '../../services/auth/auth.service';
@@ -28,10 +34,9 @@ import { SignInPromptService } from '../../services/sign-in-prompt/sign-in-promp
 import { ToastService } from '../../services/toast/toast.service';
 import { InfiniteScroll } from '../../directives/infinite-scroll';
 import { Tooltip } from '../../directives/tooltip';
+import { Sheet } from '../sheet/sheet';
 
 const PAGE = 20;
-/** The API's limit on a comment. */
-const MAX_LENGTH = 512;
 /** The counter stays out of the way until the limit is near. */
 const COUNTER_FROM = 400;
 
@@ -53,11 +58,10 @@ const COUNTER_FROM = 400;
   viewProviders: [provideIcons({ lucideSendHorizontal, lucideX })],
   templateUrl: './comment-thread.html',
   styleUrl: './comment-thread.scss',
-  host: { '[class.thread--sheet]': 'inSheet()' },
+  host: { '[class.thread--sheet]': 'inSheet' },
 })
 export class CommentThread implements OnInit {
   readonly postId = input.required<string>();
-  readonly inSheet = input(false);
   /** A comment was added (+1) or removed (-1), so whoever shows the count can update it. */
   readonly countChange = output<number>();
   /** The box took focus, which on a phone means the keyboard is coming. */
@@ -69,13 +73,13 @@ export class CommentThread implements OnInit {
   private translate = inject(TranslateService);
   private destroyRef = inject(DestroyRef);
   private injector = inject(Injector);
-  private document = inject(DOCUMENT);
+  protected readonly inSheet = !!inject(Sheet, { optional: true });
   private host: HTMLElement = inject(ElementRef).nativeElement;
   private input = viewChild<ElementRef<HTMLTextAreaElement>>('commentInput');
   private authService = inject(AuthService);
 
   readonly user = this.authService.currentUser;
-  readonly maxLength = MAX_LENGTH;
+  readonly maxLength = MAX_COMMENT_LENGTH;
   readonly comments = signal<CommentSummary[]>([]);
   readonly loading = signal(true);
   readonly failed = signal(false);
@@ -86,10 +90,9 @@ export class CommentThread implements OnInit {
   private cursor: string | undefined;
 
   readonly canSend = computed(() => !this.sending() && this.body().length > 0);
-  /** What's left to write, once that's worth showing. */
   readonly remaining = computed(() => {
     const length = this.content().length;
-    return length >= COUNTER_FROM ? MAX_LENGTH - length : null;
+    return length >= COUNTER_FROM ? MAX_COMMENT_LENGTH - length : null;
   });
   /** A reply's prefilled @name alone says nothing, so it doesn't count as a comment. */
   private readonly body = computed(() => {
@@ -100,10 +103,6 @@ export class CommentThread implements OnInit {
     const target = this.replyTo();
     return target?.mention ? `@${target.username} ` : '';
   });
-
-  constructor() {
-    this.trackKeyboard();
-  }
 
   ngOnInit(): void {
     this.load();
@@ -118,9 +117,7 @@ export class CommentThread implements OnInit {
       .subscribe({
         next: (res) => {
           const known = new Set(this.comments().map((c) => c.id));
-          const added = res.items.filter(
-            (c) => !known.has(c.id) && (c.status !== 'DELETED' || c.repliesCount > 0),
-          );
+          const added = res.items.filter((c) => !known.has(c.id) && isShown(c));
           this.comments.update((comments) => [...comments, ...added]);
           this.cursor = res.page.nextCursor;
           this.hasMore.set(res.page.hasMore);
@@ -133,7 +130,7 @@ export class CommentThread implements OnInit {
       });
   }
 
-  /** Signing in comes back to these comments, and writing is what a guest wanted to do. */
+  /** Comes back to this URL after signing in. */
   signIn(): void {
     void this.authService.login();
   }
@@ -174,7 +171,7 @@ export class CommentThread implements OnInit {
   }
 
   /** Ctrl or Cmd and Enter sends. Enter alone starts a new line, as on a phone's keyboard. */
-  onKeydown(event: Event): void {
+  onSendShortcut(event: Event): void {
     event.preventDefault();
     this.send();
   }
@@ -199,13 +196,8 @@ export class CommentThread implements OnInit {
       });
   }
 
-  /** A reply's deletion comes through here too. Its id matches nothing on this list. */
-  onDeleted({ id, hasReplies }: DeletedComment): void {
-    this.comments.update((comments) =>
-      hasReplies
-        ? comments.map((c) => (c.id === id ? { ...c, status: 'DELETED' as const } : c))
-        : comments.filter((c) => c.id !== id),
-    );
+  onDeleted(deleted: DeletedComment): void {
+    this.comments.update((comments) => afterDelete(comments, deleted));
     this.countChange.emit(-1);
   }
 
@@ -213,8 +205,11 @@ export class CommentThread implements OnInit {
     this.sending.set(false);
     this.content.set('');
     this.replyTo.set(null);
+    // NgModel writes the cleared text later, and the height has to be measured on it.
+    const box = this.input()?.nativeElement;
+    if (box) box.value = '';
     this.resize();
-    this.input()?.nativeElement.blur();
+    box?.blur();
     this.countChange.emit(1);
     if (comment.parentCommentId) {
       this.commentsService.commentAdded$.next(comment);
@@ -228,29 +223,5 @@ export class CommentThread implements OnInit {
           ?.scrollIntoView({ block: 'center', behavior: 'smooth' }),
       { injector: this.injector },
     );
-  }
-
-  /**
-   * A phone's keyboard covers the page without resizing it, so whatever sits at the bottom of the
-   * screen moves up by this much. The value goes on the root, for the sheet to use as well.
-   */
-  private trackKeyboard(): void {
-    const view = this.document.defaultView;
-    const viewport = view?.visualViewport;
-    if (!view || !viewport) {
-      return;
-    }
-    const root = this.document.documentElement;
-    const update = () => {
-      const covered = view.innerHeight - viewport.height - viewport.offsetTop;
-      root.style.setProperty('--keyboard-inset', `${Math.max(0, Math.round(covered))}px`);
-    };
-    viewport.addEventListener('resize', update);
-    viewport.addEventListener('scroll', update);
-    this.destroyRef.onDestroy(() => {
-      viewport.removeEventListener('resize', update);
-      viewport.removeEventListener('scroll', update);
-      root.style.removeProperty('--keyboard-inset');
-    });
   }
 }

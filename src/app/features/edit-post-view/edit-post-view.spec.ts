@@ -3,12 +3,12 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, Subject, throwError } from 'rxjs';
 
 import { EditPostView } from './edit-post-view';
-import { PostForm } from '../../core/components/post-form/post-form';
+import { PostForm, PostFormSubmit } from '../../core/components/post-form/post-form';
 import { MediaService } from '../../core/services/media/media.service';
 import { PostService } from '../../core/services/post/post.service';
 import { BackService } from '../../core/services/back/back.service';
 import { PostDetail } from '../../core/models/posts/post-detail.model';
-import { PostFormData } from '../../core/models/posts/post-form-data.model';
+import { PostCreateRequest } from '../../core/models/posts/post-create-request.model';
 
 describe('EditPostView', () => {
   let component: EditPostView;
@@ -29,23 +29,31 @@ describe('EditPostView', () => {
   });
 });
 
-function formData(removedMediaIds: string[] = []): PostFormData {
-  return { mediaIds: [], removedMediaIds } as unknown as PostFormData;
+const REQUEST: PostCreateRequest = {
+  title: 'Koncert',
+  description: 'Opis',
+  startsAt: '2030-05-01T17:00:00Z',
+  type: 'ONLINE',
+  mediaIds: [],
+};
+
+function formData(removedMediaIds: string[] = []): PostFormSubmit {
+  return { request: REQUEST, removedMediaIds };
 }
 
 describe('EditPostView, after saving', () => {
-  it('goes back to where the edit was opened, so the form leaves history', () => {
+  it('goes back to where the edit was opened, so the form leaves history', async () => {
     const back = spyOn(TestBed.inject(BackService), 'back');
     spyOn(TestBed.inject(PostService), 'updatePost').and.returnValue(of({} as PostDetail));
     const fixture = TestBed.createComponent(EditPostView);
     fixture.componentInstance.currentPost.set({ id: 'p1' } as PostDetail);
 
-    fixture.componentInstance.onFormSubmit(formData());
+    await fixture.componentInstance.onFormSubmit(formData());
 
     expect(back).toHaveBeenCalledWith('/posts/p1');
   });
 
-  it('deletes the removed photos only once the post no longer holds them', () => {
+  it('deletes the removed photos only once the post no longer holds them', async () => {
     const saving = new Subject<PostDetail>();
     spyOn(TestBed.inject(BackService), 'back');
     spyOn(TestBed.inject(PostService), 'updatePost').and.returnValue(saving);
@@ -55,15 +63,16 @@ describe('EditPostView, after saving', () => {
     const fixture = TestBed.createComponent(EditPostView);
     fixture.componentInstance.currentPost.set({ id: 'p1' } as PostDetail);
 
-    fixture.componentInstance.onFormSubmit(formData(['m1']));
+    const saved = fixture.componentInstance.onFormSubmit(formData(['m1']));
     expect(deleted).not.toHaveBeenCalled();
 
     saving.next({} as PostDetail);
     saving.complete();
+    await saved;
     expect(deleted).toHaveBeenCalledOnceWith('m1');
   });
 
-  it('still goes back when a removed photo could not be deleted', () => {
+  it('still goes back when a removed photo could not be deleted', async () => {
     const back = spyOn(TestBed.inject(BackService), 'back');
     spyOn(console, 'error');
     spyOn(TestBed.inject(PostService), 'updatePost').and.returnValue(of({} as PostDetail));
@@ -73,12 +82,12 @@ describe('EditPostView, after saving', () => {
     const fixture = TestBed.createComponent(EditPostView);
     fixture.componentInstance.currentPost.set({ id: 'p1' } as PostDetail);
 
-    fixture.componentInstance.onFormSubmit(formData(['m1']));
+    await fixture.componentInstance.onFormSubmit(formData(['m1']));
 
     expect(back).toHaveBeenCalledWith('/posts/p1');
   });
 
-  it('keeps the photos when the save fails', () => {
+  it('keeps the photos when the save fails', async () => {
     spyOn(console, 'error');
     spyOn(TestBed.inject(PostService), 'updatePost').and.returnValue(
       throwError(() => new Error('nope')),
@@ -90,7 +99,7 @@ describe('EditPostView, after saving', () => {
       resetSubmitting: () => undefined,
     } as PostForm;
 
-    fixture.componentInstance.onFormSubmit(formData(['m1']));
+    await fixture.componentInstance.onFormSubmit(formData(['m1']));
 
     expect(deleted).not.toHaveBeenCalled();
   });

@@ -5,7 +5,7 @@ import { Subject } from 'rxjs';
 import { GeocodingService } from './geocoding.service';
 import {
   PlaceOption,
-  PlaceSearch,
+  PlaceResults,
   PlaceSuggestion,
 } from '../../models/common/place-suggestion.model';
 
@@ -26,7 +26,7 @@ const ERGO_ARENA = {
   },
 };
 
-const TRICITY = { latitude: 54.4, longitude: 18.6 };
+const NEAR = { latitude: 54.4, longitude: 18.6 };
 
 function photon(...features: unknown[]) {
   return { type: 'FeatureCollection', features };
@@ -55,7 +55,7 @@ describe('GeocodingService', () => {
         properties: { ...ERGO_ARENA.properties, osm_key: 'amenity', osm_value: 'theatre' },
       };
       let places: PlaceSuggestion[] = [];
-      service.suggest('Ergo', TRICITY).subscribe((result) => (places = result));
+      service.suggest('Ergo', NEAR).subscribe((result) => (places = result));
 
       http.expectOne((r) => r.url === '/geo/api').flush(photon(ERGO_ARENA, theatre));
 
@@ -63,7 +63,7 @@ describe('GeocodingService', () => {
     });
 
     it('asks Photon for local names in Poland, without stops, near the given point', () => {
-      service.suggest('Ergo', TRICITY).subscribe();
+      service.suggest('Ergo', NEAR).subscribe();
 
       const request = http.expectOne((r) => r.url === '/geo/api');
       expect(params(request)).toEqual({
@@ -80,7 +80,7 @@ describe('GeocodingService', () => {
 
     it('maps a venue to our fields, latitude from the second coordinate', () => {
       let places: PlaceSuggestion[] = [];
-      service.suggest('Ergo', TRICITY).subscribe((result) => (places = result));
+      service.suggest('Ergo', NEAR).subscribe((result) => (places = result));
 
       http.expectOne((r) => r.url === '/geo/api').flush(photon(ERGO_ARENA));
 
@@ -98,7 +98,7 @@ describe('GeocodingService', () => {
 
     it('leaves out what Photon leaves out, and never takes a street or city name for a venue', () => {
       let places: PlaceSuggestion[] = [];
-      service.suggest('Długa', TRICITY).subscribe((result) => (places = result));
+      service.suggest('Długa', NEAR).subscribe((result) => (places = result));
 
       http
         .expectOne((r) => r.url === '/geo/api')
@@ -125,7 +125,7 @@ describe('GeocodingService', () => {
 
     it("cuts text to the API's limits", () => {
       let places: PlaceSuggestion[] = [];
-      service.suggest('Teatr', TRICITY).subscribe((result) => (places = result));
+      service.suggest('Teatr', NEAR).subscribe((result) => (places = result));
 
       http
         .expectOne((r) => r.url === '/geo/api')
@@ -197,7 +197,7 @@ describe('GeocodingService', () => {
 
   describe('search as the user types', () => {
     let texts: Subject<string>;
-    let results: PlaceSearch[];
+    let results: PlaceResults[];
 
     function type(text: string): void {
       texts.next(text);
@@ -208,7 +208,7 @@ describe('GeocodingService', () => {
       jasmine.clock().install().mockDate(new Date('2026-11-09T12:00:00Z'));
       texts = new Subject<string>();
       results = [];
-      service.search(texts, () => TRICITY).subscribe((result) => results.push(result));
+      service.search(texts, () => NEAR).subscribe((result) => results.push(result));
     });
 
     afterEach(() => jasmine.clock().uninstall());
@@ -282,7 +282,7 @@ describe('GeocodingService', () => {
     }
 
     it('asks for cities, towns, villages and districts only, in Poland, near the given point', () => {
-      service.findPlaces('Oliwa', TRICITY, 'area').subscribe();
+      service.findPlaces('Oliwa', NEAR, 'area').subscribe();
 
       const request = http.expectOne((r) => r.url === '/geo/api');
       expect(params(request)).toEqual({
@@ -299,7 +299,7 @@ describe('GeocodingService', () => {
 
     it('names a district with its city, and tells villages of one name apart by county', () => {
       let places: PlaceOption[] = [];
-      service.findPlaces('Nowa', TRICITY, 'area').subscribe((result) => (places = result));
+      service.findPlaces('Nowa', NEAR, 'area').subscribe((result) => (places = result));
 
       http
         .expectOne((r) => r.url === '/geo/api')
@@ -323,7 +323,7 @@ describe('GeocodingService', () => {
 
     it('lists one object Photon gives twice only once', () => {
       let places: PlaceOption[] = [];
-      service.findPlaces('Gdy', TRICITY, 'area').subscribe((result) => (places = result));
+      service.findPlaces('Gdy', NEAR, 'area').subscribe((result) => (places = result));
 
       const gdynia = area('city', 'Gdynia', { county: 'Gdynia' });
       http.expectOne((r) => r.url === '/geo/api').flush(photon(gdynia, gdynia));
@@ -333,7 +333,7 @@ describe('GeocodingService', () => {
 
     it('finds any place for a radius, without stops, with its address as the second line', () => {
       let places: PlaceOption[] = [];
-      service.findPlaces('Ergo', TRICITY, 'any').subscribe((result) => (places = result));
+      service.findPlaces('Ergo', NEAR, 'any').subscribe((result) => (places = result));
 
       const request = http.expectOne((r) => r.url === '/geo/api');
       expect(params(request)['exclude']).toEqual([

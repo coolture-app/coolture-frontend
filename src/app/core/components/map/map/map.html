@@ -48,16 +48,16 @@
       id="posts"
       [data]="pins()"
       [cluster]="true"
-      [clusterMaxZoom]="16"
-      [clusterRadius]="44"
-      [clusterProperties]="layers.CLUSTER_POSTS"
+      [clusterMaxZoom]="layers.CLUSTER_SOURCE.maxZoom"
+      [clusterRadius]="layers.CLUSTER_SOURCE.radius"
+      [clusterProperties]="layers.CLUSTER_SOURCE.properties"
     ></mgl-geojson-source>
     <mgl-layer
       id="titles"
       type="symbol"
       source="posts"
       [minzoom]="layers.TITLE_MIN_ZOOM"
-      [filter]="['!', ['has', 'point_count']]"
+      [filter]="layers.IS_PIN"
       [layout]="layers.TITLE_LAYOUT"
       [paint]="layers.TITLE_PAINT"
     ></mgl-layer>
@@ -65,7 +65,7 @@
       id="pins"
       type="symbol"
       source="posts"
-      [filter]="['!', ['has', 'point_count']]"
+      [filter]="layers.IS_PIN"
       [layout]="layers.PILL_LAYOUT"
       [paint]="layers.PILL_PAINT"
       (layerClick)="onPinClick($event)"
@@ -76,7 +76,7 @@
       id="clusters"
       type="circle"
       source="posts"
-      [filter]="['has', 'point_count']"
+      [filter]="layers.IS_CLUSTER"
       [paint]="layers.CLUSTER_PAINT"
       (layerClick)="onClusterClick($event)"
       (layerMouseEnter)="onPinEnter($event)"
@@ -86,7 +86,7 @@
       id="cluster-count"
       type="symbol"
       source="posts"
-      [filter]="['has', 'point_count']"
+      [filter]="layers.IS_CLUSTER"
       [layout]="layers.CLUSTER_COUNT_LAYOUT"
       [paint]="layers.CLUSTER_COUNT_PAINT"
     ></mgl-layer>
@@ -94,7 +94,7 @@
       id="cluster-star"
       type="symbol"
       source="posts"
-      [filter]="['all', ['has', 'point_count'], ['>', ['get', 'picks'], 0]]"
+      [filter]="layers.IS_PICK_CLUSTER"
       [layout]="layers.CLUSTER_STAR_LAYOUT"
     ></mgl-layer>
     <mgl-layer
@@ -129,7 +129,7 @@
         [closeButton]="false"
         [closeOnClick]="false"
         [offset]="cardGap"
-        [maxWidth]="'360px'"
+        maxWidth="360px"
         className="map-card"
       >
         <app-map-preview

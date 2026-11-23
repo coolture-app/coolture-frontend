@@ -60,15 +60,11 @@ export class AccountForm {
     this.saving.set(true);
     try {
       const saved = await firstValueFrom(this.users.updateProfile(userId, this.changes()));
-      this.auth.currentUser.update(
-        (user) =>
-          user && {
-            ...user,
-            username: saved.username,
-            firstName: saved.firstName,
-            lastName: saved.lastName,
-          },
-      );
+      const user = this.auth.currentUser();
+      if (user) {
+        const { username, firstName, lastName } = saved;
+        this.auth.markProfile({ ...user, username, firstName, lastName });
+      }
       this.toast.show(this.translate.instant('SETTINGS.saved'));
     } catch (err) {
       if (err instanceof HttpErrorResponse && err.status === 409) {

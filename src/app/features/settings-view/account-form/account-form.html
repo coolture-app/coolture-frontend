@@ -11,7 +11,7 @@
         maxlength="32"
         [value]="username()"
         [attr.aria-invalid]="!usernameValid() || taken()"
-        [attr.aria-describedby]="'account-username-hint'"
+        aria-describedby="account-username-hint"
         (input)="typeUsername($any($event.target).value)"
       />
     </span>

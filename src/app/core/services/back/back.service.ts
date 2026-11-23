@@ -99,7 +99,7 @@ export class BackService {
   }
 
   /** Reads the post titles, so a name shown updates once its title is known. */
-  label(url: string): PageLabel {
+  private label(url: string): PageLabel {
     const tree = this.router.parseUrl(url);
     const [first = '', second = '', third] =
       tree.root.children['primary']?.segments.map((segment) => segment.path) ?? [];
@@ -115,16 +115,16 @@ export class BackService {
         };
       }
       case 'people':
-        return { key: 'NAVBAR.friends' };
+        return { key: 'PEOPLE.title' };
       case 'plans':
-        return { key: 'NAVBAR.my-events' };
+        return { key: 'PLANS.title' };
       case 'users':
         return second ? { text: `@${second}` } : { key: 'BACK.previous' };
       case 'profile':
         return { key: PROFILE_PAGES[second] ?? 'BACK.previous' };
       case 'posts': {
-        if (second === 'new') return { key: 'BACK.newPost' };
-        if (third === 'edit') return { key: 'BACK.editPost' };
+        if (second === 'new') return { key: 'ADD_POST.title' };
+        if (third === 'edit') return { key: 'EDIT_POST.title' };
         const title = this.postTitles().get(second);
         return title ? { text: title } : { key: 'BACK.post' };
       }
@@ -178,13 +178,13 @@ export class BackService {
 }
 
 const PROFILE_PAGES: Record<string, string> = {
-  '': 'NAVBAR.my-profile',
+  '': 'PROFILE.title',
   settings: 'SETTINGS.title',
-  blocked: 'PROFILE.blocked',
+  blocked: 'BLOCKED.title',
   hidden: 'HIDDEN.title',
-  interests: 'PROFILE.interests',
+  interests: 'INTERESTS.title',
 };
 
-function pathOf(url: string): string {
+export function pathOf(url: string): string {
   return url.split(/[?#]/)[0];
 }

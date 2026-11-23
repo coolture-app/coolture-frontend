@@ -32,11 +32,10 @@ import { EventWhenService } from '../../../services/event-when/event-when.servic
 import { directionsUrl } from './directions';
 import { Tooltip } from '../../../directives/tooltip';
 import { PickStar } from '../pick-star/pick-star';
-import { MapReactions } from '../map-reactions';
+import { ViewerStates } from '../../../services/viewer-states/viewer-states';
 import { PhotoViewerService } from '../../../services/photo-viewer/photo-viewer.service';
 import { mediaQuery } from '../../../services/media-query/media-query';
 import { FriendsLine } from '../../friends-line/friends-line';
-import { AuthService } from '../../../services/auth/auth.service';
 import { CommentsSheetService } from '../../../services/comments-sheet/comments-sheet.service';
 
 /**
@@ -63,8 +62,7 @@ import { CommentsSheetService } from '../../../services/comments-sheet/comments-
 export class MapPreview {
   private eventWhen = inject(EventWhenService);
   private photoViewer = inject(PhotoViewerService);
-  readonly reactions = inject(MapReactions);
-  private auth = inject(AuthService);
+  readonly states = inject(ViewerStates);
   readonly sheet = inject(CommentsSheetService);
   readonly kinds = inject(KindsService);
   readonly kindIcon = kindIcon;
@@ -75,7 +73,6 @@ export class MapPreview {
     const words = keys.map((k) => this.kinds.eventName(k)).filter((w): w is string => !!w);
     return words.length ? words.join(', ') : null;
   }
-  readonly sharesStances = computed(() => this.auth.isAuthenticated() && this.auth.shareStances());
   readonly hoverable = mediaQuery('(hover: hover)');
 
   readonly place = input.required<Place>();
@@ -99,6 +96,7 @@ export class MapPreview {
     return this.many() ? (posts.find((post) => post.id === this.opened()) ?? null) : posts[0];
   });
   readonly placeName = computed(() => placeLine(this.place().posts[0]));
+  protected readonly placeOf = (post: PostMark) => placeLine(post);
   readonly directions = computed(() =>
     directionsUrl(
       this.place().coordinates,
@@ -132,14 +130,13 @@ export class MapPreview {
     return hasEnded(post, new Date());
   }
 
-  /** The note after a stance's name in its tooltip: why it's off, or who sees it. A translation key. */
   stanceNote(post: PostMark): string | null {
-    return this.ended(post) ? 'POST.endedHint' : this.sharesStances() ? 'POST.friendsSee' : null;
+    return this.states.stanceNote(this.ended(post));
   }
 
   stance(post: PostMark, type: 'INTERESTED' | 'TAKES_PART'): void {
     if (!this.ended(post)) {
-      this.reactions.stance(post, type);
+      this.states.stance(post, type);
     }
   }
 
@@ -158,5 +155,5 @@ export class MapPreview {
   }
 }
 
-/** The peek's width with its gap, as in the styles. */
+/** Must equal .preview__peek's width in the scss. */
 const PEEK_WIDTH_PX = 340;

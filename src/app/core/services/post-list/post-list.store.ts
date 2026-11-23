@@ -14,11 +14,16 @@ export type PostListQuery =
   | { kind: 'posts'; filters: PostFilterParams };
 
 const PAGE_SIZE = 20;
+/**
+ * How many cards before the end the next page is requested. Counted in cards, not pixels, so it means the same on any
+ * screen. Under the page size, so a new page can't ask for the next one by itself.
+ */
+const CARDS_BEFORE_END = 15;
 
 /**
  * The home page's list, kept here so that it survives going to a post and back.
- * Paging rules are in the API contract, contracts/README.md in coolture-aws. Only `hasMore: false` ends
- * a list, and a short or empty page is normal, because scores can move between pages.
+ * Paging rules are in the API contract, `aws/lambdas/post-read/contracts/README.md` in coolture-aws. Only
+ * `hasMore: false` ends a list, and a short or empty page is normal, because scores can move between pages.
  */
 @Injectable({
   providedIn: 'root',
@@ -36,6 +41,8 @@ export class PostListStore {
   readonly canLoadMore = computed(
     () => this.hasMore() && !this.loading() && !this.failed() && !this.renewing(),
   );
+  /** The index of the card that asks for the next page when it comes into view. */
+  readonly loadMoreAt = computed(() => Math.max(0, this.items().length - CARDS_BEFORE_END));
 
   private cursor: string | undefined;
   private seenIds = new Set<string>();
@@ -64,13 +71,6 @@ export class PostListStore {
     this.reset();
     this.query.set(query);
     this.fetch();
-  }
-
-  refresh(): void {
-    const query = this.query();
-    if (query) {
-      this.start(query);
-    }
   }
 
   /**

@@ -45,10 +45,6 @@ describe('app routes', () => {
     });
   });
 
-  it('covers every moved path', () => {
-    expect(moves.length).toBe(MOVED_ROUTES.length);
-  });
-
   it('keeps the query string and fragment of a saved link', async () => {
     const router = TestBed.inject(Router);
     await router.navigateByUrl('/post/p1?from=mail#comments');

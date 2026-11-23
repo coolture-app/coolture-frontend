@@ -18,9 +18,9 @@ export interface PostMark {
   coordinates: GeoPoint;
   venueName?: string;
   city?: string;
-  /** The kind the pin names: the first one the filter asked for, else the first; left out until derived. */
+  /** The kind the pin names: the first one the filter asked for, else the first. */
   kind?: string;
-  /** Every kind, best first; left out until derived. */
+  /** Every kind, best first. */
   kinds?: string[];
   /** The viewer's own; left out for a guest. */
   myReaction?: ReactionType;

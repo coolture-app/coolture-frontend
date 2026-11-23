@@ -1,0 +1,62 @@
+<div class="page">
+  <div class="plans">
+    <h1 class="plans__title">{{ 'PLANS.title' | translate }}</h1>
+    <div class="plans__filters">
+      <app-btn
+        variant="secondary"
+        size="sm"
+        [class]="selectedFilter() === 'all' ? 'active' : ''"
+        (btnClick)="setFilter('all')"
+      >
+        {{ 'PLANS.all' | translate }}
+      </app-btn>
+      <app-btn
+        variant="secondary"
+        size="sm"
+        [class]="selectedFilter() === 'INTERESTED' ? 'active' : ''"
+        (btnClick)="setFilter('INTERESTED')"
+      >
+        {{ 'PLANS.interested' | translate }}
+      </app-btn>
+      <app-btn
+        variant="secondary"
+        size="sm"
+        [class]="selectedFilter() === 'TAKES_PART' ? 'active' : ''"
+        (btnClick)="setFilter('TAKES_PART')"
+      >
+        {{ 'PLANS.takes_part' | translate }}
+      </app-btn>
+    </div>
+
+    <div class="plans__list">
+      @for (post of list.items(); track post.id) {
+        @if ($index === list.loadMoreAt()) {
+          <div
+            class="plans__trigger"
+            [appInfiniteScroll]="list.canLoadMore()"
+            (reachedEnd)="list.loadMore()"
+          ></div>
+        }
+        <app-event-card [post]="post" (cardClick)="goToPost($event)" />
+      }
+      <div
+        class="plans__trigger"
+        [appInfiniteScroll]="list.canLoadMore()"
+        (reachedEnd)="list.loadMore()"
+      ></div>
+
+      @if (list.failed()) {
+        <div class="plans__empty" role="alert">
+          <span>{{ 'PLANS.load-error' | translate }}</span>
+          <app-btn variant="secondary" size="sm" (btnClick)="list.retry()">{{
+            'PLANS.retry' | translate
+          }}</app-btn>
+        </div>
+      } @else if (list.loading()) {
+        <p class="plans__empty" role="status">{{ 'PLANS.loading' | translate }}</p>
+      } @else if (list.items().length === 0) {
+        <p class="plans__empty">{{ 'PLANS.no-events' | translate }}</p>
+      }
+    </div>
+  </div>
+</div>

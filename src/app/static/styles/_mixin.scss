@@ -105,18 +105,6 @@
   color: var(--color-text);
 }
 
-// A <dialog> that asks one thing: a card in the middle of a wide screen, a sheet from the bottom on a phone, where the
-// thumb is. Put it on the dialog element, and dialog-body on the one element inside it: a click that lands on the
-// dialog itself is then a click on the backdrop.
-@mixin dialog-body {
-  position: relative;
-  padding: var(--space-lg);
-
-  @media (max-width: 639px) {
-    padding-bottom: calc(var(--space-lg) + env(safe-area-inset-bottom));
-  }
-}
-
 // A rounded search field: a label holding the icon, the input and a clear button styled by search-clear.
 @mixin search-field {
   display: flex;

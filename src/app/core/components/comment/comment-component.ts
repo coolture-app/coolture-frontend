@@ -4,7 +4,6 @@ import {
   Component,
   computed,
   DestroyRef,
-  DOCUMENT,
   ElementRef,
   inject,
   Injector,
@@ -19,7 +18,7 @@ import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideEllipsis } from '@ng-icons/lucide';
+import { lucideEllipsis, lucidePencil, lucideTrash2 } from '@ng-icons/lucide';
 
 import { CommentSummary } from '../../models/comments/comment-summary.model';
 import { CommentsService } from '../../services/comments/comments.service';
@@ -27,9 +26,11 @@ import { AuthService } from '../../services/auth/auth.service';
 import { ToastService } from '../../services/toast/toast.service';
 import { ConfirmService } from '../../services/confirm/confirm.service';
 import { Tooltip } from '../../directives/tooltip';
+import { Sheet } from '../sheet/sheet';
+import { Menu, MenuItem } from '../menu/menu';
 import { commentTime } from './comment-time';
 
-/** Who a reply answers, and where it goes. See `target` below. */
+/** Who a reply answers, and where it goes. */
 export interface ReplyTarget {
   parentId: string;
   username: string;
@@ -43,16 +44,33 @@ export interface DeletedComment {
   hasReplies: boolean;
 }
 
+/** The API's limit on a comment. */
+export const MAX_COMMENT_LENGTH = 512;
+
+/** A deleted comment stays only as the note above its replies. */
+export function isShown(comment: CommentSummary): boolean {
+  return comment.status !== 'DELETED' || comment.repliesCount > 0;
+}
+
+export function afterDelete(
+  comments: CommentSummary[],
+  { id, hasReplies }: DeletedComment,
+): CommentSummary[] {
+  return hasReplies
+    ? comments.map((c) => (c.id === id ? { ...c, status: 'DELETED' as const } : c))
+    : comments.filter((c) => c.id !== id);
+}
+
 const REPLIES_PAGE = 20;
 
 /**
  * One comment and its replies. Replies show as one level under the top comment, and answering a reply
- * mentions its author. Replies deeper than that were written before this rule, and still show.
+ * mentions its author. One written while the top comment was deleted sits a level deeper, and still shows.
  */
 @Component({
   selector: 'app-comment-component',
-  imports: [InitialsPipe, TranslatePipe, RouterLink, NgIcon, Tooltip],
-  viewProviders: [provideIcons({ lucideEllipsis })],
+  imports: [InitialsPipe, TranslatePipe, RouterLink, NgIcon, Tooltip, Menu, MenuItem],
+  viewProviders: [provideIcons({ lucideEllipsis, lucidePencil, lucideTrash2 })],
   templateUrl: './comment-component.html',
   styleUrl: './comment-component.scss',
 })
@@ -60,10 +78,14 @@ export class CommentComponent implements OnInit {
   readonly comment = input.required<CommentSummary>();
   /** Whether the top comment can still take replies. A deleted one can't. */
   readonly rootActive = input(true);
-  /** In the sheet, a profile link replaces the sheet's history entry, so Back returns to the feed. */
-  readonly inSheet = input(false);
   readonly replyClicked = output<ReplyTarget>();
   readonly commentDeleted = output<DeletedComment>();
+  /** A reply below this one, at any depth, was deleted. */
+  readonly replyDeleted = output<void>();
+
+  /** In the sheet, a profile link replaces the sheet's history entry, so Back returns to the feed. */
+  readonly inSheet = !!inject(Sheet, { optional: true });
+  readonly maxLength = MAX_COMMENT_LENGTH;
 
   private authService = inject(AuthService);
   private commentsService = inject(CommentsService);
@@ -71,7 +93,6 @@ export class CommentComponent implements OnInit {
   private injector = inject(Injector);
   private toast = inject(ToastService);
   private translate = inject(TranslateService);
-  private document = inject(DOCUMENT);
   private host: HTMLElement = inject(ElementRef).nativeElement;
   private confirm = inject(ConfirmService);
   private editInput = viewChild<ElementRef<HTMLTextAreaElement>>('editInput');
@@ -82,7 +103,6 @@ export class CommentComponent implements OnInit {
   readonly hasEarlierReplies = signal(false);
   readonly repliesFailed = signal(false);
   readonly isEditing = signal(false);
-  readonly menuOpen = signal(false);
   readonly repliesCount = linkedSignal(() => this.comment().repliesCount);
   private readonly savedContent = signal<string | null>(null);
   private readonly wasEdited = signal(false);
@@ -93,7 +113,6 @@ export class CommentComponent implements OnInit {
   readonly isMine = computed(() => this.authService.currentUser()?.id === this.comment().author.id);
   readonly content = computed(() => this.savedContent() ?? this.comment().content);
   readonly edited = computed(() => this.wasEdited() || !!this.comment().lastEditedAt);
-  /** A reply's leading @name links to that person. */
   readonly mention = computed(() => {
     const match = this.comment().depth > 0 ? this.content().match(/^@(\S+)\s*([\s\S]*)$/) : null;
     return match ? { username: match[1], text: match[2] } : null;
@@ -145,7 +164,7 @@ export class CommentComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
-          const shown = res.items.filter((c) => c.status !== 'DELETED' || c.repliesCount > 0);
+          const shown = res.items.filter(isShown);
           const known = new Set(this.replies().map((c) => c.id));
           const older = shown.filter((c) => !known.has(c.id)).reverse();
           this.replies.update((replies) => [...older, ...replies]);
@@ -156,23 +175,6 @@ export class CommentComponent implements OnInit {
         },
         error: () => this.repliesFailed.set(true),
       });
-  }
-
-  /** The next click anywhere closes the menu, including on one of its items. */
-  toggleMenu(): void {
-    const opening = !this.menuOpen();
-    this.menuOpen.set(opening);
-    if (opening) {
-      // After this click has finished, so that it doesn't count as the next one.
-      setTimeout(() =>
-        this.document.addEventListener('click', () => this.menuOpen.set(false), { once: true }),
-      );
-    }
-  }
-
-  closeMenu(event: Event): void {
-    event.stopPropagation();
-    this.menuOpen.set(false);
   }
 
   startEditing(): void {
@@ -230,14 +232,9 @@ export class CommentComponent implements OnInit {
   }
 
   onReplyDeleted(deleted: DeletedComment): void {
-    const { id, hasReplies } = deleted;
-    this.replies.update((replies) =>
-      hasReplies
-        ? replies.map((c) => (c.id === id ? { ...c, status: 'DELETED' as const } : c))
-        : replies.filter((c) => c.id !== id),
-    );
+    this.replies.update((replies) => afterDelete(replies, deleted));
     this.repliesCount.update((count) => Math.max(0, count - 1));
-    this.commentDeleted.emit({ id, hasReplies: true });
+    this.replyDeleted.emit();
   }
 
   private deleteComment(): void {

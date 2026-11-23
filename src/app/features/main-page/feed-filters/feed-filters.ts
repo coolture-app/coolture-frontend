@@ -11,7 +11,7 @@ import { KIDS_KIND, KindsService } from '../../../core/services/interests/kinds.
 import { PostsSort } from '../../../core/models/common/enums';
 import { FiltersForm } from '../home-view';
 
-/** Rodzaj's chips while folded: the kinds most upcoming posts had when this was decided (decisions.md, 2026-11-21). */
+/** Rodzaj's chips while folded: the kinds with the most upcoming posts. */
 const FIRST_KINDS = ['stage', 'concerts', 'cinema', 'talks', 'nightlife'];
 
 /** The home page's filter panel: Wszystkie's order and everything but the place. The home page owns both. */

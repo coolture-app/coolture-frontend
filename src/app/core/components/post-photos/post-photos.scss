@@ -152,7 +152,6 @@
     white-space: nowrap;
   }
 
-  // Not the disabled attribute: that would drop the focus of someone moving a photo with the keyboard.
   &__tile-move {
     position: relative;
     display: flex;

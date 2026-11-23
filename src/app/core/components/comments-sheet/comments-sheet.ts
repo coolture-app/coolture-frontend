@@ -1,5 +1,5 @@
 import { InitialsPipe } from '../../pipes/initials.pipe';
-import { Component, inject, viewChild } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 
@@ -21,9 +21,4 @@ import { Sheet } from '../sheet/sheet';
 })
 export class CommentsSheet {
   readonly sheet = inject(CommentsSheetService);
-  private shell = viewChild(Sheet);
-
-  close(): void {
-    this.shell()?.close();
-  }
 }

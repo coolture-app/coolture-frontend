@@ -17,7 +17,7 @@ import {
   lucideUtensils,
 } from '@ng-icons/lucide';
 
-/** Each kind's Lucide icon, the same on Filtry's tiles, onboarding, the profile and the map's pins. */
+/** Each kind's Lucide icon. */
 const KIND_ICONS: Readonly<Record<string, string>> = {
   concerts: lucideMusic,
   stage: lucideDrama,

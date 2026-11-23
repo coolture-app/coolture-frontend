@@ -4,11 +4,11 @@ import { TranslateModule } from '@ngx-translate/core';
 import { AvatarCropper } from './avatar-cropper';
 
 /** A real image file, so the browser can load and draw it. */
-async function photo(width: number, height: number): Promise<File> {
+async function photo(width: number, height: number, opaque = true): Promise<File> {
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
-  canvas.getContext('2d')!.fillRect(0, 0, width, height);
+  if (opaque) canvas.getContext('2d')!.fillRect(0, 0, width, height);
   const blob = await new Promise<Blob>((resolve) => canvas.toBlob((b) => resolve(b!), 'image/png'));
   return new File([blob], 'photo.png', { type: 'image/png' });
 }
@@ -73,6 +73,23 @@ describe('AvatarCropper', () => {
     expect(blob.type).toBe('image/jpeg');
     const bitmap = await createImageBitmap(blob);
     expect([bitmap.width, bitmap.height]).toEqual([512, 512]);
+  });
+
+  it('saves a transparent photo on white, not black', async () => {
+    await open(await photo(520, 260, false));
+    const saved = new Promise<Blob>((resolve) =>
+      fixture.componentInstance.saved.subscribe((blob) => resolve(blob)),
+    );
+
+    fixture.componentInstance.save();
+    const bitmap = await createImageBitmap(await saved);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 1;
+    const context = canvas.getContext('2d')!;
+    context.drawImage(bitmap, 256, 256, 1, 1, 0, 0, 1, 1);
+    const [red, green, blue] = context.getImageData(0, 0, 1, 1).data;
+    expect([red, green, blue].every((channel) => channel > 240)).toBeTrue();
   });
 
   it('says so when the file isn’t an image it can open', async () => {

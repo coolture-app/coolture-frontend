@@ -12,6 +12,14 @@ export interface UserSummary {
 
 /** A person in a list of people: search, followers, following, blocked. */
 export interface UserListItem extends UserSummary {
-  /** With your own follow, both true means you're friends. Always false for a guest. */
+  /** False for yourself and for a guest. */
+  isFollowing: boolean;
+  /** With isFollowing, both true means you're friends. Always false for a guest. */
   followsYou: boolean;
+}
+
+export function fullName(person: Pick<UserSummary, 'username' | 'firstName' | 'lastName'>): string {
+  return person.firstName
+    ? [person.firstName, person.lastName].filter(Boolean).join(' ')
+    : person.username;
 }

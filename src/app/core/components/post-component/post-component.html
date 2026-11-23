@@ -1,13 +1,13 @@
-<div class="post" [class.post--feed]="!isFullView">
-  @if (data && folded()) {
+<div class="post" [class.post--feed]="!isFullView()">
+  @if (folded()) {
     <div class="post__folded" role="status">
       <span>{{ (isNotForMe() ? 'POST.hidden' : 'POST.restored') | translate }}</span>
       <app-btn variant="secondary" size="sm" (btnClick)="undoFold()">{{
         'POST.undo' | translate
       }}</app-btn>
     </div>
-  } @else if (data) {
-    @if (data.friendStances; as friends) {
+  } @else {
+    @if (data().friendStances; as friends) {
       <app-friends-line class="post__friends" [stances]="friends" (opened)="openFriends()" />
     }
     <div class="post__header">
@@ -18,22 +18,22 @@
         role="link"
         tabindex="0"
       >
-        @if (data.author.avatar; as avatar) {
+        @if (data().author.avatar; as avatar) {
           <img
             [src]="avatar.url"
-            [alt]="data.author.username"
+            [alt]="data().author.username"
             class="post__avatar"
             loading="lazy"
           />
         } @else {
           <div class="post__avatar post__avatar--placeholder">
-            {{ data.author | initials }}
+            {{ data().author | initials }}
           </div>
         }
         <div class="post__author">
-          <span class="post__username">{{ data.author.username }}</span>
+          <span class="post__username">{{ data().author.username }}</span>
           <div class="post__info">
-            @if (isFullView) {
+            @if (isFullView()) {
               @let kinds = shownKinds();
               @if (kinds.length) {
                 <span class="post__kinds">
@@ -54,30 +54,30 @@
             }
             <span class="post__date" [title]="'POST.starts' | translate">
               <ng-icon name="heroCalendar" />
-              {{ isFullView ? when.page(data) : when.card(data) }}
+              {{ isFullView() ? when.page(data()) : when.card(data()) }}
             </span>
             @if (ended) {
               <span class="post__ended">{{ 'POST.ended' | translate }}</span>
             }
-            @if (data.type === 'ONLINE') {
+            @if (data().type === 'ONLINE') {
               <span class="post__location">
                 <ng-icon name="heroGlobeAlt" />
                 {{ 'POST.online' | translate }}
               </span>
-            } @else if (place) {
+            } @else if (place()) {
               <button
                 type="button"
                 class="post__location post__location--link"
-                [attr.aria-label]="'POST.showOnMap' | translate: { place: place }"
+                [attr.aria-label]="'POST.showOnMap' | translate: { place: place() }"
                 [appTooltip]="'POST.showOnMapHint' | translate"
                 (click)="showOnMap($event)"
               >
                 <ng-icon name="heroMapPin" />
-                <span class="post__location-name">{{ place }}</span>
+                <span class="post__location-name">{{ place() }}</span>
                 <ng-icon class="post__location-chevron" name="lucideChevronRight" />
               </button>
             }
-            @if (distance; as away) {
+            @if (distance(); as away) {
               <span class="post__distance" [title]="'POST.distance' | translate">{{ away }}</span>
             }
           </div>
@@ -85,8 +85,8 @@
       </div>
       @if (isMyPost()) {
         <app-post-owner-menu
-          [postId]="data.id"
-          [postTitle]="data.title"
+          [postId]="data().id"
+          [postTitle]="data().title"
           (deleted)="deleteRequest.emit($event)"
         />
       }
@@ -98,18 +98,18 @@
       role="link"
       tabindex="0"
     >
-      {{ data.title }}
+      {{ data().title }}
     </h3>
-    @if (description) {
+    @if (description()) {
       <div class="post__desc">
         <p
           #descText
           class="post__desc-text"
-          [class.post__desc-text--clamped]="!isFullView && !isExpanded()"
+          [class.post__desc-text--clamped]="!isFullView() && !isExpanded()"
         >
-          {{ description }}
+          {{ description() }}
         </p>
-        @if (!isFullView && isExpanded()) {
+        @if (!isFullView() && isExpanded()) {
           <button
             type="button"
             class="post__desc-toggle"
@@ -118,7 +118,7 @@
           >
             {{ 'POST.show-less' | translate }}
           </button>
-        } @else if (!isFullView && overflows()) {
+        } @else if (!isFullView() && overflows()) {
           <button
             type="button"
             class="post__desc-toggle post__desc-toggle--over"
@@ -130,14 +130,14 @@
         }
       </div>
     }
-    @if (data.links?.length) {
-      <app-post-links [links]="data.links!" />
+    @if (data().links?.length) {
+      <app-post-links [links]="data().links!" />
     }
-    @if (photos.length > 0) {
+    @if (photos().length > 0) {
       <!-- The first photo's shape, from the data, so the frame never changes as photos load. -->
-      <div class="post__frame" [style.aspect-ratio]="frameShape">
+      <div class="post__frame" [style.aspect-ratio]="frameShape()">
         <div class="post__slides" #slides (scroll)="onSlidesScroll()">
-          @for (photo of photos; track $index) {
+          @for (photo of photos(); track $index) {
             <button
               type="button"
               class="post__slide"
@@ -156,7 +156,7 @@
             </button>
           }
         </div>
-        @if (photos.length > 1) {
+        @if (photos().length > 1) {
           <button
             type="button"
             class="post__arrow post__arrow--prev"
@@ -169,14 +169,14 @@
           <button
             type="button"
             class="post__arrow post__arrow--next"
-            [disabled]="slide() === photos.length - 1"
+            [disabled]="slide() === photos().length - 1"
             [appTooltip]="'POST.next-photo' | translate"
             (click)="goToSlide(slide() + 1)"
           >
             <ng-icon name="lucideChevronRight" />
           </button>
           <div class="post__dots" aria-hidden="true">
-            @for (photo of photos; track $index) {
+            @for (photo of photos(); track $index) {
               <span class="post__dot" [class.post__dot--on]="$index === slide()"></span>
             }
           </div>
@@ -189,12 +189,12 @@
         [fullWidth]="true"
         [class]="isLiked() ? 'liked' : ''"
         [pressed]="isLiked()"
-        [label]="withCount('POST.like' | translate, data.positiveReactionCount)"
+        [label]="withCount('POST.like' | translate, data().positiveReactionCount)"
         (btnClick)="likePost()"
       >
         <app-counted-icon
           icon="lucideThumbsUp"
-          [count]="data.positiveReactionCount"
+          [count]="data().positiveReactionCount"
           [filled]="isLiked()"
         />
       </app-btn>
@@ -226,14 +226,14 @@
           [pressed]="isInterested()"
           [unavailable]="ended"
           [label]="
-            withCount('POST.interested' | translate, data.interestedCount) +
+            withCount('POST.interested' | translate, data().interestedCount) +
             (stanceNote ? ' · ' + (stanceNote | translate) : '')
           "
           (btnClick)="setInterested()"
         >
           <app-counted-icon
             icon="lucideBookmark"
-            [count]="data.interestedCount"
+            [count]="data().interestedCount"
             [filled]="isInterested()"
           />
         </app-btn>
@@ -244,16 +244,14 @@
           [pressed]="isTakesPart()"
           [unavailable]="ended"
           [label]="
-            withCount('POST.takes_part' | translate, data.goingCount) +
+            withCount('POST.takes_part' | translate, data().goingCount) +
             (stanceNote ? ' · ' + (stanceNote | translate) : '')
           "
           (btnClick)="setTakesPart()"
         >
-          <app-counted-icon icon="appTicket" [count]="data.goingCount" [filled]="isTakesPart()" />
+          <app-counted-icon icon="appTicket" [count]="data().goingCount" [filled]="isTakesPart()" />
         </app-btn>
       </div>
     </div>
-  } @else {
-    <div class="post__loading">{{ 'POST.loading' | translate }}</div>
   }
 </div>

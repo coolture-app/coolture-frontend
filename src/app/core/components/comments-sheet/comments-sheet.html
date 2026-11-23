@@ -52,7 +52,6 @@
       @for (current of [post]; track current.id) {
         <app-comment-thread
           [postId]="current.id"
-          [inSheet]="true"
           (countChange)="sheet.changeCount($event)"
           (composerFocused)="shell.grow()"
         />

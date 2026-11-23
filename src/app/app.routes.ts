@@ -5,16 +5,17 @@ import { TranslateService } from '@ngx-translate/core';
 import { inject } from '@angular/core';
 import { NotFoundView } from './features/not-found-view/not-found-view';
 import { AddPostView } from './features/add-post-view/add-post-view';
-import { DiscoverView } from './features/discover-view/discover-view';
-import { UserProfileView } from './features/my-profile-view/my-profile-view';
+import { PeopleView } from './features/people-view/people-view';
+import { ProfileView } from './features/profile-view/profile-view';
 import { signedIn } from './core/auth/auth.guard';
 import { GuestView } from './features/guest-view/guest-view';
 import { SignInReason } from './core/models/common/sign-in-reason';
 import { EditPostView } from './features/edit-post-view/edit-post-view';
-import { MyEventsView } from './features/my-events-view/my-events-view';
+import { PlansView } from './features/plans-view/plans-view';
 import { AuthCallbackView } from './features/auth-callback-view/auth-callback-view';
 import { HiddenPostsView } from './features/hidden-posts-view/hidden-posts-view';
-import { InterestsView, unsavedInterestsGuard } from './features/interests-view/interests-view';
+import { InterestsView } from './features/interests-view/interests-view';
+import { unsavedChangesGuard } from './core/auth/unsaved-changes.guard';
 import { SettingsView } from './features/settings-view/settings-view';
 import { BlockedUsersView } from './features/blocked-users-view/blocked-users-view';
 
@@ -57,14 +58,13 @@ export const MOVED_ROUTES: Routes = [
   { path: 'interests', redirectTo: movedTo('/profile/interests') },
 ];
 
+const titled = (key: string) => () => inject(TranslateService).get(key);
+
 export const routes: Routes = [
   {
     path: '',
     component: MainPage,
-    title: () => {
-      const translate = inject(TranslateService);
-      return translate.get('MAIN_PAGE.title');
-    },
+    title: titled('MAIN_PAGE.title'),
   },
   {
     path: 'login',
@@ -80,18 +80,14 @@ export const routes: Routes = [
     // Before posts/:id, which would take "new" for an id.
     path: 'posts/new',
     component: AddPostView,
-    title: () => {
-      const translate = inject(TranslateService);
-      return translate.get('ADD_POST.title');
-    },
+    canDeactivate: [unsavedChangesGuard],
+    title: titled('ADD_POST.title'),
   }),
   ...needsSignIn('editPost', {
     path: 'posts/:id/edit',
     component: EditPostView,
-    title: () => {
-      const translate = inject(TranslateService);
-      return translate.get('EDIT_POST.title');
-    },
+    canDeactivate: [unsavedChangesGuard],
+    title: titled('EDIT_POST.title'),
   }),
   {
     path: 'posts/:id',
@@ -100,67 +96,44 @@ export const routes: Routes = [
   ...needsSignIn('interests', {
     path: 'profile/interests',
     component: InterestsView,
-    canDeactivate: [unsavedInterestsGuard],
-    title: () => {
-      const translate = inject(TranslateService);
-      return translate.get('INTERESTS.title');
-    },
+    canDeactivate: [unsavedChangesGuard],
+    title: titled('INTERESTS.title'),
   }),
   ...needsSignIn('settings', {
     path: 'profile/hidden',
     component: HiddenPostsView,
-    title: () => {
-      const translate = inject(TranslateService);
-      return translate.get('HIDDEN.title');
-    },
+    title: titled('HIDDEN.title'),
   }),
   ...needsSignIn('settings', {
     path: 'profile/settings',
     component: SettingsView,
-    title: () => {
-      const translate = inject(TranslateService);
-      return translate.get('SETTINGS.title');
-    },
+    title: titled('SETTINGS.title'),
   }),
   ...needsSignIn('settings', {
     path: 'profile/blocked',
     component: BlockedUsersView,
-    title: () => {
-      const translate = inject(TranslateService);
-      return translate.get('PROFILE.blocked');
-    },
+    title: titled('BLOCKED.title'),
   }),
   ...needsSignIn('profile', {
     path: 'profile',
-    component: UserProfileView,
-    title: () => {
-      const translate = inject(TranslateService);
-      return translate.get('PROFILE.title');
-    },
+    component: ProfileView,
+    title: titled('PROFILE.title'),
   }),
   ...needsSignIn('user', {
     path: 'users/:username',
-    component: UserProfileView,
-    title: () => {
-      const translate = inject(TranslateService);
-      return translate.get('PROFILE.title');
-    },
+    component: ProfileView,
+    // Until the profile names the person.
+    title: (route) => `@${route.paramMap.get('username')}`,
   }),
   ...needsSignIn('people', {
     path: 'people',
-    component: DiscoverView,
-    title: () => {
-      const translate = inject(TranslateService);
-      return translate.get('DISCOVER.title');
-    },
+    component: PeopleView,
+    title: titled('PEOPLE.title'),
   }),
   ...needsSignIn('plans', {
     path: 'plans',
-    component: MyEventsView,
-    title: () => {
-      const translate = inject(TranslateService);
-      return translate.get('MY_EVENTS.title');
-    },
+    component: PlansView,
+    title: titled('PLANS.title'),
   }),
   {
     path: 'auth/callback',
@@ -171,9 +144,6 @@ export const routes: Routes = [
   {
     path: '**',
     component: NotFoundView,
-    title: () => {
-      const translate = inject(TranslateService);
-      return translate.get('404.title');
-    },
+    title: titled('404.title'),
   },
 ];

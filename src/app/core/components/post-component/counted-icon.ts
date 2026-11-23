@@ -17,6 +17,7 @@ import { NgIcon } from '@ng-icons/core';
       display: inline-flex;
     }
 
+    /* Neutral: blue or red would read as unread. */
     .post__count {
       position: absolute;
       top: -7px;

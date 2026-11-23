@@ -19,7 +19,7 @@ describe('BackLink', () => {
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation('pl', {
       BACK: { to: 'Wróć do: {{page}}' },
-      NAVBAR: { friends: 'Ludzie' },
+      NAVBAR: { people: 'Ludzie' },
     });
     translate.use('pl');
     const service = TestBed.inject(BackService);
@@ -37,7 +37,7 @@ describe('BackLink', () => {
   });
 
   it('translates a page named by a key', () => {
-    target = { url: '/people', label: { key: 'NAVBAR.friends' } };
+    target = { url: '/people', label: { key: 'NAVBAR.people' } };
 
     expect(render().textContent?.trim()).toBe('Ludzie');
   });

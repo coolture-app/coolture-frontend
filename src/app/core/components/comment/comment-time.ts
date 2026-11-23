@@ -1,8 +1,8 @@
-const MINUTE = 60_000;
-const HOUR = 60 * MINUTE;
-const DAY = 24 * HOUR;
+export const MINUTE = 60_000;
+export const HOUR = 60 * MINUTE;
+export const DAY = 24 * HOUR;
 
-/** "przed chwilą" style text for the last week, and a date after that, in the given language. */
+/** Short relative text ('5 min ago') for the last week, and a date after that, in the given language. */
 export function commentTime(iso: string, lang: string, now = Date.now()): string {
   const time = new Date(iso);
   const age = now - time.getTime();

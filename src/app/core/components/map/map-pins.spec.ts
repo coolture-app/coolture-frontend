@@ -1,4 +1,5 @@
 import { PostMark } from '../../models/posts/post-mark.model';
+import { mark as stubMark } from './map-stubs.testing';
 import { groupPlaces, pinFeatures, pinLabel, placeKind, pluralForm, shortTitle } from './map-pins';
 
 const WORDS = {
@@ -20,13 +21,11 @@ function mark(
   more: Partial<PostMark> = {},
 ) {
   return {
-    id,
-    title: id,
+    ...stubMark(id),
     startsAt: startsAt.toISOString(),
-    positiveReactionCount: 0,
     coordinates: { latitude, longitude },
     ...more,
-  } as PostMark;
+  };
 }
 
 describe('groupPlaces', () => {

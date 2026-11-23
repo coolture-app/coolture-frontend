@@ -5,147 +5,46 @@
   #ptr="pullToRefresh"
   (refresh)="renewList()"
 >
-  <!-- Sticks under the navbar. On phones it slides away while scrolling down, back on scrolling up. -->
-  <div
-    #searchbar
-    class="searchbar"
-    [class.searchbar--scrolling]="scrolling()"
-    [class.searchbar--hidden]="barHidden()"
+  <app-home-bar
+    #bar
+    [search]="searchControl"
+    [feed]="isFeed()"
+    [place]="activePlace()"
+    [picked]="place.picked()"
+    [radiusKm]="activeFilters().radiusKm"
+    [filterCount]="activeFilterCount()"
+    [mapView]="isMapView()"
+    [(filtersOpen)]="showFilters"
+    [(placeOpen)]="showPlace"
+    (tabPicked)="setTab($event)"
+    (searched)="applyControls()"
+    (mapSwitched)="toggleMapView($event)"
   >
-    <div class="searchbar__inner">
-      <div class="searchbar__top">
-        <div class="tabs" role="tablist" [attr.aria-label]="'MAIN_PAGE.tabs' | translate">
-          <button
-            type="button"
-            role="tab"
-            class="tabs__tab"
-            [class.tabs__tab--on]="isFeed()"
-            [attr.aria-selected]="isFeed()"
-            [appTooltip]="'MAIN_PAGE.forYouHint' | translate"
-            (click)="setTab('forYou')"
-          >
-            {{ 'MAIN_PAGE.forYou' | translate }}
-          </button>
-          <button
-            type="button"
-            role="tab"
-            class="tabs__tab"
-            [class.tabs__tab--on]="!isFeed()"
-            [attr.aria-selected]="!isFeed()"
-            [appTooltip]="'MAIN_PAGE.allHint' | translate"
-            (click)="setTab('all')"
-          >
-            {{ 'MAIN_PAGE.all' | translate }}
-          </button>
-        </div>
-        <span class="searchbar__wrapper">
-          <ng-icon class="searchbar__icon" name="heroMagnifyingGlass" />
-          <input
-            class="searchbar__input"
-            type="search"
-            enterkeyhint="search"
-            [formControl]="searchControl"
-            [attr.aria-label]="'MAIN_PAGE.searchbar' | translate"
-            placeholder="{{ 'MAIN_PAGE.searchbar' | translate }}"
-            (keydown.enter)="applyControls()"
-          />
-          @if (searchControl.value) {
-            <button
-              type="button"
-              class="searchbar__clear"
-              [appTooltip]="'MAIN_PAGE.clearSearch' | translate"
-              (click)="clearSearch()"
-            >
-              <ng-icon name="heroXMark" />
-            </button>
-          }
-        </span>
-      </div>
-      <div class="searchbar__row">
-        <button
-          type="button"
-          class="bar-btn place-btn"
-          [class.bar-btn--active]="showPlace() || activePlace() !== ''"
-          [attr.aria-expanded]="showPlace()"
-          [appTooltip]="'MAIN_PAGE.where' | translate"
-          (click)="togglePlace()"
-        >
-          <ng-icon [name]="activePlace() === 'online' ? 'lucideRadio' : 'heroMapPin'" />
-          <span class="place-btn__text">
-            @switch (activePlace()) {
-              @case ('mine') {
-                {{ 'MAIN_PAGE.nearMe' | translate }}
-              }
-              @case ('picked') {
-                {{ pickedShortName() || ('MAIN_PAGE.pickedPlace' | translate) }}
-              }
-              @case ('online') {
-                {{ 'MAIN_PAGE.online' | translate }}
-              }
-              @default {
-                {{ 'MAIN_PAGE.anywhere' | translate }}
-              }
-            }
-          </span>
-          @if (activePlace() === 'mine' || activePlace() === 'picked') {
-            <span class="place-btn__radius"
-              >· {{ 'MAIN_PAGE.km' | translate: { km: activeFilters().radiusKm } }}</span
-            >
-          }
-          <ng-icon class="place-btn__chevron" name="heroChevronDown" />
-        </button>
-        <button
-          type="button"
-          class="bar-btn filters-btn"
-          [class.bar-btn--active]="showFilters()"
-          [attr.aria-expanded]="showFilters()"
-          [appTooltip]="
-            activeFilterCount()
-              ? ('MAIN_PAGE.filtersActive' | translate: { count: activeFilterCount() })
-              : ('MAIN_PAGE.filters' | translate)
-          "
-          (click)="toggleFilters()"
-        >
-          <ng-icon name="heroAdjustmentsHorizontal" />
-          <span class="wide-only">{{ 'MAIN_PAGE.filters' | translate }}</span>
-          @if (activeFilterCount()) {
-            <span class="filters-btn__count" aria-hidden="true">{{ activeFilterCount() }}</span>
-          }
-        </button>
-        <!-- Online posts have no pins. -->
-        @if (!isOnline()) {
-          <app-view-switch [mapView]="isMapView()" (switched)="toggleMapView($event)" />
-        }
-      </div>
-      <!-- Opens under the bar, wherever the list is scrolled to, over a dimmed page. -->
-      @if (showFilters()) {
-        <div class="filters-scrim" aria-hidden="true" (click)="showFilters.set(false)"></div>
-        <app-feed-filters
-          class="filters-popover"
-          [form]="filtersForm"
-          [signedIn]="authService.isAuthenticated()"
-          [sort]="isFeed() ? null : sort()"
-          [sortOptions]="sortOptions()"
-          (sortChange)="setSortBy($event)"
-          (clear)="clearFilters()"
-          (done)="showFilters.set(false)"
-        />
-      }
-      @if (showPlace()) {
-        <div class="filters-scrim" aria-hidden="true" (click)="showPlace.set(false)"></div>
-        <app-place-panel
-          class="filters-popover"
-          [form]="filtersForm"
-          [home]="home()"
-          [picked]="place.picked()"
-          [near]="place.searchNear()"
-          [locating]="locating()"
-          [locationFailed]="locationFailed()"
-          (pick)="pickPlace($event)"
-          (done)="showPlace.set(false)"
-        />
-      }
-    </div>
+    @if (showFilters()) {
+      <app-feed-filters
+        class="filters-popover"
+        [form]="filtersForm"
+        [signedIn]="authService.isAuthenticated()"
+        [sort]="listSort()"
+        [sortOptions]="sortOptions()"
+        (sortChange)="setSortBy($event)"
+        (clear)="clearFilters()"
+        (done)="showFilters.set(false)"
+      />
+    }
+    @if (showPlace()) {
+      <app-place-panel
+        class="filters-popover"
+        [form]="filtersForm"
+        [home]="home()"
+        [picked]="place.picked()"
+        [near]="place.searchNear()"
+        [locating]="locating()"
+        [locationFailed]="locationFailed()"
+        (pick)="pickPlace($event)"
+        (done)="showPlace.set(false)"
+      />
+    }
     @if (ptr.pull() > 0 || list.renewing()) {
       <div
         class="pull"
@@ -158,14 +57,14 @@
         <ng-icon name="lucideRefreshCw" size="20" aria-hidden="true" />
       </div>
     }
-  </div>
+  </app-home-bar>
 
   @if (!isMapView()) {
     @if (nearestFromHome(); as name) {
       <p class="list-note">{{ 'MAIN_PAGE.nearestFromHome' | translate: { place: name } }}</p>
     }
     @for (item of list.items(); track item.id) {
-      @if ($index === nextPageTrigger()) {
+      @if ($index === list.loadMoreAt()) {
         <div
           class="list-trigger"
           [appInfiniteScroll]="list.canLoadMore()"
@@ -173,7 +72,7 @@
         ></div>
       }
       <app-post-component
-        (deleteRequest)="removeChild($event)"
+        (deleteRequest)="list.removeItem($event)"
         [data]="item"
         [isFullView]="false"
         [folds]="isFeed() ? 'marked' : null"
@@ -242,7 +141,7 @@
         [focus]="mapFocusPost()"
         [resume]="mapResumes()"
         [home]="home()?.coordinates ?? null"
-        [topInset]="mapTopInset()"
+        [topInset]="bar.overlap()"
         (searchArea)="searchArea($event)"
       ></app-map>
     }

@@ -9,10 +9,9 @@ import {
   output,
   signal,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { CanDeactivateFn, Router } from '@angular/router';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { firstValueFrom, forkJoin, map } from 'rxjs';
+import { Router } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
+import { firstValueFrom, forkJoin } from 'rxjs';
 import { BackLink } from '../../core/components/back-link/back-link';
 import { Btn } from '../../core/components/btn/btn';
 import { KindGrid } from '../../core/components/kind-grid/kind-grid';
@@ -20,9 +19,7 @@ import { ConfirmService } from '../../core/services/confirm/confirm.service';
 import { Interest, InterestCatalog, label } from '../../core/models/interests/interest.model';
 import { AuthService } from '../../core/services/auth/auth.service';
 import { InterestsService } from '../../core/services/interests/interests.service';
-
-export const unsavedInterestsGuard: CanDeactivateFn<InterestsView> = (component) =>
-  component.confirmLeave();
+import { currentLang } from '../../core/utils/current-lang';
 
 type Section = 'kinds' | 'topics';
 
@@ -36,21 +33,18 @@ export class InterestsView implements OnInit {
   private authService = inject(AuthService);
   private interestsService = inject(InterestsService);
   private router = inject(Router);
-  private translate = inject(TranslateService);
   private element = inject<ElementRef<HTMLElement>>(ElementRef);
 
-  /** First selection after sign-in, shown as an overlay in two pages, with no navigation after saving. */
+  /** First selection after sign-in, shown as an overlay: kinds, then topics. Saving doesn't navigate. */
   readonly onboarding = input(false, { transform: booleanAttribute });
   readonly dismissed = output<void>();
-  /** Onboarding is done. */
+  /** The selection is saved; the home step follows. */
   readonly saved = output<void>();
 
   private confirm = inject(ConfirmService);
   private savedSnapshot = '';
 
-  private currentLang = toSignal(this.translate.onLangChange.pipe(map((event) => event.lang)), {
-    initialValue: this.translate.getCurrentLang(),
-  });
+  private currentLang = currentLang();
   protected catalog = signal<InterestCatalog | null>(null);
   protected kinds = signal<ReadonlySet<string>>(new Set());
   protected interests = signal<ReadonlySet<string>>(new Set());
@@ -91,7 +85,7 @@ export class InterestsView implements OnInit {
           selection: this.interestsService.getUserInterests(this.authService.userId()),
         }),
       );
-      // Only offered topics can be saved, so one held from before that's no longer offered goes with the next save.
+      // The API refuses a topic that isn't offered, so a hidden one the user still holds is dropped on the next save.
       const offered = new Set(catalog.categories.flatMap((c) => c.interests.map((i) => i.key)));
       this.catalog.set(catalog);
       this.kinds.set(new Set(selection.kinds));
@@ -171,10 +165,10 @@ export class InterestsView implements OnInit {
       return true;
     }
     const answer = await this.confirm.choose({
-      title: 'INTERESTS.leave-title',
-      text: 'INTERESTS.leave-text',
+      title: 'LEAVE.title',
+      text: 'LEAVE.text',
       confirm: 'INTERESTS.save',
-      other: 'INTERESTS.leave-discard',
+      other: 'LEAVE.discard',
     });
     return answer === 'confirm' ? this.persist() : answer === 'other';
   }

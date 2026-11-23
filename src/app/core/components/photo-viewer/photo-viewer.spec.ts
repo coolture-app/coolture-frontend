@@ -1,6 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PhotoViewer } from './photo-viewer';
 import { PhotoViewerService } from '../../services/photo-viewer/photo-viewer.service';
+import { until } from '../../testing/until.testing';
+
+const WIDE_PHOTO =
+  'data:image/svg+xml,' +
+  encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="100"/>');
 
 describe('PhotoViewer', () => {
   let fixture: ComponentFixture<PhotoViewer>;
@@ -18,7 +23,7 @@ describe('PhotoViewer', () => {
 
   /** Back, then the frames the viewer waits for the router's scroll. */
   async function closing(): Promise<void> {
-    await new Promise((resolve) => setTimeout(resolve, 150));
+    await until(() => service.open() === null, 'the viewer to close');
     await fixture.whenStable();
   }
 
@@ -64,13 +69,21 @@ describe('PhotoViewer', () => {
     expect(service.open()).toBeNull();
   });
 
-  it('closes on a click beside the photo, but not on the photo', async () => {
-    await openAt(0);
+  it('closes on a click on the dark bars beside the photo, but not on the photo', async () => {
+    service.show([{ url: WIDE_PHOTO }], 0);
+    await fixture.whenStable();
+    const image = element().querySelector('.viewer__photo') as HTMLImageElement;
+    await image.decode();
+    const box = image.getBoundingClientRect();
+    const clickAt = (y: number) =>
+      image.dispatchEvent(
+        new MouseEvent('click', { bubbles: true, clientX: box.left + box.width / 2, clientY: y }),
+      );
 
-    (element().querySelector('.viewer__photo') as HTMLElement).click();
+    clickAt(box.top + box.height / 2);
     expect(service.open()).not.toBeNull();
 
-    (element().querySelector('.viewer__slide') as HTMLElement).click();
+    clickAt(box.top + 2);
     await closing();
     expect(service.open()).toBeNull();
   });

@@ -4,14 +4,12 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslatePipe } from '@ngx-translate/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
-import { catchError, forkJoin, of, switchMap } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 
 import { PostService } from '../../core/services/post/post.service';
 import { MediaService } from '../../core/services/media/media.service';
-import { PostForm } from '../../core/components/post-form/post-form';
-import { PostFormData } from '../../core/models/posts/post-form-data.model';
-import { PostDetail, PostMedia } from '../../core/models/posts/post-detail.model';
-import { PostUpdateRequest } from '../../core/models/posts/post-update-request.model';
+import { PostForm, PostFormSubmit } from '../../core/components/post-form/post-form';
+import { PostDetail } from '../../core/models/posts/post-detail.model';
 import { BackService } from '../../core/services/back/back.service';
 import { BackLink } from '../../core/components/back-link/back-link';
 import { LoadState } from '../../core/components/load-state/load-state';
@@ -37,7 +35,6 @@ export class EditPostView implements OnInit {
 
   readonly postId = this.route.snapshot.paramMap.get('id') ?? '';
   currentPost = signal<PostDetail | null>(null);
-  existingMedia = signal<PostMedia[]>([]);
   readonly notFound = signal(false);
   readonly failed = signal(false);
 
@@ -54,7 +51,6 @@ export class EditPostView implements OnInit {
         next: (post) => {
           this.currentPost.set(post);
           this.backService.rememberPostTitle(post.id, post.title);
-          this.existingMedia.set(post.media || []);
         },
         error: (err) => {
           console.error('Error while fetching event', err);
@@ -67,53 +63,39 @@ export class EditPostView implements OnInit {
       });
   }
 
-  onFormSubmit(data: PostFormData): void {
+  async onFormSubmit(data: PostFormSubmit): Promise<void> {
     const post = this.currentPost();
-    if (!post) return;
+    if (post && (await this.save(data))) {
+      // Back to where the edit was opened from, so "Wróć" there never lands on this form.
+      this.backService.back(`/posts/${post.id}`);
+    }
+  }
 
-    const payload: PostUpdateRequest = {
-      title: data.title,
-      type: data.type,
-      startsAt: data.startsAt,
-      endsAt: data.endsAt,
-      openEnded: data.openEnded,
-      description: data.description,
-      links: data.links,
-      location: data.location,
-      mediaIds: data.mediaIds,
-    };
+  confirmLeave(): Promise<boolean> {
+    return this.postFormComponent?.confirmLeave((data) => this.save(data)) ?? Promise.resolve(true);
+  }
 
-    this.postService
-      .updatePost(post.id, payload)
-      .pipe(
-        // Only now: the API refuses to delete a photo still on a post. A failure leaves a file nobody sees.
-        switchMap(() =>
-          data.removedMediaIds.length > 0
-            ? forkJoin(
-                data.removedMediaIds.map((id) =>
-                  this.mediaService.deleteMedia(id).pipe(
-                    catchError((err) => {
-                      console.error('Could not delete removed image', err);
-                      return of(undefined);
-                    }),
-                  ),
-                ),
-              )
-            : of([]),
+  private async save({ request, removedMediaIds }: PostFormSubmit): Promise<boolean> {
+    const post = this.currentPost();
+    if (!post) return false;
+    try {
+      await firstValueFrom(this.postService.updatePost(post.id, request));
+    } catch (err) {
+      console.error('Error while updating post', err);
+      this.postFormComponent.resetSubmitting();
+      this.toast.failed();
+      return false;
+    }
+    // The API refuses to delete a photo still on a post, so this waits for the save. A failed delete leaves a file
+    // nobody sees.
+    await Promise.all(
+      removedMediaIds.map((id) =>
+        firstValueFrom(this.mediaService.deleteMedia(id)).catch((err) =>
+          console.error('Could not delete removed image', err),
         ),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe({
-        next: () => {
-          // Back to where the edit was opened from, so "Wróć" there never lands on this form.
-          this.postService.clearActivePost();
-          this.backService.back(`/posts/${post.id}`);
-        },
-        error: (err) => {
-          console.error('Error while updating post', err);
-          this.postFormComponent.resetSubmitting();
-          this.toast.failed();
-        },
-      });
+      ),
+    );
+    this.postService.clearActivePost();
+    return true;
   }
 }

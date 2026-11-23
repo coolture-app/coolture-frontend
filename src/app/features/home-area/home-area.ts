@@ -22,7 +22,7 @@ import { Users } from '../../core/services/users/users.service';
 
 /**
  * Where the user lives: a city, town, village or district, for the feed's proximity when the browser gives no
- * position. Step 2 of onboarding, and the profile's modal. Only the place is saved, never the browser's position.
+ * position. Onboarding's last step, and the profile's modal. Only the place is saved, never the browser's position.
  */
 @Component({
   selector: 'app-home-area',
@@ -37,7 +37,6 @@ export class HomeArea {
   private geocoding = inject(GeocodingService);
   private location = inject(LocationService);
 
-  /** In onboarding the step can be skipped; on the profile a saved home can be removed. */
   readonly onboarding = input(false, { transform: booleanAttribute });
   /** Saved, removed or skipped. */
   readonly done = output<void>();

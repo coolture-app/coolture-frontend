@@ -1,11 +1,11 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { firstValueFrom, Observable } from 'rxjs';
 import { ApiUrlService } from '../api-url.service';
 import { MediaUploadInitRequest } from '../../models/media/media-upload-init-request.model';
 import { MediaUploadInitResponse } from '../../models/media/media-upload-init-response.model';
-import { MediaCompleteRequest } from '../../models/media/media-complete-request.model';
 import { MediaResource } from '../../models/media/media-resource.model';
+import { MediaPurpose } from '../../models/common/enums';
 
 /**
  * An image's size in pixels, as the browser shows it (turned by its EXIF orientation), or null when
@@ -36,52 +36,32 @@ export class MediaService {
   private apiUrl = inject(ApiUrlService);
   private http = inject(HttpClient);
 
-  // ===== FIRST STEP: INIT =====
-  // we initate the desire to upload file
-  // we get S3 url and MediaId as a response
-  initUpload(payload: MediaUploadInitRequest): Observable<MediaUploadInitResponse> {
-    return this.http.post<MediaUploadInitResponse>(
-      this.apiUrl.path('/media/uploads/init'),
-      payload,
+  /** The file is stored but belongs to nothing until a post or the profile takes its id. */
+  async upload(file: File, purpose: MediaPurpose): Promise<MediaResource> {
+    const request: MediaUploadInitRequest = {
+      purpose,
+      mimeType: file.type,
+      sizeBytes: file.size,
+      fileName: file.name,
+      ...(await imageSize(file)),
+    };
+    const init = await firstValueFrom(
+      this.http.post<MediaUploadInitResponse>(this.apiUrl.path('/media/uploads/init'), request),
     );
-  }
-
-  // ===== SECOND STEP: UPLOADING TO S3=====
-
-  uploadToS3(
-    uploadUrl: string,
-    file: File,
-    requiredHeaders: Record<string, string>,
-  ): Observable<HttpResponse<string>> {
     let headers = new HttpHeaders();
-
-    Object.keys(requiredHeaders).forEach((key) => {
-      const lowerKey = key.toLowerCase();
-      if (lowerKey !== 'host' && lowerKey !== 'content-length') {
-        headers = headers.set(key, requiredHeaders[key]);
+    for (const [key, value] of Object.entries(init.requiredHeaders)) {
+      // The S3 PUT must skip `host` and `content-length`.
+      if (!['host', 'content-length'].includes(key.toLowerCase())) {
+        headers = headers.set(key, value);
       }
-    });
-
-    return this.http.put(uploadUrl, file, {
-      headers: headers,
-      observe: 'response',
-      responseType: 'text',
-    });
-  }
-
-  // ===== THIRD STEP: INFORM BACKEND =====
-
-  completeUpload(mediaId: string, payload: MediaCompleteRequest = {}): Observable<MediaResource> {
-    return this.http.post<MediaResource>(
-      this.apiUrl.path(`/media/uploads/${mediaId}/complete`),
-      payload,
+    }
+    await firstValueFrom(this.http.put(init.uploadUrl, file, { headers, responseType: 'text' }));
+    return firstValueFrom(
+      this.http.post<MediaResource>(
+        this.apiUrl.path(`/media/uploads/${init.mediaId}/complete`),
+        {},
+      ),
     );
-  }
-
-  // ===== FETCHING AND DELETING =====
-
-  getMedia(mediaId: string): Observable<MediaResource> {
-    return this.http.get<MediaResource>(this.apiUrl.path(`/media/${mediaId}`));
   }
 
   deleteMedia(mediaId: string): Observable<void> {

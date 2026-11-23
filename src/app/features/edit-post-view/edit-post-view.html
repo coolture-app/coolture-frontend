@@ -6,14 +6,13 @@
     @if (currentPost(); as post) {
       <div class="edit-post-card">
         <header class="card-header">
-          <h2>{{ 'EDIT_POST.header-title' | translate }}</h2>
+          <h2>{{ 'EDIT_POST.title' | translate }}</h2>
           <p>{{ 'EDIT_POST.header-desc' | translate }}</p>
         </header>
 
         <app-post-form
           mode="edit"
           [initialData]="post"
-          [existingMedia]="existingMedia()"
           (formSubmit)="onFormSubmit($event)"
         ></app-post-form>
       </div>

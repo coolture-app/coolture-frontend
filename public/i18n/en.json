@@ -3,30 +3,21 @@
     "searchbar": "Search for events",
     "sort": "Filters and sorting",
     "title": "Home Page",
-    "no-posts": "No posts to display... Sad face.",
+    "no-posts": "No events to display... Sad face.",
     "filters": "Filters",
-    "order": "Order",
     "clear": "Clear",
     "kind": "Kind",
     "clearKinds": "Clear kind",
     "kids": "For children",
     "fromDay": "From day",
     "toDay": "To day",
-    "sortCreatedAt": "Created Date",
-    "sortStartsAt": "Event Date",
-    "sortLikes": "Likes",
-    "sortParticipants": "Participants",
     "sortRecent": "Recent",
     "sortPopular": "Popular",
     "sortUpcoming": "Upcoming",
-    "sortRecommended": "Recommended",
-    "orderDesc": "Descending",
-    "orderAsc": "Ascending",
     "online": "Online",
-    "recommended": "Recommended",
     "loading": "Loading...",
     "endOfList": "That's everything",
-    "loadError": "Could not load posts.",
+    "loadError": "Could not load events.",
     "retry": "Try again",
     "refreshing": "Refreshing",
     "refreshFailed": "Couldn't refresh",
@@ -54,7 +45,7 @@
     "sortNearest": "Nearest",
     "nearestNeedsLocation": "Nearest needs your location. Allow it in your browser settings.",
     "widenRadius": "Widen to {{km}} km",
-    "seenBefore": "For you leaves out your own, liked and saved posts.",
+    "seenBefore": "For you leaves out your own, liked and saved events.",
     "showInAll": "Show in All",
     "where": "Where?",
     "close": "Close",
@@ -65,14 +56,9 @@
     "nearMe": "Near me",
     "nearestFromHome": "Distances from: {{place}}"
   },
-  "FULL_POST": {
-    "title": "Cool post"
-  },
   "BACK": {
     "to": "Back to: {{page}}",
     "post": "Event",
-    "newPost": "New event",
-    "editPost": "Editing event",
     "previous": "Previous page"
   },
   "POST": {
@@ -80,12 +66,10 @@
     "starts": "Event start",
     "show-more": "Show more",
     "show-less": "Show less",
-    "loading": "Loading post...",
-    "participating": "going",
     "comments": "Show comments",
     "photo-alt": "Event photo",
-    "edit": "Edit post",
-    "delete": "Delete post",
+    "edit": "Edit event",
+    "delete": "Delete event",
     "interested": "Interested",
     "takes_part": "Going",
     "online": "Online",
@@ -118,25 +102,14 @@
     "loadFailed": "Couldn't load the event."
   },
   "NAVBAR": {
-    "main-page": "Home",
-    "friends": "People",
-    "my-events": "Plans",
-    "my-profile": "Profile",
-    "menu": "Menu",
-    "addPost": "Add post",
+    "home": "Home",
+    "people": "People",
+    "plans": "Plans",
+    "profile": "Profile",
+    "addPost": "Add event",
     "logout": "Log out",
     "login": "Log in",
     "switch-language": "Switch to Polish (PL)"
-  },
-  "LANG": {
-    "pl": "PL",
-    "en": "EN"
-  },
-  "REGISTER": {
-    "title": "Register!"
-  },
-  "LOGIN": {
-    "title": "Log in!"
   },
   "404": {
     "header": "The thing you are looking for doesnt exist.",
@@ -150,19 +123,13 @@
     "interests": "Interests",
     "cancel": "Cancel",
     "save": "Save",
-    "firstName": "First Name",
-    "lastName": "Last Name",
-    "username": "Username",
     "bio": "Bio",
     "followers": "Followers",
     "following": "Following",
     "follow": "Follow",
     "block": "Block",
     "unblock": "Unblock",
-    "blocked": "Blocked",
     "no-blocked": "No blocked users",
-    "loading": "Loading...",
-    "hidden-posts": "Hidden posts",
     "addHome": "Add your area",
     "homeHint": "Only you can see this",
     "shareStances": "Show friends what I’m interested in and where I go",
@@ -177,8 +144,6 @@
     "removeAvatar": "Remove photo",
     "bioPlaceholder": "Add a few words about yourself",
     "since": "On Coolture since {{date}}",
-    "blockedLoadError": "Couldn’t load blocked people.",
-    "retry": "Try again",
     "youBlocked": "You blocked this person",
     "blockTitle": "Block @{{username}}?",
     "blockText": "You won't see each other's profiles, events or comments, and follows end both ways.",
@@ -187,6 +152,9 @@
     "removeAvatarTitle": "Remove the profile photo?",
     "loadFailed": "Couldn't load the profile.",
     "sharedInterests": "Interests in common"
+  },
+  "BLOCKED": {
+    "title": "Blocked"
   },
   "SETTINGS": {
     "title": "Settings",
@@ -199,19 +167,17 @@
     "usernameTaken": "That name is taken.",
     "saved": "Saved."
   },
-  "DISCOVER": {
-    "title": "Discover",
+  "PEOPLE": {
+    "title": "People",
     "searchbar": "Search for people",
     "no-users": "No users found"
   },
   "ADD_POST": {
-    "title": "Add post!",
-    "header-title": "Add new event",
-    "header-desc": "Fill the form to publish a new post."
+    "title": "Add event",
+    "header-desc": "Fill in the form to publish a new event."
   },
   "EDIT_POST": {
-    "title": "Edit post!",
-    "header-title": "Edit event",
+    "title": "Edit event",
     "header-desc": "Change the details of your event."
   },
   "POST_FORM": {
@@ -255,7 +221,7 @@
     "status-removed": "Photo removed. Photos left: {{total}}.",
     "status-cover-removed": "Cover removed. The first photo is now the cover. Photos left: {{total}}.",
     "upload-failed": "Could not upload photo {{name}}.",
-    "too-many-photos": "A post can have at most {{max}} photos.",
+    "too-many-photos": "An event can have at most {{max}} photos.",
     "when": "When?",
     "ends-at-error": "The end must be after the start.",
     "add-end": "Add an end",
@@ -313,7 +279,7 @@
   "EVENT_CARD": {
     "by": "by"
   },
-  "MY_EVENTS": {
+  "PLANS": {
     "title": "Plans",
     "no-events": "You don't have any events yet... Sad face.",
     "all": "All",
@@ -342,10 +308,7 @@
     "loading": "Loading...",
     "load-error": "Could not load the interests.",
     "retry": "Try again",
-    "skip": "Skip for now",
-    "leave-title": "Unsaved changes",
-    "leave-text": "Save your changes before leaving?",
-    "leave-discard": "Don't save"
+    "skip": "Skip for now"
   },
   "KINDS": {
     "more": "+{{count}} more",
@@ -417,11 +380,9 @@
     "error-no-place": "Pick a place from the list or point to it on the map."
   },
   "HIDDEN": {
-    "title": "Hidden posts",
-    "intro": "Posts you marked “Not for me”. Only you see them.",
-    "empty": "You haven't hidden any posts yet.",
-    "load-error": "Couldn't load your hidden posts.",
-    "retry": "Try again"
+    "title": "Hidden events",
+    "intro": "Events you marked “Not for me”. Only you see them.",
+    "empty": "You haven't hidden any events yet."
   },
   "MAP": {
     "searchArea": "Search this area",
@@ -573,5 +534,11 @@
     "noFollowing": "Not following anyone yet.",
     "noFollowingOwn": "You're not following anyone yet.",
     "close": "Close the list"
+  },
+  "LEAVE": {
+    "title": "Unsaved changes",
+    "text": "Save your changes before leaving?",
+    "textNew": "Publish the event before leaving?",
+    "discard": "Don't save"
   }
 }

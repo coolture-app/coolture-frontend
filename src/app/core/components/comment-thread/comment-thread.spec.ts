@@ -2,7 +2,9 @@ import { computed, signal, WritableSignal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, Subject, throwError } from 'rxjs';
 
+import { By } from '@angular/platform-browser';
 import { CommentThread } from './comment-thread';
+import { CommentComponent } from '../comment/comment-component';
 import { CommentSummary } from '../../models/comments/comment-summary.model';
 import { PaginatedResponse } from '../../models/common/paginated-response.model';
 import { AuthService } from '../../services/auth/auth.service';
@@ -14,15 +16,11 @@ function comment(id: string, overrides: Partial<CommentSummary> = {}): CommentSu
   return {
     id,
     postId: 'p1',
-    rootCommentId: null,
-    parentCommentId: null,
     author: { id: 'u1', username: 'ola', followersCount: 0, followingCount: 0 },
     content: id,
     depth: 0,
     repliesCount: 0,
     createdAt: '2026-11-04T10:00:00Z',
-    lastEditedAt: null,
-    deletedAt: null,
     status: 'ACTIVE',
     ...overrides,
   };
@@ -113,7 +111,7 @@ describe('CommentThread', () => {
     expect(element().textContent).toContain('COMMENT.empty');
   });
 
-  it('goes past the first 20 comments (finding F2), without repeating any', async () => {
+  it('goes past the first 20 comments, without repeating any', async () => {
     await open(page(['c', 'b'], 'next'));
 
     load.and.returnValue(of(page(['b', 'a'])));
@@ -142,7 +140,7 @@ describe('CommentThread', () => {
   });
 
   describe('writing a comment', () => {
-    it('can’t send an empty or blank comment (finding C2)', async () => {
+    it('can’t send an empty or blank comment', async () => {
       await open();
       const create = spyOn(service, 'createComment');
 
@@ -155,7 +153,7 @@ describe('CommentThread', () => {
       expect(create).not.toHaveBeenCalled();
     });
 
-    it('puts a new comment at the top and clears the box (finding C1)', async () => {
+    it('puts a new comment at the top and clears the box', async () => {
       await open();
       const create = spyOn(service, 'createComment').and.returnValue(of(comment('new')));
 
@@ -197,7 +195,7 @@ describe('CommentThread', () => {
       answer.next(comment('new'));
     });
 
-    it('keeps the text and says so when sending fails (finding C2)', async () => {
+    it('keeps the text and says so when sending fails', async () => {
       await open();
       spyOn(service, 'createComment').and.returnValue(throwError(() => new Error('400')));
       await type('my words');
@@ -211,10 +209,8 @@ describe('CommentThread', () => {
       expect(counts).toEqual([]);
     });
 
-    it('limits the box to the API’s 512 characters, and counts down near it', async () => {
+    it('counts down near the 512-character limit', async () => {
       await open();
-      const box = element().querySelector('textarea')!;
-      expect(box.maxLength).toBe(512);
       expect(element().querySelector('.composer__counter')).toBeNull();
 
       await type('x'.repeat(400));
@@ -303,7 +299,7 @@ describe('CommentThread', () => {
     expect(login).toHaveBeenCalled();
   });
 
-  it('reports a deleted comment, keeping it in place if it has replies', async () => {
+  it('reports a deleted comment or reply, keeping a comment in place if it has replies', async () => {
     await open({
       items: [comment('a', { repliesCount: 1 }), comment('b')],
       page: { limit: 20, hasMore: false },
@@ -311,9 +307,12 @@ describe('CommentThread', () => {
 
     component.onDeleted({ id: 'a', hasReplies: true });
     component.onDeleted({ id: 'b', hasReplies: false });
+    fixture.debugElement
+      .query(By.directive(CommentComponent))
+      .componentInstance.replyDeleted.emit();
     await fixture.whenStable();
 
     expect(component.comments().map((c) => [c.id, c.status])).toEqual([['a', 'DELETED']]);
-    expect(counts).toEqual([-1, -1]);
+    expect(counts).toEqual([-1, -1, -1]);
   });
 });

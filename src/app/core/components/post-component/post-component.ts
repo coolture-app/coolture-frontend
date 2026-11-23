@@ -3,17 +3,15 @@ import {
   afterNextRender,
   Component,
   computed,
-  input,
-  ElementRef,
-  Injector,
-  Input,
-  signal,
-  inject,
-  OnInit,
-  viewChild,
-  Output,
-  EventEmitter,
   DestroyRef,
+  ElementRef,
+  inject,
+  Injector,
+  input,
+  linkedSignal,
+  output,
+  signal,
+  viewChild,
 } from '@angular/core';
 import { PostCard } from '../../models/posts/post-card.model';
 import { PostDetail } from '../../models/posts/post-detail.model';
@@ -30,7 +28,6 @@ import {
   lucideMessageCircle,
   lucideThumbsUp,
 } from '@ng-icons/lucide';
-import { catchError, concatMap, EMPTY, Observable, Subject, tap } from 'rxjs';
 import { frameShape, Photo, toPhoto } from '../../models/media/photo';
 import { PhotoViewerService } from '../../services/photo-viewer/photo-viewer.service';
 import { appTicket } from '../../icons/ticket';
@@ -39,31 +36,20 @@ import { PostLinks } from '../post-links/post-links';
 import { kindParams } from '../../../features/main-page/home-url';
 import { KindsService } from '../../services/interests/kinds.service';
 import { FriendsLine } from '../friends-line/friends-line';
-import { InteractionsService } from '../../services/interactions/interactions.service';
 import { AuthService } from '../../services/auth/auth.service';
-import { SignInPromptService } from '../../services/sign-in-prompt/sign-in-prompt.service';
-import { STANCE_SIGN_IN_REASONS } from '../../models/common/sign-in-reason';
 import { PostOwnerMenu } from '../post-owner-menu/post-owner-menu';
 import { Btn } from '../btn/btn';
 import { CommentsSheetService } from '../../services/comments-sheet/comments-sheet.service';
 import { EventWhenService } from '../../services/event-when/event-when.service';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { postPlace } from '../../models/posts/post-place';
 import { hasEnded } from '../../utils/event-time';
 import { formatDistance } from '../../models/common/distance';
 import { LocationService } from '../../services/location/location.service';
-import { counted, ParticipationType } from '../../models/common/enums';
+import { ParticipationType } from '../../models/common/enums';
 import { Tooltip } from '../../directives/tooltip';
 import { CountedIcon } from './counted-icon';
-import {
-  participants,
-  viewerState,
-  ViewerState,
-  withLike,
-  withStance,
-} from '../../models/posts/viewer-state';
-import { ViewerStates } from '../../services/viewer-states/viewer-states';
-import { ToastService } from '../../services/toast/toast.service';
+import { viewerState, ViewerState } from '../../models/posts/viewer-state';
+import { ShownPost, ViewerStates } from '../../services/viewer-states/viewer-states';
 
 /**
  * Ids of posts whose text someone expanded, so a card keeps its height when the list comes back,
@@ -115,39 +101,36 @@ export type PostFold = 'marked' | 'unmarked' | null;
   templateUrl: './post-component.html',
   styleUrl: './post-component.scss',
 })
-export class PostComponent implements OnInit {
-  isExpanded = signal(false);
+export class PostComponent {
+  readonly data = input.required<PostCard | PostDetail>();
+  readonly isFullView = input(false);
+  readonly folds = input<PostFold>(null);
+  readonly deleteRequest = output<string>();
+
+  readonly isExpanded = linkedSignal(() => expandedPosts.has(this.data().id));
   /** Whether the clamped text has more than it shows, which only the browser's layout can tell. */
   overflows = signal(false);
   loadedPhotos = signal<ReadonlySet<string>>(new Set());
-  /** The photo the carousel shows. */
   slide = signal(0);
 
-  isLiked = signal(false);
+  /** The viewer's like and stance, from the data, then from their taps until the data changes. */
+  readonly state = linkedSignal(() => viewerState(this.data()));
+  readonly isLiked = computed(() => this.state().myReaction === 'LIKE');
   /** The viewer's stance: one of three at a time, or none. */
-  stance = signal<ParticipationType | undefined>(undefined);
+  readonly stance = computed(() => this.state().myParticipation);
   isInterested = computed(() => this.stance() === 'INTERESTED');
   isTakesPart = computed(() => this.stance() === 'TAKES_PART');
   isNotForMe = computed(() => this.stance() === 'NOT_INTERESTED');
 
-  folds = input<PostFold>(null);
   folded = computed(() =>
     this.folds() === 'marked'
       ? this.isNotForMe()
       : this.folds() === 'unmarked' && !this.isNotForMe(),
   );
 
-  /** One request at a time, in order, so a quick Cofnij can't reach the server before what it undoes. */
-  private requests = new Subject<Observable<unknown>>();
-
   private router = inject(Router);
-  private interactions = inject(InteractionsService);
   private authService = inject(AuthService);
-  private signInPrompt = inject(SignInPromptService);
-  /** Friends see the viewer's Interesuje mnie and Biorę udział, so the buttons say so. */
-  readonly sharesStances = computed(
-    () => this.authService.isAuthenticated() && this.authService.shareStances(),
-  );
+  readonly isMyPost = computed(() => this.authService.currentUser()?.id === this.data().author.id);
   private destroyRef = inject(DestroyRef);
   private injector = inject(Injector);
   private host: HTMLElement = inject(ElementRef).nativeElement;
@@ -155,22 +138,17 @@ export class PostComponent implements OnInit {
   private slides = viewChild<ElementRef<HTMLElement>>('slides');
   private photoViewer = inject(PhotoViewerService);
   private commentsSheet = inject(CommentsSheetService);
-  private toast = inject(ToastService);
   private translate = inject(TranslateService);
   private location = inject(LocationService);
   private mapFocus = inject(MapFocus);
   private viewerStates = inject(ViewerStates);
 
-  isMyPost = signal<boolean>(false);
   readonly when = inject(EventWhenService);
   private kinds = inject(KindsService);
 
-  @Input() data!: PostCard | PostDetail;
-  @Input() isFullView!: boolean;
-
   /** Read on each check, so a card left open turns ended without a reload. */
   get ended(): boolean {
-    return hasEnded(this.data, new Date());
+    return hasEnded(this.data(), new Date());
   }
 
   /**
@@ -178,7 +156,8 @@ export class PostComponent implements OnInit {
    * kind says so here. Cards don't show them.
    */
   shownKinds(): { key: string; name: string }[] {
-    const keys = 'kinds' in this.data ? (this.data.kinds ?? []) : [];
+    const data = this.data();
+    const keys = 'kinds' in data ? (data.kinds ?? []) : [];
     return keys.flatMap((key) => {
       const name = this.kinds.eventName(key);
       return name ? [{ key, name }] : [];
@@ -188,34 +167,12 @@ export class PostComponent implements OnInit {
   readonly kindIcon = kindIcon;
   readonly kindParams = kindParams;
 
-  /** The note after a stance's name in its tooltip: why it's off, or who sees it. A translation key. */
   get stanceNote(): string | null {
-    return this.ended ? 'POST.endedHint' : this.sharesStances() ? 'POST.friendsSee' : null;
+    return this.viewerStates.stanceNote(this.ended);
   }
-
-  @Output() deleteRequest = new EventEmitter<string>();
 
   constructor() {
     afterNextRender(() => this.watchDescription());
-    this.requests
-      .pipe(
-        concatMap((request) => request),
-        takeUntilDestroyed(),
-      )
-      .subscribe();
-  }
-
-  ngOnInit(): void {
-    if (this.data) {
-      this.isExpanded.set(expandedPosts.has(this.data.id));
-      this.isLiked.set(this.data.myReaction === 'LIKE');
-      this.stance.set(this.data.myParticipation);
-      this.isMyPost.set(this.authService.currentUser()?.id === this.data.author.id ? true : false);
-    }
-  }
-
-  isParticipating(): boolean {
-    return counted(this.stance());
   }
 
   /** A counted button's name, with the exact number the badge may cut. */
@@ -226,32 +183,33 @@ export class PostComponent implements OnInit {
   /** Live while this post's comments are open, since the card can stay in view beside them. */
   commentCount(): number {
     const open = this.commentsSheet.commentsOf();
-    return open?.id === this.data.id ? this.commentsSheet.count() : (this.data.commentsCount ?? 0);
+    const data = this.data();
+    return open?.id === data.id ? this.commentsSheet.count() : data.commentsCount;
   }
 
   /** The sheet over the list. On the post page, the comments are already there, under the post. */
   openComments(): void {
-    if (this.isFullView) {
+    if (this.isFullView()) {
       this.host.ownerDocument
         .getElementById('comments')
         ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } else {
-      this.commentsSheet.show(this.data);
+      this.commentsSheet.show(this.data());
     }
   }
 
   /** Also on the post page, where the comments under the post leave the panel free for this. */
   openFriends(): void {
-    this.commentsSheet.showFriends(this.data);
+    this.commentsSheet.showFriends(this.data());
   }
 
   toggleExpanded(): void {
     const expanded = !this.isExpanded();
     this.isExpanded.set(expanded);
     if (expanded) {
-      expandedPosts.add(this.data.id);
+      expandedPosts.add(this.data().id);
     } else {
-      expandedPosts.delete(this.data.id);
+      expandedPosts.delete(this.data().id);
       // Collapsing a long text can leave the card above the view, with the reader lost in the list.
       afterNextRender(
         () => this.host.querySelector('.post')?.scrollIntoView({ block: 'nearest' }),
@@ -267,7 +225,7 @@ export class PostComponent implements OnInit {
   }
 
   openPhoto(index: number): void {
-    this.photoViewer.show(this.photos, index);
+    this.photoViewer.show(this.photos(), index);
   }
 
   onSlidesScroll(): void {
@@ -285,7 +243,7 @@ export class PostComponent implements OnInit {
   /** Measures again whenever the width changes, as a text that fits on a desktop may not on a phone. */
   private watchDescription(): void {
     const text = this.descText()?.nativeElement;
-    if (!text || this.isFullView) {
+    if (!text || this.isFullView()) {
       return;
     }
     const observer = new ResizeObserver(() => {
@@ -300,170 +258,94 @@ export class PostComponent implements OnInit {
   /** The place opens this post's pin on the home map. Directions are one tap further, in the pin's preview. */
   showOnMap(event: Event): void {
     event.stopPropagation();
-    this.mapFocus.show(this.data);
+    this.mapFocus.show(this.data());
   }
 
-  get place(): string {
-    return postPlace(this.data, this.isFullView);
-  }
+  readonly place = computed(() => postPlace(this.data(), this.isFullView()));
 
   /** How far the event is from the user, when their position is known and the post has a place. */
-  get distance(): string | null {
-    const point = this.data.type === 'OFFLINE' ? this.data.location?.coordinates : undefined;
+  readonly distance = computed(() => {
+    const data = this.data();
+    const point = data.type === 'OFFLINE' ? data.location?.coordinates : undefined;
     const meters = point ? this.location.metersTo(point) : null;
     return meters === null ? null : formatDistance(meters, this.translate.currentLang || 'pl');
-  }
+  });
 
   /** Paragraphs stay, and a run of blank lines between them becomes one. */
-  get description(): string {
-    return (this.data.description ?? '')
+  readonly description = computed(() =>
+    (this.data().description ?? '')
       .replace(/\r\n?/g, '\n')
       .replace(/[ \t]+\n/g, '\n')
       .replace(/\n{3,}/g, '\n\n')
-      .trim();
-  }
+      .trim(),
+  );
 
   /** Every photo, in their order with the cover first, in a carousel: the post page's own list, or the card's. */
-  get photos(): Photo[] {
+  readonly photos = computed(() => {
+    const data = this.data();
     const media =
-      this.isFullView && 'media' in this.data
-        ? this.data.media.map((m) => m.media)
-        : ('photos' in this.data && this.data.photos) || [];
-    const all = media.length > 0 ? media : [this.data.coverMedia];
+      this.isFullView() && 'media' in data
+        ? data.media.map((m) => m.media)
+        : ('photos' in data && data.photos) || [];
+    const all = media.length > 0 ? media : [data.coverMedia];
     return all.map(toPhoto).filter((photo): photo is Photo => !!photo);
-  }
+  });
 
-  get frameShape(): number {
-    return frameShape(this.photos[0]);
-  }
+  readonly frameShape = computed(() => frameShape(this.photos()[0]));
 
-  /** A like takes back "Nie dla mnie", on the server too. */
+  /** A like takes back "Nie dla mnie", on the server too, and Cofnij brings it back. */
   likePost(): void {
-    if (!this.signInPrompt.allows('like')) {
-      return;
+    const marked = this.isNotForMe();
+    if (this.viewerStates.like(this.shown(), this.apply) && marked) {
+      undoable.set(this.data().id, { stance: 'NOT_INTERESTED', liked: false });
     }
-    const liked = !this.isLiked();
-    const wasMarked = liked && this.isNotForMe();
-    if (wasMarked) {
-      undoable.set(this.data.id, { stance: 'NOT_INTERESTED', liked: false });
-      this.applyParticipation(undefined);
-    }
-    this.applyReaction(liked);
-    this.send(
-      liked
-        ? this.interactions.setReaction(this.data.id, { type: 'LIKE' })
-        : this.interactions.removeReaction(this.data.id),
-      () => {
-        this.applyReaction(!liked);
-        if (wasMarked) {
-          this.applyParticipation('NOT_INTERESTED');
-        }
-      },
-    );
   }
 
   setInterested(): void {
-    this.toggleParticipation('INTERESTED');
+    this.toggleStance('INTERESTED');
   }
 
   setTakesPart(): void {
-    this.toggleParticipation('TAKES_PART');
+    this.toggleStance('TAKES_PART');
   }
 
   setNotForMe(): void {
-    this.toggleParticipation('NOT_INTERESTED');
+    this.toggleStance('NOT_INTERESTED');
   }
 
   /** Cofnij on a folded card: back to the stance and like from before the fold. */
   undoFold(): void {
-    const undo = undoable.get(this.data.id);
-    if (!undo || !this.signInPrompt.allows('notForMe')) {
-      return;
-    }
-    undoable.delete(this.data.id);
-    const now: Undo = { stance: this.data.myParticipation, liked: this.isLiked() };
-    const revert = () => {
-      this.applyParticipation(now.stance);
-      this.applyReaction(now.liked);
-    };
-    this.applyParticipation(undo.stance);
-    this.send(
-      undo.stance
-        ? this.interactions.setParticipation(this.data.id, { type: undo.stance })
-        : this.interactions.removeParticipation(this.data.id),
-      revert,
-    );
-    if (undo.liked) {
-      this.applyReaction(true);
-      this.send(this.interactions.setReaction(this.data.id, { type: 'LIKE' }), revert);
+    const id = this.data().id;
+    const undo = undoable.get(id);
+    if (undo && this.viewerStates.restore(this.shown(), undo.stance, undo.liked, this.apply)) {
+      undoable.delete(id);
     }
   }
 
-  private send(request: Observable<unknown>, revert: () => void, done?: () => void): void {
-    this.requests.next(
-      request.pipe(
-        tap({ next: () => done?.(), error: revert }),
-        catchError(() => EMPTY),
-      ),
-    );
-  }
-
-  private applyReaction(liked: boolean): void {
-    this.update(withLike(viewerState(this.data), liked));
-    this.isLiked.set(liked);
-  }
-
-  /** "Nie dla mnie" takes back the like, on the server too. */
-  private toggleParticipation(type: ParticipationType): void {
-    if (!this.signInPrompt.allows(STANCE_SIGN_IN_REASONS[type])) {
-      return;
+  private toggleStance(type: ParticipationType): void {
+    const before: Undo = { stance: this.stance(), liked: this.isLiked() };
+    if (this.viewerStates.stance(this.shown(), type, this.apply)) {
+      undoable.set(this.data().id, before);
     }
-    const previous = this.data.myParticipation;
-    const next = previous === type ? undefined : type;
-    const takesLike = next === 'NOT_INTERESTED' && this.isLiked();
-    undoable.set(this.data.id, { stance: previous, liked: this.isLiked() });
-    this.applyParticipation(next);
-    if (takesLike) {
-      this.applyReaction(false);
-    }
-    this.send(
-      next
-        ? this.interactions.setParticipation(this.data.id, { type: next })
-        : this.interactions.removeParticipation(this.data.id),
-      () => {
-        this.applyParticipation(previous);
-        if (takesLike) {
-          this.applyReaction(true);
-        }
-      },
-      // The post leaves the feed on its next refresh, and this says where it went.
-      counted(next)
-        ? () => this.toast.show(this.translate.instant('POST.saved-to-plans'))
-        : undefined,
-    );
   }
 
-  private applyParticipation(type: ParticipationType | undefined): void {
-    this.update(withStance(viewerState(this.data), type));
-    this.stance.set(type);
+  private shown(): ShownPost {
+    return { ...this.state(), id: this.data().id };
   }
 
-  /**
-   * `data` is what a card shows again after coming back to the list, so it changes in place. The map shows the same
-   * post from its own marks, so it learns of the change from `ViewerStates`.
-   */
-  private update(state: ViewerState): void {
-    Object.assign(this.data, state, { participantCount: participants(state) });
-    this.viewerStates.remember(this.data.id, state);
-  }
+  /** `data` is what a card shows again after coming back to the list, so it changes in place. */
+  private readonly apply = (state: ViewerState) => {
+    Object.assign(this.data(), state);
+    this.state.set(state);
+  };
 
   goToFullPost(): void {
-    if (!this.isFullView) {
-      this.router.navigate(['/posts', this.data.id]);
+    if (!this.isFullView()) {
+      this.router.navigate(['/posts', this.data().id]);
     }
   }
 
   goToUserProfile(): void {
-    this.router.navigate(['/users', this.data.author.username]);
+    this.router.navigate(['/users', this.data().author.username]);
   }
 }

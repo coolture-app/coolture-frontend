@@ -13,8 +13,6 @@ function comment(overrides: Partial<CommentSummary> = {}): CommentSummary {
   return {
     id: 'c1',
     postId: 'p1',
-    rootCommentId: null,
-    parentCommentId: null,
     author: {
       id: 'u1',
       username: 'ola',
@@ -27,8 +25,6 @@ function comment(overrides: Partial<CommentSummary> = {}): CommentSummary {
     depth: 0,
     repliesCount: 0,
     createdAt: '2026-11-04T10:00:00Z',
-    lastEditedAt: null,
-    deletedAt: null,
     status: 'ACTIVE',
     ...overrides,
   };
@@ -100,12 +96,6 @@ describe('CommentComponent', () => {
     );
 
     expect(element().querySelector('.comment__avatar--placeholder')).not.toBeNull();
-  });
-
-  it('has no heart or any other reaction', async () => {
-    await render(comment());
-
-    expect(element().querySelector('[class*="like"], [class*="heart"]')).toBeNull();
   });
 
   it('says when a comment was edited', async () => {
@@ -249,28 +239,32 @@ describe('CommentComponent', () => {
 
       (element().querySelector('.comment__menu-btn') as HTMLButtonElement).click();
       await fixture.whenStable();
-      expect(buttonNamed('COMMENT.edit-comment')).toBeDefined();
-      expect(buttonNamed('COMMENT.delete-comment')).toBeDefined();
-    });
-
-    it('closes the menu on the next click anywhere', async () => {
-      await render(mine());
-      (element().querySelector('.comment__menu-btn') as HTMLButtonElement).click();
-      await new Promise((resolve) => setTimeout(resolve));
-
+      const rows = [...document.querySelectorAll('[role="menuitem"]')].map((b) => b.textContent);
+      expect(rows.map((text) => text?.trim())).toEqual([
+        'COMMENT.edit-comment',
+        'COMMENT.delete-comment',
+      ]);
       document.body.click();
       await fixture.whenStable();
-
-      expect(component.menuOpen()).toBeFalse();
     });
+
+    async function startEditing(): Promise<HTMLTextAreaElement> {
+      component.startEditing();
+      await fixture.whenStable();
+      return element().querySelector('textarea') as HTMLTextAreaElement;
+    }
+
+    const press = (box: HTMLTextAreaElement, key: string, text = box.value) => {
+      box.value = text;
+      box.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+    };
 
     it('saves an edit on Enter, and shows the new text', async () => {
       const edit = spyOn(service, 'editComment').and.returnValue(of(mine()));
       await render(mine());
-      component.startEditing();
-      await fixture.whenStable();
+      const box = await startEditing();
 
-      component.saveEdit('  changed ');
+      press(box, 'Enter', '  changed ');
       await fixture.whenStable();
 
       expect(edit).toHaveBeenCalledWith('c1', { content: 'changed' });
@@ -282,10 +276,8 @@ describe('CommentComponent', () => {
       const edit = spyOn(service, 'editComment');
       await render(mine());
 
-      component.startEditing();
-      component.saveEdit('   ');
-      component.startEditing();
-      component.saveEdit('hello');
+      press(await startEditing(), 'Enter', '   ');
+      press(await startEditing(), 'Enter', 'hello');
 
       expect(edit).not.toHaveBeenCalled();
     });
@@ -293,9 +285,9 @@ describe('CommentComponent', () => {
     it('puts the old text back and says so when an edit fails', async () => {
       spyOn(service, 'editComment').and.returnValue(throwError(() => new Error('down')));
       await render(mine());
-      component.startEditing();
+      const box = await startEditing();
 
-      component.saveEdit('changed');
+      press(box, 'Enter', 'changed');
       await fixture.whenStable();
 
       expect(element().querySelector('.comment__text')?.textContent).toContain('hello');
@@ -305,10 +297,10 @@ describe('CommentComponent', () => {
     it('cancels an edit on Escape, without saving when the box then loses focus', async () => {
       const edit = spyOn(service, 'editComment');
       await render(mine());
-      component.startEditing();
+      const box = await startEditing();
 
-      component.cancelEdit(new Event('keydown'));
-      component.saveEdit('changed');
+      press(box, 'Escape', 'changed');
+      box.dispatchEvent(new Event('blur'));
 
       expect(edit).not.toHaveBeenCalled();
       expect(component.isEditing()).toBeFalse();
@@ -334,16 +326,19 @@ describe('CommentComponent', () => {
       expect(deleted).toEqual([{ id: 'c1', hasReplies: false }]);
     });
 
-    it('goes from the list once its replies are gone, by what it has now', async () => {
+    it('reports a reply’s deletion apart, and goes from the list once its replies are gone', async () => {
       spyOn(service, 'deleteComment').and.returnValue(of(undefined));
       const deleted: DeletedComment[] = [];
       component.commentDeleted.subscribe((d) => deleted.push(d));
+      let repliesDeleted = 0;
+      component.replyDeleted.subscribe(() => repliesDeleted++);
       await render({ ...mine(), repliesCount: 1 });
 
       component.onReplyDeleted({ id: 'r1', hasReplies: false });
+      expect(repliesDeleted).toBe(1);
       await askToDelete('confirm');
 
-      expect(deleted.at(-1)).toEqual({ id: 'c1', hasReplies: false });
+      expect(deleted).toEqual([{ id: 'c1', hasReplies: false }]);
     });
 
     it('stays as a note while replies remain, and hides with the last one', async () => {

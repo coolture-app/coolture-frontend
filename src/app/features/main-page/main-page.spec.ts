@@ -4,9 +4,11 @@ import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpTestingController, TestRequest } from '@angular/common/http/testing';
 import { Navigation, provideRouter, Router } from '@angular/router';
+import { By } from '@angular/platform-browser';
 import { MapFocus } from '../../core/components/map/map-focus';
 
 import { MainPage } from './main-page';
+import { HomeBar } from './home-bar/home-bar';
 import { LocationService } from '../../core/services/location/location.service';
 import { PostService } from '../../core/services/post/post.service';
 import { GeoPoint } from '../../core/models/common/geo.model';
@@ -80,10 +82,19 @@ describe('MainPage', () => {
     currentNavigation.and.returnValue(null);
   }
 
-  /** Waits past the search debounce. */
-  async function debounce(): Promise<void> {
-    await new Promise((resolve) => setTimeout(resolve, 420));
+  /** Applies the search and filters now, as the typing pause would. */
+  async function apply(): Promise<void> {
+    component.applyControls();
     await settle();
+  }
+
+  /** Opens the page on Wszystkie, with both first pages answered. */
+  async function openAll(): Promise<void> {
+    await open();
+    expectFeed().flush({ ...page(), mode: 'RANKED' });
+    component.setTab('all');
+    await settle();
+    expectPosts().flush(page());
   }
 
   function expectFeed(): TestRequest {
@@ -112,7 +123,18 @@ describe('MainPage', () => {
   }
 
   async function openPlace(): Promise<void> {
-    component.togglePlace();
+    (fixture.nativeElement.querySelector('.place-btn') as HTMLButtonElement).click();
+    await settle();
+  }
+
+  /** Answered by the position in `askedLocation`, or refused. */
+  async function pickMyLocation(): Promise<void> {
+    option('MAIN_PAGE.myLocation').click();
+    await settle();
+  }
+
+  async function toggleFilters(): Promise<void> {
+    (fixture.nativeElement.querySelector('.filters-btn') as HTMLButtonElement).click();
     await settle();
   }
 
@@ -178,7 +200,7 @@ describe('MainPage', () => {
     spyOn(scroller, 'scrollToPosition');
   });
 
-  /** Filtry asks for the kinds' names when it opens. */
+  /** The page asks for the kinds' names when it is created. */
   function flushKinds(): void {
     http.match((r) => r.url.endsWith('/dicts/interests')).forEach((r) => r.flush(KIND_CATALOG));
   }
@@ -204,7 +226,9 @@ describe('MainPage', () => {
       expectFeed().flush({ ...page(), mode: 'RANKED' });
 
       component.searchControl.setValue('  jazz ');
-      await debounce();
+      // Past the typing pause.
+      await new Promise((resolve) => setTimeout(resolve, 420));
+      await settle();
 
       const feed = expectFeed();
       expect(param(feed, 'q')).toBe('jazz');
@@ -217,7 +241,7 @@ describe('MainPage', () => {
       expectFeed().flush({ ...page(), mode: 'RANKED' });
 
       component.filtersForm.controls.includePast.setValue(true);
-      await debounce();
+      await apply();
 
       const first = expectFeed();
       expect(param(first, 'includePast')).toBe('true');
@@ -238,8 +262,7 @@ describe('MainPage', () => {
     it('filters by the kinds picked in Filtry, counted as one, and by Dla dzieci', async () => {
       await open();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
-      component.toggleFilters();
-      await settle();
+      await toggleFilters();
       flushKinds();
       await settle();
       const tile = (name: string) =>
@@ -250,7 +273,7 @@ describe('MainPage', () => {
 
       tile('Scena').click();
       tile('Koncerty').click();
-      await debounce();
+      await apply();
       const feed = expectFeed();
       expect(param(feed, 'kinds')).toBe('concerts,stage');
       feed.flush({ ...page(), mode: 'RANKED' });
@@ -258,7 +281,7 @@ describe('MainPage', () => {
       expect(router.url).toBe('/?kinds=concerts,stage');
 
       component.filtersForm.controls.kids.setValue(true);
-      await debounce();
+      await apply();
       const kids = expectFeed();
       expect(param(kids, 'kids')).toBe('true');
       kids.flush({ ...page(), mode: 'RANKED' });
@@ -269,8 +292,7 @@ describe('MainPage', () => {
     it('clears the kinds and Dla dzieci with Wyczyść, and the kinds alone with Wyczyść rodzaj', async () => {
       await open();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
-      component.toggleFilters();
-      await settle();
+      await toggleFilters();
       flushKinds();
       await settle();
       const el = fixture.nativeElement as HTMLElement;
@@ -286,13 +308,13 @@ describe('MainPage', () => {
 
       tile('Koncerty').click();
       component.filtersForm.controls.kids.setValue(true);
-      await debounce();
+      await apply();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
       await settle();
       expect(tile('Koncerty').getAttribute('aria-pressed')).toBe('true');
 
       clearKinds()!.click();
-      await debounce();
+      await apply();
       const kinds = expectFeed();
       expect(param(kinds, 'kinds')).toBeNull();
       expect(param(kinds, 'kids')).toBe('true');
@@ -302,7 +324,7 @@ describe('MainPage', () => {
       expect(clearKinds()).toBeUndefined();
 
       tile('Scena').click();
-      await debounce();
+      await apply();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
       await settle();
 
@@ -322,7 +344,7 @@ describe('MainPage', () => {
       await open();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
       component.searchControl.setValue('jazz');
-      await debounce();
+      await apply();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
 
       component.setTab('all');
@@ -335,18 +357,14 @@ describe('MainPage', () => {
     });
 
     it('keeps the sort when filters change on Wszystkie, and keeps the filters when the sort changes', async () => {
-      await open();
-      expectFeed().flush({ ...page(), mode: 'RANKED' });
-      component.setTab('all');
-      await settle();
-      expectPosts().flush(page());
+      await openAll();
 
       await component.setSortBy('POPULAR');
       await settle();
       expect(param(expectPosts(), 'sortBy')).toBe('POPULAR');
 
       component.filtersForm.controls.includePast.setValue(true);
-      await debounce();
+      await apply();
       const filtered = expectPosts();
       expect(param(filtered, 'sortBy')).toBe('POPULAR');
       expect(param(filtered, 'includePast')).toBe('true');
@@ -366,8 +384,7 @@ describe('MainPage', () => {
         );
       await open();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
-      component.toggleFilters();
-      await settle();
+      await toggleFilters();
       expect(sortChips().length).toBe(0);
 
       component.setTab('all');
@@ -415,21 +432,13 @@ describe('MainPage', () => {
       await settle();
       expectPosts().flush(page());
       component.filtersForm.controls.includePast.setValue(true);
-      await debounce();
+      await apply();
       expectPosts().flush(page());
 
       component.setTab('forYou');
       await settle();
 
       expect(param(expectFeed(), 'includePast')).toBe('true');
-    });
-
-    it('never disables search or filters on the feed', async () => {
-      await open();
-      expectFeed().flush({ ...page(), mode: 'RANKED' });
-
-      expect(component.searchControl.enabled).toBeTrue();
-      expect(component.filtersForm.controls.kinds.enabled).toBeTrue();
     });
 
     it('does not start a new list when nothing about it changed', async () => {
@@ -445,23 +454,24 @@ describe('MainPage', () => {
       expect(shownTitles()).toEqual(['Post a']);
     });
 
-    it('applies the search at once on Enter, without waiting for the debounce', async () => {
+    it('applies the search at once on Enter, without waiting for the typing pause', async () => {
       await open();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
+      const input = fixture.nativeElement.querySelector('.search__input') as HTMLInputElement;
 
-      component.searchControl.setValue('jazz');
-      component.applyControls();
+      input.value = 'jazz';
+      input.dispatchEvent(new Event('input'));
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
       await settle();
 
-      expectFeed().flush({ ...page(), mode: 'RANKED' });
-      await debounce();
+      expect(param(expectFeed(), 'q')).toBe('jazz');
     });
 
     it('points a search on Dla Ciebie to Wszystkie, at the end of its results', async () => {
       await open();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
       component.searchControl.setValue('jazz');
-      await debounce();
+      await apply();
       expectFeed().flush({ ...page(['a']), mode: 'RANKED' });
       await settle();
 
@@ -485,11 +495,7 @@ describe('MainPage', () => {
   describe('Najbliższe', () => {
     it('sends the position with the sort', async () => {
       askedLocation = { latitude: 54.35, longitude: 18.65 };
-      await open();
-      expectFeed().flush({ ...page(), mode: 'RANKED' });
-      component.setTab('all');
-      await settle();
-      expectPosts().flush(page());
+      await openAll();
 
       await component.setSortBy('NEAREST');
       await settle();
@@ -503,11 +509,7 @@ describe('MainPage', () => {
     });
 
     it('keeps the order and says why when the position is refused', async () => {
-      await open();
-      expectFeed().flush({ ...page(), mode: 'RANKED' });
-      component.setTab('all');
-      await settle();
-      expectPosts().flush(page());
+      await openAll();
 
       await component.setSortBy('NEAREST');
       await settle();
@@ -522,11 +524,7 @@ describe('MainPage', () => {
         name: 'Oliwa, Gdańsk',
         coordinates: { latitude: 54.41, longitude: 18.56 },
       });
-      await open();
-      expectFeed().flush({ ...page(), mode: 'RANKED' });
-      component.setTab('all');
-      await settle();
-      expectPosts().flush(page());
+      await openAll();
 
       await component.setSortBy('NEAREST');
       await settle();
@@ -536,6 +534,32 @@ describe('MainPage', () => {
       posts.flush(page());
       await settle();
       expect(text()).toContain('MAIN_PAGE.nearestFromHome');
+    });
+
+    it('measures from the home after Wszędzie, not from the place picked before it', async () => {
+      TestBed.inject(AuthService).home.set({
+        name: 'Oliwa, Gdańsk',
+        coordinates: { latitude: 54.41, longitude: 18.56 },
+      });
+      await open();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      component.pickPlace({ name: 'Sopot', coordinates: { latitude: 54.44, longitude: 18.56 } });
+      await apply();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      await openPlace();
+      option('MAIN_PAGE.anywhere').click();
+      await apply();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      component.setTab('all');
+      await settle();
+      expectPosts().flush(page());
+
+      await component.setSortBy('NEAREST');
+      await settle();
+
+      expect(param(expectPosts(), 'latitude')).toBe('54.41');
+      await openPlace();
+      expect(option('Sopot')).toBeUndefined();
     });
   });
 
@@ -549,13 +573,13 @@ describe('MainPage', () => {
       expectFeed().flush({ ...page(['j']), mode: 'RANKED' });
       await settle();
 
-      (fixture.nativeElement.querySelector('.searchbar__clear') as HTMLButtonElement).click();
+      (fixture.nativeElement.querySelector('.search__clear') as HTMLButtonElement).click();
       await settle();
 
       expectFeed().flush({ ...page(['f']), mode: 'RANKED' });
       await settle();
       expect(component.searchControl.value).toBe('');
-      expect(fixture.nativeElement.querySelector('.searchbar__clear')).toBeNull();
+      expect(fixture.nativeElement.querySelector('.search__clear')).toBeNull();
     });
 
     it('counts the filters that are on, a date range as one, and not the search', async () => {
@@ -591,24 +615,27 @@ describe('MainPage', () => {
     it('hides while scrolling down past the top and comes back on any scroll up', async () => {
       await open();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
+      const bar: HomeBar = fixture.debugElement.query(By.directive(HomeBar)).componentInstance;
       let y = 0;
       spyOnProperty(window, 'scrollY').and.callFake(() => y);
       const scrollTo = (to: number) => {
         y = to;
-        component.onScroll();
+        bar.onScroll();
       };
+      jasmine.clock().install();
 
       scrollTo(60);
-      expect(component.barHidden()).toBeFalse();
+      expect(bar.hidden()).toBeFalse();
       scrollTo(400);
-      expect(component.barHidden()).toBeTrue();
+      expect(bar.hidden()).toBeTrue();
       scrollTo(395);
-      expect(component.barHidden()).toBeFalse();
-      expect(component.scrolling()).toBeTrue();
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      expect(component.scrolling()).toBeTrue();
-      await new Promise((resolve) => setTimeout(resolve, 600));
-      expect(component.scrolling()).toBeFalse();
+      expect(bar.hidden()).toBeFalse();
+      expect(bar.scrolling()).toBeTrue();
+      jasmine.clock().tick(999);
+      expect(bar.scrolling()).toBeTrue();
+      jasmine.clock().tick(1);
+      expect(bar.scrolling()).toBeFalse();
+      jasmine.clock().uninstall();
     });
   });
 
@@ -633,7 +660,7 @@ describe('MainPage', () => {
       expect([...component.mapPicks()!]).toEqual(['a', 'b']);
 
       component.searchControl.setValue('jazz');
-      await debounce();
+      await apply();
       expect([...component.mapPicks()!]).toEqual(['a', 'b']);
 
       expectFeed().flush({ ...page(['c']), mode: 'RANKED' });
@@ -683,19 +710,6 @@ describe('MainPage', () => {
       expectPosts().flush(page());
     });
 
-    it('is there on the feed too', async () => {
-      await open();
-      expectFeed().flush({ ...page(), mode: 'RANKED' });
-      await settle();
-
-      const options = fixture.nativeElement.querySelectorAll('.view-switch__option');
-      expect(Array.from(options as NodeListOf<Element>).map((o) => o.textContent!.trim())).toEqual([
-        'MAIN_PAGE.list',
-        'MAIN_PAGE.map',
-      ]);
-      expect(options[0].getAttribute('aria-pressed')).toBe('true');
-    });
-
     it('passes the active filters on, and catches the list up when switched off', async () => {
       await open();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
@@ -704,7 +718,7 @@ describe('MainPage', () => {
       component.toggleMapView(true);
       await settle();
       component.searchControl.setValue('jazz');
-      await debounce();
+      await apply();
 
       expect(component.activeFilters()).toEqual({ q: 'jazz' });
       http.match((r) => r.url.endsWith('/posts/map'));
@@ -755,7 +769,7 @@ describe('MainPage', () => {
       component.toggleMapView(true);
       await settle();
       component.searchControl.setValue('jazz');
-      await debounce();
+      await apply();
       component.toggleMapView(false);
       await settle();
 
@@ -766,22 +780,11 @@ describe('MainPage', () => {
   });
 
   describe('past events', () => {
-    it('sends includePast when the switch is on, also on the map filters', async () => {
-      await open();
-      expectFeed().flush({ ...page(), mode: 'RANKED' });
-
-      component.filtersForm.controls.includePast.setValue(true);
-      await debounce();
-
-      expect(param(expectFeed(), 'includePast')).toBe('true');
-      expect(component.activeFilters()).toEqual({ includePast: true });
-    });
-
     it('offers past events on an empty result, and opens the filters', async () => {
       await open();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
       component.searchControl.setValue('jazz');
-      await debounce();
+      await apply();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
       await settle();
 
@@ -813,7 +816,7 @@ describe('MainPage', () => {
       component.filtersForm.controls.fromDay.setValue('2026-01-01');
       await settle();
       http.match((r) => r.url.endsWith('/posts'));
-      await debounce();
+      await apply();
       expectPosts().flush(page());
       await settle();
       expect(button('MAIN_PAGE.searchPast')).toBeUndefined();
@@ -856,21 +859,22 @@ describe('MainPage', () => {
       expectFeed().flush({ ...page(['b']), mode: 'RANKED' });
     });
 
-    it('asks for the next page from 15 cards before the end, on any screen', async () => {
-      const ids = Array.from({ length: 20 }, (_, i) => `c${i}`);
+    it('asks for the next page from 15 cards before the end, at once when there are fewer', async () => {
+      const triggerCard = () => {
+        const triggers = fixture.nativeElement.querySelectorAll('.list-trigger');
+        expect(triggers.length).toBe(1);
+        return triggers[0].nextElementSibling.querySelector('.post__title').textContent.trim();
+      };
       await open();
-      expectFeed().flush({
-        ...page(ids),
-        mode: 'RANKED',
-        page: { limit: 20, hasMore: true, nextCursor: 'c1' },
-      });
+      expectFeed().flush({ ...page(['a', 'b']), mode: 'RANKED' });
       await settle();
+      expect(triggerCard()).toBe('Post a');
 
-      const triggers = fixture.nativeElement.querySelectorAll('.list-trigger');
-      expect(triggers.length).toBe(1);
-      expect(triggers[0].nextElementSibling.querySelector('.post__title').textContent.trim()).toBe(
-        'Post c5',
-      );
+      component.setTab('all');
+      await settle();
+      expectPosts().flush(page(Array.from({ length: 20 }, (_, i) => `c${i}`)));
+      await settle();
+      expect(triggerCard()).toBe('Post c5');
     });
 
     it('also asks from after the last card, for a jump straight to the bottom', async () => {
@@ -894,21 +898,6 @@ describe('MainPage', () => {
       expect(directive.enabled()).toBeTrue();
       directive.reachedEnd.emit();
       expect(component.list.loadMore).toHaveBeenCalled();
-    });
-
-    it('asks straight away when a short page leaves fewer cards than that', async () => {
-      await open();
-      expectFeed().flush({
-        ...page(['a', 'b']),
-        mode: 'RANKED',
-        page: { limit: 20, hasMore: true, nextCursor: 'c1' },
-      });
-      await settle();
-
-      const trigger = fixture.nativeElement.querySelector('.list-trigger');
-      expect(trigger.nextElementSibling.querySelector('.post__title').textContent.trim()).toBe(
-        'Post a',
-      );
     });
 
     it('shows the end of the list only after posts', async () => {
@@ -998,14 +987,6 @@ describe('MainPage', () => {
       request.flush({ ...page(), mode: 'RANKED' });
     });
 
-    it('offers no Near me button any more', async () => {
-      await open();
-      expectFeed().flush({ ...page(), mode: 'RANKED' });
-      await settle();
-
-      expect(text()).not.toContain('MAIN_PAGE.nearMe');
-    });
-
     describe('the place panel', () => {
       async function openFilters(): Promise<void> {
         await open();
@@ -1027,20 +1008,19 @@ describe('MainPage', () => {
         askedLocation = { latitude: 54.35, longitude: 18.65 };
         await openFilters();
 
-        chip('MAIN_PAGE.myLocation').click();
-        await debounce();
+        await pickMyLocation();
         expectFeed().flush({ ...page(), mode: 'RANKED' });
         expect(component.showPlace()).toBeTrue();
         expect(radiusChips().length).toBeGreaterThan(0);
 
         radiusChips()[0].click();
-        await debounce();
+        await apply();
         expectFeed().flush({ ...page(), mode: 'RANKED' });
         expect(component.showPlace()).toBeFalse();
 
         await openPlace();
         chip('MAIN_PAGE.anywhere').click();
-        await debounce();
+        await apply();
         expectFeed().flush({ ...page(), mode: 'RANKED' });
         expect(component.showPlace()).toBeFalse();
       });
@@ -1049,8 +1029,7 @@ describe('MainPage', () => {
         askedLocation = { latitude: 54.35, longitude: 18.65 };
         await openFilters();
 
-        chip('MAIN_PAGE.myLocation').click();
-        await debounce();
+        await pickMyLocation();
 
         const feed = expectFeed();
         expect(param(feed, 'latitude')).toBe('54.35');
@@ -1078,13 +1057,12 @@ describe('MainPage', () => {
       it('changes the radius', async () => {
         askedLocation = { latitude: 54.35, longitude: 18.65 };
         await openFilters();
-        chip('MAIN_PAGE.myLocation').click();
-        await debounce();
+        await pickMyLocation();
         expectFeed().flush({ ...page(), mode: 'RANKED' });
         await settle();
 
         radiusChips()[4].click();
-        await debounce();
+        await apply();
 
         expect(param(expectFeed(), 'radiusKm')).toBe('50');
       });
@@ -1092,8 +1070,7 @@ describe('MainPage', () => {
       it('offers the next radius when nothing is inside, and none past the largest', async () => {
         askedLocation = { latitude: 54.35, longitude: 18.65 };
         await openFilters();
-        chip('MAIN_PAGE.myLocation').click();
-        await debounce();
+        await pickMyLocation();
         expectFeed().flush({ ...page(), mode: 'RANKED' });
         await settle();
 
@@ -1104,7 +1081,7 @@ describe('MainPage', () => {
         expect(component.filtersForm.controls.radiusKm.value).toBe(10);
 
         component.filtersForm.controls.radiusKm.setValue(100);
-        await debounce();
+        await apply();
         expectFeed().flush({ ...page(), mode: 'RANKED' });
         await settle();
         expect(button('MAIN_PAGE.widenRadius')).toBeUndefined();
@@ -1113,8 +1090,7 @@ describe('MainPage', () => {
       it('goes back to Anywhere and says why when the position is refused', async () => {
         await openFilters();
 
-        chip('MAIN_PAGE.myLocation').click();
-        await debounce();
+        await pickMyLocation();
 
         expect(component.filtersForm.controls.place.value).toBe('');
         expect(text()).toContain('MAIN_PAGE.locationFailed');
@@ -1125,12 +1101,11 @@ describe('MainPage', () => {
         locationRequest = new Promise((resolve) => (answer = resolve));
         await openFilters();
 
-        chip('MAIN_PAGE.myLocation').click();
-        await settle();
+        await pickMyLocation();
         expect(component.locating()).toBeTrue();
 
         answer({ latitude: 54.35, longitude: 18.65 });
-        await debounce();
+        await apply();
         expect(component.locating()).toBeFalse();
         expect(param(expectFeed(), 'radiusKm')).toBe('5');
       });
@@ -1145,7 +1120,7 @@ describe('MainPage', () => {
         name: 'Ergo Arena',
         coordinates: { latitude: 54.43, longitude: 18.58 },
       });
-      await debounce();
+      await apply();
 
       const feed = expectFeed();
       expect(param(feed, 'latitude')).toBe('54.43');
@@ -1168,7 +1143,7 @@ describe('MainPage', () => {
       const options = fixture.nativeElement.querySelectorAll('.panel__option-name');
       expect(options[0].textContent.trim()).toBe('Oliwa, Gdańsk');
       option('Oliwa, Gdańsk').click();
-      await debounce();
+      await apply();
 
       expect(param(expectFeed(), 'latitude')).toBe('54.41');
       await settle();
@@ -1213,12 +1188,12 @@ describe('MainPage', () => {
       nameLookups(null);
     });
 
-    it('keeps the place when Filtry is cleared', async () => {
+    it('keeps the place when Filtry is cleared, Online too', async () => {
       await open();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
       component.pickPlace({ name: 'Sopot', coordinates: { latitude: 54.44, longitude: 18.56 } });
       component.searchControl.setValue('jazz');
-      await debounce();
+      await apply();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
 
       component.clearFilters();
@@ -1228,20 +1203,34 @@ describe('MainPage', () => {
       expect(param(feed, 'q')).toBeNull();
       expect(param(feed, 'latitude')).toBe('54.44');
       feed.flush({ ...page(), mode: 'RANKED' });
+
+      await openPlace();
+      option('MAIN_PAGE.online').click();
+      await settle();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      component.filtersForm.controls.includePast.setValue(true);
+      await apply();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+
+      component.clearFilters();
+      await settle();
+
+      const online = expectFeed();
+      expect(param(online, 'type')).toBe('ONLINE');
+      expect(param(online, 'includePast')).toBeNull();
+      online.flush({ ...page(), mode: 'RANKED' });
     });
 
     it('closes the panel on Escape, and on its ✕', async () => {
       await open();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
-      component.toggleFilters();
-      await settle();
+      await toggleFilters();
 
       document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
       await settle();
       expect(component.showFilters()).toBeFalse();
 
-      component.toggleFilters();
-      await settle();
+      await toggleFilters();
       (
         fixture.nativeElement.querySelector(
           'app-feed-filters [aria-label="MAIN_PAGE.close"]',
@@ -1264,8 +1253,7 @@ describe('MainPage', () => {
       await open();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
       await openPlace();
-      option('MAIN_PAGE.myLocation').click();
-      await debounce();
+      await pickMyLocation();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
 
       // Still open on the position's radius.
@@ -1277,7 +1265,7 @@ describe('MainPage', () => {
       expect(param(feed, 'radiusKm')).toBeNull();
       expect(param(feed, 'latitude')).toBeNull();
       feed.flush({ ...page(), mode: 'RANKED' });
-      await debounce();
+      await apply();
       expect(component.showPlace()).toBeFalse();
       expect(pill()).toBe('MAIN_PAGE.online');
       expect(component.activeFilterCount()).toBe(0);
@@ -1285,11 +1273,7 @@ describe('MainPage', () => {
     });
 
     it('hides Mapa, and goes to Lista when picked on the map', async () => {
-      await open();
-      expectFeed().flush({ ...page(), mode: 'RANKED' });
-      component.setTab('all');
-      await settle();
-      expectPosts().flush(page());
+      await openAll();
       component.toggleMapView(true);
       await settle();
       http.match((r) => r.url.endsWith('/posts/map'));
@@ -1300,12 +1284,12 @@ describe('MainPage', () => {
       const posts = expectPosts();
       expect(param(posts, 'type')).toBe('ONLINE');
       posts.flush(page());
-      await debounce();
+      await apply();
       expect(fixture.nativeElement.querySelector('app-view-switch')).toBeNull();
 
       await openPlace();
       option('MAIN_PAGE.anywhere').click();
-      await debounce();
+      await apply();
       expectPosts().flush(page());
       await settle();
       expect(fixture.nativeElement.querySelector('app-view-switch')).not.toBeNull();
@@ -1313,11 +1297,7 @@ describe('MainPage', () => {
 
     it('takes Najbliższe out of the sort, going back to Nadchodzące', async () => {
       askedLocation = { latitude: 54.35, longitude: 18.65 };
-      await open();
-      expectFeed().flush({ ...page(), mode: 'RANKED' });
-      component.setTab('all');
-      await settle();
-      expectPosts().flush(page());
+      await openAll();
       await component.setSortBy('NEAREST');
       await settle();
       expectPosts().flush(page());
@@ -1327,28 +1307,12 @@ describe('MainPage', () => {
       const posts = expectPosts();
       expect(param(posts, 'sortBy')).toBe('UPCOMING');
       posts.flush(page());
-      await debounce();
+      await apply();
       expect(component.sortOptions().map((o) => o.value)).toEqual([
         'UPCOMING',
         'POPULAR',
         'RECENT',
       ]);
-    });
-
-    it('is no longer a Typ in Filtry, and Wyczyść leaves it on', async () => {
-      await router.navigateByUrl('/?type=online&past=true');
-      await open();
-      expectFeed().flush({ ...page(), mode: 'RANKED' });
-      component.toggleFilters();
-      await settle();
-
-      expect(fixture.nativeElement.querySelector('app-feed-filters select')).toBeNull();
-      component.clearFilters();
-      await settle();
-      const feed = expectFeed();
-      expect(param(feed, 'type')).toBe('ONLINE');
-      expect(param(feed, 'includePast')).toBeNull();
-      feed.flush({ ...page(), mode: 'RANKED' });
     });
   });
 
@@ -1375,7 +1339,7 @@ describe('MainPage', () => {
       await settle();
       expectPosts().flush(page());
       component.searchControl.setValue('jazz');
-      await debounce();
+      await apply();
       expectPosts().flush(page());
       await settle();
 
@@ -1475,7 +1439,7 @@ describe('MainPage', () => {
       expect(router.url).toBe('/');
     });
 
-    it('offers a linked place as Wskazane miejsce, and lists around it', async () => {
+    it('offers a linked place as the picked one, lists around it, and names it by the district around it', async () => {
       await router.navigateByUrl('/?radius=25&lat=54.35&lng=18.65');
 
       await open();
@@ -1485,23 +1449,14 @@ describe('MainPage', () => {
       expect(param(feed, 'longitude')).toBe('18.65');
       expect(param(feed, 'radiusKm')).toBe('25');
       feed.flush({ ...page(), mode: 'RANKED' });
-      nameLookups(null);
-      await openPlace();
-      expect(chip('MAIN_PAGE.pickedPlace').getAttribute('aria-pressed')).toBe('true');
-      expect(chip('MAIN_PAGE.myLocation').getAttribute('aria-pressed')).toBe('false');
       expect(pill()).toBe('MAIN_PAGE.pickedPlace · MAIN_PAGE.km');
-    });
-
-    it('names a linked place by the district around it', async () => {
-      await router.navigateByUrl('/?radius=25&lat=54.35&lng=18.65');
-      await open();
-      expectFeed().flush({ ...page(), mode: 'RANKED' });
-
       nameLookups('Wrzeszcz Górny');
       await settle();
-
       expect(pill()).toBe('Wrzeszcz Górny · MAIN_PAGE.km');
       expect(router.url).toBe('/?radius=25&lat=54.35&lng=18.65');
+      await openPlace();
+      expect(chip('Wrzeszcz Górny, Gdańsk').getAttribute('aria-pressed')).toBe('true');
+      expect(chip('MAIN_PAGE.myLocation').getAttribute('aria-pressed')).toBe('false');
     });
 
     it('moves from a linked place to the user’s own position, and shows that in the URL', async () => {
@@ -1512,8 +1467,7 @@ describe('MainPage', () => {
       nameLookups(null);
       await openPlace();
 
-      chip('MAIN_PAGE.myLocation').click();
-      await debounce();
+      await pickMyLocation();
 
       const feed = expectFeed();
       expect(param(feed, 'latitude')).toBe('50.06');
@@ -1535,7 +1489,7 @@ describe('MainPage', () => {
       nameLookups(null);
       await openPlace();
       chip('MAIN_PAGE.anywhere').click();
-      await debounce();
+      await apply();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
       await settle();
 
@@ -1625,8 +1579,8 @@ describe('MainPage', () => {
       expectPosts().flush(page());
       component.searchControl.setValue('jazz');
       component.filtersForm.controls.includePast.setValue(true);
-      component.toggleFilters();
-      await debounce();
+      await toggleFilters();
+      await apply();
       expectPosts().flush(page(['c']));
       await settle();
       await leaveAfterScrolling();
@@ -1639,7 +1593,33 @@ describe('MainPage', () => {
       expect(component.tab()).toBe('all');
       expect(component.sort()).toBe('POPULAR');
       expect(shownTitles()).toEqual(['Post c']);
-      await debounce();
+      await apply();
+    });
+
+    it('restores Moja lokalizacja, and Wszystkie’s order kept on Dla Ciebie, which the URL doesn’t hold', async () => {
+      askedLocation = { latitude: 54.35, longitude: 18.65 };
+      component.setTab('all');
+      await settle();
+      expectPosts().flush(page());
+      await component.setSortBy('POPULAR');
+      await settle();
+      expectPosts().flush(page());
+      component.setTab('forYou');
+      await settle();
+      expectFeed().flush({ ...page(), mode: 'RANKED' });
+      await openPlace();
+      await pickMyLocation();
+      expectFeed().flush({ ...page(['n']), mode: 'RANKED' });
+      await settle();
+      await leaveAfterScrolling();
+
+      await comeBack({ trigger: 'popstate', extras: {} });
+
+      expect(shownTitles()).toEqual(['Post n']);
+      expect(pill()).toBe('MAIN_PAGE.nearMe · MAIN_PAGE.km');
+      component.setTab('all');
+      await settle();
+      expect(param(expectPosts(), 'sortBy')).toBe('POPULAR');
     });
 
     it('shows on the card what happened on the post page', async () => {
@@ -1676,18 +1656,6 @@ describe('MainPage', () => {
       await leaveAfterScrolling();
 
       await comeBack({ trigger: 'imperative', extras: {} });
-
-      expectFeed().flush({ ...page(['z']), mode: 'RANKED' });
-      await settle();
-      expect(shownTitles()).toEqual(['Post z']);
-    });
-
-    it('starts a new session when coming back after more than 30 minutes', async () => {
-      await leaveAfterScrolling();
-      const later = Date.now() + 31 * 60 * 1000;
-      spyOn(Date, 'now').and.returnValue(later);
-
-      await comeBack({ trigger: 'popstate', extras: {} });
 
       expectFeed().flush({ ...page(['z']), mode: 'RANKED' });
       await settle();

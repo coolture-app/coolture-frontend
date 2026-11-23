@@ -33,15 +33,12 @@
         }
         <span class="follow-list__who">
           <span class="follow-list__name">{{ fullName(user) }}</span>
-          <app-relation-pill
-            [following]="followingIds().has(user.id)"
-            [followsYou]="user.followsYou"
-          />
+          <app-relation-pill [following]="user.isFollowing" [followsYou]="user.followsYou" />
         </span>
       </a>
       @if (canFollow(user)) {
         <app-follow-btn
-          [following]="followingIds().has(user.id)"
+          [following]="user.isFollowing"
           [busy]="busyId() === user.id"
           (toggled)="toggleFollow(user)"
         />

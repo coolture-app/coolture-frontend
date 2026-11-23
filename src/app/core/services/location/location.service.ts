@@ -1,4 +1,4 @@
-import { computed, inject, Injectable, PLATFORM_ID, signal } from '@angular/core';
+import { inject, Injectable, PLATFORM_ID, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { GeoPoint } from '../../models/common/geo.model';
 
@@ -8,7 +8,7 @@ const POSITION_OPTIONS: PositionOptions = {
   maximumAge: 10 * 60 * 1000,
 };
 
-/** About 1.1 km. A precise position never leaves this service, so it can't reach URLs or logs. */
+/** About 1.1 km. Anything sent or put in a URL gets the rounded position. */
 function rounded(coordinate: number): number {
   return Math.round(coordinate * 100) / 100;
 }
@@ -53,9 +53,6 @@ export class LocationService {
    * inside the radius never shows more than the radius, even if the browser's later readings moved.
    */
   private readonly listCentre = signal<GeoPoint | null>(null);
-  /** Whether a position is known, so cards can show distances. */
-  readonly known = computed(() => (this.listCentre() ?? this.precise()) !== null);
-
   /** Metres from the user to a point. Null when no position is known. */
   metersTo(point: GeoPoint): number | null {
     const from = this.listCentre() ?? this.precise();

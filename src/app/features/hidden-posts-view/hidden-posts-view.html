@@ -7,7 +7,7 @@
     <p class="hidden-posts__intro">{{ 'HIDDEN.intro' | translate }}</p>
 
     @for (item of list.items(); track item.id) {
-      @if ($index === nextPageTrigger()) {
+      @if ($index === list.loadMoreAt()) {
         <div
           class="hidden-posts__trigger"
           [appInfiniteScroll]="list.canLoadMore()"
@@ -23,12 +23,7 @@
     ></div>
 
     @if (list.failed()) {
-      <div class="hidden-posts__empty" role="alert">
-        <span>{{ 'HIDDEN.load-error' | translate }}</span>
-        <app-btn variant="secondary" size="sm" (btnClick)="list.retry()">{{
-          'HIDDEN.retry' | translate
-        }}</app-btn>
-      </div>
+      <app-load-state [failed]="true" (retry)="list.retry()" />
     } @else if (list.loading()) {
       <app-post-skeleton />
     } @else if (list.items().length === 0) {

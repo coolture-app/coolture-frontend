@@ -372,15 +372,6 @@
   font-size: var(--text-body);
 }
 
-// A count on the corner of an action's icon. Neutral, because blue or red would read as something
-// unread.
-.post__loading {
-  @include center-flex;
-  padding: var(--space-xl);
-  color: var(--color-text-tertiary);
-  font-size: var(--text-sm);
-}
-
 .post__kinds {
   flex-wrap: wrap;
 

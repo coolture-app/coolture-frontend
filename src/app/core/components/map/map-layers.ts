@@ -20,11 +20,20 @@ type FillPaint = Extract<AnyPaint, { 'fill-color'?: unknown }>;
 const REGULAR = ['Noto Sans Regular'];
 const BOLD = ['Noto Sans Bold'];
 
-/** The clusters' count is of posts, not of places. */
-export const CLUSTER_POSTS: Record<string, ExpressionSpecification> = {
-  posts: ['+', ['get', 'count']],
-  picks: ['+', ['case', ['==', ['get', 'tone'], 'pick'], 1, 0]],
+/** The `posts` source's clustering. A cluster's count is of posts, not of places. */
+export const CLUSTER_SOURCE = {
+  maxZoom: 16,
+  radius: 44,
+  properties: {
+    posts: ['+', ['get', 'count']],
+    picks: ['+', ['case', ['==', ['get', 'tone'], 'pick'], 1, 0]],
+  } satisfies Record<string, ExpressionSpecification>,
 };
+
+export const IS_CLUSTER: ExpressionSpecification = ['has', 'point_count'];
+export const IS_PIN: ExpressionSpecification = ['!', IS_CLUSTER];
+const HAS_PICKS: ExpressionSpecification = ['>', ['get', 'picks'], 0];
+export const IS_PICK_CLUSTER: ExpressionSpecification = ['all', IS_CLUSTER, HAS_PICKS];
 
 const PIXEL_RATIO = 2;
 const PILL_HEIGHT = 26;
@@ -259,8 +268,23 @@ export const TITLE_PAINT: SymbolPaint = {
   'text-halo-width': 1.5,
 };
 
-const HAS_PICKS: ExpressionSpecification = ['>', ['get', 'picks'], 0];
-const CLUSTER_RADIUS: ExpressionSpecification = ['step', ['get', 'posts'], 16, 10, 20, 50, 25];
+/** A cluster's radius in px, from a number of posts up. */
+const CLUSTER_SIZES = [
+  [0, 16],
+  [10, 20],
+  [50, 25],
+] as const;
+
+/** A step expression over a cluster's posts, with a value for each of `CLUSTER_SIZES`. */
+function bySize(value: (radius: number) => unknown): ExpressionSpecification {
+  const [[, first], ...rest] = CLUSTER_SIZES;
+  return [
+    'step',
+    ['get', 'posts'],
+    value(first),
+    ...rest.flatMap(([from, radius]) => [from, value(radius)]),
+  ] as ExpressionSpecification;
+}
 
 /**
  * A cluster: white with its count, like the pins, so only picks stand out. An accent ring and a star mark one that
@@ -268,7 +292,7 @@ const CLUSTER_RADIUS: ExpressionSpecification = ['step', ['get', 'posts'], 16, 1
  */
 export const CLUSTER_PAINT: CirclePaint = {
   'circle-color': '#ffffff',
-  'circle-radius': CLUSTER_RADIUS,
+  'circle-radius': bySize((radius) => radius),
   'circle-stroke-color': ['case', HAS_PICKS, ACCENT, BORDER],
   'circle-stroke-width': ['case', HAS_PICKS, 3, 1.5],
 };
@@ -280,23 +304,17 @@ export const CLUSTER_COUNT_LAYOUT: SymbolLayout = {
 };
 export const CLUSTER_COUNT_PAINT: SymbolPaint = { 'text-color': TEXT };
 
-/** The star on a cluster's top right edge, whatever its size. */
+/** The star on a cluster's edge at the top right, whatever its size. */
 export const CLUSTER_STAR_LAYOUT: SymbolLayout = {
   'icon-image': 'star-badge',
   'icon-allow-overlap': true,
   'icon-ignore-placement': true,
-  'icon-offset': [
-    'step',
-    ['get', 'posts'],
-    ['literal', [12, -12]],
-    10,
-    ['literal', [15, -15]],
-    50,
-    ['literal', [18, -18]],
-  ],
+  'icon-offset': bySize((radius) => {
+    const edge = Math.ceil(radius * Math.SQRT1_2);
+    return ['literal', [edge, -edge]];
+  }),
 };
 
-/** The user's own position, after "Moja lokalizacja". */
 /** The searched area: a thin line, and the world outside it dimmed, so the area reads as the bright part. */
 export const RADIUS_LINE_PAINT: LinePaint = {
   'line-color': ACCENT,

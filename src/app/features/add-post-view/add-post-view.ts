@@ -5,10 +5,9 @@ import { Router } from '@angular/router';
 import { lastValueFrom } from 'rxjs';
 
 import { PostService } from '../../core/services/post/post.service';
-import { PostForm } from '../../core/components/post-form/post-form';
-import { PostFormData } from '../../core/models/posts/post-form-data.model';
-import { PostCreateRequest } from '../../core/models/posts/post-create-request.model';
+import { PostForm, PostFormSubmit } from '../../core/components/post-form/post-form';
 import { ToastService } from '../../core/services/toast/toast.service';
+import { PostDetail } from '../../core/models/posts/post-detail.model';
 
 @Component({
   selector: 'app-add-post-view',
@@ -23,28 +22,26 @@ export class AddPostView {
 
   @ViewChild(PostForm) postFormComponent!: PostForm;
 
-  async onFormSubmit(data: PostFormData): Promise<void> {
-    try {
-      const payload: PostCreateRequest = {
-        title: data.title,
-        type: data.type,
-        startsAt: data.startsAt,
-        endsAt: data.endsAt,
-        openEnded: data.openEnded,
-        description: data.description,
-        links: data.links,
-        location: data.location,
-        mediaIds: data.mediaIds.length > 0 ? data.mediaIds : undefined,
-      };
-
-      const createdPost = await lastValueFrom(this.postService.addPost(payload));
-      this.postFormComponent.resetForm();
+  async onFormSubmit(data: PostFormSubmit): Promise<void> {
+    const post = await this.save(data);
+    if (post) {
       // In place of the form, so going back from the new post never lands on the form again.
-      this.router.navigate(['/posts', createdPost.id], { replaceUrl: true });
+      void this.router.navigate(['/posts', post.id], { replaceUrl: true });
+    }
+  }
+
+  confirmLeave(): Promise<boolean> {
+    return this.postFormComponent.confirmLeave(async (data) => !!(await this.save(data)));
+  }
+
+  private async save({ request }: PostFormSubmit): Promise<PostDetail | null> {
+    try {
+      return await lastValueFrom(this.postService.addPost(request));
     } catch (err) {
       console.error(err);
       this.postFormComponent.resetSubmitting();
       this.toast.failed();
+      return null;
     }
   }
 }
