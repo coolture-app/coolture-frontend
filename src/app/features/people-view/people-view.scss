@@ -6,6 +6,11 @@
   margin: 0 auto;
 }
 
+.title {
+  font-size: var(--text-xl);
+  font-weight: var(--font-semibold);
+}
+
 .searchbar {
   @include center-flex;
   padding: var(--space-md) 0 var(--space-lg);

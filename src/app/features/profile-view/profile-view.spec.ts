@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController } from '@angular/common/http/testing';
 import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
+import { Title } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 
 import { ProfileView } from './profile-view';
@@ -289,7 +290,11 @@ describe('ProfileView', () => {
     it('links back to Ludzie when the tab came straight here', () => {
       const back = element.querySelector('app-back-link a');
       expect(back?.getAttribute('href')).toBe('/people');
-      expect(back?.textContent?.trim()).toBe('NAVBAR.people');
+      expect(back?.textContent?.trim()).toBe('PEOPLE.title');
+    });
+
+    it('names the tab after them', () => {
+      expect(TestBed.inject(Title).getTitle()).toBe('Jan Kowalski (@jan)');
     });
 
     it('has Obserwuj as its only button and Zablokuj in the ⋯ menu', () => {

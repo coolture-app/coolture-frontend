@@ -119,7 +119,8 @@ export const routes: Routes = [
   ...needsSignIn('user', {
     path: 'users/:username',
     component: ProfileView,
-    title: titled('PROFILE.title'),
+    // Until the profile names the person.
+    title: (route) => `@${route.paramMap.get('username')}`,
   }),
   ...needsSignIn('people', {
     path: 'people',

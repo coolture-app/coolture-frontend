@@ -115,16 +115,16 @@ export class BackService {
         };
       }
       case 'people':
-        return { key: 'NAVBAR.people' };
+        return { key: 'PEOPLE.title' };
       case 'plans':
-        return { key: 'NAVBAR.plans' };
+        return { key: 'PLANS.title' };
       case 'users':
         return second ? { text: `@${second}` } : { key: 'BACK.previous' };
       case 'profile':
         return { key: PROFILE_PAGES[second] ?? 'BACK.previous' };
       case 'posts': {
-        if (second === 'new') return { key: 'BACK.newPost' };
-        if (third === 'edit') return { key: 'BACK.editPost' };
+        if (second === 'new') return { key: 'ADD_POST.title' };
+        if (third === 'edit') return { key: 'EDIT_POST.title' };
         const title = this.postTitles().get(second);
         return title ? { text: title } : { key: 'BACK.post' };
       }
@@ -178,11 +178,11 @@ export class BackService {
 }
 
 const PROFILE_PAGES: Record<string, string> = {
-  '': 'NAVBAR.profile',
+  '': 'PROFILE.title',
   settings: 'SETTINGS.title',
   blocked: 'BLOCKED.title',
   hidden: 'HIDDEN.title',
-  interests: 'PROFILE.interests',
+  interests: 'INTERESTS.title',
 };
 
 export function pathOf(url: string): string {

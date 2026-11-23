@@ -7,7 +7,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { InitialsPipe } from '../../pipes/initials.pipe';
 import { InfiniteScroll } from '../../directives/infinite-scroll';
-import { fullName } from '../../models/posts/friend-stances.model';
+import { fullName } from '../../models/users/user-summary.model';
 import { UserListItem } from '../../models/users/user-summary.model';
 import { AuthService } from '../../services/auth/auth.service';
 import { RelationsService } from '../../services/relations/relations.service';

@@ -3,7 +3,7 @@
     "searchbar": "Szukaj wydarzeń",
     "sort": "Filtry i sortowanie",
     "title": "Strona główna",
-    "no-posts": "Nie ma postów do wyświetlenia... Smutno.",
+    "no-posts": "Nie ma wydarzeń do wyświetlenia... Smutno.",
     "filters": "Filtry",
     "clear": "Wyczyść",
     "kind": "Rodzaj",
@@ -17,7 +17,7 @@
     "online": "Online",
     "loading": "Ładowanie...",
     "endOfList": "To już wszystko",
-    "loadError": "Nie udało się wczytać postów.",
+    "loadError": "Nie udało się wczytać wydarzeń.",
     "retry": "Spróbuj ponownie",
     "refreshing": "Odświeżanie",
     "refreshFailed": "Nie udało się odświeżyć",
@@ -45,7 +45,7 @@
     "sortNearest": "Najbliższe",
     "nearestNeedsLocation": "Najbliższe potrzebują Twojej lokalizacji. Zezwól na nią w ustawieniach przeglądarki.",
     "widenRadius": "Poszerz do {{km}} km",
-    "seenBefore": "Dla Ciebie pomija Twoje posty oraz polubione i zapisane.",
+    "seenBefore": "Dla Ciebie pomija Twoje wydarzenia oraz polubione i zapisane.",
     "showInAll": "Pokaż we Wszystkich",
     "where": "Gdzie?",
     "close": "Zamknij",
@@ -59,8 +59,6 @@
   "BACK": {
     "to": "Wróć do: {{page}}",
     "post": "Wydarzenie",
-    "newPost": "Nowe wydarzenie",
-    "editPost": "Edycja wydarzenia",
     "previous": "Poprzednia strona"
   },
   "POST": {
@@ -70,8 +68,8 @@
     "show-less": "Wyświetl mniej",
     "comments": "Pokaż komentarze",
     "photo-alt": "Zdjęcie z wydarzenia",
-    "edit": "Edytuj post",
-    "delete": "Usuń post",
+    "edit": "Edytuj wydarzenie",
+    "delete": "Usuń wydarzenie",
     "interested": "Interesuje mnie",
     "takes_part": "Biorę udział",
     "online": "Online",
@@ -108,7 +106,7 @@
     "people": "Ludzie",
     "plans": "Plany",
     "profile": "Profil",
-    "addPost": "Dodaj post",
+    "addPost": "Dodaj wydarzenie",
     "logout": "Wyloguj się",
     "login": "Zaloguj się",
     "switch-language": "Zmień język na angielski (EN)"
@@ -133,7 +131,6 @@
     "unblock": "Odblokuj",
     "no-blocked": "Brak zablokowanych użytkowników",
     "loading": "Ładowanie...",
-    "hidden-posts": "Ukryte posty",
     "addHome": "Dodaj miejsce",
     "homeHint": "Widoczne tylko dla Ciebie",
     "shareStances": "Pokazuj znajomym, co mnie interesuje i gdzie idę",
@@ -174,18 +171,16 @@
     "saved": "Zapisano."
   },
   "PEOPLE": {
-    "title": "Odkrywaj",
+    "title": "Ludzie",
     "searchbar": "Szukaj ludzi",
     "no-users": "Nie znaleziono uzytkownikow"
   },
   "ADD_POST": {
-    "title": "Dodaj post!",
-    "header-title": "Dodaj nowe wydarzenie",
-    "header-desc": "Wypełnij formularz, aby opublikować nowy post."
+    "title": "Dodaj wydarzenie",
+    "header-desc": "Wypełnij formularz, aby opublikować nowe wydarzenie."
   },
   "EDIT_POST": {
-    "title": "Edytuj post!",
-    "header-title": "Edytuj wydarzenie",
+    "title": "Edytuj wydarzenie",
     "header-desc": "Zmień szczegóły swojego wydarzenia."
   },
   "POST_FORM": {
@@ -229,7 +224,7 @@
     "status-removed": "Zdjęcie usunięte. Zostało zdjęć: {{total}}.",
     "status-cover-removed": "Okładka usunięta. Okładką jest teraz pierwsze zdjęcie. Zostało zdjęć: {{total}}.",
     "upload-failed": "Nie udało się wysłać zdjęcia {{name}}.",
-    "too-many-photos": "Post może mieć najwyżej {{max}} zdjęć.",
+    "too-many-photos": "Wydarzenie może mieć najwyżej {{max}} zdjęć.",
     "when": "Kiedy?",
     "ends-at-error": "Koniec musi być po początku.",
     "add-end": "Dodaj zakończenie",
@@ -391,10 +386,10 @@
     "error-no-place": "Wybierz miejsce z listy albo wskaż je na mapie."
   },
   "HIDDEN": {
-    "title": "Ukryte posty",
-    "intro": "Posty oznaczone „Nie dla mnie”. Widzisz je tylko Ty.",
-    "empty": "Nie ukryto jeszcze żadnego posta.",
-    "load-error": "Nie udało się wczytać ukrytych postów.",
+    "title": "Ukryte wydarzenia",
+    "intro": "Wydarzenia oznaczone „Nie dla mnie”. Widzisz je tylko Ty.",
+    "empty": "Nie ukryto jeszcze żadnego wydarzenia.",
+    "load-error": "Nie udało się wczytać ukrytych wydarzeń.",
     "retry": "Spróbuj ponownie"
   },
   "MAP": {

@@ -52,18 +52,18 @@ describe('BackService', () => {
       ['/', { key: 'MAIN_PAGE.forYou' }],
       ['/?tab=all&sort=popular', { key: 'MAIN_PAGE.all' }],
       ['/?tab=all&view=map', { key: 'MAIN_PAGE.map' }],
-      ['/people', { key: 'NAVBAR.people' }],
-      ['/plans', { key: 'NAVBAR.plans' }],
-      ['/profile', { key: 'NAVBAR.profile' }],
+      ['/people', { key: 'PEOPLE.title' }],
+      ['/plans', { key: 'PLANS.title' }],
+      ['/profile', { key: 'PROFILE.title' }],
       ['/users/jan_demo', { text: '@jan_demo' }],
       ['/posts/p1', { key: 'BACK.post' }],
       ['/posts/p1#comments', { key: 'BACK.post' }],
       ['/profile/settings', { key: 'SETTINGS.title' }],
       ['/profile/blocked', { key: 'BLOCKED.title' }],
       ['/profile/hidden', { key: 'HIDDEN.title' }],
-      ['/profile/interests', { key: 'PROFILE.interests' }],
-      ['/posts/new', { key: 'BACK.newPost' }],
-      ['/posts/p1/edit', { key: 'BACK.editPost' }],
+      ['/profile/interests', { key: 'INTERESTS.title' }],
+      ['/posts/new', { key: 'ADD_POST.title' }],
+      ['/posts/p1/edit', { key: 'EDIT_POST.title' }],
       ['/nowhere', { key: 'BACK.previous' }],
     ];
     for (const [url, label] of cases) {
@@ -138,7 +138,7 @@ describe('BackService', () => {
       await visit('/users/jan');
       const historyBack = spyOn(location, 'back');
 
-      expect(back.target('/people')).toEqual({ url: '/people', label: { key: 'NAVBAR.people' } });
+      expect(back.target('/people')).toEqual({ url: '/people', label: { key: 'PEOPLE.title' } });
       await pop(() => back.back('/people'));
 
       expect(historyBack).not.toHaveBeenCalled();

@@ -3,6 +3,7 @@ import {
   afterNextRender,
   Component,
   computed,
+  effect,
   ElementRef,
   inject,
   Injector,
@@ -12,6 +13,7 @@ import {
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Title } from '@angular/platform-browser';
 import { catchError, firstValueFrom, map, of } from 'rxjs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -38,6 +40,7 @@ import { InterestsService } from '../../core/services/interests/interests.servic
 import { KindsService } from '../../core/services/interests/kinds.service';
 import { kindIcon } from '../../core/icons/kind-icons';
 import { UserProfile } from '../../core/models/users/user-profile.model';
+import { fullName } from '../../core/models/users/user-summary.model';
 import { Interest, label } from '../../core/models/interests/interest.model';
 import { FollowListComponent, FollowListType } from '../../core/components/follow-list/follow-list';
 import { Sheet } from '../../core/components/sheet/sheet';
@@ -212,6 +215,19 @@ export class ProfileView {
     inject(ActivatedRoute)
       .paramMap.pipe(takeUntilDestroyed())
       .subscribe((params) => void this.load(params.get('username')));
+    const title = inject(Title);
+    effect(() => {
+      const user = this.user();
+      if (!user) return;
+      const name = fullName(user);
+      title.setTitle(
+        this.isOwnProfile()
+          ? this.translate.instant('PROFILE.title')
+          : name === user.username
+            ? `@${name}`
+            : `${name} (@${user.username})`,
+      );
+    });
   }
 
   private async load(username: string | null) {

@@ -17,3 +17,9 @@ export interface UserListItem extends UserSummary {
   /** With isFollowing, both true means you're friends. Always false for a guest. */
   followsYou: boolean;
 }
+
+export function fullName(person: Pick<UserSummary, 'username' | 'firstName' | 'lastName'>): string {
+  return person.firstName
+    ? [person.firstName, person.lastName].filter(Boolean).join(' ')
+    : person.username;
+}

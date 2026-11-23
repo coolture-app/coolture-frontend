@@ -6,7 +6,8 @@ import { lucideBookmark } from '@ng-icons/lucide';
 import { Subscription } from 'rxjs';
 
 import { appTicket } from '../../icons/ticket';
-import { fullName, PostFriends } from '../../models/posts/friend-stances.model';
+import { PostFriends } from '../../models/posts/friend-stances.model';
+import { fullName } from '../../models/users/user-summary.model';
 import { InitialsPipe } from '../../pipes/initials.pipe';
 import { PostService } from '../../services/post/post.service';
 

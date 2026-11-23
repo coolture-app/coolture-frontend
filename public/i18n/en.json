@@ -3,7 +3,7 @@
     "searchbar": "Search for events",
     "sort": "Filters and sorting",
     "title": "Home Page",
-    "no-posts": "No posts to display... Sad face.",
+    "no-posts": "No events to display... Sad face.",
     "filters": "Filters",
     "clear": "Clear",
     "kind": "Kind",
@@ -17,7 +17,7 @@
     "online": "Online",
     "loading": "Loading...",
     "endOfList": "That's everything",
-    "loadError": "Could not load posts.",
+    "loadError": "Could not load events.",
     "retry": "Try again",
     "refreshing": "Refreshing",
     "refreshFailed": "Couldn't refresh",
@@ -45,7 +45,7 @@
     "sortNearest": "Nearest",
     "nearestNeedsLocation": "Nearest needs your location. Allow it in your browser settings.",
     "widenRadius": "Widen to {{km}} km",
-    "seenBefore": "For you leaves out your own, liked and saved posts.",
+    "seenBefore": "For you leaves out your own, liked and saved events.",
     "showInAll": "Show in All",
     "where": "Where?",
     "close": "Close",
@@ -59,8 +59,6 @@
   "BACK": {
     "to": "Back to: {{page}}",
     "post": "Event",
-    "newPost": "New event",
-    "editPost": "Editing event",
     "previous": "Previous page"
   },
   "POST": {
@@ -70,8 +68,8 @@
     "show-less": "Show less",
     "comments": "Show comments",
     "photo-alt": "Event photo",
-    "edit": "Edit post",
-    "delete": "Delete post",
+    "edit": "Edit event",
+    "delete": "Delete event",
     "interested": "Interested",
     "takes_part": "Going",
     "online": "Online",
@@ -108,7 +106,7 @@
     "people": "People",
     "plans": "Plans",
     "profile": "Profile",
-    "addPost": "Add post",
+    "addPost": "Add event",
     "logout": "Log out",
     "login": "Log in",
     "switch-language": "Switch to Polish (PL)"
@@ -133,7 +131,6 @@
     "unblock": "Unblock",
     "no-blocked": "No blocked users",
     "loading": "Loading...",
-    "hidden-posts": "Hidden posts",
     "addHome": "Add your area",
     "homeHint": "Only you can see this",
     "shareStances": "Show friends what I’m interested in and where I go",
@@ -174,18 +171,16 @@
     "saved": "Saved."
   },
   "PEOPLE": {
-    "title": "Discover",
+    "title": "People",
     "searchbar": "Search for people",
     "no-users": "No users found"
   },
   "ADD_POST": {
-    "title": "Add post!",
-    "header-title": "Add new event",
-    "header-desc": "Fill the form to publish a new post."
+    "title": "Add event",
+    "header-desc": "Fill in the form to publish a new event."
   },
   "EDIT_POST": {
-    "title": "Edit post!",
-    "header-title": "Edit event",
+    "title": "Edit event",
     "header-desc": "Change the details of your event."
   },
   "POST_FORM": {
@@ -229,7 +224,7 @@
     "status-removed": "Photo removed. Photos left: {{total}}.",
     "status-cover-removed": "Cover removed. The first photo is now the cover. Photos left: {{total}}.",
     "upload-failed": "Could not upload photo {{name}}.",
-    "too-many-photos": "A post can have at most {{max}} photos.",
+    "too-many-photos": "An event can have at most {{max}} photos.",
     "when": "When?",
     "ends-at-error": "The end must be after the start.",
     "add-end": "Add an end",
@@ -391,10 +386,10 @@
     "error-no-place": "Pick a place from the list or point to it on the map."
   },
   "HIDDEN": {
-    "title": "Hidden posts",
-    "intro": "Posts you marked “Not for me”. Only you see them.",
-    "empty": "You haven't hidden any posts yet.",
-    "load-error": "Couldn't load your hidden posts.",
+    "title": "Hidden events",
+    "intro": "Events you marked “Not for me”. Only you see them.",
+    "empty": "You haven't hidden any events yet.",
+    "load-error": "Couldn't load your hidden events.",
     "retry": "Try again"
   },
   "MAP": {

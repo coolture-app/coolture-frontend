@@ -25,9 +25,3 @@ export interface PostFriends {
   going: Friend[];
   interested: Friend[];
 }
-
-export function fullName(friend: Friend): string {
-  return friend.firstName
-    ? [friend.firstName, friend.lastName].filter(Boolean).join(' ')
-    : friend.username;
-}
