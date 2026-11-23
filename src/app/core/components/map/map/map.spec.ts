@@ -1,6 +1,6 @@
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, TestRequest } from '@angular/common/http/testing';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { Map } from './map';
@@ -102,7 +102,32 @@ describe('Map', () => {
 
     const map = await load();
 
-    expect(map.jumpTo).toHaveBeenCalledWith({ center: [18.54, 54.52], zoom: 12 });
+    expect(map.jumpTo).toHaveBeenCalledWith(
+      { center: [18.54, 54.52], zoom: 12 },
+      { startMove: true },
+    );
+  });
+
+  it('moves to a home known only after it opened', async () => {
+    const map = await load();
+
+    fixture.componentRef.setInput('home', { latitude: 54.52, longitude: 18.54 });
+    await fixture.whenStable();
+
+    expect(map.jumpTo).toHaveBeenCalledOnceWith(
+      { center: [18.54, 54.52], zoom: 12 },
+      { startMove: true },
+    );
+  });
+
+  it('stays where the user moved it when the home comes later', async () => {
+    const map = await load();
+    component.onMoveEnd(moveEnd({ originalEvent: new MouseEvent('mouseup') }));
+
+    fixture.componentRef.setInput('home', { latitude: 54.52, longitude: 18.54 });
+    await fixture.whenStable();
+
+    expect(map.jumpTo).not.toHaveBeenCalled();
   });
 
   it('opens where it was left on Back from a post, though setting its padding ends a move', async () => {
@@ -169,20 +194,36 @@ describe('Map', () => {
     );
   });
 
-  it('eases out from a start with too few pins, until a move not its own', async () => {
+  it('looks further out from a start with no pins, then frames it with the nearest', async () => {
+    const map = await load();
+    const west = (r: TestRequest) => +r.request.params.get('leftUpper.longitude')!;
+    const first = http.expectOne(marks());
+    first.flush([]);
+
+    const wider = http.expectOne(marks());
+    expect(west(wider)).toBeLessThan(west(first));
+    wider.flush([mark('far', 54.6)]);
+
+    expect(map.fitBounds).toHaveBeenCalledOnceWith(
+      [
+        [18.6, 54.35123],
+        [18.60456, 54.6],
+      ],
+      jasmine.objectContaining({ maxZoom: 12 }),
+      { startMove: true },
+    );
+  });
+
+  it('stops looking further out after a move not its own', async () => {
     const map = await load();
     http.expectOne(marks()).flush([]);
-    expect(map.easeTo).toHaveBeenCalledOnceWith({ zoom: 10, duration: 500 }, { startMove: true });
-    const store = TestBed.inject(MapMarks);
-
-    component.onMoveEnd(moveEnd({ startMove: true }));
-    store.settled.next();
-    expect(map.easeTo).toHaveBeenCalledTimes(2);
 
     // The ease of a cluster tap or of Moja lokalizacja.
     component.onMoveEnd(moveEnd());
-    store.settled.next();
-    expect(map.easeTo).toHaveBeenCalledTimes(2);
+    http.expectOne(marks()).flush([mark('far', 54.6)]);
+
+    http.expectNone(marks());
+    expect(map.fitBounds).not.toHaveBeenCalled();
   });
 
   it('offers a search in the view only after the user moves the map', async () => {

@@ -41,6 +41,7 @@ import {
   MapArea,
   outside,
   pointData,
+  padded,
   ringPoints,
   startStep,
   toBox,
@@ -66,9 +67,8 @@ const FAR_ZOOM = 13;
 const PIN_ZOOM = 14;
 const FOCUS_ZOOM = 15;
 const EASE_MS = 500;
-/** The start eases out until this many pins show, but never wider than `WIDEST_START_ZOOM`. */
-const START_PINS = 3;
-const WIDEST_START_ZOOM = 9;
+/** The start shows at least this many pins, looking as far out as it takes. */
+const START_PINS = 1;
 /** A selected pin and its card keep this far from the map's edges and the sheet. */
 const FIT_MARGIN_PX = 32;
 /** Between a pin and its card on wide screens. */
@@ -76,8 +76,15 @@ const CARD_GAP_PX = 18;
 /** A cluster tap zooms at least this far in, and no further than `MAX_TAP_ZOOM`. */
 const MIN_TAP_ZOOM_STEP = 1.5;
 const MAX_TAP_ZOOM = 18;
-/** Marks the start's own moves, as MapLibre hands it to their `moveend`: any other move ends the start's easing out. */
+/** Marks the start's own moves, as MapLibre hands it to their `moveend`: any other move ends the start. */
 const START_MOVE = { startMove: true };
+
+type StartFrom = 'tricity' | 'home' | 'position';
+const START_ZOOM: Record<StartFrom, number> = {
+  tricity: TRICITY_ZOOM,
+  home: HOME_ZOOM,
+  position: POSITION_ZOOM,
+};
 
 @Component({
   selector: 'app-map',
@@ -217,8 +224,14 @@ export class Map {
   private fittedArea: Feature<Polygon> | null = null;
   /** Something changed while Lista hid the map, so it fetches when shown. */
   private stale = false;
-  /** The first view is still easing out to show `START_PINS` pins. */
-  private easingOut = false;
+  /**
+   * Where the start put the camera, until a move not its own or a selected pin. A home or a position known only later
+   * may still move it.
+   */
+  private startedAt: StartFrom | null = null;
+  /** The start shows fewer than `START_PINS` pins and asks for boxes `startReach` views wider on each side. */
+  private findingPin = false;
+  private startReach = 0;
   /** Only the latest selection's fit runs. */
   private fitRun = 0;
 
@@ -272,6 +285,16 @@ export class Map {
       untracked(() => this.remember(place));
     });
 
+    // `/auth/me` can answer after the map opened over Trójmiasto.
+    effect(() => {
+      const home = this.home();
+      untracked(() => {
+        if (home && this.map && this.startedAt === 'tricity') {
+          this.beginStart(this.map, 'home', home);
+        }
+      });
+    });
+
     effect(() => {
       const top = this.topInset();
       this.map?.setPadding({ top, right: 0, bottom: 0, left: 0 });
@@ -291,7 +314,7 @@ export class Map {
 
     this.store.settled.pipe(takeUntilDestroyed()).subscribe(() => {
       this.searching.set(false);
-      this.easeOutIfEmpty();
+      this.findStartPin();
     });
   }
 
@@ -322,16 +345,12 @@ export class Map {
       this.fetchForView();
       return;
     }
-    const home = this.home();
-    if (home && !this.radiusArea()) {
-      map.jumpTo({ center: [home.longitude, home.latitude], zoom: HOME_ZOOM });
-    }
     const area = this.radiusArea();
+    const home = this.home();
     if (area) {
       this.fitTo(map, area);
     } else {
-      this.easingOut = true;
-      this.fetchForView();
+      this.beginStart(map, home ? 'home' : 'tricity', home);
       void this.startAtPosition(map);
     }
   }
@@ -349,12 +368,26 @@ export class Map {
   /** The browser's position beats the home and Trójmiasto, if it's already allowed and the user hasn't moved yet. */
   private async startAtPosition(map: MapLibreMap): Promise<void> {
     const position = await this.location.currentIfAllowed(POSITION_WAIT_MS);
-    if (position && !this.moved() && !this.radiusArea() && !this.selectedPost()) {
-      map.jumpTo(
-        { center: [position.longitude, position.latitude], zoom: POSITION_ZOOM },
-        START_MOVE,
-      );
+    if (position && this.startedAt) {
+      this.beginStart(map, 'position', position);
     }
+  }
+
+  private beginStart(map: MapLibreMap, from: StartFrom, at: GeoPoint | null): void {
+    if (at) {
+      map.jumpTo({ center: [at.longitude, at.latitude], zoom: START_ZOOM[from] }, START_MOVE);
+    }
+    // The pins of an earlier start would count as the nearest.
+    this.store.forget();
+    this.startedAt = from;
+    this.findingPin = true;
+    this.startReach = 0;
+    this.fetchForView();
+  }
+
+  private endStart(): void {
+    this.startedAt = null;
+    this.findingPin = false;
   }
 
   private showFocus(map: MapLibreMap, post: PostMark, animate: boolean): void {
@@ -511,6 +544,8 @@ export class Map {
   }
 
   private select(postId: string | null): void {
+    // A pin whose card already fits moves nothing, so its tap would not end the start.
+    this.endStart();
     this.selectedPost.set(postId);
     this.opened.set(null);
   }
@@ -521,7 +556,7 @@ export class Map {
       this.moved.set(true);
     }
     if (!event.startMove) {
-      this.easingOut = false;
+      this.endStart();
     }
     this.remember(this.selected());
     this.boundsChange$.next();
@@ -540,7 +575,8 @@ export class Map {
     }
   }
 
-  private fetchForView(): void {
+  /** The pins for the view, or for a box `views` wider on each side. */
+  private fetchForView(views = 0): void {
     const map = this.map;
     if (!map) {
       return;
@@ -550,7 +586,7 @@ export class Map {
       return;
     }
     this.stale = false;
-    const asked = this.store.load(toBox(map.getBounds()), {
+    const asked = this.store.load(padded(toBox(map.getBounds()), views), {
       filters: this.filters(),
       excludeMine: this.excludeMine(),
     });
@@ -559,37 +595,33 @@ export class Map {
     }
   }
 
-  /** At the start, a view with fewer than `START_PINS` pins eases out to the nearest ones. */
-  private easeOutIfEmpty(): void {
+  /** Frames the start and its nearest pins, once a box wide enough has them. Never zooms in. */
+  private findStartPin(): void {
     const map = this.map;
-    // A pin whose card already fits moves nothing when tapped, so a selection stops the start too.
-    if (!this.easingOut || !map || this.selectedPost()) {
+    if (!this.findingPin || !map) {
       return;
     }
+    const view = toBox(map.getBounds());
     const { lng, lat } = map.getCenter();
-    const step = startStep(
-      toBox(map.getBounds()),
-      { latitude: lat, longitude: lng },
-      this.store.marks(),
-      START_PINS,
-    );
-    const wider = map.getZoom() - 2;
-    if (step === 'wider' && wider >= WIDEST_START_ZOOM) {
-      // Nothing more is loaded around this view, so look wider and check again on the answer.
-      map.easeTo({ zoom: wider, duration: EASE_MS }, START_MOVE);
+    const step = startStep(view, { latitude: lat, longitude: lng }, this.store.marks(), START_PINS);
+    // Until the box last asked for spans the world.
+    if (step === 'wider' && (view.east - view.west) * (2 * this.startReach + 1) < 360) {
+      this.startReach = this.startReach * 4 || 4;
+      this.fetchForView(this.startReach);
       return;
     }
-    this.easingOut = false;
-    if (!Array.isArray(step)) {
-      return;
-    }
-    const camera = map.cameraForBounds(boundsOf(step), { padding: 48 });
-    if (camera?.zoom !== undefined) {
-      map.easeTo({
-        center: [lng, lat],
-        zoom: Math.max(WIDEST_START_ZOOM, Math.min(map.getZoom(), camera.zoom)),
-        duration: EASE_MS,
-      });
+    this.findingPin = false;
+    if (Array.isArray(step)) {
+      map.fitBounds(
+        boundsOf(step),
+        // The nearest pin may join a cluster, whose middle can be the clustering radius away from it.
+        {
+          padding: layers.CLUSTER_SOURCE.radius + FIT_MARGIN_PX,
+          maxZoom: map.getZoom(),
+          duration: EASE_MS,
+        },
+        START_MOVE,
+      );
     }
   }
 
