@@ -27,6 +27,13 @@ interface TokenResponse {
   refresh_token?: string;
 }
 
+/** Cognito answered that it won't accept the code or the refresh token, unlike a network failure or a `5xx`. */
+class TokenRequestRefused extends Error {
+  constructor(status: number) {
+    super(`Token request refused with status ${status}`);
+  }
+}
+
 const TOKENS_KEY = 'coolture.auth.tokens';
 const PENDING_LOGIN_KEY = 'coolture.auth.pending-login';
 const LOCAL_LOGOUT_KEY = 'coolture.auth.local-logout';
@@ -44,6 +51,8 @@ export class AuthService {
   private devIdentity = inject(DEV_IDENTITY, { optional: true });
   private refreshing: Promise<string | null> | null = null;
   private sessionCheck: Observable<boolean> | null = null;
+  /** Counts logouts, so a `/auth/me` answer sent before one can't sign the user back in. */
+  private logouts = 0;
 
   readonly currentUser = signal<UserProfile | null>(null);
   /**
@@ -69,8 +78,13 @@ export class AuthService {
     }
     const changesBefore = this.homeChanges;
     const shareChangesBefore = this.shareChanges;
-    this.sessionCheck ??= this.http.get<Me>(this.apiUrl.path('/auth/me')).pipe(
+    const logoutsBefore = this.logouts;
+    const loggedOutSince = () => this.logouts !== logoutsBefore;
+    const check: Observable<boolean> = this.http.get<Me>(this.apiUrl.path('/auth/me')).pipe(
       tap(({ onboarded, home, shareStances, ...profile }) => {
+        if (loggedOutSince()) {
+          return;
+        }
         this.currentUser.set(profile);
         this.onboarded.update((selected) => selected || onboarded);
         if (this.homeChanges === changesBefore) {
@@ -80,16 +94,21 @@ export class AuthService {
           this.shareStances.set(shareStances);
         }
       }),
-      map(() => true),
+      map(() => !loggedOutSince()),
       catchError((error: HttpErrorResponse) => {
-        if (error.status === 401 || error.status === 403) {
+        if ((error.status === 401 || error.status === 403) && !loggedOutSince()) {
           this.clearUser();
         }
         return of(false);
       }),
-      finalize(() => (this.sessionCheck = null)),
+      finalize(() => {
+        if (this.sessionCheck === check) {
+          this.sessionCheck = null;
+        }
+      }),
       shareReplay(1),
     );
+    this.sessionCheck ??= check;
     return this.sessionCheck;
   }
 
@@ -202,6 +221,8 @@ export class AuthService {
     if (!isPlatformBrowser(this.platformId)) {
       return;
     }
+    this.logouts++;
+    this.sessionCheck = null;
     this.clearTokens();
     this.clearUser();
     if (this.devIdentity) {
@@ -228,9 +249,11 @@ export class AuthService {
       });
       this.storeTokens({ ...tokens, refresh_token: tokens.refresh_token ?? refreshToken });
       return tokens.id_token;
-    } catch {
-      this.clearTokens();
-      this.clearUser();
+    } catch (error) {
+      if (error instanceof TokenRequestRefused) {
+        this.clearTokens();
+        this.clearUser();
+      }
       return null;
     }
   }
@@ -242,7 +265,9 @@ export class AuthService {
       body: new URLSearchParams({ client_id: environment.cognito.clientId, ...body }),
     });
     if (!response.ok) {
-      throw new Error(`Token request failed with status ${response.status}`);
+      throw response.status >= 500 || response.status === 429
+        ? new Error(`Token request failed with status ${response.status}`)
+        : new TokenRequestRefused(response.status);
     }
     return response.json();
   }
