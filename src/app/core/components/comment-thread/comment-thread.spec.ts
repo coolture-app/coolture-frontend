@@ -16,15 +16,11 @@ function comment(id: string, overrides: Partial<CommentSummary> = {}): CommentSu
   return {
     id,
     postId: 'p1',
-    rootCommentId: null,
-    parentCommentId: null,
     author: { id: 'u1', username: 'ola', followersCount: 0, followingCount: 0 },
     content: id,
     depth: 0,
     repliesCount: 0,
     createdAt: '2026-11-04T10:00:00Z',
-    lastEditedAt: null,
-    deletedAt: null,
     status: 'ACTIVE',
     ...overrides,
   };

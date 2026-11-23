@@ -2,7 +2,7 @@
  * When an event ends and how to say when it is, in the browser's time zone. The rules match the API's `EventTime`:
  * the end is `endsAt`, or the start plus `DEFAULT_EVENT_HOURS` without one, or never for a post with no end date (`openEnded`).
  */
-export const DEFAULT_EVENT_HOURS = 3;
+const DEFAULT_EVENT_HOURS = 3;
 
 const HOUR_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * HOUR_MS;
@@ -14,7 +14,7 @@ const NIGHT_HOURS = 6;
 export interface EventTimes {
   startsAt: string;
   endsAt?: string;
-  openEnded?: boolean;
+  openEnded: boolean;
 }
 
 /** The words around dates, from `EVENT_TIME` in the translations. */

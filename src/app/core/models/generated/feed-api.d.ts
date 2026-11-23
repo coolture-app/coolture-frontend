@@ -58,6 +58,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/posts/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * One post, with all its photos and kinds, for its page and its edit form
+     * @description A deleted post is a 404, and so is a post whose author and viewer blocked one another. post-write's POST and PATCH answer the same shape.
+     */
+    get: operations['getPost'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/posts/{postId}/friends': {
     parameters: {
       query?: never;
@@ -143,6 +163,17 @@ export interface components {
       /** @description Every photo of the post, cover first, then in the post's order. At most 8, the limit a post can have (PostLimits.MAX_PHOTOS). Left out when the post has none. */
       photos?: components['schemas']['MediaResource'][];
       friendStances?: components['schemas']['FriendStances'];
+    };
+    /** @description A card's fields, with every photo and its position in place of photos, and the kinds. */
+    PostDetail: components['schemas']['PostCard'] & {
+      /** @description In the post's order. Empty when it has none. */
+      media: components['schemas']['PostMedia'][];
+      /** @description Kinds of event, best first. Left out until derived. */
+      kinds?: string[];
+    };
+    PostMedia: {
+      media: components['schemas']['MediaResource'];
+      position: number;
     };
     /** @description What a pin and its preview need. Only the description's start: the map loads every post in view at once, and whole descriptions were over half of the answer. The viewer's own reaction and stance are left out for a guest or when there's none. */
     PostMark: {
@@ -478,6 +509,31 @@ export interface operations {
         };
       };
       400: components['responses']['BadRequest'];
+    };
+  };
+  getPost: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description The post. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PostDetail'];
+        };
+      };
+      400: components['responses']['BadRequest'];
+      404: components['responses']['NotFound'];
+      500: components['responses']['ServerError'];
     };
   };
   getPostFriends: {

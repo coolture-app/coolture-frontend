@@ -13,8 +13,6 @@ function comment(overrides: Partial<CommentSummary> = {}): CommentSummary {
   return {
     id: 'c1',
     postId: 'p1',
-    rootCommentId: null,
-    parentCommentId: null,
     author: {
       id: 'u1',
       username: 'ola',
@@ -27,8 +25,6 @@ function comment(overrides: Partial<CommentSummary> = {}): CommentSummary {
     depth: 0,
     repliesCount: 0,
     createdAt: '2026-11-04T10:00:00Z',
-    lastEditedAt: null,
-    deletedAt: null,
     status: 'ACTIVE',
     ...overrides,
   };
