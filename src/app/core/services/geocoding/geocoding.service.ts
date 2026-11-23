@@ -16,7 +16,7 @@ import { LOCATION_LIMITS } from '../../models/common/location-limits';
 import {
   PlaceKind,
   PlaceOption,
-  PlaceSearch,
+  PlaceResults,
   PlaceSuggestion,
 } from '../../models/common/place-suggestion.model';
 
@@ -135,7 +135,7 @@ export class GeocodingService {
    * Suggestions for a search box's text as it changes. Waits for a pause in typing, and asks once the text is long enough.
    * `near` is read for each request, so it can follow the map's centre.
    */
-  search(texts: Observable<string>, near: () => GeoPoint): Observable<PlaceSearch> {
+  search(texts: Observable<string>, near: () => GeoPoint): Observable<PlaceResults> {
     return this.asTyped(texts, (text) => this.suggest(text, near()));
   }
 
@@ -144,24 +144,13 @@ export class GeocodingService {
     texts: Observable<string>,
     near: () => GeoPoint,
     kind: PlaceKind,
-  ): Observable<PlaceSearch<PlaceOption>> {
+  ): Observable<PlaceResults<PlaceOption>> {
     return this.asTyped(texts, (text) => this.findPlaces(text, near(), kind));
   }
 
   /** One search for `searchPlaces`, with no waiting. Errors like `suggest`. */
   findPlaces(text: string, near: GeoPoint, kind: PlaceKind): Observable<PlaceOption[]> {
-    let params = (
-      kind === 'area'
-        ? new HttpParams().set('lang', 'default').set('include', AREAS)
-        : this.params()
-    )
-      .set('q', text)
-      .set('limit', SUGGESTIONS)
-      .set('lat', near.latitude)
-      .set('lon', near.longitude);
-    for (const code of geocoder.countryCodes) {
-      params = params.append('countrycode', code);
-    }
+    const params = this.searchParams(this.params(kind === 'area' ? AREAS : undefined), text, near);
     return this.get('/api', params).pipe(
       map((features) =>
         distinct(
@@ -174,19 +163,15 @@ export class GeocodingService {
 
   /** The district, or else the city, town or village, at a point. Null where there's none. Errors like `suggest`. */
   areaAt(at: GeoPoint): Observable<PlaceOption | null> {
-    const params = new HttpParams()
-      .set('lang', 'default')
-      .set('include', AREAS)
-      .set('lat', at.latitude)
-      .set('lon', at.longitude)
-      .set('limit', 1);
-    return this.get('/reverse', params).pipe(map(([first]) => (first ? toOption(first) : null)));
+    return this.get('/reverse', this.pointParams(this.params(AREAS), at)).pipe(
+      map(([first]) => (first ? toOption(first) : null)),
+    );
   }
 
   private asTyped<Place>(
     texts: Observable<string>,
     ask: (text: string) => Observable<Place[]>,
-  ): Observable<PlaceSearch<Place>> {
+  ): Observable<PlaceResults<Place>> {
     return texts.pipe(
       map((text) => text.trim()),
       debounceTime(DEBOUNCE_MS),
@@ -208,16 +193,7 @@ export class GeocodingService {
    * it a short text matches anywhere in Poland, and "Ergo" gave three offices called Ergo before Ergo Arena.
    */
   suggest(text: string, near: GeoPoint): Observable<PlaceSuggestion[]> {
-    let params = this.params()
-      .set('q', text)
-      .set('limit', SUGGESTIONS)
-      .set('lat', near.latitude)
-      .set('lon', near.longitude);
-    // Search only: /reverse answers 400 to it.
-    for (const code of geocoder.countryCodes) {
-      params = params.append('countrycode', code);
-    }
-    return this.get('/api', params).pipe(
+    return this.get('/api', this.searchParams(this.params(), text, near)).pipe(
       map((features) =>
         distinct(
           features.map((f) => toPlace(f, 'search')),
@@ -235,22 +211,41 @@ export class GeocodingService {
 
   /** The address at a point on the map. Null when there's none, as in the sea. Errors like `suggest`. */
   reverse(at: GeoPoint): Observable<PlaceSuggestion | null> {
-    const params = this.params().set('lat', at.latitude).set('lon', at.longitude).set('limit', 1);
-    return this.get('/reverse', params).pipe(
+    return this.get('/reverse', this.pointParams(this.params(), at)).pipe(
       map(([first]) => (first ? toPlace(first, 'pin') : null)),
     );
   }
 
   /**
    * `lang=default` gives the local names whatever the browser's language. Without it an English browser stores
-   * "Gdansk" and "Poland", which everyone then sees.
+   * "Gdansk" and "Poland", which everyone then sees. With `include`, only those places; without it, all but `EXCLUDED`.
    */
-  private params(): HttpParams {
+  private params(include?: string): HttpParams {
     let params = new HttpParams().set('lang', 'default');
+    if (include) {
+      return params.set('include', include);
+    }
     for (const category of EXCLUDED) {
       params = params.append('exclude', category);
     }
     return params;
+  }
+
+  private searchParams(params: HttpParams, text: string, near: GeoPoint): HttpParams {
+    params = params
+      .set('q', text)
+      .set('limit', SUGGESTIONS)
+      .set('lat', near.latitude)
+      .set('lon', near.longitude);
+    // Search only: /reverse answers 400 to it.
+    for (const code of geocoder.countryCodes) {
+      params = params.append('countrycode', code);
+    }
+    return params;
+  }
+
+  private pointParams(params: HttpParams, at: GeoPoint): HttpParams {
+    return params.set('lat', at.latitude).set('lon', at.longitude).set('limit', 1);
   }
 
   private get(path: string, params: HttpParams): Observable<PhotonFeature[]> {

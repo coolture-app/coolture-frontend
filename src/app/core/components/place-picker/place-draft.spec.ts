@@ -1,5 +1,6 @@
 import { PlaceSuggestion } from '../../models/common/place-suggestion.model';
 import {
+  addressFailed,
   addressFound,
   EMPTY_DRAFT,
   offerTaken,
@@ -61,6 +62,17 @@ describe('place draft', () => {
     expect(draft.text.street).toBe('Aleja Grunwaldzka');
     expect(draft.text.city).toBe('Gdańsk');
     expect(draft.countryCode).toBe('PL');
+  });
+
+  it('asks for the address at a moved pin, and a failure keeps the fields until the next pin asks again', () => {
+    const asked = pinMoved(picked(ERGO_ARENA), PIN);
+    const failed = addressFailed(asked);
+
+    expect(asked.lookup).toBe('pending');
+    expect(failed.text).toEqual(asked.text);
+    expect(failed.lookup).toBe('failed');
+    expect(pinMoved(failed, PIN).lookup).toBe('pending');
+    expect(addressFound(asked, NEXT_DOOR).lookup).toBe('idle');
   });
 
   it('a pin move replaces automatic fields', () => {

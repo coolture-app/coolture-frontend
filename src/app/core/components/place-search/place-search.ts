@@ -17,11 +17,7 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { heroMagnifyingGlass } from '@ng-icons/heroicons/outline';
 
 import { GeoPoint } from '../../models/common/geo.model';
-import {
-  PlaceKind,
-  PlaceOption,
-  PlaceSearch as PlaceResults,
-} from '../../models/common/place-suggestion.model';
+import { PlaceKind, PlaceOption, PlaceResults } from '../../models/common/place-suggestion.model';
 import { GeocodingService } from '../../services/geocoding/geocoding.service';
 
 let nextId = 0;

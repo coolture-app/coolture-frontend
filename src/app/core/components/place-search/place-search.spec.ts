@@ -3,10 +3,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 
 import { PlaceSearch } from './place-search';
-import {
-  PlaceOption,
-  PlaceSearch as PlaceResults,
-} from '../../models/common/place-suggestion.model';
+import { PlaceOption, PlaceResults } from '../../models/common/place-suggestion.model';
 import { GeocodingService } from '../../services/geocoding/geocoding.service';
 
 const place = (name: string): PlaceOption => ({

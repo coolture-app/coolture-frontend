@@ -19,6 +19,8 @@ export interface PlaceDraft {
   automatic: ReadonlySet<PlaceField>;
   /** What the map has at the pin, offered in one click instead of overwriting the user's text. */
   offer: PlaceOffer | null;
+  /** The address at the pin: asked for, or not found because the geocoder failed. */
+  lookup: 'idle' | 'pending' | 'failed';
 }
 
 export interface PlaceOffer {
@@ -42,6 +44,7 @@ export const EMPTY_DRAFT: PlaceDraft = {
   countryCode: null,
   automatic: new Set(),
   offer: null,
+  lookup: 'idle',
 };
 
 function textOf(place: PlaceSuggestion): PlaceText {
@@ -60,7 +63,7 @@ export function savedDraft(
   coordinates: GeoPoint | null,
   countryCode: string | null,
 ): PlaceDraft {
-  return { text, coordinates, countryCode, automatic: new Set(), offer: null };
+  return { text, coordinates, countryCode, automatic: new Set(), offer: null, lookup: 'idle' };
 }
 
 /** A search suggestion replaces the whole place. */
@@ -71,12 +74,18 @@ export function picked(place: PlaceSuggestion): PlaceDraft {
     countryCode: place.countryCode ?? null,
     automatic: new Set(PLACE_FIELDS),
     offer: null,
+    lookup: 'idle',
   };
 }
 
 /** The pin moved, before the address at it is known. */
 export function pinMoved(draft: PlaceDraft, to: GeoPoint): PlaceDraft {
-  return { ...draft, coordinates: to, offer: null };
+  return { ...draft, coordinates: to, offer: null, lookup: 'pending' };
+}
+
+/** The geocoder failed: the fields stay as they are, and the user types the city. */
+export function addressFailed(draft: PlaceDraft): PlaceDraft {
+  return { ...draft, lookup: 'failed' };
 }
 
 /**
@@ -119,6 +128,7 @@ export function addressFound(draft: PlaceDraft, found: PlaceSuggestion | null): 
     automatic,
     countryCode: found?.countryCode ?? draft.countryCode,
     offer: offer.address || offer.name ? offer : null,
+    lookup: 'idle',
   };
 }
 

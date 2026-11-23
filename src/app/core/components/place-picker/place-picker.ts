@@ -19,7 +19,13 @@ import type { LngLat, Map as MapLibreMap, MapMouseEvent, Marker } from 'maplibre
 import { catchError, map, of, Subject, switchMap } from 'rxjs';
 
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideMaximize2, lucideMinimize2 } from '@ng-icons/lucide';
+import {
+  lucideMapPin,
+  lucideMaximize2,
+  lucideMinimize2,
+  lucideSearch,
+  lucideX,
+} from '@ng-icons/lucide';
 import { FormInput } from '../form-input/form-input';
 import { backClosable } from '../../services/back-closable/back-closable';
 import { collapseCredit, followLanguage, MAP_STYLE, quietMissingIcons } from '../map/map-style';
@@ -28,15 +34,16 @@ import { LocationService } from '../../services/location/location.service';
 import { GeoPoint, TRICITY } from '../../models/common/geo.model';
 import { LOCATION_LIMITS } from '../../models/common/location-limits';
 import { LocationForm } from './location-form';
-import { PlaceSearch, PlaceSuggestion } from '../../models/common/place-suggestion.model';
+import { PlaceResults, PlaceSuggestion } from '../../models/common/place-suggestion.model';
 import {
+  addressFailed,
   addressFound,
   describePlace,
   EMPTY_DRAFT,
   offerTaken,
-  PLACE_FIELDS,
   picked,
   pinMoved,
+  PLACE_FIELDS,
   PlaceDraft,
   PlaceOffer,
   savedDraft,
@@ -66,7 +73,9 @@ function rounded(at: LngLat): GeoPoint {
 @Component({
   selector: 'app-place-picker',
   imports: [ReactiveFormsModule, TranslatePipe, FormInput, MapComponent, MarkerComponent, NgIcon],
-  viewProviders: [provideIcons({ lucideMaximize2, lucideMinimize2 })],
+  viewProviders: [
+    provideIcons({ lucideMapPin, lucideMaximize2, lucideMinimize2, lucideSearch, lucideX }),
+  ],
   host: { '(document:keydown.escape)': 'full() && toggleFull()' },
   templateUrl: './place-picker.html',
   styleUrl: './place-picker.scss',
@@ -101,7 +110,7 @@ export class PlacePicker implements OnInit {
   });
 
   readonly query = signal('');
-  readonly results = signal<PlaceSearch | null>(null);
+  readonly results = signal<PlaceResults | null>(null);
   readonly listOpen = signal(false);
   readonly active = signal(-1);
   /** Suggestions for the text in the box, never for an older one. */
@@ -121,12 +130,8 @@ export class PlacePicker implements OnInit {
   private fullScreen = backClosable('placeMap', () => this.setFull(false));
   readonly showMap = computed(() => this.hasPlace() || this.mapRequested());
   readonly fieldsOpen = signal(false);
-  private readonly lookingUpAt = signal<GeoPoint | null>(null);
-  readonly lookingUp = computed(() => {
-    const at = this.lookingUpAt();
-    return at !== null && at === this.draft().coordinates;
-  });
-  readonly lookupFailed = signal(false);
+  readonly lookingUp = computed(() => this.draft().lookup === 'pending');
+  readonly lookupFailed = computed(() => this.draft().lookup === 'failed');
   /** The map's style or tiles never loaded, so typed coordinates are the only way to set a pin. */
   readonly tilesFailed = signal(false);
   /** MapLibre needs a browser, so the map waits for the first render there. */
@@ -178,24 +183,18 @@ export class PlacePicker implements OnInit {
       .pipe(
         switchMap((at) =>
           this.geocoding.reverse(at).pipe(
-            map((found) => ({ at, found, failed: false })),
-            // A failed lookup leaves the fields as they are: the user types the city.
-            catchError(() => of({ at, found: null, failed: true })),
+            map((found) => ({ found, failed: false })),
+            catchError(() => of({ found: null, failed: true })),
           ),
         ),
         takeUntilDestroyed(),
       )
-      .subscribe(({ at, found, failed }) => {
+      .subscribe(({ found, failed }) => {
         // A pick, a clear or a saved post came first, so the answer is about a pin that's gone.
-        if (at !== this.draft().coordinates) {
+        if (this.draft().lookup !== 'pending') {
           return;
         }
-        this.lookingUpAt.set(null);
-        if (failed) {
-          this.lookupFailed.set(true);
-        } else {
-          this.apply(addressFound(this.draft(), found));
-        }
+        this.apply(failed ? addressFailed(this.draft()) : addressFound(this.draft(), found));
         this.openFieldsIfIncomplete();
       });
   }
@@ -282,7 +281,6 @@ export class PlacePicker implements OnInit {
     this.apply(picked(place));
     this.setQuery('');
     this.listOpen.set(false);
-    this.lookupFailed.set(false);
     this.fieldsOpen.set(false);
     this.group().controls.coordinates.markAsTouched();
     this.moveMapTo(place.coordinates, PLACE_ZOOM);
@@ -300,7 +298,6 @@ export class PlacePicker implements OnInit {
     this.mapInstance = null;
     this.mapRequested.set(false);
     this.fieldsOpen.set(false);
-    this.lookupFailed.set(false);
     this.searchBox()?.nativeElement.focus();
   }
 
@@ -368,8 +365,6 @@ export class PlacePicker implements OnInit {
   private placePin(at: GeoPoint): void {
     this.apply(pinMoved(this.draft(), at));
     this.group().controls.coordinates.markAsTouched();
-    this.lookingUpAt.set(at);
-    this.lookupFailed.set(false);
     this.pins.next(at);
   }
 

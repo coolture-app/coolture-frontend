@@ -5,7 +5,7 @@ import { Subject } from 'rxjs';
 import { GeocodingService } from './geocoding.service';
 import {
   PlaceOption,
-  PlaceSearch,
+  PlaceResults,
   PlaceSuggestion,
 } from '../../models/common/place-suggestion.model';
 
@@ -197,7 +197,7 @@ describe('GeocodingService', () => {
 
   describe('search as the user types', () => {
     let texts: Subject<string>;
-    let results: PlaceSearch[];
+    let results: PlaceResults[];
 
     function type(text: string): void {
       texts.next(text);

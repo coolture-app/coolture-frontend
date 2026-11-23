@@ -8,7 +8,7 @@ import { WITHOUT_MAPLIBRE } from '../map/map-stubs.testing';
 import { GeocodingService } from '../../services/geocoding/geocoding.service';
 import { LocationService } from '../../services/location/location.service';
 import { GeoPoint } from '../../models/common/geo.model';
-import { PlaceSearch, PlaceSuggestion } from '../../models/common/place-suggestion.model';
+import { PlaceResults, PlaceSuggestion } from '../../models/common/place-suggestion.model';
 
 const ERGO_ARENA: PlaceSuggestion = {
   coordinates: { latitude: 54.4265, longitude: 18.5805 },
@@ -31,13 +31,13 @@ const NEXT_DOOR: PlaceSuggestion = {
 };
 
 class FakeGeocoding {
-  readonly answers = new Subject<PlaceSearch>();
+  readonly answers = new Subject<PlaceResults>();
   readonly asked: string[] = [];
   near: (() => GeoPoint) | null = null;
   reverseAnswer: Observable<PlaceSuggestion | null> = of(null);
   readonly reverse = jasmine.createSpy('reverse').and.callFake(() => this.reverseAnswer);
 
-  search(texts: Observable<string>, near: () => GeoPoint): Observable<PlaceSearch> {
+  search(texts: Observable<string>, near: () => GeoPoint): Observable<PlaceResults> {
     this.near = near;
     texts.subscribe((text) => this.asked.push(text));
     return this.answers;
