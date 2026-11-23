@@ -4,9 +4,11 @@ import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpTestingController, TestRequest } from '@angular/common/http/testing';
 import { Navigation, provideRouter, Router } from '@angular/router';
+import { By } from '@angular/platform-browser';
 import { MapFocus } from '../../core/components/map/map-focus';
 
 import { MainPage } from './main-page';
+import { HomeBar } from './home-bar/home-bar';
 import { LocationService } from '../../core/services/location/location.service';
 import { PostService } from '../../core/services/post/post.service';
 import { GeoPoint } from '../../core/models/common/geo.model';
@@ -112,7 +114,12 @@ describe('MainPage', () => {
   }
 
   async function openPlace(): Promise<void> {
-    component.togglePlace();
+    (fixture.nativeElement.querySelector('.place-btn') as HTMLButtonElement).click();
+    await settle();
+  }
+
+  async function toggleFilters(): Promise<void> {
+    (fixture.nativeElement.querySelector('.filters-btn') as HTMLButtonElement).click();
     await settle();
   }
 
@@ -178,7 +185,7 @@ describe('MainPage', () => {
     spyOn(scroller, 'scrollToPosition');
   });
 
-  /** Filtry asks for the kinds' names when it opens. */
+  /** The page asks for the kinds' names when it is created. */
   function flushKinds(): void {
     http.match((r) => r.url.endsWith('/dicts/interests')).forEach((r) => r.flush(KIND_CATALOG));
   }
@@ -238,8 +245,7 @@ describe('MainPage', () => {
     it('filters by the kinds picked in Filtry, counted as one, and by Dla dzieci', async () => {
       await open();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
-      component.toggleFilters();
-      await settle();
+      await toggleFilters();
       flushKinds();
       await settle();
       const tile = (name: string) =>
@@ -269,8 +275,7 @@ describe('MainPage', () => {
     it('clears the kinds and Dla dzieci with Wyczyść, and the kinds alone with Wyczyść rodzaj', async () => {
       await open();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
-      component.toggleFilters();
-      await settle();
+      await toggleFilters();
       flushKinds();
       await settle();
       const el = fixture.nativeElement as HTMLElement;
@@ -366,8 +371,7 @@ describe('MainPage', () => {
         );
       await open();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
-      component.toggleFilters();
-      await settle();
+      await toggleFilters();
       expect(sortChips().length).toBe(0);
 
       component.setTab('all');
@@ -575,13 +579,13 @@ describe('MainPage', () => {
       expectFeed().flush({ ...page(['j']), mode: 'RANKED' });
       await settle();
 
-      (fixture.nativeElement.querySelector('.searchbar__clear') as HTMLButtonElement).click();
+      (fixture.nativeElement.querySelector('.search__clear') as HTMLButtonElement).click();
       await settle();
 
       expectFeed().flush({ ...page(['f']), mode: 'RANKED' });
       await settle();
       expect(component.searchControl.value).toBe('');
-      expect(fixture.nativeElement.querySelector('.searchbar__clear')).toBeNull();
+      expect(fixture.nativeElement.querySelector('.search__clear')).toBeNull();
     });
 
     it('counts the filters that are on, a date range as one, and not the search', async () => {
@@ -617,24 +621,27 @@ describe('MainPage', () => {
     it('hides while scrolling down past the top and comes back on any scroll up', async () => {
       await open();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
+      const bar: HomeBar = fixture.debugElement.query(By.directive(HomeBar)).componentInstance;
       let y = 0;
       spyOnProperty(window, 'scrollY').and.callFake(() => y);
       const scrollTo = (to: number) => {
         y = to;
-        component.onScroll();
+        bar.onScroll();
       };
+      jasmine.clock().install();
 
       scrollTo(60);
-      expect(component.barHidden()).toBeFalse();
+      expect(bar.hidden()).toBeFalse();
       scrollTo(400);
-      expect(component.barHidden()).toBeTrue();
+      expect(bar.hidden()).toBeTrue();
       scrollTo(395);
-      expect(component.barHidden()).toBeFalse();
-      expect(component.scrolling()).toBeTrue();
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      expect(component.scrolling()).toBeTrue();
-      await new Promise((resolve) => setTimeout(resolve, 600));
-      expect(component.scrolling()).toBeFalse();
+      expect(bar.hidden()).toBeFalse();
+      expect(bar.scrolling()).toBeTrue();
+      jasmine.clock().tick(999);
+      expect(bar.scrolling()).toBeTrue();
+      jasmine.clock().tick(1);
+      expect(bar.scrolling()).toBeFalse();
+      jasmine.clock().uninstall();
     });
   });
 
@@ -1259,15 +1266,13 @@ describe('MainPage', () => {
     it('closes the panel on Escape, and on its ✕', async () => {
       await open();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
-      component.toggleFilters();
-      await settle();
+      await toggleFilters();
 
       document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
       await settle();
       expect(component.showFilters()).toBeFalse();
 
-      component.toggleFilters();
-      await settle();
+      await toggleFilters();
       (
         fixture.nativeElement.querySelector(
           'app-feed-filters [aria-label="MAIN_PAGE.close"]',
@@ -1365,8 +1370,7 @@ describe('MainPage', () => {
       await router.navigateByUrl('/?type=online&past=true');
       await open();
       expectFeed().flush({ ...page(), mode: 'RANKED' });
-      component.toggleFilters();
-      await settle();
+      await toggleFilters();
 
       expect(fixture.nativeElement.querySelector('app-feed-filters select')).toBeNull();
       component.clearFilters();
@@ -1651,7 +1655,7 @@ describe('MainPage', () => {
       expectPosts().flush(page());
       component.searchControl.setValue('jazz');
       component.filtersForm.controls.includePast.setValue(true);
-      component.toggleFilters();
+      await toggleFilters();
       await debounce();
       expectPosts().flush(page(['c']));
       await settle();

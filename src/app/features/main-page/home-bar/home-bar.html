@@ -1,0 +1,110 @@
+<div class="bar">
+  <div class="bar__top">
+    <div class="tabs" role="tablist" [attr.aria-label]="'MAIN_PAGE.tabs' | translate">
+      <button
+        type="button"
+        role="tab"
+        class="tabs__tab"
+        [class.tabs__tab--on]="feed()"
+        [attr.aria-selected]="feed()"
+        [appTooltip]="'MAIN_PAGE.forYouHint' | translate"
+        (click)="tabPicked.emit('forYou')"
+      >
+        {{ 'MAIN_PAGE.forYou' | translate }}
+      </button>
+      <button
+        type="button"
+        role="tab"
+        class="tabs__tab"
+        [class.tabs__tab--on]="!feed()"
+        [attr.aria-selected]="!feed()"
+        [appTooltip]="'MAIN_PAGE.allHint' | translate"
+        (click)="tabPicked.emit('all')"
+      >
+        {{ 'MAIN_PAGE.all' | translate }}
+      </button>
+    </div>
+    <span class="search">
+      <ng-icon class="search__icon" name="heroMagnifyingGlass" />
+      <input
+        class="search__input"
+        type="search"
+        enterkeyhint="search"
+        [formControl]="search()"
+        [attr.aria-label]="'MAIN_PAGE.searchbar' | translate"
+        placeholder="{{ 'MAIN_PAGE.searchbar' | translate }}"
+        (keydown.enter)="searched.emit()"
+      />
+      @if (search().value) {
+        <button
+          type="button"
+          class="search__clear"
+          [appTooltip]="'MAIN_PAGE.clearSearch' | translate"
+          (click)="clearSearch()"
+        >
+          <ng-icon name="heroXMark" />
+        </button>
+      }
+    </span>
+  </div>
+  <div class="bar__row">
+    <button
+      type="button"
+      class="bar-btn place-btn"
+      [class.bar-btn--active]="placeOpen() || place() !== ''"
+      [attr.aria-expanded]="placeOpen()"
+      [appTooltip]="'MAIN_PAGE.where' | translate"
+      (click)="togglePlace()"
+    >
+      <ng-icon [name]="place() === 'online' ? 'lucideRadio' : 'heroMapPin'" />
+      <span class="place-btn__text">
+        @switch (place()) {
+          @case ('mine') {
+            {{ 'MAIN_PAGE.nearMe' | translate }}
+          }
+          @case ('picked') {
+            {{ pickedShortName() || ('MAIN_PAGE.pickedPlace' | translate) }}
+          }
+          @case ('online') {
+            {{ 'MAIN_PAGE.online' | translate }}
+          }
+          @default {
+            {{ 'MAIN_PAGE.anywhere' | translate }}
+          }
+        }
+      </span>
+      @if (place() === 'mine' || place() === 'picked') {
+        <span class="place-btn__radius"
+          >· {{ 'MAIN_PAGE.km' | translate: { km: radiusKm() } }}</span
+        >
+      }
+      <ng-icon class="place-btn__chevron" name="heroChevronDown" />
+    </button>
+    <button
+      type="button"
+      class="bar-btn filters-btn"
+      [class.bar-btn--active]="filtersOpen()"
+      [attr.aria-expanded]="filtersOpen()"
+      [appTooltip]="
+        filterCount()
+          ? ('MAIN_PAGE.filtersActive' | translate: { count: filterCount() })
+          : ('MAIN_PAGE.filters' | translate)
+      "
+      (click)="toggleFilters()"
+    >
+      <ng-icon name="heroAdjustmentsHorizontal" />
+      <span class="wide-only">{{ 'MAIN_PAGE.filters' | translate }}</span>
+      @if (filterCount()) {
+        <span class="filters-btn__count" aria-hidden="true">{{ filterCount() }}</span>
+      }
+    </button>
+    <!-- Online posts have no pins. -->
+    @if (place() !== 'online') {
+      <app-view-switch [mapView]="mapView()" (switched)="mapSwitched.emit($event)" />
+    }
+  </div>
+</div>
+@if (filtersOpen() || placeOpen()) {
+  <div class="scrim" aria-hidden="true" (click)="closePanels()"></div>
+}
+<ng-content />

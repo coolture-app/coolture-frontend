@@ -12,216 +12,58 @@
   flex-grow: 1;
 }
 
-// Sticks under the navbar, across the whole width, so cards scroll under it.
-.searchbar {
-  @include center-flex;
-  position: sticky;
-  top: var(--navbar-height);
-  z-index: var(--z-dropdown);
-  margin: calc(-1 * var(--space-md)) calc(-1 * var(--space-md)) var(--space-sm);
-  padding: var(--space-md);
-  // The blur is always on, and only the background's opacity changes: see-through at once when
-  // scrolling starts, back to solid with a slow fade.
-  background: rgba(250, 250, 250, 1);
-  backdrop-filter: blur(12px);
-  transition:
-    background 600ms ease,
-    transform var(--transition-slow),
-    visibility var(--transition-slow);
+// Under the bar, so it opens where the reader is, and scrolls inside itself when long.
+.filters-popover {
+  position: absolute;
+  top: calc(100% - var(--space-xs));
+  left: 50%;
+  z-index: 1;
+  width: min(var(--container-max), calc(100% - 2 * var(--space-md)));
+  max-height: calc(100dvh - var(--navbar-height) - var(--bottom-bar-height) - 140px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  transform: translateX(-50%);
+  animation: popover-in var(--transition-base);
 
-  &--scrolling {
-    background: rgba(250, 250, 250, 0.72);
-    transition:
-      background 100ms ease,
-      transform var(--transition-slow),
-      visibility var(--transition-slow);
-  }
-
-  // Phones: "quick return". Away while reading down the list, back on any scroll up.
   @media (max-width: 639px) {
-    padding: var(--space-sm) var(--space-md);
+    width: calc(100% - 2 * var(--space-sm));
+  }
+}
 
-    &--hidden {
-      transform: translateY(calc(-100% - var(--navbar-height)));
-      visibility: hidden;
-    }
+// Fades in and comes down over the list as it's pulled, turning with the pull. The list itself stays put.
+.pull {
+  --size: 36px;
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  display: grid;
+  place-items: center;
+  width: var(--size);
+  height: var(--size);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md);
+  color: var(--color-text-secondary);
+  opacity: min(1, calc(var(--pull) / 48));
+  transform: translate(-50%, calc(var(--pull) * 1px - var(--size) - var(--space-sm)));
+
+  ng-icon {
+    transform: rotate(calc(var(--pull) * 3deg));
   }
 
-  // Under the bar, so it opens where the reader is, and scrolls inside itself when long.
-  .filters-popover {
-    position: absolute;
-    top: calc(100% - var(--space-xs));
-    left: 50%;
-    z-index: 1;
-    width: min(var(--container-max), calc(100% - 2 * var(--space-md)));
-    max-height: calc(100dvh - var(--navbar-height) - var(--bottom-bar-height) - 140px);
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-xl);
-    transform: translateX(-50%);
-    animation: popover-in var(--transition-base);
-
-    @media (max-width: 639px) {
-      width: calc(100% - 2 * var(--space-sm));
-    }
+  &--ready {
+    color: var(--color-accent);
   }
 
-  // Fades in and comes down over the list as it's pulled, turning with the pull. The list itself stays put.
-  .pull {
-    --size: 36px;
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    display: grid;
-    place-items: center;
-    width: var(--size);
-    height: var(--size);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-full);
-    background: var(--color-surface);
-    box-shadow: var(--shadow-md);
-    color: var(--color-text-secondary);
-    opacity: min(1, calc(var(--pull) / 48));
-    transform: translate(-50%, calc(var(--pull) * 1px - var(--size) - var(--space-sm)));
+  &--renewing {
+    color: var(--color-accent);
+    transition: transform var(--transition-base);
 
     ng-icon {
-      transform: rotate(calc(var(--pull) * 3deg));
-    }
-
-    &--ready {
-      color: var(--color-accent);
-    }
-
-    &--renewing {
-      color: var(--color-accent);
-      transition: transform var(--transition-base);
-
-      ng-icon {
-        animation: pull-spin 0.8s linear infinite;
-      }
-    }
-  }
-
-  // Dims the list below while the panel is open; a tap on it closes the panel.
-  .filters-scrim {
-    position: absolute;
-    top: 100%;
-    right: 0;
-    left: 0;
-    height: 100dvh;
-    background: rgba(17, 17, 17, 0.25);
-    animation: scrim-in var(--transition-base);
-  }
-
-  &__inner {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-    width: 100%;
-    max-width: var(--container-max);
-  }
-
-  &__row {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-  }
-
-  // The tabs on the left, and search taking the rest of the row.
-  &__top {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-
-    @media (max-width: 639px) {
-      gap: var(--space-sm);
-
-      .tabs {
-        gap: var(--space-md);
-      }
-
-      .searchbar__wrapper {
-        gap: var(--space-xs);
-        padding-left: var(--space-sm);
-      }
-    }
-  }
-
-  &__wrapper {
-    display: flex;
-    flex: 1;
-    align-items: center;
-    gap: var(--space-sm);
-    min-width: 0;
-    height: 44px;
-    padding: 0 var(--space-xs) 0 var(--space-md);
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-full);
-    transition:
-      border-color var(--transition-fast),
-      box-shadow var(--transition-fast);
-
-    &:focus-within {
-      border-color: var(--color-accent);
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-    }
-  }
-
-  &__icon {
-    --ng-icon__size: 20px;
-    color: var(--color-text-tertiary);
-    flex-shrink: 0;
-  }
-
-  &__input {
-    flex: 1;
-    min-width: 0;
-    text-overflow: ellipsis;
-    border: none;
-    background: transparent;
-    font-family: var(--font-sans);
-    // 16 px, so phones don't zoom in on focus.
-    font-size: var(--text-base);
-    color: var(--color-text);
-
-    &:focus {
-      outline: none;
-    }
-
-    &::placeholder {
-      color: var(--color-text-tertiary);
-    }
-
-    // The clear button below replaces the browser's own.
-    &::-webkit-search-cancel-button {
-      display: none;
-    }
-  }
-
-  &__clear {
-    @include center-flex;
-    flex-shrink: 0;
-    width: 36px;
-    height: 36px;
-    border: none;
-    border-radius: var(--radius-full);
-    background: none;
-    color: var(--color-text-secondary);
-    cursor: pointer;
-
-    ng-icon {
-      --ng-icon__size: 18px;
-    }
-
-    &:hover {
-      background: var(--color-surface-alt);
-      color: var(--color-text);
-    }
-
-    &:focus-visible {
-      outline: 2px solid var(--color-accent);
+      animation: pull-spin 0.8s linear infinite;
     }
   }
 }
@@ -230,56 +72,6 @@
   from {
     opacity: 0;
     transform: translate(-50%, -6px);
-  }
-}
-
-@keyframes scrim-in {
-  from {
-    opacity: 0;
-  }
-}
-
-/* Dla Ciebie | Wszystkie: two words with an underline under the open one, as social apps' feed tabs. */
-.tabs {
-  display: flex;
-  flex-shrink: 0;
-  gap: var(--space-lg);
-  border-bottom: 1px solid var(--color-border-light);
-
-  &__tab {
-    position: relative;
-    padding: var(--space-xs) 0 var(--space-sm);
-    border: none;
-    background: none;
-    color: var(--color-text-secondary);
-    font-family: var(--font-sans);
-    font-size: var(--text-body);
-    font-weight: var(--font-semibold);
-    cursor: pointer;
-
-    &:hover {
-      color: var(--color-text);
-    }
-
-    &:focus-visible {
-      outline: 2px solid var(--color-accent);
-      outline-offset: 2px;
-    }
-
-    &--on {
-      color: var(--color-text);
-
-      &::after {
-        content: '';
-        position: absolute;
-        right: 0;
-        bottom: -1px;
-        left: 0;
-        height: 3px;
-        border-radius: 3px 3px 0 0;
-        background: var(--color-accent);
-      }
-    }
   }
 }
 
@@ -315,5 +107,18 @@
 @keyframes pull-spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+// Lista hides the map instead of destroying it.
+app-map.map-hidden {
+  display: none;
+}
+
+// Phones on Mapa: the map fills the page, under the bar.
+@media (max-width: 639px) {
+  .page--map {
+    position: relative;
+    padding: 0;
   }
 }
