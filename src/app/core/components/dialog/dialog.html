@@ -7,5 +7,7 @@
   (cancel)="$event.preventDefault(); dismissed.emit()"
   (click)="$event.target === dialog && dismissed.emit()"
 >
-  <ng-content />
+  <div class="dialog__body">
+    <ng-content />
+  </div>
 </dialog>

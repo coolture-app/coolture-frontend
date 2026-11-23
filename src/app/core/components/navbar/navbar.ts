@@ -1,5 +1,4 @@
 import { Component, DOCUMENT, inject, signal } from '@angular/core';
-import { NgTemplateOutlet } from '@angular/common';
 import { IsActiveMatchOptions, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -21,16 +20,7 @@ import { pathOf } from '../../services/back/back.service';
 
 @Component({
   selector: 'app-navbar',
-  imports: [
-    TranslateModule,
-    Btn,
-    RouterLink,
-    RouterLinkActive,
-    NgIcon,
-    Tooltip,
-    NgTemplateOutlet,
-    InitialsPipe,
-  ],
+  imports: [TranslateModule, Btn, RouterLink, RouterLinkActive, NgIcon, Tooltip, InitialsPipe],
   viewProviders: [
     provideIcons({
       lucideCalendarDays,
@@ -100,9 +90,5 @@ export class Navbar {
 
   login(): void {
     void this.authService.login();
-  }
-
-  async logout(): Promise<void> {
-    this.authService.logout();
   }
 }

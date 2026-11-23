@@ -90,6 +90,7 @@ $z-index: (
   // The home feed's column, narrower than other pages, as a feed reads better and more of a card fits on screen.
   // Pages of the profile use it too, so their cards and rows line up with the feed's.
   --feed-column: 560px;
+  --docked-sheet: 420px;
 
   @each $name, $value in $colors {
     --color-#{$name}: #{$value};
